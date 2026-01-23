@@ -1,0 +1,116 @@
+# AudioAnalyzer - Agent Steering Instructions
+
+> **Note**: These instructions apply to ALL AI coding assistants working on this project, including GitHub Copilot, Claude, and other AI agents.
+
+## Project Overview
+Real-time audio frequency spectrum analyzer for Windows using NAudio library. Captures system audio via WASAPI loopback and displays frequency spectrum with BPM detection in terminal.
+
+## Critical Rules
+
+### Build Verification
+**ALWAYS verify the code builds after making changes:**
+```powershell
+dotnet build .\AudioAnalyzer\AudioAnalyzer.csproj
+```
+Never complete a task without confirming successful compilation.
+
+### Code Style
+- Use C# 10 top-level statements
+- Prefer explicit types over `var` for clarity in audio processing code
+- Keep methods under 50 lines; extract complex logic into separate methods
+- Use meaningful variable names (e.g., `barHeight`, `normalizedMag`, not `h`, `n`)
+
+### Terminal Output Requirements
+- **All output must scale dynamically with terminal size**
+- Check `Console.WindowWidth` and `Console.WindowHeight` before rendering
+- Account for margins/labels when calculating available space
+- Prevent line wraps by ensuring content fits within `termWidth`
+- Update display when terminal is resized
+
+### Performance Constraints
+- Display update interval: 50ms (20 FPS)
+- FFT length: 8192 samples (fixed)
+- Minimize allocations in hot paths (ProcessAudio, DisplaySpectrum)
+- Reuse arrays; only reallocate when terminal size changes
+
+## Architecture
+
+### Key Components
+1. **Audio Capture**: `WasapiLoopbackCapture` - captures system audio
+2. **FFT Analysis**: `FastFourierTransform.FFT` - frequency domain conversion
+3. **Display Engine**: Terminal-based visualization with ANSI colors
+4. **BPM Detection**: Energy-based beat detection algorithm
+5. **Auto-Gain**: Adaptive normalization for quiet/loud sources
+
+### Data Flow
+```
+Audio Buffer → FFT Processing → Frequency Bands → Smoothing → Peak Hold → Display
+                                                 ↓
+                                           Beat Detection → BPM
+```
+
+### Critical Fields
+- `NumBands`: Dynamic, 8-60 based on terminal width
+- `smoothedMagnitudes[]`: Current smoothed frequency values
+- `peakHold[]`: Peak hold values for visual feedback
+- `targetMaxMagnitude`: Auto-gain normalization target
+
+## Color Scheme
+Amplitude-based gradient (consistent across volume bar and spectrum):
+- Blue (0-25%): Very quiet
+- Cyan (25-40%): Quiet
+- Green (40-55%): Medium
+- Yellow (55-70%): Loud
+- Magenta (70-85%): Very loud
+- Red (85-100%): Loudest
+- White: Peak hold markers
+
+## Testing Requirements
+When modifying display code:
+1. Test in narrow terminal (80 chars)
+2. Test in wide terminal (200+ chars)
+3. Test in short terminal (24 rows)
+4. Test in tall terminal (50+ rows)
+5. Resize terminal during runtime to verify dynamic scaling
+
+When modifying audio processing:
+1. Test with music (wide frequency range)
+2. Test with speech/conversation (narrow frequency range, low energy)
+3. Verify auto-gain adapts appropriately
+
+## Common Modifications
+
+### Adding New Visual Elements
+1. Calculate space requirements in characters
+2. Update `UpdateDisplayDimensions()` to account for new element
+3. Adjust `NumBands` calculation if horizontal space changes
+4. Test with various terminal sizes
+
+### Adjusting Sensitivity
+- `SmoothingFactor`: Controls bar smoothness (0.7 = 70% previous, 30% new)
+- `PeakHoldFrames`: How long peaks hold (20 frames ≈ 1 second)
+- `PeakFallRate`: How fast peaks fall (0.08 = 8% per frame)
+- Auto-gain: Modify gain calculation in `DisplaySpectrum()`
+
+### Frequency Band Configuration
+- Min frequency: 20 Hz (human hearing lower limit)
+- Max frequency: 20,000 Hz (human hearing upper limit)
+- Distribution: Logarithmic scale for perceptual accuracy
+- Labels: Update `allLabels` array for new frequency markers
+
+## Dependencies
+- **NAudio.CoreAudioApi**: System audio capture
+- **NAudio.Wave**: Audio format handling
+- **NAudio.Dsp**: FFT implementation
+- **.NET 10.0**: Target framework
+
+## Git Workflow
+- Commit after each logical feature completion
+- Build must succeed before committing
+- Use descriptive commit messages referencing feature/fix
+
+## Debugging Tips
+- Volume too low: Increase auto-gain multiplier (currently 0.8)
+- Bars jumping: Increase `SmoothingFactor` (0.7 → 0.8)
+- BPM inaccurate: Adjust `BeatThreshold` (currently 1.3x average)
+- Peaks falling too fast/slow: Modify `PeakFallRate`
