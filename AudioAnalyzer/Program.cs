@@ -52,7 +52,11 @@ public class AudioAnalyzer
     private int NumBands; // Number of frequency bands to display (dynamic)
     private double[] bandMagnitudes = Array.Empty<double>();
     private double[] smoothedMagnitudes = Array.Empty<double>();
+    private double[] peakHold = Array.Empty<double>(); // Peak hold values for each band
+    private int[] peakHoldTime = Array.Empty<int>(); // Frames since peak was set
     private const double SmoothingFactor = 0.7; // For smoothing the display
+    private const int PeakHoldFrames = 20; // Hold peak for 20 frames (~1 second)
+    private const double PeakFallRate = 0.08; // Peak falls at 8% per frame after hold time
     private int lastTerminalWidth = 0;
     private int lastTerminalHeight = 0;
     private double maxMagnitudeEver = 0.001; // Track maximum magnitude for auto-gain
@@ -77,14 +81,17 @@ public class AudioAnalyzer
     private void UpdateDisplayDimensions()
     {
         // Calculate number of bands based on terminal width (each band needs 2 characters minimum)
+        // Account for left axis labels (5 chars) and margins
         // Wider terminals = more frequency detail
-        NumBands = Math.Max(8, Math.Min(60, (Console.WindowWidth - 4) / 2));
+        NumBands = Math.Max(8, Math.Min(60, (Console.WindowWidth - 8) / 2));
         
         // Resize arrays if needed
         if (bandMagnitudes == null || bandMagnitudes.Length != NumBands)
         {
             bandMagnitudes = new double[NumBands];
             smoothedMagnitudes = new double[NumBands];
+            peakHold = new double[NumBands];
+            peakHoldTime = new int[NumBands];
         }
         
         lastTerminalWidth = Console.WindowWidth;
@@ -200,6 +207,22 @@ public class AudioAnalyzer
             // Apply smoothing
             smoothedMagnitudes[b] = smoothedMagnitudes[b] * SmoothingFactor + 
                                       bandMagnitudes[b] * (1 - SmoothingFactor);
+            
+            // Update peak hold
+            if (smoothedMagnitudes[b] > peakHold[b])
+            {
+                peakHold[b] = smoothedMagnitudes[b];
+                peakHoldTime[b] = 0;
+            }
+            else
+            {
+                peakHoldTime[b]++;
+                // After holding for a while, start falling
+                if (peakHoldTime[b] > PeakHoldFrames)
+                {
+                    peakHold[b] = Math.Max(0, peakHold[b] - peakHold[b] * PeakFallRate);
+                }
+            }
             
             // Track maximum for auto-gain
             if (smoothedMagnitudes[b] > maxMagnitudeEver)
@@ -334,6 +357,21 @@ public class AudioAnalyzer
         // Draw from top to bottom
         for (int row = barHeight; row > 0; row--)
         {
+            // Draw amplitude scale on the left
+            double percentAtRow = (double)row / barHeight * 100;
+            if (row == barHeight)
+                Console.Write("100%");
+            else if (row == (int)(barHeight * 0.75) && barHeight >= 16)
+                Console.Write(" 75%");
+            else if (row == (int)(barHeight * 0.5) && barHeight >= 12)
+                Console.Write(" 50%");
+            else if (row == (int)(barHeight * 0.25) && barHeight >= 16)
+                Console.Write(" 25%");
+            else if (row == 1)
+                Console.Write("  0%");
+            else
+                Console.Write("    ");
+            
             Console.Write(" ");
             for (int band = 0; band < NumBands; band++)
             {
@@ -343,7 +381,18 @@ public class AudioAnalyzer
                 double normalizedMag = Math.Min(smoothedMagnitudes[band] * gain * 0.8, 1.0);
                 int height = (int)(normalizedMag * barHeight);
                 
-                if (height >= row)
+                // Calculate peak position
+                double normalizedPeak = Math.Min(peakHold[band] * gain * 0.8, 1.0);
+                int peakHeight = (int)(normalizedPeak * barHeight);
+                
+                // Draw peak marker (white line at the top)
+                if (row == peakHeight && peakHeight > 0)
+                {
+                    Console.ForegroundColor = ConsoleColor.White;
+                    Console.Write("══");
+                    Console.ResetColor();
+                }
+                else if (height >= row)
                 {
                     // Color scale based on amplitude
                     if (row <= barHeight * 0.25)
@@ -387,18 +436,18 @@ public class AudioAnalyzer
         }
         
         // Draw baseline
-        Console.Write(" ");
-        Console.WriteLine(new string('─', Math.Min(NumBands * 2, termWidth - 2)));
+        Console.Write("     ");
+        Console.WriteLine(new string('─', Math.Min(NumBands * 2, termWidth - 6)));
         
         // Draw frequency labels (scale labels with terminal width)
-        Console.Write(" ");
+        Console.Write("     ");
         var allLabels = new[] { "20", "30", "50", "80", "100", "150", "200", "300", "500", "800", "1k", "1.5k", "2k", "3k", "5k", "8k", "10k", "15k", "20k" };
         
         // Determine how many labels to show based on width
         int maxLabels = Math.Max(4, Math.Min(allLabels.Length, NumBands / 3));
         int labelInterval = Math.Max(1, NumBands / maxLabels);
         
-        for (int band = 0; band < NumBands && band * 2 < termWidth - 2; band++)
+        for (int band = 0; band < NumBands && band * 2 < termWidth - 6; band++)
         {
             if (band % labelInterval == 0 && band / labelInterval < allLabels.Length)
             {
