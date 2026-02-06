@@ -15,11 +15,11 @@ public sealed class ConsoleDisplayDimensions : IDisplayDimensions
     {
         try
         {
-            return getValue();
+            return Math.Max(1, getValue());
         }
         catch (IOException)
         {
-            return fallback;
+            return Math.Max(1, fallback);
         }
     }
 }

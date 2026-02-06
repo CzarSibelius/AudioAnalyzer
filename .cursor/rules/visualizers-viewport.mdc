@@ -1,0 +1,16 @@
+---
+description: Visualizers must respect viewport bounds to avoid corrupting the UI
+globs: **/Visualizers/**/*.cs,**/CompositeVisualizationRenderer.cs,**/IVisualizer.cs,**/VisualizerViewport.cs
+---
+
+# Visualizer viewport contract
+
+When adding or changing visualizers:
+
+1. **Respect the viewport**: `IVisualizer.Render` receives `VisualizerViewport` (StartRow, MaxLines, Width). Never write more than `viewport.MaxLines` lines and no line longer than `viewport.Width`. Use `VisualizerViewport.TruncateToWidth(line, viewport.Width)` for output lines.
+
+2. **Clamp line count**: Derive bar height, grid height, or other row counts from `viewport.MaxLines` minus any fixed lines (headers, footers, separators). Ensure the total number of `Console.WriteLine` calls does not exceed `viewport.MaxLines`.
+
+3. **Clamp line length**: For dynamic content (bars, waveform, grid), limit the number of columns or bands so that the built line length does not exceed `viewport.Width`, or truncate the final string before writing.
+
+This prevents erroneous or oversized visualizers from scrolling the console or wrapping lines and messing up the rest of the UI.

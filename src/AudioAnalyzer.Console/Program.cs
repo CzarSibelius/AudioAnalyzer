@@ -95,7 +95,7 @@ IAudioInput? currentInput = null;
 string currentDeviceName = initialName;
 object deviceLock = new();
 
-engine.SetHeaderCallback(() => DrawMainUI(currentDeviceName), 6);
+engine.SetHeaderCallback(() => DrawMainUI(currentDeviceName), () => DrawHeaderOnly(currentDeviceName), 6);
 
 void StartCapture(string? deviceId, string name)
 {
@@ -119,6 +119,7 @@ void StartCapture(string? deviceId, string name)
 
 StartCapture(initialDeviceId, initialName);
 DrawMainUI(currentDeviceName);
+engine.Redraw();
 
 bool running = true;
 while (running)
@@ -143,14 +144,17 @@ while (running)
                     lock (deviceLock) currentInput?.Start();
                 }
                 DrawMainUI(currentDeviceName);
+                engine.Redraw();
                 break;
             case ConsoleKey.H:
                 ShowHelpMenu();
                 DrawMainUI(currentDeviceName);
+                engine.Redraw();
                 break;
             case ConsoleKey.V:
                 engine.NextVisualizationMode();
                 DrawMainUI(currentDeviceName);
+                engine.Redraw();
                 break;
             case ConsoleKey.OemPlus:
             case ConsoleKey.Add:
@@ -181,6 +185,7 @@ while (running)
                 Console.ResetColor();
                 Thread.Sleep(600);
                 DrawMainUI(currentDeviceName);
+                engine.Redraw();
                 break;
         }
     }
@@ -199,16 +204,54 @@ Console.WriteLine("Recording stopped.");
 
 void DrawMainUI(string deviceName)
 {
+    try
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            int w = Console.WindowWidth;
+            int h = Math.Max(15, Console.WindowHeight);
+            if (w >= 10 && h >= 15)
+            {
+                Console.BufferWidth = w;
+                Console.BufferHeight = h;
+            }
+        }
+    }
+    catch { /* Buffer size not supported */ }
+
     Console.Clear();
     Console.CursorVisible = false;
-    int width = GetConsoleWidth();
+    DrawHeaderOnly(deviceName);
+}
+
+void DrawHeaderOnly(string deviceName)
+{
+    int width = Math.Max(10, GetConsoleWidth());
     string title = " AUDIO ANALYZER - Real-time Frequency Spectrum ";
+    title = VisualizerViewport.TruncateToWidth(title, width - 2);
     int padding = Math.Max(0, (width - title.Length - 2) / 2);
-    Console.WriteLine("╔" + new string('═', width - 2) + "╗");
-    Console.WriteLine("║" + new string(' ', padding) + title + new string(' ', width - padding - title.Length - 2) + "║");
-    Console.WriteLine("╚" + new string('═', width - 2) + "╝");
-    Console.WriteLine($"\nInput: {deviceName}");
-    Console.WriteLine("Press H for help, D to change device, ESC to quit\n");
+    string line1 = VisualizerViewport.TruncateToWidth("╔" + new string('═', width - 2) + "╗", width).PadRight(width);
+    string line2 = VisualizerViewport.TruncateToWidth("║" + new string(' ', padding) + title + new string(' ', width - padding - title.Length - 2) + "║", width).PadRight(width);
+    string line3 = VisualizerViewport.TruncateToWidth("╚" + new string('═', width - 2) + "╝", width).PadRight(width);
+    string line4 = VisualizerViewport.TruncateToWidth($"Input: {deviceName}", width).PadRight(width);
+    string line5 = VisualizerViewport.TruncateToWidth("Press H for help, D to change device, ESC to quit", width).PadRight(width);
+    string line6 = new string(' ', width);
+    try
+    {
+        Console.SetCursorPosition(0, 0);
+        Console.Write(line1);
+        Console.SetCursorPosition(0, 1);
+        Console.Write(line2);
+        Console.SetCursorPosition(0, 2);
+        Console.Write(line3);
+        Console.SetCursorPosition(0, 3);
+        Console.Write(line4);
+        Console.SetCursorPosition(0, 4);
+        Console.Write(line5);
+        Console.SetCursorPosition(0, 5);
+        Console.Write(line6);
+    }
+    catch { }
 }
 
 void ShowHelpMenu()

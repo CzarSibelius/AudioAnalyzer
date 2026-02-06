@@ -21,11 +21,9 @@ public sealed class GeissVisualizer : IVisualizer
 
     public bool ShowBeatCircles { get => _showBeatCircles; set => _showBeatCircles = value; }
 
-    public void Render(AnalysisSnapshot snapshot, IDisplayDimensions dimensions, int displayStartRow)
+    public void Render(AnalysisSnapshot snapshot, VisualizerViewport viewport)
     {
-        int termWidth = dimensions.Width;
-        int termHeight = dimensions.Height;
-        if (termWidth < 30 || termHeight < 15) return;
+        if (viewport.Width < 30 || viewport.MaxLines < 3) return;
 
         _phase += 0.15;
         _colorPhase += 0.08;
@@ -51,13 +49,14 @@ public sealed class GeissVisualizer : IVisualizer
         }
         UpdateBeatCircles();
 
-        Console.SetCursorPosition(0, displayStartRow);
-        int height = Math.Max(12, Math.Min(25, termHeight - 12));
-        int width = Math.Min(termWidth - 4, 100);
+        int maxHeight = Math.Max(1, viewport.MaxLines - 2);
+        int height = Math.Max(12, Math.Min(25, maxHeight));
+        int width = Math.Min(viewport.Width - 4, 100);
         char[] plasmaChars = [' ', '·', ':', ';', '+', '*', '#', '@', '█'];
 
+        Console.SetCursorPosition(0, viewport.StartRow);
         _lineBuffer.Clear();
-        _lineBuffer.Append(' ', termWidth - 1);
+        _lineBuffer.Append(' ', Math.Max(0, viewport.Width - 1));
         Console.WriteLine(_lineBuffer.ToString());
 
         for (int y = 0; y < height; y++)
@@ -106,12 +105,12 @@ public sealed class GeissVisualizer : IVisualizer
                     AnsiConsole.AppendColored(_lineBuffer, ch, color);
                 }
             }
-            int remaining = termWidth - width - 3;
+            int remaining = viewport.Width - width - 3;
             if (remaining > 0) _lineBuffer.Append(' ', remaining);
             Console.WriteLine(_lineBuffer.ToString());
         }
 
-        string footer = $"  Geiss - Psychedelic | Bass: {_bassIntensity:F2} | Treble: {_trebleIntensity:F2}".PadRight(termWidth - 1);
+        string footer = $"  Geiss - Psychedelic | Bass: {_bassIntensity:F2} | Treble: {_trebleIntensity:F2}".PadRight(viewport.Width - 1);
         Console.WriteLine(AnsiConsole.ToAnsiString(footer, ConsoleColor.DarkGray));
     }
 

@@ -1,4 +1,5 @@
 using System.Text;
+using AudioAnalyzer.Application;
 using AudioAnalyzer.Application.Abstractions;
 
 namespace AudioAnalyzer.Visualizers;
@@ -7,16 +8,15 @@ public sealed class WinampBarsVisualizer : IVisualizer
 {
     private readonly StringBuilder _lineBuffer = new(512);
 
-    public void Render(AnalysisSnapshot snapshot, IDisplayDimensions dimensions, int displayStartRow)
+    public void Render(AnalysisSnapshot snapshot, VisualizerViewport viewport)
     {
-        int termWidth = dimensions.Width;
-        int termHeight = dimensions.Height;
-        if (termWidth < 30 || termHeight < 15) return;
+        if (viewport.Width < 30 || viewport.MaxLines < 5) return;
 
-        Console.SetCursorPosition(0, displayStartRow);
-        int barHeight = Math.Max(10, Math.Min(20, termHeight - 14));
-        int numBars = Math.Min(snapshot.NumBands, (termWidth - 4) / 3);
-        Console.WriteLine();
+        int maxBarLines = Math.Max(1, viewport.MaxLines - 3);
+        int barHeight = Math.Max(10, Math.Min(20, maxBarLines));
+        int numBars = Math.Min(snapshot.NumBands, (viewport.Width - 4) / 3);
+        int expectedLines = barHeight + 1 + 1; // bars + separator + footer (no leading blank)
+        Console.SetCursorPosition(0, viewport.StartRow);
         double gain = snapshot.TargetMaxMagnitude > 0.0001 ? Math.Min(1000, 1.0 / snapshot.TargetMaxMagnitude) : 1000;
         for (int row = barHeight; row >= 1; row--)
         {
@@ -43,7 +43,7 @@ public sealed class WinampBarsVisualizer : IVisualizer
         for (int band = 0; band < numBars; band++)
             AnsiConsole.AppendColored(_lineBuffer, "══ ", ConsoleColor.DarkGray);
         Console.WriteLine(_lineBuffer.ToString());
-        Console.WriteLine("\n  Winamp Style - Classic music player visualization".PadRight(termWidth));
+        Console.WriteLine(VisualizerViewport.TruncateToWidth("\n  Winamp Style - Classic music player visualization".PadRight(viewport.Width), viewport.Width));
     }
 
     private static ConsoleColor GetWinampColor(int row, int barHeight)

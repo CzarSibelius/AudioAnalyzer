@@ -1,4 +1,5 @@
 using System.Text;
+using AudioAnalyzer.Application;
 using AudioAnalyzer.Application.Abstractions;
 
 namespace AudioAnalyzer.Visualizers;
@@ -7,18 +8,17 @@ public sealed class OscilloscopeVisualizer : IVisualizer
 {
     private readonly StringBuilder _lineBuffer = new(256);
 
-    public void Render(AnalysisSnapshot snapshot, IDisplayDimensions dimensions, int displayStartRow)
+    public void Render(AnalysisSnapshot snapshot, VisualizerViewport viewport)
     {
-        int termWidth = dimensions.Width;
-        int termHeight = dimensions.Height;
-        if (termWidth < 30 || termHeight < 15) return;
+        if (viewport.Width < 30 || viewport.MaxLines < 5) return;
 
-        Console.SetCursorPosition(0, displayStartRow);
-        int height = Math.Max(10, Math.Min(25, termHeight - 12));
-        int width = Math.Min(termWidth - 4, snapshot.WaveformSize);
+        int maxHeight = Math.Max(1, viewport.MaxLines - 4);
+        int height = Math.Max(10, Math.Min(25, maxHeight));
+        int width = Math.Min(viewport.Width - 4, snapshot.WaveformSize);
         int centerY = height / 2;
+        int expectedLines = 1 + height + 1 + 1; // top + grid + bottom + footer (one line)
 
-        Console.WriteLine();
+        Console.SetCursorPosition(0, viewport.StartRow);
         Console.WriteLine(AnsiConsole.ToAnsiString("  ┌" + new string('─', width) + "┐", ConsoleColor.DarkGray));
 
         var screen = new char[height, width];
@@ -54,7 +54,7 @@ public sealed class OscilloscopeVisualizer : IVisualizer
         }
 
         Console.WriteLine(AnsiConsole.ToAnsiString("  └" + new string('─', width) + "┘", ConsoleColor.DarkGray));
-        Console.WriteLine("\n  Waveform Display - Shows audio amplitude over time".PadRight(termWidth));
+        Console.WriteLine(VisualizerViewport.TruncateToWidth("  Waveform Display - Shows audio amplitude over time".PadRight(viewport.Width), viewport.Width));
     }
 
     private static ConsoleColor GetOscilloscopeColor(int y, int centerY, int height)
