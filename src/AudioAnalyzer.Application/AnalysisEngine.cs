@@ -55,17 +55,11 @@ public sealed class AnalysisEngine
     private double _currentBpm;
     private double _instantEnergy;
     private int _beatFlashFrames;
-
-    private double _geissPhase;
-    private double _geissColorPhase;
-    private double _geissBassIntensity;
-    private double _geissTrebleIntensity;
-    private readonly List<BeatCircle> _beatCircles = new();
-    private bool _showBeatCircles = true;
+    private int _beatCount;
 
     private readonly IVisualizationRenderer _renderer;
     private readonly IDisplayDimensions _displayDimensions;
-    private readonly VisualizationFrame _frame = new();
+    private readonly AnalysisSnapshot _snapshot = new();
 
     public AnalysisEngine(IVisualizationRenderer renderer, IDisplayDimensions displayDimensions)
     {
@@ -76,7 +70,6 @@ public sealed class AnalysisEngine
 
     public VisualizationMode CurrentMode => _currentMode;
     public double BeatSensitivity { get => _beatThreshold; set => _beatThreshold = Math.Clamp(value, 0.5, 3.0); }
-    public bool ShowBeatCircles { get => _showBeatCircles; set => _showBeatCircles = value; }
 
     public void SetHeaderCallback(Action? redrawHeader, int startRow)
     {
@@ -183,60 +176,35 @@ public sealed class AnalysisEngine
                     UpdateDisplayDimensions();
                     _onRedrawHeader?.Invoke();
                 }
-                if (_currentMode == VisualizationMode.Geiss)
-                {
-                    UpdateBeatCircles();
-                    _geissPhase += 0.15;
-                    _geissColorPhase += 0.08;
-                    if (_smoothedMagnitudes.Length > 0)
-                    {
-                        double gain = _targetMaxMagnitude > 0.0001 ? Math.Min(1000, 1.0 / _targetMaxMagnitude) : 1000;
-                        int bassEnd = Math.Max(1, _smoothedMagnitudes.Length / 4);
-                        double bassSum = 0;
-                        for (int i = 0; i < bassEnd; i++) bassSum += _smoothedMagnitudes[i] * gain;
-                        _geissBassIntensity = _geissBassIntensity * 0.7 + (bassSum / bassEnd) * 0.3;
-                        int trebleStart = _smoothedMagnitudes.Length * 3 / 4;
-                        double trebleSum = 0;
-                        for (int i = trebleStart; i < _smoothedMagnitudes.Length; i++) trebleSum += _smoothedMagnitudes[i] * gain;
-                        _geissTrebleIntensity = _geissTrebleIntensity * 0.7 + (trebleSum / (_smoothedMagnitudes.Length - trebleStart)) * 0.3;
-                    }
-                }
-                FillFrame(maxVolume, w, h);
-                try { _renderer.Render(_frame); } catch { }
+                FillSnapshot(maxVolume, w, h);
+                try { _renderer.Render(_snapshot, _currentMode); } catch { }
             }
             _lastUpdate = DateTime.Now;
             if (_beatFlashFrames > 0) _beatFlashFrames--;
         }
     }
 
-    private void FillFrame(float volume, int termWidth, int termHeight)
+    private void FillSnapshot(float volume, int termWidth, int termHeight)
     {
-        _frame.Mode = _currentMode;
-        _frame.DisplayStartRow = _displayStartRow;
-        _frame.TerminalWidth = termWidth;
-        _frame.TerminalHeight = termHeight;
-        _frame.Volume = volume;
-        _frame.CurrentBpm = _currentBpm;
-        _frame.BeatSensitivity = _beatThreshold;
-        _frame.BeatFlashActive = _beatFlashFrames > 0;
-        _frame.ModeName = GetModeName();
-        _frame.NumBands = _numBands;
-        _frame.SmoothedMagnitudes = _smoothedMagnitudes;
-        _frame.PeakHold = _peakHold;
-        _frame.TargetMaxMagnitude = _targetMaxMagnitude;
-        _frame.Waveform = _displayWaveform;
-        _frame.WaveformPosition = _waveformPosition;
-        _frame.WaveformSize = WaveformSize;
-        _frame.LeftChannel = _leftChannel;
-        _frame.RightChannel = _rightChannel;
-        _frame.LeftPeakHold = _leftPeakHold;
-        _frame.RightPeakHold = _rightPeakHold;
-        _frame.GeissPhase = _geissPhase;
-        _frame.GeissColorPhase = _geissColorPhase;
-        _frame.GeissBassIntensity = _geissBassIntensity;
-        _frame.GeissTrebleIntensity = _geissTrebleIntensity;
-        _frame.ShowBeatCircles = _showBeatCircles;
-        _frame.BeatCircles = _beatCircles.ToList();
+        _snapshot.DisplayStartRow = _displayStartRow;
+        _snapshot.TerminalWidth = termWidth;
+        _snapshot.TerminalHeight = termHeight;
+        _snapshot.Volume = volume;
+        _snapshot.CurrentBpm = _currentBpm;
+        _snapshot.BeatSensitivity = _beatThreshold;
+        _snapshot.BeatFlashActive = _beatFlashFrames > 0;
+        _snapshot.BeatCount = _beatCount;
+        _snapshot.NumBands = _numBands;
+        _snapshot.SmoothedMagnitudes = _smoothedMagnitudes;
+        _snapshot.PeakHold = _peakHold;
+        _snapshot.TargetMaxMagnitude = _targetMaxMagnitude;
+        _snapshot.Waveform = _displayWaveform;
+        _snapshot.WaveformPosition = _waveformPosition;
+        _snapshot.WaveformSize = WaveformSize;
+        _snapshot.LeftChannel = _leftChannel;
+        _snapshot.RightChannel = _rightChannel;
+        _snapshot.LeftPeakHold = _leftPeakHold;
+        _snapshot.RightPeakHold = _rightPeakHold;
     }
 
     private void UpdateDisplayDimensions()
@@ -346,8 +314,7 @@ public sealed class AnalysisEngine
             _beatTimes.Enqueue(now);
             _lastBeatTime = now;
             _beatFlashFrames = 3;
-            if (_showBeatCircles && _currentMode == VisualizationMode.Geiss)
-                SpawnBeatCircle();
+            _beatCount++;
             while (_beatTimes.Count > 0 && (now - _beatTimes.Peek()).TotalSeconds > 8)
                 _beatTimes.Dequeue();
             CalculateBPM();
@@ -373,25 +340,4 @@ public sealed class AnalysisEngine
         }
     }
 
-    private void SpawnBeatCircle()
-    {
-        int colorIndex = Random.Shared.Next(6);
-        double maxRadius = Math.Clamp(0.3 + _geissBassIntensity * 0.4, 0.3, 0.7);
-        _beatCircles.Add(new BeatCircle(0.02, maxRadius, 0, colorIndex));
-        while (_beatCircles.Count > 5) _beatCircles.RemoveAt(0);
-    }
-
-    private void UpdateBeatCircles()
-    {
-        for (int i = _beatCircles.Count - 1; i >= 0; i--)
-        {
-            var c = _beatCircles[i];
-            double newRadius = c.Radius + 0.03;
-            int newAge = c.Age + 1;
-            if (newRadius > c.MaxRadius || newAge > 30)
-                _beatCircles.RemoveAt(i);
-            else
-                _beatCircles[i] = new BeatCircle(newRadius, c.MaxRadius, newAge, c.ColorIndex);
-        }
-    }
 }

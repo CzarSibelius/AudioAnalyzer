@@ -1,4 +1,4 @@
-namespace AudioAnalyzer.Application.Abstractions;
+namespace AudioAnalyzer.Visualizers;
 
 /// <summary>
 /// Beat circle for Geiss visualization. ColorIndex is 0-5 (renderer maps to ConsoleColor).

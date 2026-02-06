@@ -1,13 +1,11 @@
-using AudioAnalyzer.Domain;
-
 namespace AudioAnalyzer.Application.Abstractions;
 
 /// <summary>
-/// All data needed to render one frame. Filled by AnalysisEngine, consumed by IVisualizationRenderer.
+/// Mode-agnostic analysis data produced by the engine. Contains only analysis-derived data and layout (dimensions).
+/// Consumed by IVisualizationRenderer and IVisualizer implementations.
 /// </summary>
-public sealed class VisualizationFrame
+public sealed class AnalysisSnapshot
 {
-    public VisualizationMode Mode { get; set; }
     public int DisplayStartRow { get; set; }
     public int TerminalWidth { get; set; }
     public int TerminalHeight { get; set; }
@@ -16,7 +14,8 @@ public sealed class VisualizationFrame
     public double CurrentBpm { get; set; }
     public double BeatSensitivity { get; set; }
     public bool BeatFlashActive { get; set; }
-    public string ModeName { get; set; } = "";
+    /// <summary>Incremented each time a beat is detected; visualizers can react to changes (e.g. spawn circles).</summary>
+    public int BeatCount { get; set; }
 
     public int NumBands { get; set; }
     public double[] SmoothedMagnitudes { get; set; } = Array.Empty<double>();
@@ -31,11 +30,4 @@ public sealed class VisualizationFrame
     public float RightChannel { get; set; }
     public float LeftPeakHold { get; set; }
     public float RightPeakHold { get; set; }
-
-    public double GeissPhase { get; set; }
-    public double GeissColorPhase { get; set; }
-    public double GeissBassIntensity { get; set; }
-    public double GeissTrebleIntensity { get; set; }
-    public bool ShowBeatCircles { get; set; }
-    public IReadOnlyList<BeatCircle> BeatCircles { get; set; } = Array.Empty<BeatCircle>();
 }
