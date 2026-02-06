@@ -1,4 +1,5 @@
 using System.Text;
+using AudioAnalyzer.Application;
 using AudioAnalyzer.Application.Abstractions;
 
 namespace AudioAnalyzer.Visualizers;
@@ -7,16 +8,18 @@ public sealed class SpectrumBarsVisualizer : IVisualizer
 {
     private readonly StringBuilder _lineBuffer = new(512);
 
-    public void Render(AnalysisSnapshot snapshot, IDisplayDimensions dimensions, int displayStartRow)
+    public void Render(AnalysisSnapshot snapshot, VisualizerViewport viewport)
     {
-        int termWidth = dimensions.Width;
-        int termHeight = dimensions.Height;
-        if (termWidth < 30 || termHeight < 15) return;
+        if (viewport.Width < 30 || viewport.MaxLines < 5) return;
 
-        Console.SetCursorPosition(0, displayStartRow);
-        DisplayVolumeBar(snapshot.Volume, termWidth);
-        DisplayFrequencyBars(snapshot, termWidth, termHeight);
-        DisplayFrequencyLabels(snapshot, termWidth);
+        int maxBarLines = Math.Max(1, viewport.MaxLines - 6);
+        int barHeight = Math.Max(10, Math.Min(30, maxBarLines));
+        int expectedLines = 2 + barHeight + 1 + 2; // volume(2) + bars(barHeight) + separator(1) + labels(2)
+
+        Console.SetCursorPosition(0, viewport.StartRow);
+        DisplayVolumeBar(snapshot.Volume, viewport.Width);
+        DisplayFrequencyBars(snapshot, viewport);
+        DisplayFrequencyLabels(snapshot, viewport);
     }
 
     private void DisplayVolumeBar(float volume, int termWidth)
@@ -39,9 +42,11 @@ public sealed class SpectrumBarsVisualizer : IVisualizer
         Console.WriteLine();
     }
 
-    private void DisplayFrequencyBars(AnalysisSnapshot f, int termWidth, int termHeight)
+    private void DisplayFrequencyBars(AnalysisSnapshot f, VisualizerViewport viewport)
     {
-        int barHeight = Math.Max(10, Math.Min(30, termHeight - 15));
+        int maxBarLines = Math.Max(1, viewport.MaxLines - 6);
+        int barHeight = Math.Max(10, Math.Min(30, maxBarLines));
+        int numBands = Math.Min(f.NumBands, Math.Max(1, (viewport.Width - 5) / 2));
         double gain = f.TargetMaxMagnitude > 0.0001 ? Math.Min(1000, 1.0 / f.TargetMaxMagnitude) : 1000;
         for (int row = barHeight; row > 0; row--)
         {
@@ -53,7 +58,7 @@ public sealed class SpectrumBarsVisualizer : IVisualizer
             else if (row == 1) _lineBuffer.Append("  0%");
             else _lineBuffer.Append("    ");
             _lineBuffer.Append(' ');
-            for (int band = 0; band < f.NumBands; band++)
+            for (int band = 0; band < numBands; band++)
             {
                 double normalizedMag = Math.Min(f.SmoothedMagnitudes[band] * gain * 0.8, 1.0);
                 int height = (int)(normalizedMag * barHeight);
@@ -70,7 +75,7 @@ public sealed class SpectrumBarsVisualizer : IVisualizer
         }
         _lineBuffer.Clear();
         _lineBuffer.Append("     ");
-        _lineBuffer.Append('─', Math.Min(f.NumBands * 2, termWidth - 6));
+        _lineBuffer.Append('─', Math.Min(numBands * 2, viewport.Width - 6));
         Console.WriteLine(_lineBuffer.ToString());
     }
 
@@ -93,15 +98,16 @@ public sealed class SpectrumBarsVisualizer : IVisualizer
         };
     }
 
-    private void DisplayFrequencyLabels(AnalysisSnapshot f, int termWidth)
+    private void DisplayFrequencyLabels(AnalysisSnapshot f, VisualizerViewport viewport)
     {
+        int numBands = Math.Min(f.NumBands, Math.Max(1, (viewport.Width - 5) / 2));
         _lineBuffer.Clear();
         _lineBuffer.Append("     ");
         var allLabels = new[] { "20", "30", "50", "80", "100", "150", "200", "300", "500", "800",
             "1k", "1.5k", "2k", "3k", "5k", "8k", "10k", "15k", "20k" };
-        int maxLabels = Math.Max(4, Math.Min(allLabels.Length, f.NumBands / 3));
-        int labelInterval = Math.Max(1, f.NumBands / maxLabels);
-        for (int band = 0; band < f.NumBands && band * 2 < termWidth - 6; band++)
+        int maxLabels = Math.Max(4, Math.Min(allLabels.Length, numBands / 3));
+        int labelInterval = Math.Max(1, numBands / maxLabels);
+        for (int band = 0; band < numBands && band * 2 < viewport.Width - 6; band++)
         {
             if (band % labelInterval == 0 && band / labelInterval < allLabels.Length)
             {
@@ -112,6 +118,6 @@ public sealed class SpectrumBarsVisualizer : IVisualizer
                 _lineBuffer.Append("  ");
         }
         Console.WriteLine(_lineBuffer.ToString());
-        Console.WriteLine("\n Frequency (Hz)".PadRight(termWidth));
+        Console.WriteLine(VisualizerViewport.TruncateToWidth("\n Frequency (Hz)".PadRight(viewport.Width), viewport.Width));
     }
 }

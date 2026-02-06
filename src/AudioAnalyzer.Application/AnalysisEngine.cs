@@ -28,6 +28,7 @@ public sealed class AnalysisEngine
     private int _lastTerminalHeight;
     private int _displayStartRow = 6;
     private Action? _onRedrawHeader;
+    private Action? _onRefreshHeader;
 
     private VisualizationMode _currentMode = VisualizationMode.SpectrumBars;
     private int _numBands;
@@ -60,6 +61,7 @@ public sealed class AnalysisEngine
     private readonly IVisualizationRenderer _renderer;
     private readonly IDisplayDimensions _displayDimensions;
     private readonly AnalysisSnapshot _snapshot = new();
+    private readonly object _renderLock = new();
 
     public AnalysisEngine(IVisualizationRenderer renderer, IDisplayDimensions displayDimensions)
     {
@@ -71,10 +73,32 @@ public sealed class AnalysisEngine
     public VisualizationMode CurrentMode => _currentMode;
     public double BeatSensitivity { get => _beatThreshold; set => _beatThreshold = Math.Clamp(value, 0.5, 3.0); }
 
-    public void SetHeaderCallback(Action? redrawHeader, int startRow)
+    /// <param name="redrawHeader">Full redraw (clear + header), e.g. on resize or keypress.</param>
+    /// <param name="refreshHeader">Optional: redraw only the header lines (no clear), called before each render so the top never disappears.</param>
+    public void SetHeaderCallback(Action? redrawHeader, Action? refreshHeader, int startRow)
     {
         _onRedrawHeader = redrawHeader;
+        _onRefreshHeader = refreshHeader;
         _displayStartRow = startRow;
+    }
+
+    /// <summary>
+    /// Redraw the toolbar and visualizer once using current dimensions and last snapshot data.
+    /// Call after DrawMainUI so the toolbar appears immediately instead of waiting for the next audio-driven frame.
+    /// </summary>
+    public void Redraw()
+    {
+        lock (_renderLock)
+        {
+            int w = _displayDimensions.Width;
+            int h = _displayDimensions.Height;
+            if (w < 30 || h < 15) return;
+            _snapshot.DisplayStartRow = _displayStartRow;
+            _snapshot.TerminalWidth = w;
+            _snapshot.TerminalHeight = h;
+            _onRefreshHeader?.Invoke();
+            try { _renderer.Render(_snapshot, _currentMode); } catch { }
+        }
     }
 
     public void NextVisualizationMode()
@@ -176,8 +200,12 @@ public sealed class AnalysisEngine
                     UpdateDisplayDimensions();
                     _onRedrawHeader?.Invoke();
                 }
-                FillSnapshot(maxVolume, w, h);
-                try { _renderer.Render(_snapshot, _currentMode); } catch { }
+                lock (_renderLock)
+                {
+                    _onRefreshHeader?.Invoke();
+                    FillSnapshot(maxVolume, w, h);
+                    try { _renderer.Render(_snapshot, _currentMode); } catch { }
+                }
             }
             _lastUpdate = DateTime.Now;
             if (_beatFlashFrames > 0) _beatFlashFrames--;

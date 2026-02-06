@@ -64,3 +64,7 @@ On Windows you can use backslashes: `src\AudioAnalyzer.Console\AudioAnalyzer.Con
 - Requires Windows with WASAPI support.
 - Use loopback to analyze system playback; use a capture device for microphone or other inputs.
 - Ensure audio is playing (or that the selected device is active) to see meaningful analysis.
+
+## Visualizer bounds (for developers)
+
+Visualizers receive a **viewport** (`VisualizerViewport`: start row, max lines, width). They must not write more than `viewport.MaxLines` lines and no line longer than `viewport.Width`. The composite renderer validates dimensions and display start row before calling visualizers; if a visualizer throws, a one-line error is shown and the next frame can recover. This keeps resizes and bad data from corrupting the console UI.
