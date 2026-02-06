@@ -1,9 +1,12 @@
+using System.Text;
 using AudioAnalyzer.Application.Abstractions;
 
 namespace AudioAnalyzer.Visualizers;
 
 public sealed class VuMeterVisualizer : IVisualizer
 {
+    private readonly StringBuilder _lineBuffer = new(256);
+
     public void Render(AnalysisSnapshot snapshot, IDisplayDimensions dimensions, int displayStartRow)
     {
         int termWidth = dimensions.Width;
@@ -14,62 +17,68 @@ public sealed class VuMeterVisualizer : IVisualizer
         int meterWidth = Math.Min(60, termWidth - 20);
         Console.WriteLine();
         Console.WriteLine();
-        DrawVuMeterChannel("  L ", snapshot.LeftChannel, snapshot.LeftPeakHold, meterWidth);
+        Console.WriteLine(BuildVuMeterChannel("  L ", snapshot.LeftChannel, snapshot.LeftPeakHold, meterWidth));
         Console.WriteLine();
-        DrawVuMeterChannel("  R ", snapshot.RightChannel, snapshot.RightPeakHold, meterWidth);
+        Console.WriteLine(BuildVuMeterChannel("  R ", snapshot.RightChannel, snapshot.RightPeakHold, meterWidth));
         Console.WriteLine();
         Console.WriteLine();
-        Console.Write("    ");
+
+        _lineBuffer.Clear();
+        _lineBuffer.Append("    ");
         for (int i = 0; i <= 10; i++)
-            Console.Write((i * 10).ToString().PadRight(meterWidth / 10));
-        Console.WriteLine();
-        Console.ForegroundColor = ConsoleColor.DarkGray;
-        Console.Write("    ");
-        string[] dbLabels = { "-∞", "-40", "-30", "-20", "-10", "-6", "-3", "0" };
+            _lineBuffer.Append((i * 10).ToString().PadRight(meterWidth / 10));
+        Console.WriteLine(_lineBuffer.ToString());
+
+        _lineBuffer.Clear();
+        _lineBuffer.Append("    ");
+        string[] dbLabels = ["-∞", "-40", "-30", "-20", "-10", "-6", "-3", "0"];
         int labelSpacing = meterWidth / (dbLabels.Length - 1);
         for (int i = 0; i < dbLabels.Length; i++)
-            Console.Write(dbLabels[i].PadRight(labelSpacing));
-        Console.ResetColor();
+            _lineBuffer.Append(dbLabels[i].PadRight(labelSpacing));
+        Console.WriteLine(AnsiConsole.ToAnsiString(_lineBuffer.ToString(), ConsoleColor.DarkGray));
         Console.WriteLine();
-        Console.WriteLine();
+
         float balance = (snapshot.RightChannel - snapshot.LeftChannel) / Math.Max(0.001f, snapshot.LeftChannel + snapshot.RightChannel);
         int balancePos = (int)((balance + 1) / 2 * meterWidth);
-        Console.Write("  BAL ");
-        Console.ForegroundColor = ConsoleColor.DarkGray;
-        Console.Write(new string('─', balancePos));
-        Console.ForegroundColor = ConsoleColor.White;
-        Console.Write("●");
-        Console.ForegroundColor = ConsoleColor.DarkGray;
-        Console.WriteLine(new string('─', meterWidth - balancePos - 1));
-        Console.Write("      L");
-        Console.Write(new string(' ', meterWidth / 2 - 2));
-        Console.Write("C");
-        Console.Write(new string(' ', meterWidth / 2 - 2));
-        Console.WriteLine("R");
-        Console.ResetColor();
+        _lineBuffer.Clear();
+        _lineBuffer.Append("  BAL ");
+        AnsiConsole.AppendColored(_lineBuffer, new string('─', balancePos), ConsoleColor.DarkGray);
+        AnsiConsole.AppendColored(_lineBuffer, "●", ConsoleColor.White);
+        AnsiConsole.AppendColored(_lineBuffer, new string('─', meterWidth - balancePos - 1), ConsoleColor.DarkGray);
+        Console.WriteLine(_lineBuffer.ToString());
+
+        _lineBuffer.Clear();
+        _lineBuffer.Append("      L");
+        _lineBuffer.Append(' ', meterWidth / 2 - 2);
+        _lineBuffer.Append("C");
+        _lineBuffer.Append(' ', meterWidth / 2 - 2);
+        _lineBuffer.Append("R");
+        Console.WriteLine(_lineBuffer.ToString());
         Console.WriteLine("\n  Classic VU Meter - Shows channel levels".PadRight(termWidth));
     }
 
-    private static void DrawVuMeterChannel(string label, float level, float peakHold, int width)
+    private string BuildVuMeterChannel(string label, float level, float peakHold, int width)
     {
-        Console.Write(label);
-        Console.Write("[");
+        _lineBuffer.Clear();
+        _lineBuffer.Append(label);
+        _lineBuffer.Append('[');
         int barLength = (int)(level * width);
         int peakPos = (int)(peakHold * width);
         for (int i = 0; i < width; i++)
         {
-            if (i == peakPos && peakPos > 0) { Console.ForegroundColor = ConsoleColor.White; Console.Write("│"); }
-            else if (i < barLength) { SetVuColor((double)i / width); Console.Write("█"); }
-            else { Console.ForegroundColor = ConsoleColor.DarkGray; Console.Write("░"); }
-            Console.ResetColor();
+            if (i == peakPos && peakPos > 0)
+                AnsiConsole.AppendColored(_lineBuffer, "│", ConsoleColor.White);
+            else if (i < barLength)
+                AnsiConsole.AppendColored(_lineBuffer, "█", GetVuColor((double)i / width));
+            else
+                AnsiConsole.AppendColored(_lineBuffer, "░", ConsoleColor.DarkGray);
         }
-        Console.Write("]");
+        _lineBuffer.Append(']');
         double db = 20 * Math.Log10(Math.Max(level, 0.00001));
-        Console.Write($" {db:F1} dB");
+        _lineBuffer.Append($" {db:F1} dB");
+        return _lineBuffer.ToString();
     }
 
-    private static void SetVuColor(double position)
-    {
-        Console.ForegroundColor = position switch { >= 0.9 => ConsoleColor.Red, >= 0.75 => ConsoleColor.Yellow, _ => ConsoleColor.Green };
-    }
+    private static ConsoleColor GetVuColor(double position) =>
+        position switch { >= 0.9 => ConsoleColor.Red, >= 0.75 => ConsoleColor.Yellow, _ => ConsoleColor.Green };
 }

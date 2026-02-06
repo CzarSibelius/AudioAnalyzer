@@ -1,9 +1,12 @@
+using System.Text;
 using AudioAnalyzer.Application.Abstractions;
 
 namespace AudioAnalyzer.Visualizers;
 
 public sealed class OscilloscopeVisualizer : IVisualizer
 {
+    private readonly StringBuilder _lineBuffer = new(256);
+
     public void Render(AnalysisSnapshot snapshot, IDisplayDimensions dimensions, int displayStartRow)
     {
         int termWidth = dimensions.Width;
@@ -14,10 +17,10 @@ public sealed class OscilloscopeVisualizer : IVisualizer
         int height = Math.Max(10, Math.Min(25, termHeight - 12));
         int width = Math.Min(termWidth - 4, snapshot.WaveformSize);
         int centerY = height / 2;
+
         Console.WriteLine();
-        Console.ForegroundColor = ConsoleColor.DarkGray;
-        Console.WriteLine("  ┌" + new string('─', width) + "┐");
-        Console.ResetColor();
+        Console.WriteLine(AnsiConsole.ToAnsiString("  ┌" + new string('─', width) + "┐", ConsoleColor.DarkGray));
+
         var screen = new char[height, width];
         var colors = new ConsoleColor[height, width];
         for (int y = 0; y < height; y++)
@@ -39,20 +42,18 @@ public sealed class OscilloscopeVisualizer : IVisualizer
             }
             prevY = y;
         }
+
         for (int y = 0; y < height; y++)
         {
-            Console.ForegroundColor = ConsoleColor.DarkGray;
-            Console.Write("  │");
+            _lineBuffer.Clear();
+            AnsiConsole.AppendColored(_lineBuffer, "  │", ConsoleColor.DarkGray);
             for (int x = 0; x < width; x++)
-            {
-                Console.ForegroundColor = colors[y, x];
-                Console.Write(screen[y, x]);
-            }
-            Console.ForegroundColor = ConsoleColor.DarkGray;
-            Console.WriteLine("│");
+                AnsiConsole.AppendColored(_lineBuffer, screen[y, x], colors[y, x]);
+            AnsiConsole.AppendColored(_lineBuffer, "│", ConsoleColor.DarkGray);
+            Console.WriteLine(_lineBuffer.ToString());
         }
-        Console.WriteLine("  └" + new string('─', width) + "┘");
-        Console.ResetColor();
+
+        Console.WriteLine(AnsiConsole.ToAnsiString("  └" + new string('─', width) + "┘", ConsoleColor.DarkGray));
         Console.WriteLine("\n  Waveform Display - Shows audio amplitude over time".PadRight(termWidth));
     }
 
