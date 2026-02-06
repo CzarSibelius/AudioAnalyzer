@@ -39,6 +39,10 @@ Never complete a task without confirming successful compilation.
 - Minimize allocations in hot paths (ProcessAudio, DisplaySpectrum)
 - Reuse arrays; only reallocate when terminal size changes
 
+### Documentation
+- **Keep feature documentation updated**: When adding or changing features, update any project feature documentation (README, and if present, `docs/` or a dedicated feature doc). Document new capabilities, options, and behavior in the appropriate place.
+- **Keep the README updated**: When changing behavior, dependencies, or usage, update README.md: prerequisites, run instructions, "What It Does", usage steps, dependencies, and notes so they stay accurate.
+
 ## Architecture
 
 ### Key Components

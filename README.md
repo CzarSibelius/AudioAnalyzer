@@ -1,11 +1,11 @@
 # Audio Analyzer
 
-A real-time audio analyzer that captures and analyzes system audio output using NAudio. This application captures the audio playing on your system (loopback capture) and performs FFT analysis to display volume levels and frequency information.
+A real-time audio analyzer that captures and analyzes system audio output using NAudio. This application captures the audio playing on your system (loopback capture) or from a selected capture device and performs FFT analysis with multiple visualization modes: spectrum bars, oscilloscope, VU meter, Winamp-style bars, and Geiss-style visualization.
 
 ## Prerequisites
 
 - .NET 10.0 SDK or later
-- Windows operating system (uses WASAPI loopback capture)
+- Windows operating system (uses WASAPI loopback/capture)
 - NAudio package (automatically restored when building)
 
 ## How to Run
@@ -13,50 +13,54 @@ A real-time audio analyzer that captures and analyzes system audio output using 
 ### Using Visual Studio
 
 1. Open `AudioAnalyzer.sln` in Visual Studio
-2. Press F5 to build and run the application
+2. Set **AudioAnalyzer.Console** as the startup project (or press F5 to build and run)
 
 ### Using Command Line
 
-1. Navigate to the project directory:
-   ```bash
-   cd AudioAnalyzer
-   ```
+From the solution root (the folder containing `AudioAnalyzer.sln`):
 
-2. Restore dependencies and build the project:
+1. Restore and build:
    ```bash
    dotnet build
    ```
 
-3. Run the application:
+2. Run the application:
    ```bash
-   dotnet run
+   dotnet run --project src/AudioAnalyzer.Console/AudioAnalyzer.Console.csproj
    ```
 
-Alternatively, run directly from the solution root:
-```bash
-dotnet run --project AudioAnalyzer/AudioAnalyzer.csproj
-```
+On Windows you can use backslashes: `src\AudioAnalyzer.Console\AudioAnalyzer.Console.csproj`.
 
 ## Usage
 
-1. Once the application starts, it will begin capturing all audio playing on your system
-2. The analyzer will display real-time volume levels and frequency analysis
-3. Play any audio on your system to see the analysis in action
-4. Press **ESC** to stop the analyzer and exit the application
+1. On first run (or if no device was saved), choose an audio input: loopback (system output) or a specific capture device (↑/↓ to move, ENTER to select, ESC to cancel).
+2. The analyzer shows real-time volume and frequency analysis. Play audio to see it in action.
+3. **Keyboard controls:**
+   - **H** – Show help (all keys and visualization modes)
+   - **V** – Cycle visualization mode (Spectrum, Oscilloscope, VU Meter, Winamp Style, Geiss)
+   - **B** – Toggle beat circles (Geiss mode)
+   - **+** / **-** – Increase / decrease beat sensitivity
+   - **S** – Save current settings (device, mode, beat sensitivity, beat circles)
+   - **D** – Change audio input device
+   - **ESC** – Quit
 
 ## What It Does
 
-- **Loopback Audio Capture**: Captures all audio playing on your system output
-- **Volume Analysis**: Monitors and displays audio volume levels in real-time
-- **FFT Analysis**: Performs Fast Fourier Transform to analyze frequency components
-- **Real-time Display**: Updates analysis every 100ms
+- **Audio input**: Loopback (system output) or a specific WASAPI capture device; choice is saved in settings.
+- **Volume analysis**: Real-time level and peak display; stereo VU-style meters in VU Meter mode.
+- **FFT analysis**: Fast Fourier Transform with log-spaced frequency bands and peak hold.
+- **Visualization modes**: Spectrum bars, Oscilloscope, VU Meter, Winamp-style bars, Geiss (with optional beat circles).
+- **Beat detection**: Optional beat detection and BPM estimate; sensitivity and beat circles are configurable and persist.
+- **Real-time display**: Updates every 50 ms.
+- **Settings**: Stored in a local file (e.g. next to the executable); device, visualization mode, beat sensitivity, and beat circles are persisted.
 
 ## Dependencies
 
-- **NAudio 2.2.1**: Audio library for .NET providing WASAPI capture and DSP functionality
+- **NAudio 2.2.1**: WASAPI capture/loopback and audio processing
+- **Microsoft.Extensions.DependencyInjection 9.0.0**: Used by the Console host (dependency injection)
 
 ## Notes
 
-- This application requires Windows with WASAPI support
-- Make sure audio is playing on your system to see analysis results
-- The application captures system audio output, not microphone input
+- Requires Windows with WASAPI support.
+- Use loopback to analyze system playback; use a capture device for microphone or other inputs.
+- Ensure audio is playing (or that the selected device is active) to see meaningful analysis.

@@ -1,0 +1,20 @@
+---
+description: Keep feature documentation and README updated
+alwaysApply: true
+---
+
+# Documentation
+
+When adding or changing features:
+
+1. **Update feature documentation**: Update the README and any other feature docs (e.g. `docs/` or a dedicated feature file). Document new capabilities, options, and behavior in the appropriate place.
+
+2. **Update the README**: When changing behavior, dependencies, or usage, update README.md so these sections stay accurate:
+   - Prerequisites
+   - How to Run
+   - Usage
+   - What It Does
+   - Dependencies
+   - Notes
+
+Do not complete feature work without updating the relevant documentation.
