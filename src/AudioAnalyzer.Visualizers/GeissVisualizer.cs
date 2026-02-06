@@ -1,3 +1,4 @@
+using System.Text;
 using AudioAnalyzer.Application.Abstractions;
 
 namespace AudioAnalyzer.Visualizers;
@@ -16,6 +17,7 @@ public sealed class GeissVisualizer : IVisualizer
     private readonly List<BeatCircle> _beatCircles = new();
     private int _lastBeatCount = -1;
     private bool _showBeatCircles = true;
+    private readonly StringBuilder _lineBuffer = new(256);
 
     public bool ShowBeatCircles { get => _showBeatCircles; set => _showBeatCircles = value; }
 
@@ -53,11 +55,15 @@ public sealed class GeissVisualizer : IVisualizer
         int height = Math.Max(12, Math.Min(25, termHeight - 12));
         int width = Math.Min(termWidth - 4, 100);
         char[] plasmaChars = [' ', '·', ':', ';', '+', '*', '#', '@', '█'];
-        Console.Write(new string(' ', termWidth - 1));
-        Console.WriteLine();
+
+        _lineBuffer.Clear();
+        _lineBuffer.Append(' ', termWidth - 1);
+        Console.WriteLine(_lineBuffer.ToString());
+
         for (int y = 0; y < height; y++)
         {
-            Console.Write("  ");
+            _lineBuffer.Clear();
+            _lineBuffer.Append("  ");
             for (int x = 0; x < width; x++)
             {
                 double nx = (double)x / width, ny = (double)y / height;
@@ -80,8 +86,7 @@ public sealed class GeissVisualizer : IVisualizer
                 }
                 if (onCircle)
                 {
-                    Console.ForegroundColor = circleColor;
-                    Console.Write("○");
+                    AnsiConsole.AppendColored(_lineBuffer, '○', circleColor);
                 }
                 else
                 {
@@ -96,19 +101,18 @@ public sealed class GeissVisualizer : IVisualizer
                     if (snapshot.BeatFlashActive) plasma += 0.3;
                     plasma = Math.Clamp((plasma + 1.5) / 3.0, 0, 1);
                     double hue = ((nx + ny + _colorPhase) + plasma * 0.3) % 1.0;
-                    Console.ForegroundColor = GetGeissColor(hue, plasma);
-                    Console.Write(plasmaChars[(int)(plasma * (plasmaChars.Length - 1))]);
+                    ConsoleColor color = GetGeissColor(hue, plasma);
+                    char ch = plasmaChars[(int)(plasma * (plasmaChars.Length - 1))];
+                    AnsiConsole.AppendColored(_lineBuffer, ch, color);
                 }
             }
-            Console.ResetColor();
             int remaining = termWidth - width - 3;
-            if (remaining > 0) Console.Write(new string(' ', remaining));
-            Console.WriteLine();
+            if (remaining > 0) _lineBuffer.Append(' ', remaining);
+            Console.WriteLine(_lineBuffer.ToString());
         }
-        Console.ForegroundColor = ConsoleColor.DarkGray;
-        Console.Write($"  Geiss - Psychedelic | Bass: {_bassIntensity:F2} | Treble: {_trebleIntensity:F2}".PadRight(termWidth - 1));
-        Console.ResetColor();
-        Console.WriteLine();
+
+        string footer = $"  Geiss - Psychedelic | Bass: {_bassIntensity:F2} | Treble: {_trebleIntensity:F2}".PadRight(termWidth - 1);
+        Console.WriteLine(AnsiConsole.ToAnsiString(footer, ConsoleColor.DarkGray));
     }
 
     private static ConsoleColor GetGeissColor(double hue, double intensity)

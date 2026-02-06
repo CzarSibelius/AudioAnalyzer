@@ -54,13 +54,10 @@ public sealed class CompositeVisualizationRenderer : IVisualizationRenderer
         string bpmDisplay = snapshot.CurrentBpm > 0 ? $" | BPM: {snapshot.CurrentBpm:F0}" : "";
         string sensitivityDisplay = $" | Beat: {snapshot.BeatSensitivity:F1} (+/-)";
         string beatIndicator = snapshot.BeatFlashActive ? " *BEAT*" : "";
-        if (snapshot.BeatFlashActive) Console.ForegroundColor = ConsoleColor.Red;
-        Console.WriteLine($"Volume: {snapshot.Volume * 100:F1}% ({db:F1} dB){bpmDisplay}{sensitivityDisplay}{beatIndicator}".PadRight(termWidth));
-        Console.ResetColor();
-        Console.ForegroundColor = ConsoleColor.DarkGray;
+        string volumeLine = $"Volume: {snapshot.Volume * 100:F1}% ({db:F1} dB){bpmDisplay}{sensitivityDisplay}{beatIndicator}".PadRight(termWidth);
+        Console.WriteLine(snapshot.BeatFlashActive ? AnsiConsole.ToAnsiString(volumeLine, ConsoleColor.Red) : volumeLine);
         string modeName = GetModeName(mode);
-        Console.WriteLine($"Mode: {modeName} (V) | S=Save | H=Help".PadRight(termWidth));
-        Console.ResetColor();
+        Console.WriteLine(AnsiConsole.ToAnsiString($"Mode: {modeName} (V) | S=Save | H=Help".PadRight(termWidth), ConsoleColor.DarkGray));
     }
 
     private static string GetModeName(VisualizationMode mode)
