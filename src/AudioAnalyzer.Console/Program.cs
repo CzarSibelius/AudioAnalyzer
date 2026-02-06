@@ -36,6 +36,34 @@ var compositeRenderer = provider.GetRequiredService<CompositeVisualizationRender
 
 var settings = settingsRepo.Load();
 
+const string CapturePrefix = "capture:";
+const string LoopbackPrefix = "loopback:";
+
+static (string? deviceId, string name) TryResolveDeviceFromSettings(IReadOnlyList<AudioDeviceEntry> devices, AppSettings settings)
+{
+    if (devices.Count == 0)
+        return (null, "");
+
+    if (settings.InputMode == "loopback" && string.IsNullOrEmpty(settings.DeviceName))
+    {
+        var first = devices[0];
+        return (first.Id, first.Name);
+    }
+
+    if (settings.InputMode == "device" && !string.IsNullOrEmpty(settings.DeviceName))
+    {
+        var captureId = CapturePrefix + settings.DeviceName;
+        var loopbackId = LoopbackPrefix + settings.DeviceName;
+        foreach (var d in devices)
+        {
+            if (d.Id == captureId || d.Id == loopbackId)
+                return (d.Id, d.Name);
+        }
+    }
+
+    return (null, "");
+}
+
 static VisualizationMode ParseMode(string? mode)
 {
     return mode switch
@@ -52,7 +80,11 @@ engine.SetVisualizationMode(ParseMode(settings.VisualizationMode));
 engine.BeatSensitivity = settings.BeatSensitivity;
 compositeRenderer.SetShowBeatCircles(settings.BeatCircles);
 
-var (initialDeviceId, initialName) = ShowDeviceSelectionMenu(deviceInfo, settingsRepo, settings, null);
+var devices = deviceInfo.GetDevices();
+var (initialDeviceId, initialName) = TryResolveDeviceFromSettings(devices, settings);
+if (initialName == "")
+    (initialDeviceId, initialName) = ShowDeviceSelectionMenu(deviceInfo, settingsRepo, settings, null);
+
 if (initialName == "")
 {
     Console.WriteLine("No device selected.");
@@ -208,7 +240,6 @@ void ShowHelpMenu()
     Console.WriteLine("  ─────────────────────────────────────");
     Console.WriteLine("  ↑/↓       Navigate devices");
     Console.WriteLine("  ENTER     Select device");
-    Console.WriteLine("  S         Save selection as default");
     Console.WriteLine("  ESC       Cancel and return");
     Console.WriteLine();
     Console.ForegroundColor = ConsoleColor.Cyan;
@@ -274,7 +305,6 @@ static (string? deviceId, string name) ShowDeviceSelectionMenu(IAudioDeviceInfo 
         Console.WriteLine("╚" + new string('═', width - 2) + "╝");
         Console.WriteLine();
         Console.WriteLine("  Use ↑/↓ to select, ENTER to confirm, ESC to cancel");
-        Console.WriteLine("  Press 'S' to save selection as default");
         Console.WriteLine();
 
         for (int i = 0; i < devices.Count; i++)
@@ -309,6 +339,19 @@ static (string? deviceId, string name) ShowDeviceSelectionMenu(IAudioDeviceInfo 
                 break;
             case ConsoleKey.Enter:
                 var selected = devices[selectedIndex];
+                settings.InputMode = selected.Id == null ? "loopback" : "device";
+                if (selected.Id != null)
+                {
+                    if (selected.Id.StartsWith("capture:", StringComparison.Ordinal))
+                        settings.DeviceName = selected.Id.Substring(8);
+                    else if (selected.Id.StartsWith("loopback:", StringComparison.Ordinal))
+                        settings.DeviceName = selected.Id.Substring(9);
+                    else
+                        settings.DeviceName = selected.Id;
+                }
+                else
+                    settings.DeviceName = null;
+                settingsRepo.Save(settings);
                 try
                 {
                     return (selected.Id, selected.Name);
@@ -321,27 +364,6 @@ static (string? deviceId, string name) ShowDeviceSelectionMenu(IAudioDeviceInfo 
                     Console.ReadKey(true);
                     Console.Clear();
                 }
-                break;
-            case ConsoleKey.S:
-                var toSave = devices[selectedIndex];
-                settings.InputMode = toSave.Id == null ? "loopback" : "device";
-                if (toSave.Id != null)
-                {
-                    if (toSave.Id.StartsWith("capture:", StringComparison.Ordinal))
-                        settings.DeviceName = toSave.Id.Substring(8);
-                    else if (toSave.Id.StartsWith("loopback:", StringComparison.Ordinal))
-                        settings.DeviceName = toSave.Id.Substring(9);
-                    else
-                        settings.DeviceName = toSave.Id;
-                }
-                else
-                    settings.DeviceName = null;
-                settingsRepo.Save(settings);
-                Console.SetCursorPosition(0, 6 + devices.Count + 1);
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("  ✓ Saved as default!".PadRight(width - 1));
-                Console.ResetColor();
-                Thread.Sleep(800);
                 break;
             case ConsoleKey.Escape:
                 return (null, "");
