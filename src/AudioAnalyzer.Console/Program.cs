@@ -13,7 +13,12 @@ static int GetConsoleWidth()
 
 var services = new ServiceCollection();
 services.AddSingleton<IDisplayDimensions, ConsoleDisplayDimensions>();
-services.AddSingleton<IVisualizationRenderer, ConsoleRenderer>();
+services.AddSingleton<CompositeVisualizationRenderer>(sp =>
+{
+    var dimensions = sp.GetRequiredService<IDisplayDimensions>();
+    return new CompositeVisualizationRenderer(dimensions);
+});
+services.AddSingleton<IVisualizationRenderer>(sp => sp.GetRequiredService<CompositeVisualizationRenderer>());
 services.AddSingleton<ISettingsRepository>(_ => new FileSettingsRepository());
 services.AddSingleton<IAudioDeviceInfo, NAudioDeviceInfo>();
 services.AddSingleton<AnalysisEngine>(sp =>
@@ -27,6 +32,7 @@ var provider = services.BuildServiceProvider();
 var settingsRepo = provider.GetRequiredService<ISettingsRepository>();
 var deviceInfo = provider.GetRequiredService<IAudioDeviceInfo>();
 var engine = provider.GetRequiredService<AnalysisEngine>();
+var compositeRenderer = provider.GetRequiredService<CompositeVisualizationRenderer>();
 
 var settings = settingsRepo.Load();
 
@@ -44,7 +50,7 @@ static VisualizationMode ParseMode(string? mode)
 
 engine.SetVisualizationMode(ParseMode(settings.VisualizationMode));
 engine.BeatSensitivity = settings.BeatSensitivity;
-engine.ShowBeatCircles = settings.BeatCircles;
+compositeRenderer.SetShowBeatCircles(settings.BeatCircles);
 
 var (initialDeviceId, initialName) = ShowDeviceSelectionMenu(deviceInfo, settingsRepo, settings, null);
 if (initialName == "")
@@ -123,7 +129,7 @@ while (running)
                 engine.BeatSensitivity -= 0.1;
                 break;
             case ConsoleKey.B:
-                engine.ShowBeatCircles = !engine.ShowBeatCircles;
+                compositeRenderer.SetShowBeatCircles(!compositeRenderer.GetShowBeatCircles());
                 break;
             case ConsoleKey.S:
                 settings.VisualizationMode = engine.CurrentMode switch
@@ -135,7 +141,7 @@ while (running)
                     _ => "spectrum"
                 };
                 settings.BeatSensitivity = engine.BeatSensitivity;
-                settings.BeatCircles = engine.ShowBeatCircles;
+                settings.BeatCircles = compositeRenderer.GetShowBeatCircles();
                 settingsRepo.Save(settings);
                 Console.SetCursorPosition(0, 6);
                 Console.ForegroundColor = ConsoleColor.Green;
