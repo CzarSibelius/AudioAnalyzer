@@ -14,6 +14,12 @@ dotnet build .\AudioAnalyzer\AudioAnalyzer.csproj
 ```
 Never complete a task without confirming successful compilation.
 
+### User Control Requirements
+- **Every feature must be toggleable by the user in realtime** via keyboard shortcuts
+- New features should have a dedicated key binding (e.g., B for beat circles, V for visualization mode)
+- **Help menu (H key) must document every available command** - always update `ShowHelpMenu()` when adding new controls
+- Settings that can be toggled should be saveable via the S key to `appsettings.json`
+
 ### Code Style
 - Use C# 10 top-level statements
 - Prefer explicit types over `var` for clarity in audio processing code
