@@ -38,42 +38,73 @@ On Windows you can use backslashes: `src\AudioAnalyzer.Console\AudioAnalyzer.Con
 3. **Keyboard controls:**
    - **H** – Show help (all keys and visualization modes)
    - **V** – Cycle visualization mode (Spectrum, Oscilloscope, VU Meter, Winamp Style, Geiss, Unknown Pleasures)
+   - **P** – Cycle color palette (for palette-aware visualizers such as Unknown Pleasures)
    - **B** – Toggle beat circles (Geiss mode)
    - **+** / **-** – Increase / decrease beat sensitivity
    - **[** / **]** – Increase / decrease oscilloscope gain (Oscilloscope mode; 1.0–10.0)
    - **D** – Change audio input device
    - **ESC** – Quit
 
-   Settings (device, mode, beat sensitivity, oscilloscope gain, beat circles) are saved automatically when you change them.
+   Settings (device, mode, selected palette, beat sensitivity, oscilloscope gain, beat circles) are saved automatically when you change them.
 
 ## What It Does
 
 - **Audio input**: Loopback (system output) or a specific WASAPI capture device; choice is saved in settings.
 - **Volume analysis**: Real-time level and peak display; stereo VU-style meters in VU Meter mode.
 - **FFT analysis**: Fast Fourier Transform with log-spaced frequency bands and peak hold.
-- **Visualization modes**: Spectrum bars, Oscilloscope (time-domain waveform; gain adjustable with [ ] in real time, 1.0–10.0), VU Meter, Winamp-style bars, Geiss (with optional beat circles), and **Unknown Pleasures** (stacked waveform snapshots; color palette is configurable via settings).
+- **Visualization modes**: Spectrum bars, Oscilloscope (time-domain waveform; gain adjustable with [ ] in real time, 1.0–10.0), VU Meter, Winamp-style bars, Geiss (with optional beat circles), and **Unknown Pleasures** (stacked waveform snapshots; uses the selected color palette; press **P** to cycle palettes).
+- **Colors and palettes**: Palette-aware visualizers support **24-bit true color** (RGB) and 16 console colors. Palettes are stored as JSON files in a **palettes** directory (see below). The selected palette is applied when using Unknown Pleasures (and any future palette-aware mode).
 - **Beat detection**: Optional beat detection and BPM estimate; sensitivity and beat circles are configurable and persist.
 - **Real-time display**: Updates every 50 ms.
-- **Settings**: Stored in a local file (e.g. next to the executable). Each visualizer that needs configuration has its own settings under `VisualizerSettings` (e.g. `VisualizerSettings.UnknownPleasures.Palette` for the Unknown Pleasures color palette). Device, visualization mode, beat sensitivity, oscilloscope gain, and beat circles are saved automatically when changed.
+- **Settings**: Stored in a local file (e.g. next to the executable). `SelectedPaletteId` stores the current palette; per-visualizer options live under `VisualizerSettings`. Device, visualization mode, selected palette, beat sensitivity, oscilloscope gain, and beat circles are saved automatically when changed.
 
 ## Dependencies
 
 - **NAudio 2.2.1**: WASAPI capture/loopback and audio processing
 - **Microsoft.Extensions.DependencyInjection 9.0.0**: Used by the Console host (dependency injection)
 
+## Palettes (JSON files)
+
+Color palettes are stored as **JSON files** in a **`palettes`** directory next to the executable (e.g. `palettes/` in the same folder as the .exe). The app ships with `palettes/default.json`. You can add more `.json` files; each file is one palette. Press **P** to cycle through all available palettes when using a palette-aware visualizer (e.g. Unknown Pleasures).
+
+**Palette JSON format:**
+
+- **`Name`** (optional): Display name (e.g. `"Power Corruption & Lies"`).
+- **`Colors`**: Array of color entries. Each entry can be:
+  - A **string**: hex `"#RRGGBB"` (24-bit) or a console color name (e.g. `"Magenta"`).
+  - An **object**: `{ "R": 255, "G": 0, "B": 0 }` (values 0–255).
+
+Example (`palettes/default.json`):
+
+```json
+{
+  "Name": "Default",
+  "Colors": ["Magenta", "Yellow", "Green", "Cyan", "Blue"]
+}
+```
+
+Example with 24-bit colors:
+
+```json
+{
+  "Name": "Sunset",
+  "Colors": ["#FF6B35", "#F7C59F", "#2A9D8F", "#264653", "#E9C46A"]
+}
+```
+
 ## Settings structure (per-visualizer)
 
-Visualizer-specific options live under `VisualizerSettings` in the settings file (e.g. `appsettings.json`):
-
-- **Unknown Pleasures**: `VisualizerSettings.UnknownPleasures.Palette` — a `ColorPalette` with `Name` (optional) and `ColorNames` (array of console color names, e.g. `["Magenta","Yellow","Green","Cyan","Blue"]`). If omitted, the default palette is used.
-- **Geiss**: `VisualizerSettings.Geiss.BeatCircles` — show beat circles (boolean).
-- **Oscilloscope**: `VisualizerSettings.Oscilloscope.Gain` — amplitude gain (1.0–10.0).
+- **Selected palette**: `SelectedPaletteId` — id of the current palette (e.g. filename without extension, like `"default"`). Resolved from the palettes directory on startup.
+- **Visualizer-specific options** live under `VisualizerSettings` in the settings file (e.g. `appsettings.json`):
+  - **Unknown Pleasures**: Legacy `VisualizerSettings.UnknownPleasures.Palette` (ColorPalette with `ColorNames`) is still read if `SelectedPaletteId` is not set, for backward compatibility.
+  - **Geiss**: `VisualizerSettings.Geiss.BeatCircles` — show beat circles (boolean).
+  - **Oscilloscope**: `VisualizerSettings.Oscilloscope.Gain` — amplitude gain (1.0–10.0).
 
 Example JSON:
 
 ```json
+"SelectedPaletteId": "default",
 "VisualizerSettings": {
-  "UnknownPleasures": { "Palette": { "ColorNames": ["Magenta", "Yellow", "Green", "Cyan", "Blue"] } },
   "Geiss": { "BeatCircles": true },
   "Oscilloscope": { "Gain": 2.5 }
 }

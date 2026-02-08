@@ -1,6 +1,7 @@
 using System.Text;
 using AudioAnalyzer.Application;
 using AudioAnalyzer.Application.Abstractions;
+using AudioAnalyzer.Domain;
 
 namespace AudioAnalyzer.Visualizers;
 
@@ -80,7 +81,7 @@ public sealed class UnknownPleasuresVisualizer : IVisualizer
             int i = startIndex + j;
             if (i >= numSnapshots) break;
             double[] pulse = _snapshots[i];
-            ConsoleColor color = palette[(i + _colorOffset) % palette.Count];
+            PaletteColor color = palette[(i + _colorOffset) % palette.Count];
 
             for (int line = 0; line < linesPerSnapshot && rowIndex < viewport.MaxLines; line++)
             {
