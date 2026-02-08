@@ -78,6 +78,7 @@ static VisualizationMode ParseMode(string? mode)
 
 engine.SetVisualizationMode(ParseMode(settings.VisualizationMode));
 engine.BeatSensitivity = settings.BeatSensitivity;
+engine.OscilloscopeGain = settings.OscilloscopeGain;
 compositeRenderer.SetShowBeatCircles(settings.BeatCircles);
 
 var devices = deviceInfo.GetDevices();
@@ -167,6 +168,14 @@ while (running)
             case ConsoleKey.B:
                 compositeRenderer.SetShowBeatCircles(!compositeRenderer.GetShowBeatCircles());
                 break;
+            case ConsoleKey.Oem4:   // [ (increase gain)
+                engine.OscilloscopeGain += 0.5;
+                engine.Redraw();
+                break;
+            case ConsoleKey.Oem6:   // ] (decrease gain)
+                engine.OscilloscopeGain -= 0.5;
+                engine.Redraw();
+                break;
             case ConsoleKey.S:
                 settings.VisualizationMode = engine.CurrentMode switch
                 {
@@ -177,6 +186,7 @@ while (running)
                     _ => "spectrum"
                 };
                 settings.BeatSensitivity = engine.BeatSensitivity;
+                settings.OscilloscopeGain = engine.OscilloscopeGain;
                 settings.BeatCircles = compositeRenderer.GetShowBeatCircles();
                 settingsRepo.Save(settings);
                 Console.SetCursorPosition(0, 6);
@@ -273,6 +283,7 @@ void ShowHelpMenu()
     Console.WriteLine("  V         Change visualization mode");
     Console.WriteLine("  B         Toggle beat circles (Geiss mode)");
     Console.WriteLine("  +/-       Adjust beat sensitivity");
+    Console.WriteLine("  [ / ]     Adjust oscilloscope gain (Oscilloscope mode)");
     Console.WriteLine("  S         Save current settings");
     Console.WriteLine("  D         Change audio input device");
     Console.WriteLine("  ESC       Quit the application");
@@ -290,7 +301,7 @@ void ShowHelpMenu()
     Console.ResetColor();
     Console.WriteLine("  ─────────────────────────────────────");
     Console.WriteLine("  Spectrum Analyzer  Frequency bars with peak hold");
-    Console.WriteLine("  Oscilloscope       Waveform display");
+    Console.WriteLine("  Oscilloscope       Waveform display ( [ ] = gain)");
     Console.WriteLine("  VU Meter           Classic stereo level meters");
     Console.WriteLine("  Winamp Style       Classic music player bars");
     Console.WriteLine("  Geiss              Psychedelic plasma visualization");

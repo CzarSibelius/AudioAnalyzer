@@ -22,6 +22,7 @@ public sealed class AnalysisEngine
     private readonly float[] _waveformBuffer = new float[WaveformSize];
     private int _waveformPosition;
     private readonly float[] _displayWaveform = new float[WaveformSize];
+    private int _displayWaveformPosition;
 
     private DateTime _lastUpdate = DateTime.Now;
     private int _lastTerminalWidth;
@@ -52,6 +53,7 @@ public sealed class AnalysisEngine
     private readonly Queue<double> _energyHistory = new();
     private readonly Queue<DateTime> _beatTimes = new();
     private double _beatThreshold = 1.3;
+    private double _oscilloscopeGain = 2.5;
     private DateTime _lastBeatTime = DateTime.MinValue;
     private double _currentBpm;
     private double _instantEnergy;
@@ -72,6 +74,7 @@ public sealed class AnalysisEngine
 
     public VisualizationMode CurrentMode => _currentMode;
     public double BeatSensitivity { get => _beatThreshold; set => _beatThreshold = Math.Clamp(value, 0.5, 3.0); }
+    public double OscilloscopeGain { get => _oscilloscopeGain; set => _oscilloscopeGain = Math.Clamp(value, 1.0, 10.0); }
 
     /// <param name="redrawHeader">Full redraw (clear + header), e.g. on resize or keypress.</param>
     /// <param name="refreshHeader">Optional: redraw only the header lines (no clear), called before each render so the top never disappears.</param>
@@ -191,6 +194,7 @@ public sealed class AnalysisEngine
         if ((DateTime.Now - _lastUpdate).TotalMilliseconds >= UpdateIntervalMs)
         {
             Array.Copy(_waveformBuffer, _displayWaveform, WaveformSize);
+            _displayWaveformPosition = _waveformPosition;
             int w = _displayDimensions.Width;
             int h = _displayDimensions.Height;
             if (w >= 30 && h >= 15)
@@ -227,8 +231,9 @@ public sealed class AnalysisEngine
         _snapshot.PeakHold = _peakHold;
         _snapshot.TargetMaxMagnitude = _targetMaxMagnitude;
         _snapshot.Waveform = _displayWaveform;
-        _snapshot.WaveformPosition = _waveformPosition;
+        _snapshot.WaveformPosition = _displayWaveformPosition;
         _snapshot.WaveformSize = WaveformSize;
+        _snapshot.OscilloscopeGain = _oscilloscopeGain;
         _snapshot.LeftChannel = _leftChannel;
         _snapshot.RightChannel = _rightChannel;
         _snapshot.LeftPeakHold = _leftPeakHold;

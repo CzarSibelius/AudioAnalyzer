@@ -105,7 +105,7 @@ public sealed class CompositeVisualizationRenderer : IVisualizationRenderer
             $"Volume: {snapshot.Volume * 100:F1}% ({db:F1} dB){bpmDisplay}{sensitivityDisplay}{beatIndicator}",
             w).PadRight(w);
         string line2 = toolbarViewport.MaxLines >= 2
-            ? VisualizerViewport.TruncateToWidth($"Mode: {GetModeName(mode)} (V) | S=Save | H=Help", w).PadRight(w)
+            ? VisualizerViewport.TruncateToWidth(GetToolbarLine2(mode, snapshot, w), w).PadRight(w)
             : new string(' ', w);
 
         try
@@ -132,6 +132,14 @@ public sealed class CompositeVisualizationRenderer : IVisualizationRenderer
             }
             catch { }
         }
+    }
+
+    private static string GetToolbarLine2(VisualizationMode mode, AnalysisSnapshot snapshot, int w)
+    {
+        string baseLine = $"Mode: {GetModeName(mode)} (V) | S=Save | H=Help";
+        if (mode == VisualizationMode.Oscilloscope)
+            baseLine = $"Mode: {GetModeName(mode)} (V) | Gain: {snapshot.OscilloscopeGain:F1} ([ ]) | S=Save | H=Help";
+        return baseLine;
     }
 
     private static string GetModeName(VisualizationMode mode)

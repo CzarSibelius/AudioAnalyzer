@@ -25,6 +25,8 @@ public sealed class AnalysisSnapshot
     public float[] Waveform { get; set; } = Array.Empty<float>();
     public int WaveformPosition { get; set; }
     public int WaveformSize { get; set; }
+    /// <summary>Amplitude gain for oscilloscope display (user-adjustable, e.g. 1.0–10.0).</summary>
+    public double OscilloscopeGain { get; set; } = 2.5;
 
     public float LeftChannel { get; set; }
     public float RightChannel { get; set; }

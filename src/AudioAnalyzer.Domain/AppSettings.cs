@@ -29,4 +29,9 @@ public class AppSettings
     /// Show expanding circles on beat in Geiss mode.
     /// </summary>
     public bool BeatCircles { get; set; } = true;
+
+    /// <summary>
+    /// Oscilloscope amplitude gain (1.0 = no boost, higher = more visible waveform). Default is 2.5; range typically 1.0–10.0.
+    /// </summary>
+    public double OscilloscopeGain { get; set; } = 2.5;
 }
