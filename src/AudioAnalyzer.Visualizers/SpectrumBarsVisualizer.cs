@@ -14,7 +14,10 @@ public sealed class SpectrumBarsVisualizer : IVisualizer
 
     public void Render(AnalysisSnapshot snapshot, VisualizerViewport viewport)
     {
-        if (viewport.Width < 30 || viewport.MaxLines < 5) return;
+        if (viewport.Width < 30 || viewport.MaxLines < 5)
+        {
+            return;
+        }
 
         int maxBarLines = Math.Max(1, viewport.MaxLines - 6);
         int barHeight = Math.Max(10, Math.Min(30, maxBarLines));
@@ -35,13 +38,21 @@ public sealed class SpectrumBarsVisualizer : IVisualizer
         for (int i = 0; i < availableWidth; i++)
         {
             if (i < volBarLength)
+            {
                 AnsiConsole.AppendColored(_lineBuffer, "█", GetColorByPosition((double)i / availableWidth));
+            }
             else
+            {
                 _lineBuffer.Append(' ');
+            }
         }
         _lineBuffer.Append(']');
         int pad = termWidth - availableWidth - 2;
-        if (pad > 0) _lineBuffer.Append(' ', pad);
+        if (pad > 0)
+        {
+            _lineBuffer.Append(' ', pad);
+        }
+
         Console.WriteLine(_lineBuffer.ToString());
         Console.WriteLine();
     }
@@ -55,12 +66,31 @@ public sealed class SpectrumBarsVisualizer : IVisualizer
         for (int row = barHeight; row > 0; row--)
         {
             _lineBuffer.Clear();
-            if (row == barHeight) _lineBuffer.Append("100%");
-            else if (row == (int)(barHeight * 0.75) && barHeight >= 16) _lineBuffer.Append(" 75%");
-            else if (row == (int)(barHeight * 0.5) && barHeight >= 12) _lineBuffer.Append(" 50%");
-            else if (row == (int)(barHeight * 0.25) && barHeight >= 16) _lineBuffer.Append(" 25%");
-            else if (row == 1) _lineBuffer.Append("  0%");
-            else _lineBuffer.Append("    ");
+            if (row == barHeight)
+            {
+                _lineBuffer.Append("100%");
+            }
+            else if (row == (int)(barHeight * 0.75) && barHeight >= 16)
+            {
+                _lineBuffer.Append(" 75%");
+            }
+            else if (row == (int)(barHeight * 0.5) && barHeight >= 12)
+            {
+                _lineBuffer.Append(" 50%");
+            }
+            else if (row == (int)(barHeight * 0.25) && barHeight >= 16)
+            {
+                _lineBuffer.Append(" 25%");
+            }
+            else if (row == 1)
+            {
+                _lineBuffer.Append("  0%");
+            }
+            else
+            {
+                _lineBuffer.Append("    ");
+            }
+
             _lineBuffer.Append(' ');
             for (int band = 0; band < numBands; band++)
             {
@@ -69,11 +99,17 @@ public sealed class SpectrumBarsVisualizer : IVisualizer
                 double normalizedPeak = Math.Min(f.PeakHold[band] * gain * 0.8, 1.0);
                 int peakHeight = (int)(normalizedPeak * barHeight);
                 if (row == peakHeight && peakHeight > 0)
+                {
                     AnsiConsole.AppendColored(_lineBuffer, "══", ConsoleColor.White);
+                }
                 else if (height >= row)
+                {
                     AnsiConsole.AppendColored(_lineBuffer, "██", GetColorByRow(row, barHeight));
+                }
                 else
+                {
                     _lineBuffer.Append("  ");
+                }
             }
             Console.WriteLine(_lineBuffer.ToString());
         }
@@ -87,8 +123,12 @@ public sealed class SpectrumBarsVisualizer : IVisualizer
     {
         return position switch
         {
-            >= 0.85 => ConsoleColor.Red, >= 0.7 => ConsoleColor.Magenta, >= 0.55 => ConsoleColor.Yellow,
-            >= 0.4 => ConsoleColor.Green, >= 0.25 => ConsoleColor.Cyan, _ => ConsoleColor.Blue
+            >= 0.85 => ConsoleColor.Red,
+            >= 0.7 => ConsoleColor.Magenta,
+            >= 0.55 => ConsoleColor.Yellow,
+            >= 0.4 => ConsoleColor.Green,
+            >= 0.25 => ConsoleColor.Cyan,
+            _ => ConsoleColor.Blue
         };
     }
 
@@ -97,8 +137,12 @@ public sealed class SpectrumBarsVisualizer : IVisualizer
         double position = (double)row / barHeight;
         return position switch
         {
-            <= 0.25 => ConsoleColor.Red, <= 0.4 => ConsoleColor.Magenta, <= 0.55 => ConsoleColor.Yellow,
-            <= 0.7 => ConsoleColor.Green, <= 0.85 => ConsoleColor.Cyan, _ => ConsoleColor.Blue
+            <= 0.25 => ConsoleColor.Red,
+            <= 0.4 => ConsoleColor.Magenta,
+            <= 0.55 => ConsoleColor.Yellow,
+            <= 0.7 => ConsoleColor.Green,
+            <= 0.85 => ConsoleColor.Cyan,
+            _ => ConsoleColor.Blue
         };
     }
 
@@ -119,7 +163,9 @@ public sealed class SpectrumBarsVisualizer : IVisualizer
                 _lineBuffer.Append(label.PadRight(Math.Min(4, labelInterval * 2))[..Math.Min(label.Length + 1, 2)]);
             }
             else
+            {
                 _lineBuffer.Append("  ");
+            }
         }
         Console.WriteLine(_lineBuffer.ToString());
         Console.WriteLine(VisualizerViewport.TruncateToWidth("\n Frequency (Hz)".PadRight(viewport.Width), viewport.Width));

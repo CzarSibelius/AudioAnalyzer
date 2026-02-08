@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using AudioAnalyzer.Application.Abstractions;
 
@@ -13,7 +14,10 @@ public sealed class VuMeterVisualizer : IVisualizer
 
     public void Render(AnalysisSnapshot snapshot, VisualizerViewport viewport)
     {
-        if (viewport.Width < 30 || viewport.MaxLines < 7) return;
+        if (viewport.Width < 30 || viewport.MaxLines < 7)
+        {
+            return;
+        }
 
         int meterWidth = Math.Min(60, viewport.Width - 20);
         int lineCount = 0;
@@ -21,7 +25,7 @@ public sealed class VuMeterVisualizer : IVisualizer
         {
             if (lineCount < viewport.MaxLines)
             {
-                string line = s.Contains("\x1b") ? s : VisualizerViewport.TruncateToWidth(s, viewport.Width);
+                string line = s.Contains('\x1b') ? s : VisualizerViewport.TruncateToWidth(s, viewport.Width);
                 Console.WriteLine(line);
                 lineCount++;
             }
@@ -39,7 +43,10 @@ public sealed class VuMeterVisualizer : IVisualizer
         _lineBuffer.Clear();
         _lineBuffer.Append("    ");
         for (int i = 0; i <= 10; i++)
-            _lineBuffer.Append((i * 10).ToString().PadRight(Math.Max(1, meterWidth / 10)));
+        {
+            _lineBuffer.Append((i * 10).ToString(CultureInfo.InvariantCulture).PadRight(Math.Max(1, meterWidth / 10)));
+        }
+
         WriteLineSafe(_lineBuffer.ToString());
 
         _lineBuffer.Clear();
@@ -47,7 +54,10 @@ public sealed class VuMeterVisualizer : IVisualizer
         string[] dbLabels = ["-∞", "-40", "-30", "-20", "-10", "-6", "-3", "0"];
         int labelSpacing = Math.Max(1, meterWidth / (dbLabels.Length - 1));
         for (int i = 0; i < dbLabels.Length; i++)
+        {
             _lineBuffer.Append(dbLabels[i].PadRight(labelSpacing));
+        }
+
         WriteLineSafe(AnsiConsole.ToAnsiString(_lineBuffer.ToString(), ConsoleColor.DarkGray));
         WriteLineSafe("");
 
@@ -56,17 +66,17 @@ public sealed class VuMeterVisualizer : IVisualizer
         balancePos = Math.Clamp(balancePos, 0, meterWidth - 1);
         _lineBuffer.Clear();
         _lineBuffer.Append("  BAL ");
-        AnsiConsole.AppendColored(_lineBuffer, new string('─', balancePos), ConsoleColor.DarkGray);
-        AnsiConsole.AppendColored(_lineBuffer, "●", ConsoleColor.White);
-        AnsiConsole.AppendColored(_lineBuffer, new string('─', meterWidth - balancePos - 1), ConsoleColor.DarkGray);
+        AnsiConsole.AppendColored(_lineBuffer, new string('\u2500', balancePos), ConsoleColor.DarkGray);
+        AnsiConsole.AppendColored(_lineBuffer, "\u25CF", ConsoleColor.White);
+        AnsiConsole.AppendColored(_lineBuffer, new string('\u2500', meterWidth - balancePos - 1), ConsoleColor.DarkGray);
         WriteLineSafe(_lineBuffer.ToString());
 
         _lineBuffer.Clear();
         _lineBuffer.Append("      L");
         _lineBuffer.Append(' ', Math.Max(0, meterWidth / 2 - 2));
-        _lineBuffer.Append("C");
+        _lineBuffer.Append('C');
         _lineBuffer.Append(' ', Math.Max(0, meterWidth / 2 - 2));
-        _lineBuffer.Append("R");
+        _lineBuffer.Append('R');
         WriteLineSafe(_lineBuffer.ToString());
         WriteLineSafe("\n  Classic VU Meter - Shows channel levels".PadRight(viewport.Width));
     }
@@ -81,15 +91,21 @@ public sealed class VuMeterVisualizer : IVisualizer
         for (int i = 0; i < width; i++)
         {
             if (i == peakPos && peakPos > 0)
+            {
                 AnsiConsole.AppendColored(_lineBuffer, "│", ConsoleColor.White);
+            }
             else if (i < barLength)
+            {
                 AnsiConsole.AppendColored(_lineBuffer, "█", GetVuColor((double)i / width));
+            }
             else
+            {
                 AnsiConsole.AppendColored(_lineBuffer, "░", ConsoleColor.DarkGray);
+            }
         }
         _lineBuffer.Append(']');
         double db = 20 * Math.Log10(Math.Max(level, 0.00001));
-        _lineBuffer.Append($" {db:F1} dB");
+        _lineBuffer.Append(CultureInfo.InvariantCulture, $" {db:F1} dB");
         return _lineBuffer.ToString();
     }
 

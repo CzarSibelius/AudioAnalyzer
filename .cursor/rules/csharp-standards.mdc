@@ -1,0 +1,41 @@
+---
+description: C# coding standards (try-catch, braces)
+globs: "**/*.cs"
+alwaysApply: false
+---
+
+# C# Standards
+
+## No empty try-catch
+
+Never leave empty `catch` blocks. Either remove the try-catch or add real error handling (e.g. log, rethrow with context, or handle meaningfully).
+
+```csharp
+// BAD
+try { DoWork(); } catch (Exception) { }
+
+// GOOD: remove if not needed
+DoWork();
+
+// GOOD: add handling
+try { DoWork(); }
+catch (Exception ex)
+{
+    _logger.LogError(ex, "DoWork failed");
+    throw;
+}
+```
+
+## Braces for all control flow
+
+Always use braces for `if`, `else`, `for`, `foreach`, `while`, and `using` bodies, even when the body is a single statement.
+
+```csharp
+// BAD
+if (flag) DoSomething();
+foreach (var x in items) Process(x);
+
+// GOOD
+if (flag) { DoSomething(); }
+foreach (var x in items) { Process(x); }
+```

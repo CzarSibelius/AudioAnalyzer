@@ -41,8 +41,15 @@ public sealed class CompositeVisualizationRenderer : IVisualizationRenderer
     {
         try
         {
-            if (snapshot.TerminalWidth < 30 || snapshot.TerminalHeight < 15) return;
-            if (snapshot.DisplayStartRow < 0 || snapshot.DisplayStartRow + ToolbarLineCount >= snapshot.TerminalHeight) return;
+            if (snapshot.TerminalWidth < 30 || snapshot.TerminalHeight < 15)
+            {
+                return;
+            }
+
+            if (snapshot.DisplayStartRow < 0 || snapshot.DisplayStartRow + ToolbarLineCount >= snapshot.TerminalHeight)
+            {
+                return;
+            }
 
             int termWidth = snapshot.TerminalWidth;
             var toolbarViewport = new VisualizerViewport(snapshot.DisplayStartRow, ToolbarLineCount, termWidth);
@@ -103,19 +110,29 @@ public sealed class CompositeVisualizationRenderer : IVisualizationRenderer
 
     public VisualizationMode? GetModeFromTechnicalName(string key)
     {
-        if (string.IsNullOrWhiteSpace(key)) return null;
+        if (string.IsNullOrWhiteSpace(key))
+        {
+            return null;
+        }
+
         key = key.Trim();
         foreach (var (mode, visualizer) in _visualizers)
         {
             if (string.Equals(visualizer.TechnicalName, key, StringComparison.OrdinalIgnoreCase))
+            {
                 return mode;
+            }
         }
         return null;
     }
 
     private static void ClearRegion(int startRow, int lineCount, int width)
     {
-        if (width <= 0 || lineCount <= 0) return;
+        if (width <= 0 || lineCount <= 0)
+        {
+            return;
+        }
+
         string blank = new string(' ', width);
         try
         {
@@ -174,9 +191,15 @@ public sealed class CompositeVisualizationRenderer : IVisualizationRenderer
         string displayName = GetDisplayName(mode);
         string baseLine = $"Mode: {displayName} (V) | H=Help";
         if (mode == VisualizationMode.Oscilloscope)
+        {
             baseLine = $"Mode: {displayName} (V) | Gain: {snapshot.OscilloscopeGain:F1} ([ ]) | H=Help";
+        }
+
         if (SupportsPaletteCycling(mode) && !string.IsNullOrEmpty(snapshot.CurrentPaletteName))
+        {
             baseLine = $"Mode: {displayName} (V) | Palette: {snapshot.CurrentPaletteName} (P) | H=Help";
+        }
+
         return baseLine;
     }
 }

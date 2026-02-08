@@ -14,7 +14,10 @@ public sealed class OscilloscopeVisualizer : IVisualizer
 
     public void Render(AnalysisSnapshot snapshot, VisualizerViewport viewport)
     {
-        if (viewport.Width < 30 || viewport.MaxLines < 5) return;
+        if (viewport.Width < 30 || viewport.MaxLines < 5)
+        {
+            return;
+        }
 
         int maxHeight = Math.Max(1, viewport.MaxLines - 4);
         int height = Math.Max(10, Math.Min(25, maxHeight));
@@ -28,7 +31,10 @@ public sealed class OscilloscopeVisualizer : IVisualizer
         var screen = new char[height, width];
         var colors = new ConsoleColor[height, width];
         for (int y = 0; y < height; y++)
+        {
             for (int x = 0; x < width; x++) { screen[y, x] = ' '; colors[y, x] = ConsoleColor.Gray; }
+        }
+
         for (int x = 0; x < width; x++) { screen[centerY, x] = '·'; colors[centerY, x] = ConsoleColor.DarkGray; }
         int step = Math.Max(1, snapshot.WaveformSize / width);
         int prevY = centerY;
@@ -54,7 +60,10 @@ public sealed class OscilloscopeVisualizer : IVisualizer
             _lineBuffer.Clear();
             AnsiConsole.AppendColored(_lineBuffer, "  │", ConsoleColor.DarkGray);
             for (int x = 0; x < width; x++)
+            {
                 AnsiConsole.AppendColored(_lineBuffer, screen[y, x], colors[y, x]);
+            }
+
             AnsiConsole.AppendColored(_lineBuffer, "│", ConsoleColor.DarkGray);
             Console.WriteLine(_lineBuffer.ToString());
         }

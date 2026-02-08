@@ -38,7 +38,10 @@ public static class AnsiConsole
     public static string ColorCode(PaletteColor color)
     {
         if (color.IsRgb)
+        {
             return $"\x1b[38;2;{color.R};{color.G};{color.B}m";
+        }
+
         return ForegroundCodes[(int)color.ConsoleColor!.Value];
     }
 
