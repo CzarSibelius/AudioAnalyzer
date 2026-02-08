@@ -38,7 +38,7 @@ On Windows you can use backslashes: `src\AudioAnalyzer.Console\AudioAnalyzer.Con
 3. **Keyboard controls:**
    - **H** – Show help (all keys and visualization modes)
    - **V** – Cycle visualization mode (Spectrum, Oscilloscope, VU Meter, Winamp Style, Geiss, Unknown Pleasures)
-   - **P** – Cycle color palette (for palette-aware visualizers such as Unknown Pleasures)
+   - **P** – Cycle color palette (for palette-aware visualizers: Geiss, Unknown Pleasures)
    - **B** – Toggle beat circles (Geiss mode)
    - **+** / **-** – Increase / decrease beat sensitivity
    - **[** / **]** – Increase / decrease oscilloscope gain (Oscilloscope mode; 1.0–10.0)
@@ -52,8 +52,8 @@ On Windows you can use backslashes: `src\AudioAnalyzer.Console\AudioAnalyzer.Con
 - **Audio input**: Loopback (system output) or a specific WASAPI capture device; choice is saved in settings.
 - **Volume analysis**: Real-time level and peak display; stereo VU-style meters in VU Meter mode.
 - **FFT analysis**: Fast Fourier Transform with log-spaced frequency bands and peak hold.
-- **Visualization modes**: Spectrum bars, Oscilloscope (time-domain waveform; gain adjustable with [ ] in real time, 1.0–10.0), VU Meter, Winamp-style bars, Geiss (with optional beat circles), and **Unknown Pleasures** (stacked waveform snapshots; uses the selected color palette; press **P** to cycle palettes).
-- **Colors and palettes**: Palette-aware visualizers support **24-bit true color** (RGB) and 16 console colors. Palettes are stored as JSON files in a **palettes** directory (see below). The selected palette is applied when using Unknown Pleasures (and any future palette-aware mode).
+- **Visualization modes**: Spectrum bars, Oscilloscope (time-domain waveform; gain adjustable with [ ] in real time, 1.0–10.0), VU Meter, Winamp-style bars, **Geiss** (psychedelic plasma; optional beat circles; uses the selected color palette; press **P** to cycle palettes), and **Unknown Pleasures** (stacked waveform snapshots; uses the selected color palette; press **P** to cycle palettes).
+- **Colors and palettes**: Palette-aware visualizers (Geiss, Unknown Pleasures) support **24-bit true color** (RGB) and 16 console colors. Palettes are stored as JSON files in a **palettes** directory (see below). The selected palette is applied when using Geiss or Unknown Pleasures.
 - **Beat detection**: Optional beat detection and BPM estimate; sensitivity and beat circles are configurable and persist.
 - **Real-time display**: Updates every 50 ms.
 - **Settings**: Stored in a local file (e.g. next to the executable). `SelectedPaletteId` stores the current palette; per-visualizer options live under `VisualizerSettings`. Device, visualization mode, selected palette, beat sensitivity, oscilloscope gain, and beat circles are saved automatically when changed.
@@ -65,7 +65,7 @@ On Windows you can use backslashes: `src\AudioAnalyzer.Console\AudioAnalyzer.Con
 
 ## Palettes (JSON files)
 
-Color palettes are stored as **JSON files** in a **`palettes`** directory next to the executable (e.g. `palettes/` in the same folder as the .exe). The app ships with `palettes/default.json`. You can add more `.json` files; each file is one palette. Press **P** to cycle through all available palettes when using a palette-aware visualizer (e.g. Unknown Pleasures).
+Color palettes are stored as **JSON files** in a **`palettes`** directory next to the executable (e.g. `palettes/` in the same folder as the .exe). The app ships with `palettes/default.json`. You can add more `.json` files; each file is one palette. Press **P** to cycle through all available palettes when using a palette-aware visualizer (Geiss or Unknown Pleasures).
 
 **Palette JSON format:**
 
@@ -119,5 +119,7 @@ Legacy top-level `BeatCircles` and `OscilloscopeGain` are still read for backwar
 - Ensure audio is playing (or that the selected device is active) to see meaningful analysis.
 
 ## Visualizer bounds (for developers)
+
+Visualizers implement **`IVisualizer`** and expose **technical name** (stable key for settings/CLI, e.g. `"geiss"`), **display name** (for toolbar and help), and **`SupportsPaletteCycling`** (whether the visualizer uses the global palette when the user presses P). The composite renderer uses this metadata for the toolbar and for resolving/saving the visualization mode in settings.
 
 Visualizers receive a **viewport** (`VisualizerViewport`: start row, max lines, width). They must not write more than `viewport.MaxLines` lines and no line longer than `viewport.Width`. The composite renderer validates dimensions and display start row before calling visualizers; if a visualizer throws, a one-line error is shown and the next frame can recover. This keeps resizes and bad data from corrupting the console UI.

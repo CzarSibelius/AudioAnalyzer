@@ -6,6 +6,10 @@ namespace AudioAnalyzer.Visualizers;
 
 public sealed class SpectrumBarsVisualizer : IVisualizer
 {
+    public string TechnicalName => "spectrum";
+    public string DisplayName => "Spectrum Analyzer";
+    public bool SupportsPaletteCycling => false;
+
     private readonly StringBuilder _lineBuffer = new(512);
 
     public void Render(AnalysisSnapshot snapshot, VisualizerViewport viewport)

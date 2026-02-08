@@ -5,6 +5,10 @@ namespace AudioAnalyzer.Visualizers;
 
 public sealed class VuMeterVisualizer : IVisualizer
 {
+    public string TechnicalName => "vumeter";
+    public string DisplayName => "VU Meter";
+    public bool SupportsPaletteCycling => false;
+
     private readonly StringBuilder _lineBuffer = new(256);
 
     public void Render(AnalysisSnapshot snapshot, VisualizerViewport viewport)
