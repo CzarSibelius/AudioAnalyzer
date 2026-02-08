@@ -28,7 +28,10 @@ public sealed class GeissVisualizer : IVisualizer
 
     public void Render(AnalysisSnapshot snapshot, VisualizerViewport viewport)
     {
-        if (viewport.Width < 30 || viewport.MaxLines < 3) return;
+        if (viewport.Width < 30 || viewport.MaxLines < 3)
+        {
+            return;
+        }
 
         var palette = snapshot.UnknownPleasuresPalette;
         bool usePalette = palette is { Count: > 0 };
@@ -41,12 +44,19 @@ public sealed class GeissVisualizer : IVisualizer
             double gain = snapshot.TargetMaxMagnitude > 0.0001 ? Math.Min(1000, 1.0 / snapshot.TargetMaxMagnitude) : 1000;
             int bassEnd = Math.Max(1, snapshot.SmoothedMagnitudes.Length / 4);
             double bassSum = 0;
-            for (int i = 0; i < bassEnd; i++) bassSum += snapshot.SmoothedMagnitudes[i] * gain;
+            for (int i = 0; i < bassEnd; i++)
+            {
+                bassSum += snapshot.SmoothedMagnitudes[i] * gain;
+            }
+
             _bassIntensity = _bassIntensity * 0.7 + (bassSum / bassEnd) * 0.3;
             int trebleStart = snapshot.SmoothedMagnitudes.Length * 3 / 4;
             double trebleSum = 0;
             for (int i = trebleStart; i < snapshot.SmoothedMagnitudes.Length; i++)
+            {
                 trebleSum += snapshot.SmoothedMagnitudes[i] * gain;
+            }
+
             _trebleIntensity = _trebleIntensity * 0.7 + (trebleSum / (snapshot.SmoothedMagnitudes.Length - trebleStart)) * 0.3;
         }
 
@@ -88,9 +98,14 @@ public sealed class GeissVisualizer : IVisualizer
                         {
                             onCircle = true;
                             if (usePalette)
+                            {
                                 circlePaletteColor = palette![circle.ColorIndex % palette.Count];
+                            }
                             else
+                            {
                                 circleColor = BeatCircleColors[circle.ColorIndex % BeatCircleColors.Length];
+                            }
+
                             break;
                         }
                     }
@@ -98,9 +113,13 @@ public sealed class GeissVisualizer : IVisualizer
                 if (onCircle)
                 {
                     if (usePalette && circlePaletteColor.HasValue)
+                    {
                         AnsiConsole.AppendColored(_lineBuffer, '○', circlePaletteColor.Value);
+                    }
                     else
+                    {
                         AnsiConsole.AppendColored(_lineBuffer, '○', circleColor);
+                    }
                 }
                 else
                 {
@@ -112,14 +131,22 @@ public sealed class GeissVisualizer : IVisualizer
                     double distFromCenterPlasma = Math.Sqrt((nx - 0.5) * (nx - 0.5) + (ny - 0.5) * (ny - 0.5));
                     plasma += Math.Sin(distFromCenterPlasma * 20 - _phase * 2) * _bassIntensity * 0.5;
                     plasma += Math.Sin(nx * 30 + ny * 30 + _phase * 3) * _trebleIntensity * 0.3;
-                    if (snapshot.BeatFlashActive) plasma += 0.3;
+                    if (snapshot.BeatFlashActive)
+                    {
+                        plasma += 0.3;
+                    }
+
                     plasma = Math.Clamp((plasma + 1.5) / 3.0, 0, 1);
                     double hue = ((nx + ny + _colorPhase) + plasma * 0.3) % 1.0;
                     char ch = plasmaChars[(int)(plasma * (plasmaChars.Length - 1))];
                     if (usePalette)
                     {
                         int paletteIndex = (int)(hue * palette!.Count) % palette.Count;
-                        if (paletteIndex < 0) paletteIndex = (paletteIndex % palette.Count + palette.Count) % palette.Count;
+                        if (paletteIndex < 0)
+                        {
+                            paletteIndex = (paletteIndex % palette.Count + palette.Count) % palette.Count;
+                        }
+
                         AnsiConsole.AppendColored(_lineBuffer, ch, palette[paletteIndex]);
                     }
                     else
@@ -130,7 +157,11 @@ public sealed class GeissVisualizer : IVisualizer
                 }
             }
             int remaining = viewport.Width - width - 3;
-            if (remaining > 0) _lineBuffer.Append(' ', remaining);
+            if (remaining > 0)
+            {
+                _lineBuffer.Append(' ', remaining);
+            }
+
             Console.WriteLine(_lineBuffer.ToString());
         }
 
@@ -140,13 +171,26 @@ public sealed class GeissVisualizer : IVisualizer
 
     private static ConsoleColor GetGeissColor(double hue, double intensity)
     {
-        if (intensity < 0.2) return ConsoleColor.DarkBlue;
+        if (intensity < 0.2)
+        {
+            return ConsoleColor.DarkBlue;
+        }
+
         int colorIndex = (int)(hue * 12) % 12;
         return colorIndex switch
         {
-            0 => ConsoleColor.Red, 1 => ConsoleColor.DarkYellow, 2 => ConsoleColor.Yellow, 3 => ConsoleColor.Green,
-            4 => ConsoleColor.Cyan, 5 => ConsoleColor.Blue, 6 => ConsoleColor.DarkBlue, 7 => ConsoleColor.Magenta,
-            8 => ConsoleColor.DarkMagenta, 9 => ConsoleColor.Red, 10 => ConsoleColor.DarkRed, _ => ConsoleColor.White
+            0 => ConsoleColor.Red,
+            1 => ConsoleColor.DarkYellow,
+            2 => ConsoleColor.Yellow,
+            3 => ConsoleColor.Green,
+            4 => ConsoleColor.Cyan,
+            5 => ConsoleColor.Blue,
+            6 => ConsoleColor.DarkBlue,
+            7 => ConsoleColor.Magenta,
+            8 => ConsoleColor.DarkMagenta,
+            9 => ConsoleColor.Red,
+            10 => ConsoleColor.DarkRed,
+            _ => ConsoleColor.White
         };
     }
 
@@ -155,7 +199,10 @@ public sealed class GeissVisualizer : IVisualizer
         int colorIndex = Random.Shared.Next(6);
         double maxRadius = Math.Clamp(0.3 + _bassIntensity * 0.4, 0.3, 0.7);
         _beatCircles.Add(new BeatCircle(0.02, maxRadius, 0, colorIndex));
-        while (_beatCircles.Count > 5) _beatCircles.RemoveAt(0);
+        while (_beatCircles.Count > 5)
+        {
+            _beatCircles.RemoveAt(0);
+        }
     }
 
     private void UpdateBeatCircles()
@@ -166,9 +213,13 @@ public sealed class GeissVisualizer : IVisualizer
             double newRadius = c.Radius + 0.03;
             int newAge = c.Age + 1;
             if (newRadius > c.MaxRadius || newAge > 30)
+            {
                 _beatCircles.RemoveAt(i);
+            }
             else
+            {
                 _beatCircles[i] = new BeatCircle(newRadius, c.MaxRadius, newAge, c.ColorIndex);
+            }
         }
     }
 }

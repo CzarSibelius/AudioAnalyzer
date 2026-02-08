@@ -26,7 +26,7 @@ public sealed class NAudioAudioInput : IAudioInput
         }
     }
 
-    public void Stop()
+    public void StopCapture()
     {
         lock (_lock)
         {
@@ -36,14 +36,22 @@ public sealed class NAudioAudioInput : IAudioInput
 
     private void OnDataAvailable(object? sender, WaveInEventArgs e)
     {
-        if (_capture == null || e.BytesRecorded == 0) return;
+        if (_capture == null || e.BytesRecorded == 0)
+        {
+            return;
+        }
+
         var format = _capture switch
         {
             WasapiLoopbackCapture loopback => loopback.WaveFormat,
             WasapiCapture wasapi => wasapi.WaveFormat,
             _ => null
         };
-        if (format == null) return;
+        if (format == null)
+        {
+            return;
+        }
+
         var audioFormat = new AudioFormat
         {
             SampleRate = format.SampleRate,
@@ -62,7 +70,11 @@ public sealed class NAudioAudioInput : IAudioInput
     {
         lock (_lock)
         {
-            if (_disposed) return;
+            if (_disposed)
+            {
+                return;
+            }
+
             _capture?.StopRecording();
             _capture?.Dispose();
             _capture = null;

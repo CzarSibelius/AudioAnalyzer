@@ -27,11 +27,16 @@ public static class ColorPaletteParser
     public static IReadOnlyList<PaletteColor>? Parse(PaletteDefinition? definition)
     {
         if (definition?.Colors is not { Length: > 0 })
+        {
             return null;
+        }
 
         var result = new PaletteColor[definition.Colors.Length];
         for (int i = 0; i < definition.Colors.Length; i++)
+        {
             result[i] = ParseEntry(definition.Colors[i]);
+        }
+
         return result;
     }
 
@@ -42,7 +47,9 @@ public static class ColorPaletteParser
     public static IReadOnlyList<PaletteColor>? Parse(ColorPalette? palette)
     {
         if (palette?.ColorNames is not { Length: > 0 })
+        {
             return null;
+        }
 
         var result = new PaletteColor[palette.ColorNames.Length];
         for (int i = 0; i < palette.ColorNames.Length; i++)
@@ -63,7 +70,9 @@ public static class ColorPaletteParser
     public static PaletteColor ParseEntry(PaletteColorEntry? entry)
     {
         if (entry == null)
+        {
             return DefaultPaletteColorFallback;
+        }
 
         if (entry.R.HasValue && entry.G.HasValue && entry.B.HasValue)
         {
@@ -77,10 +86,15 @@ public static class ColorPaletteParser
         {
             var s = entry.Value.Trim();
             if (s.StartsWith('#') && s.Length >= 7 && TryParseHex(s, out byte r, out byte g, out byte b))
+            {
                 return PaletteColor.FromRgb(r, g, b);
+            }
+
             var cc = TryParseConsoleColor(s);
             if (cc.HasValue)
+            {
                 return PaletteColor.FromConsoleColor(cc.Value);
+            }
         }
 
         return DefaultPaletteColorFallback;
@@ -89,15 +103,26 @@ public static class ColorPaletteParser
     private static ConsoleColor? TryParseConsoleColor(string name)
     {
         if (Enum.TryParse<ConsoleColor>(name, ignoreCase: true, out var color))
+        {
             return color;
+        }
+
         return null;
     }
 
     private static bool TryParseHex(string hex, out byte r, out byte g, out byte b)
     {
         r = g = b = 0;
-        if (hex.Length < 7) return false;
-        if (hex[0] != '#') return false;
+        if (hex.Length < 7)
+        {
+            return false;
+        }
+
+        if (hex[0] != '#')
+        {
+            return false;
+        }
+
         return byte.TryParse(hex.AsSpan(1, 2), System.Globalization.NumberStyles.HexNumber, null, out r)
             && byte.TryParse(hex.AsSpan(3, 2), System.Globalization.NumberStyles.HexNumber, null, out g)
             && byte.TryParse(hex.AsSpan(5, 2), System.Globalization.NumberStyles.HexNumber, null, out b);

@@ -20,8 +20,16 @@ public readonly struct VisualizerViewport
     /// <summary>Truncates a line to at most maxWidth characters so it does not wrap.</summary>
     public static string TruncateToWidth(string line, int maxWidth)
     {
-        if (string.IsNullOrEmpty(line)) return "";
-        if (line.Length <= maxWidth) return line;
+        if (string.IsNullOrEmpty(line))
+        {
+            return "";
+        }
+
+        if (line.Length <= maxWidth)
+        {
+            return line;
+        }
+
         return line[..maxWidth];
     }
 }

@@ -44,7 +44,9 @@ const string LoopbackPrefix = "loopback:";
 static (string? deviceId, string name) TryResolveDeviceFromSettings(IReadOnlyList<AudioDeviceEntry> devices, AppSettings settings)
 {
     if (devices.Count == 0)
+    {
         return (null, "");
+    }
 
     if (settings.InputMode == "loopback" && string.IsNullOrEmpty(settings.DeviceName))
     {
@@ -59,7 +61,9 @@ static (string? deviceId, string name) TryResolveDeviceFromSettings(IReadOnlyLis
         foreach (var d in devices)
         {
             if (d.Id == captureId || d.Id == loopbackId)
+            {
                 return (d.Id, d.Name);
+            }
         }
     }
 
@@ -113,7 +117,9 @@ ResolveAndSetPalette(settings, paletteRepo, compositeRenderer);
 var devices = deviceInfo.GetDevices();
 var (initialDeviceId, initialName) = TryResolveDeviceFromSettings(devices, settings);
 if (initialName == "")
+{
     (initialDeviceId, initialName) = ShowDeviceSelectionMenu(deviceInfo, settingsRepo, settings, null);
+}
 
 if (initialName == "")
 {
@@ -131,7 +137,7 @@ void StartCapture(string? deviceId, string name)
 {
     lock (deviceLock)
     {
-        currentInput?.Stop();
+        currentInput?.StopCapture();
         currentInput?.Dispose();
         currentInput = deviceInfo.CreateCapture(deviceId);
         currentDeviceName = name;
@@ -139,7 +145,11 @@ void StartCapture(string? deviceId, string name)
         {
             lock (deviceLock)
             {
-                if (currentInput == null) return;
+                if (currentInput == null)
+                {
+                    return;
+                }
+
                 engine.ProcessAudio(e.Buffer, e.BytesRecorded, e.Format);
             }
         };
@@ -177,7 +187,11 @@ while (running)
                 running = false;
                 break;
             case ConsoleKey.D:
-                lock (deviceLock) currentInput?.Stop();
+                lock (deviceLock)
+                {
+                    currentInput?.StopCapture();
+                }
+
                 var (newId, newName) = ShowDeviceSelectionMenu(deviceInfo, settingsRepo, settings, currentDeviceName);
                 if (newName != "")
                 {
@@ -185,7 +199,10 @@ while (running)
                 }
                 else
                 {
-                    lock (deviceLock) currentInput?.Start();
+                    lock (deviceLock)
+                    {
+                        currentInput?.Start();
+                    }
                 }
                 DrawMainUI(currentDeviceName);
                 engine.Redraw();
@@ -236,7 +253,11 @@ while (running)
 void CyclePalette()
 {
     var all = paletteRepo.GetAll();
-    if (all.Count == 0) return;
+    if (all.Count == 0)
+    {
+        return;
+    }
+
     var currentId = settings.SelectedPaletteId ?? "";
     int index = 0;
     for (int i = 0; i < all.Count; i++)
@@ -262,7 +283,7 @@ void CyclePalette()
 
 lock (deviceLock)
 {
-    currentInput?.Stop();
+    currentInput?.StopCapture();
     currentInput?.Dispose();
     currentInput = null;
 }
@@ -372,7 +393,10 @@ void ShowHelpMenu()
     {
         string desc = Desc(mode);
         if (compositeRenderer.SupportsPaletteCycling(mode))
+        {
             desc += " (P = cycle palette)";
+        }
+
         Console.WriteLine($"  {compositeRenderer.GetDisplayName(mode),-22} {desc}");
     }
     Console.WriteLine();
@@ -440,13 +464,22 @@ static (string? deviceId, string name) ShowDeviceSelectionMenu(IAudioDeviceInfo 
                 Console.ForegroundColor = ConsoleColor.Black;
             }
             else if (isCurrent)
+            {
                 Console.ForegroundColor = ConsoleColor.Cyan;
+            }
 
             string prefix = i == selectedIndex ? " ► " : "   ";
             string suffix = isCurrent ? " (current)" : "";
             string line = $"{prefix}{devices[i].Name}{suffix}";
-            if (line.Length < width - 1) line = line.PadRight(width - 1);
-            else line = line[..(width - 1)];
+            if (line.Length < width - 1)
+            {
+                line = line.PadRight(width - 1);
+            }
+            else
+            {
+                line = line[..(width - 1)];
+            }
+
             Console.WriteLine(line);
             Console.ResetColor();
         }
@@ -467,14 +500,23 @@ static (string? deviceId, string name) ShowDeviceSelectionMenu(IAudioDeviceInfo 
                 if (selected.Id != null)
                 {
                     if (selected.Id.StartsWith("capture:", StringComparison.Ordinal))
+                    {
                         settings.DeviceName = selected.Id.Substring(8);
+                    }
                     else if (selected.Id.StartsWith("loopback:", StringComparison.Ordinal))
+                    {
                         settings.DeviceName = selected.Id.Substring(9);
+                    }
                     else
+                    {
                         settings.DeviceName = selected.Id;
+                    }
                 }
                 else
+                {
                     settings.DeviceName = null;
+                }
+
                 settingsRepo.Save(settings);
                 try
                 {

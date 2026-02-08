@@ -1,0 +1,14 @@
+---
+description: Use linter diagnostics after editing code; fix errors and warnings
+globs: "**/*.cs"
+alwaysApply: false
+---
+
+# Static analysis
+
+After making code changes, check linter diagnostics for the modified files (use read_lints for those paths).
+
+- **Fix all reported errors.**
+- **Fix warnings** unless the rule is explicitly disabled for that line (e.g. pragma or editorconfig).
+
+Do not complete code edits without addressing any linter errors in the files you changed.

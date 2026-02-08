@@ -11,7 +11,7 @@ public interface IAudioInput : IDisposable
     event EventHandler<AudioDataAvailableEventArgs>? DataAvailable;
 
     void Start();
-    void Stop();
+    void StopCapture();
 }
 
 public sealed class AudioDataAvailableEventArgs : EventArgs

@@ -25,7 +25,11 @@ public sealed class FilePaletteRepository : IPaletteRepository
             foreach (var path in Directory.EnumerateFiles(_palettesDirectory, "*.json", SearchOption.TopDirectoryOnly))
             {
                 var id = Path.GetFileNameWithoutExtension(path);
-                if (string.IsNullOrEmpty(id)) continue;
+                if (string.IsNullOrEmpty(id))
+                {
+                    continue;
+                }
+
                 var def = LoadFromPath(path);
                 var name = def?.Name?.Trim();
                 list.Add(new PaletteInfo(id, string.IsNullOrEmpty(name) ? id : name));
@@ -40,9 +44,16 @@ public sealed class FilePaletteRepository : IPaletteRepository
 
     public PaletteDefinition? GetById(string id)
     {
-        if (string.IsNullOrWhiteSpace(id)) return null;
+        if (string.IsNullOrWhiteSpace(id))
+        {
+            return null;
+        }
         // Prevent path traversal
-        if (id.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0) return null;
+        if (id.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
+        {
+            return null;
+        }
+
         EnsurePalettesDirectoryExists();
         var path = Path.Combine(_palettesDirectory, id + ".json");
         return File.Exists(path) ? LoadFromPath(path) : null;
@@ -53,7 +64,9 @@ public sealed class FilePaletteRepository : IPaletteRepository
         try
         {
             if (!Directory.Exists(_palettesDirectory))
+            {
                 Directory.CreateDirectory(_palettesDirectory);
+            }
         }
         catch
         {
@@ -82,11 +95,26 @@ public sealed class FilePaletteRepository : IPaletteRepository
                     if (el.ValueKind == JsonValueKind.Object)
                     {
                         int? r = null, g = null, b = null;
-                        if (el.TryGetProperty("R", out var rProp)) r = rProp.TryGetInt32(out var ri) ? ri : null;
-                        if (el.TryGetProperty("G", out var gProp)) g = gProp.TryGetInt32(out var gi) ? gi : null;
-                        if (el.TryGetProperty("B", out var bProp)) b = bProp.TryGetInt32(out var bi) ? bi : null;
+                        if (el.TryGetProperty("R", out var rProp))
+                        {
+                            r = rProp.TryGetInt32(out var ri) ? ri : null;
+                        }
+
+                        if (el.TryGetProperty("G", out var gProp))
+                        {
+                            g = gProp.TryGetInt32(out var gi) ? gi : null;
+                        }
+
+                        if (el.TryGetProperty("B", out var bProp))
+                        {
+                            b = bProp.TryGetInt32(out var bi) ? bi : null;
+                        }
+
                         if (r.HasValue || g.HasValue || b.HasValue)
+                        {
                             colors.Add(new PaletteColorEntry { R = r, G = g, B = b });
+                        }
+
                         continue;
                     }
                 }

@@ -1,0 +1,8 @@
+<Project>
+  <PropertyGroup>
+    <!-- Enforce .editorconfig code style rules as build diagnostics -->
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <!-- Use latest recommended analyzer rules -->
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+  </PropertyGroup>
+</Project>

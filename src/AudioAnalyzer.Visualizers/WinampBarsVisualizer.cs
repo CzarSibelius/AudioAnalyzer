@@ -14,7 +14,10 @@ public sealed class WinampBarsVisualizer : IVisualizer
 
     public void Render(AnalysisSnapshot snapshot, VisualizerViewport viewport)
     {
-        if (viewport.Width < 30 || viewport.MaxLines < 5) return;
+        if (viewport.Width < 30 || viewport.MaxLines < 5)
+        {
+            return;
+        }
 
         int maxBarLines = Math.Max(1, viewport.MaxLines - 3);
         int barHeight = Math.Max(10, Math.Min(20, maxBarLines));
@@ -33,11 +36,18 @@ public sealed class WinampBarsVisualizer : IVisualizer
                 double normalizedPeak = Math.Min(snapshot.PeakHold[band] * gain * 0.8, 1.0);
                 int peakH = (int)(normalizedPeak * barHeight);
                 if (row == peakH && peakH > 0)
+                {
                     AnsiConsole.AppendColored(_lineBuffer, "▀▀", ConsoleColor.White);
+                }
                 else if (height >= row)
+                {
                     AnsiConsole.AppendColored(_lineBuffer, "██", GetWinampColor(row, barHeight));
+                }
                 else
+                {
                     _lineBuffer.Append("  ");
+                }
+
                 _lineBuffer.Append(' ');
             }
             Console.WriteLine(_lineBuffer.ToString());
@@ -45,7 +55,10 @@ public sealed class WinampBarsVisualizer : IVisualizer
         _lineBuffer.Clear();
         _lineBuffer.Append("  ");
         for (int band = 0; band < numBars; band++)
+        {
             AnsiConsole.AppendColored(_lineBuffer, "══ ", ConsoleColor.DarkGray);
+        }
+
         Console.WriteLine(_lineBuffer.ToString());
         Console.WriteLine(VisualizerViewport.TruncateToWidth("\n  Winamp Style - Classic music player visualization".PadRight(viewport.Width), viewport.Width));
     }
@@ -55,8 +68,11 @@ public sealed class WinampBarsVisualizer : IVisualizer
         double position = (double)row / barHeight;
         return position switch
         {
-            >= 0.85 => ConsoleColor.Red, >= 0.7 => ConsoleColor.DarkYellow, >= 0.5 => ConsoleColor.Yellow,
-            >= 0.3 => ConsoleColor.Green, _ => ConsoleColor.DarkGreen
+            >= 0.85 => ConsoleColor.Red,
+            >= 0.7 => ConsoleColor.DarkYellow,
+            >= 0.5 => ConsoleColor.Yellow,
+            >= 0.3 => ConsoleColor.Green,
+            _ => ConsoleColor.DarkGreen
         };
     }
 }

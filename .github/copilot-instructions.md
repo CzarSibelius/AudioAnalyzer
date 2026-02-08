@@ -10,9 +10,12 @@ Real-time audio frequency spectrum analyzer for Windows using NAudio library. Ca
 ### Build Verification
 **ALWAYS verify the code builds after making changes:**
 ```powershell
-dotnet build .\AudioAnalyzer\AudioAnalyzer.csproj
+dotnet build .\AudioAnalyzer.sln
 ```
 Never complete a task without confirming successful compilation.
+
+### Static analysis
+After making code changes, check linter diagnostics for the modified files and fix any reported errors; fix warnings unless the rule is explicitly disabled for that line. Optionally run `dotnet format --verify-no-changes` to verify formatting (or `dotnet format` to fix); this uses .editorconfig.
 
 ### Architecture decisions (ADRs)
 - **Follow docs/adr/**: When changing architecture, persistence, or user-facing behavior, read the relevant ADRs in `docs/adr/` and align implementation with them.

@@ -19,16 +19,22 @@ public sealed class NAudioDeviceInfo : IAudioDeviceInfo
 
             var captureDevices = enumerator.EnumerateAudioEndPoints(DataFlow.Capture, DeviceState.Active);
             foreach (var device in captureDevices)
+            {
                 list.Add(new AudioDeviceEntry { Name = "🎤 " + device.FriendlyName, Id = CapturePrefix + device.FriendlyName });
+            }
 
             var renderDevices = enumerator.EnumerateAudioEndPoints(DataFlow.Render, DeviceState.Active);
             foreach (var device in renderDevices)
+            {
                 list.Add(new AudioDeviceEntry { Name = "🔊 " + device.FriendlyName + " (Loopback)", Id = LoopbackPrefix + device.FriendlyName });
+            }
         }
         catch
         {
             if (list.Count == 0)
+            {
                 list.Add(new AudioDeviceEntry { Name = "System Audio (Loopback)", Id = null });
+            }
         }
         return list;
     }

@@ -23,6 +23,7 @@ From the solution root (the folder containing `AudioAnalyzer.sln`):
    ```bash
    dotnet build
    ```
+   The solution uses static analysis: code style from `.editorconfig` is enforced at build time (`Directory.Build.props`). To verify formatting without changing files, run `dotnet format .\AudioAnalyzer.sln --verify-no-changes` (or `dotnet format .\AudioAnalyzer.sln` to fix).
 
 2. Run the application:
    ```bash

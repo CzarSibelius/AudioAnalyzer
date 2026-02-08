@@ -28,15 +28,23 @@ public sealed class UnknownPleasuresVisualizer : IVisualizer
 
     public void Render(AnalysisSnapshot snapshot, VisualizerViewport viewport)
     {
-        if (viewport.Width < 20 || viewport.MaxLines < 5) return;
+        if (viewport.Width < 20 || viewport.MaxLines < 5)
+        {
+            return;
+        }
 
         var palette = snapshot.UnknownPleasuresPalette;
         if (palette is null || palette.Count == 0)
+        {
             return;
+        }
 
         var magnitudes = snapshot.SmoothedMagnitudes ?? Array.Empty<double>();
         int numBands = Math.Min(snapshot.NumBands, magnitudes.Length);
-        if (numBands == 0) return;
+        if (numBands == 0)
+        {
+            return;
+        }
 
         double gain = snapshot.TargetMaxMagnitude > 0.0001 ? Math.Min(1000, 1.0 / snapshot.TargetMaxMagnitude) : 1000;
 
@@ -50,7 +58,11 @@ public sealed class UnknownPleasuresVisualizer : IVisualizer
             for (int c = 0; c < SnapshotWidth; c++)
             {
                 int band = (c * numBands) / SnapshotWidth;
-                if (band >= magnitudes.Length) band = magnitudes.Length - 1;
+                if (band >= magnitudes.Length)
+                {
+                    band = magnitudes.Length - 1;
+                }
+
                 current[c] = Math.Min(magnitudes[band] * gain * 0.8, 1.0);
             }
             double min = current.Min(), max = current.Max();
@@ -58,11 +70,15 @@ public sealed class UnknownPleasuresVisualizer : IVisualizer
             if (range > 0.0001)
             {
                 for (int c = 0; c < SnapshotWidth; c++)
+                {
                     current[c] = (current[c] - min) / range;
+                }
             }
             _snapshots.Add(current);
             while (_snapshots.Count > MaxSnapshots)
+            {
                 _snapshots.RemoveAt(0);
+            }
         }
 
         int barWidth = viewport.Width;
@@ -75,7 +91,9 @@ public sealed class UnknownPleasuresVisualizer : IVisualizer
         int startIndex = Math.Max(0, numSnapshots - canShow);
 
         if (onBeat)
+        {
             _colorOffset = (_colorOffset + 1) % Math.Max(1, palette.Count);
+        }
 
         Console.SetCursorPosition(0, viewport.StartRow);
 
@@ -83,7 +101,11 @@ public sealed class UnknownPleasuresVisualizer : IVisualizer
         for (int j = 0; j < canShow && rowIndex < viewport.MaxLines; j++)
         {
             int i = startIndex + j;
-            if (i >= numSnapshots) break;
+            if (i >= numSnapshots)
+            {
+                break;
+            }
+
             double[] pulse = _snapshots[i];
             PaletteColor color = palette[(i + _colorOffset) % palette.Count];
 
@@ -93,45 +115,75 @@ public sealed class UnknownPleasuresVisualizer : IVisualizer
                 for (int c = 0; c < barWidth; c++)
                 {
                     int src = (c * SnapshotWidth) / barWidth;
-                    if (src >= pulse.Length) src = pulse.Length - 1;
+                    if (src >= pulse.Length)
+                    {
+                        src = pulse.Length - 1;
+                    }
+
                     double mag = pulse[src];
                     char ch;
                     if (line == 0)
                     {
                         if (mag >= 2.0 / 3.0)
+                        {
                             ch = AsciiGradient[Math.Min(1 + (int)((mag - 2.0 / 3.0) * 3 * (AsciiGradient.Length - 2)), AsciiGradient.Length - 1)];
+                        }
                         else
+                        {
                             ch = ' ';
+                        }
                     }
                     else if (line == 1)
                     {
                         if (mag >= 1.0 / 3.0 && mag < 2.0 / 3.0)
+                        {
                             ch = AsciiGradient[Math.Min(1 + (int)((mag - 1.0 / 3.0) * 1.5 * (AsciiGradient.Length - 2)), AsciiGradient.Length - 1)];
+                        }
                         else
+                        {
                             ch = ' ';
+                        }
                     }
                     else
                     {
                         if (mag >= 1.0 / 3.0)
+                        {
                             ch = ' ';
+                        }
                         else
                         {
                             int idx = 1 + (int)(mag * (AsciiGradient.Length - 2));
-                            if (idx < 1) idx = 1;
-                            if (idx >= AsciiGradient.Length) idx = AsciiGradient.Length - 1;
+                            if (idx < 1)
+                            {
+                                idx = 1;
+                            }
+
+                            if (idx >= AsciiGradient.Length)
+                            {
+                                idx = AsciiGradient.Length - 1;
+                            }
+
                             ch = AsciiGradient[idx];
                         }
                     }
                     if (ch != ' ')
+                    {
                         AnsiConsole.AppendColored(_lineBuffer, ch, color);
+                    }
                     else
+                    {
                         _lineBuffer.Append(' ');
+                    }
                 }
                 Console.WriteLine(_lineBuffer.ToString());
                 rowIndex++;
             }
 
-            if (rowIndex >= viewport.MaxLines) break;
+            if (rowIndex >= viewport.MaxLines)
+            {
+                break;
+            }
+
             if (j < canShow - 1)
             {
                 Console.WriteLine(new string(' ', barWidth));

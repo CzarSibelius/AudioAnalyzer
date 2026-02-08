@@ -1,0 +1,18 @@
+# Apply to this repo only
+root = true
+
+# C# files
+[*.cs]
+
+#### Indentation ####
+indent_style = space
+indent_size = 4
+tab_width = 4
+
+#### .NET code style (align with .cursor/rules/csharp-standards.mdc) ####
+# Prefer braces for all control flow (if, else, for, foreach, while, using)
+csharp_prefer_braces = true
+dotnet_diagnostic.IDE0011.severity = warning
+
+#### Formatting ####
+trim_trailing_whitespace = true

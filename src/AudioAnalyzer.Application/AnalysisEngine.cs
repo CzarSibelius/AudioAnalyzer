@@ -95,7 +95,11 @@ public sealed class AnalysisEngine
         {
             int w = _displayDimensions.Width;
             int h = _displayDimensions.Height;
-            if (w < 30 || h < 15) return;
+            if (w < 30 || h < 15)
+            {
+                return;
+            }
+
             _snapshot.DisplayStartRow = _displayStartRow;
             _snapshot.TerminalWidth = w;
             _snapshot.TerminalHeight = h;
@@ -161,10 +165,24 @@ public sealed class AnalysisEngine
 
         _leftChannel = _leftChannel * 0.7f + maxLeft * 0.3f;
         _rightChannel = _rightChannel * 0.7f + maxRight * 0.3f;
-        if (maxLeft > _leftPeak) _leftPeak = maxLeft;
-        else _leftPeak *= 0.95f;
-        if (maxRight > _rightPeak) _rightPeak = maxRight;
-        else _rightPeak *= 0.95f;
+        if (maxLeft > _leftPeak)
+        {
+            _leftPeak = maxLeft;
+        }
+        else
+        {
+            _leftPeak *= 0.95f;
+        }
+
+        if (maxRight > _rightPeak)
+        {
+            _rightPeak = maxRight;
+        }
+        else
+        {
+            _rightPeak *= 0.95f;
+        }
+
         UpdateVuPeakHold(ref _leftPeakHold, ref _leftPeakHoldTime, maxLeft);
         UpdateVuPeakHold(ref _rightPeakHold, ref _rightPeakHoldTime, maxRight);
 
@@ -199,7 +217,10 @@ public sealed class AnalysisEngine
                 }
             }
             _lastUpdate = DateTime.Now;
-            if (_beatFlashFrames > 0) _beatFlashFrames--;
+            if (_beatFlashFrames > 0)
+            {
+                _beatFlashFrames--;
+            }
         }
     }
 
@@ -233,7 +254,11 @@ public sealed class AnalysisEngine
         int h = _displayDimensions.Height;
         if (w < 30 || h < 15)
         {
-            if (_numBands == 0) _numBands = 8;
+            if (_numBands == 0)
+            {
+                _numBands = 8;
+            }
+
             return;
         }
         _numBands = Math.Max(8, Math.Min(60, (w - 8) / 2));
@@ -254,7 +279,10 @@ public sealed class AnalysisEngine
         else
         {
             holdTime++;
-            if (holdTime > 30) peakHold = Math.Max(0, peakHold - 0.02f);
+            if (holdTime > 30)
+            {
+                peakHold = Math.Max(0, peakHold - 0.02f);
+            }
         }
     }
 
@@ -282,7 +310,9 @@ public sealed class AnalysisEngine
             _smoothedMagnitudes[b] = _smoothedMagnitudes[b] * SmoothingFactor + _bandMagnitudes[b] * (1 - SmoothingFactor);
             UpdatePeakHold(b);
             if (_smoothedMagnitudes[b] > _maxMagnitudeEver)
+            {
                 _maxMagnitudeEver = _smoothedMagnitudes[b];
+            }
         }
         _targetMaxMagnitude = _targetMaxMagnitude * 0.95 + _maxMagnitudeEver * 0.05;
     }
@@ -316,15 +346,24 @@ public sealed class AnalysisEngine
         {
             _peakHoldTime[bandIndex]++;
             if (_peakHoldTime[bandIndex] > PeakHoldFrames)
+            {
                 _peakHold[bandIndex] = Math.Max(0, _peakHold[bandIndex] - _peakHold[bandIndex] * PeakFallRate);
+            }
         }
     }
 
     private void DetectBeat(double energy)
     {
         _energyHistory.Enqueue(energy);
-        if (_energyHistory.Count > EnergyHistorySize) _energyHistory.Dequeue();
-        if (_energyHistory.Count < EnergyHistorySize / 2) return;
+        if (_energyHistory.Count > EnergyHistorySize)
+        {
+            _energyHistory.Dequeue();
+        }
+
+        if (_energyHistory.Count < EnergyHistorySize / 2)
+        {
+            return;
+        }
 
         double avgEnergy = _energyHistory.Take(_energyHistory.Count - 1).Average();
         DateTime now = DateTime.Now;
@@ -336,21 +375,35 @@ public sealed class AnalysisEngine
             _beatFlashFrames = 3;
             _beatCount++;
             while (_beatTimes.Count > 0 && (now - _beatTimes.Peek()).TotalSeconds > 8)
+            {
                 _beatTimes.Dequeue();
+            }
+
             CalculateBPM();
         }
     }
 
     private void CalculateBPM()
     {
-        if (_beatTimes.Count < 2) return;
+        if (_beatTimes.Count < 2)
+        {
+            return;
+        }
+
         var recentBeats = _beatTimes.TakeLast(Math.Min(BPMHistorySize + 1, _beatTimes.Count)).ToList();
-        if (recentBeats.Count < 2) return;
+        if (recentBeats.Count < 2)
+        {
+            return;
+        }
+
         var intervals = new List<double>();
         for (int i = 1; i < recentBeats.Count; i++)
         {
             double intervalMs = (recentBeats[i] - recentBeats[i - 1]).TotalMilliseconds;
-            if (intervalMs >= 250 && intervalMs <= 2000) intervals.Add(intervalMs);
+            if (intervalMs >= 250 && intervalMs <= 2000)
+            {
+                intervals.Add(intervalMs);
+            }
         }
         if (intervals.Count > 0)
         {
