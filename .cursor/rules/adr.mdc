@@ -1,0 +1,14 @@
+---
+description: Follow Architecture Decision Records when changing architecture, persistence, or user-facing behavior
+alwaysApply: true
+---
+
+# Architecture Decision Records (ADRs)
+
+1. **Follow existing ADRs**: When changing architecture, persistence, or user-facing behavior, read the relevant documents in **docs/adr/** and align your implementation with the decisions recorded there.
+
+2. **Consult the index**: Before implementing features that touch those areas, check **docs/adr/README.md** for the list of ADRs and open any that apply.
+
+3. **Adding a new decision**: When making a new architectural or behavioral decision, create a new ADR under docs/adr/ using the template (0000-template.md), use the next number in sequence (e.g. 0002), and update the index in docs/adr/README.md. If the decision affects how agents should work, update this rule or .github/copilot-instructions.md as needed.
+
+4. **Conflicts**: If a requested change would conflict with an accepted ADR, either update the ADR (e.g. supersede it with a new one) or align the implementation with the ADR; do not silently contradict documented decisions.

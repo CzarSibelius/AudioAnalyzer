@@ -41,9 +41,10 @@ On Windows you can use backslashes: `src\AudioAnalyzer.Console\AudioAnalyzer.Con
    - **B** – Toggle beat circles (Geiss mode)
    - **+** / **-** – Increase / decrease beat sensitivity
    - **[** / **]** – Increase / decrease oscilloscope gain (Oscilloscope mode; 1.0–10.0)
-   - **S** – Save current settings (device, mode, beat sensitivity, oscilloscope gain, beat circles)
    - **D** – Change audio input device
    - **ESC** – Quit
+
+   Settings (device, mode, beat sensitivity, oscilloscope gain, beat circles) are saved automatically when you change them.
 
 ## What It Does
 
@@ -53,7 +54,7 @@ On Windows you can use backslashes: `src\AudioAnalyzer.Console\AudioAnalyzer.Con
 - **Visualization modes**: Spectrum bars, Oscilloscope (time-domain waveform; gain adjustable with [ ] in real time, 1.0–10.0), VU Meter, Winamp-style bars, Geiss (with optional beat circles).
 - **Beat detection**: Optional beat detection and BPM estimate; sensitivity and beat circles are configurable and persist.
 - **Real-time display**: Updates every 50 ms.
-- **Settings**: Stored in a local file (e.g. next to the executable); device, visualization mode, beat sensitivity, oscilloscope gain, and beat circles are persisted.
+- **Settings**: Stored in a local file (e.g. next to the executable); device, visualization mode, beat sensitivity, oscilloscope gain, and beat circles are saved automatically when changed.
 
 ## Dependencies
 

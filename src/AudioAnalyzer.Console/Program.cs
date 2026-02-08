@@ -122,6 +122,22 @@ StartCapture(initialDeviceId, initialName);
 DrawMainUI(currentDeviceName);
 engine.Redraw();
 
+void SaveSettingsToRepository()
+{
+    settings.VisualizationMode = engine.CurrentMode switch
+    {
+        VisualizationMode.Oscilloscope => "oscilloscope",
+        VisualizationMode.VuMeter => "vumeter",
+        VisualizationMode.WinampBars => "winamp",
+        VisualizationMode.Geiss => "geiss",
+        _ => "spectrum"
+    };
+    settings.BeatSensitivity = engine.BeatSensitivity;
+    settings.OscilloscopeGain = engine.OscilloscopeGain;
+    settings.BeatCircles = compositeRenderer.GetShowBeatCircles();
+    settingsRepo.Save(settings);
+}
+
 bool running = true;
 while (running)
 {
@@ -154,47 +170,32 @@ while (running)
                 break;
             case ConsoleKey.V:
                 engine.NextVisualizationMode();
+                SaveSettingsToRepository();
                 DrawMainUI(currentDeviceName);
                 engine.Redraw();
                 break;
             case ConsoleKey.OemPlus:
             case ConsoleKey.Add:
                 engine.BeatSensitivity += 0.1;
+                SaveSettingsToRepository();
                 break;
             case ConsoleKey.OemMinus:
             case ConsoleKey.Subtract:
                 engine.BeatSensitivity -= 0.1;
+                SaveSettingsToRepository();
                 break;
             case ConsoleKey.B:
                 compositeRenderer.SetShowBeatCircles(!compositeRenderer.GetShowBeatCircles());
+                SaveSettingsToRepository();
                 break;
             case ConsoleKey.Oem4:   // [ (increase gain)
                 engine.OscilloscopeGain += 0.5;
+                SaveSettingsToRepository();
                 engine.Redraw();
                 break;
             case ConsoleKey.Oem6:   // ] (decrease gain)
                 engine.OscilloscopeGain -= 0.5;
-                engine.Redraw();
-                break;
-            case ConsoleKey.S:
-                settings.VisualizationMode = engine.CurrentMode switch
-                {
-                    VisualizationMode.Oscilloscope => "oscilloscope",
-                    VisualizationMode.VuMeter => "vumeter",
-                    VisualizationMode.WinampBars => "winamp",
-                    VisualizationMode.Geiss => "geiss",
-                    _ => "spectrum"
-                };
-                settings.BeatSensitivity = engine.BeatSensitivity;
-                settings.OscilloscopeGain = engine.OscilloscopeGain;
-                settings.BeatCircles = compositeRenderer.GetShowBeatCircles();
-                settingsRepo.Save(settings);
-                Console.SetCursorPosition(0, 6);
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.Write($"Settings saved! Mode: {engine.GetModeName()}".PadRight(GetConsoleWidth() - 1));
-                Console.ResetColor();
-                Thread.Sleep(600);
-                DrawMainUI(currentDeviceName);
+                SaveSettingsToRepository();
                 engine.Redraw();
                 break;
         }
@@ -284,7 +285,6 @@ void ShowHelpMenu()
     Console.WriteLine("  B         Toggle beat circles (Geiss mode)");
     Console.WriteLine("  +/-       Adjust beat sensitivity");
     Console.WriteLine("  [ / ]     Adjust oscilloscope gain (Oscilloscope mode)");
-    Console.WriteLine("  S         Save current settings");
     Console.WriteLine("  D         Change audio input device");
     Console.WriteLine("  ESC       Quit the application");
     Console.WriteLine();

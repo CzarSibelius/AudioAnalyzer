@@ -14,11 +14,15 @@ dotnet build .\AudioAnalyzer\AudioAnalyzer.csproj
 ```
 Never complete a task without confirming successful compilation.
 
+### Architecture decisions (ADRs)
+- **Follow docs/adr/**: When changing architecture, persistence, or user-facing behavior, read the relevant ADRs in `docs/adr/` and align implementation with them.
+- If a change would conflict with an accepted ADR, either update/supersede the ADR or align the implementation with it; do not silently contradict documented decisions.
+
 ### User Control Requirements
 - **Every feature must be toggleable by the user in realtime** via keyboard shortcuts
 - New features should have a dedicated key binding (e.g., B for beat circles, V for visualization mode)
 - **Help menu (H key) must document every available command** - always update `ShowHelpMenu()` when adding new controls
-- Settings that can be toggled should be saveable via the S key to `appsettings.json`
+- Settings are persisted automatically when changed (see ADR-0001 in docs/adr/); no manual save key is required
 
 ### Code Style
 - Use C# 10 top-level statements
