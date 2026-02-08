@@ -40,7 +40,8 @@ On Windows you can use backslashes: `src\AudioAnalyzer.Console\AudioAnalyzer.Con
    - **V** – Cycle visualization mode (Spectrum, Oscilloscope, VU Meter, Winamp Style, Geiss)
    - **B** – Toggle beat circles (Geiss mode)
    - **+** / **-** – Increase / decrease beat sensitivity
-   - **S** – Save current settings (device, mode, beat sensitivity, beat circles)
+   - **[** / **]** – Increase / decrease oscilloscope gain (Oscilloscope mode; 1.0–10.0)
+   - **S** – Save current settings (device, mode, beat sensitivity, oscilloscope gain, beat circles)
    - **D** – Change audio input device
    - **ESC** – Quit
 
@@ -49,10 +50,10 @@ On Windows you can use backslashes: `src\AudioAnalyzer.Console\AudioAnalyzer.Con
 - **Audio input**: Loopback (system output) or a specific WASAPI capture device; choice is saved in settings.
 - **Volume analysis**: Real-time level and peak display; stereo VU-style meters in VU Meter mode.
 - **FFT analysis**: Fast Fourier Transform with log-spaced frequency bands and peak hold.
-- **Visualization modes**: Spectrum bars, Oscilloscope, VU Meter, Winamp-style bars, Geiss (with optional beat circles).
+- **Visualization modes**: Spectrum bars, Oscilloscope (time-domain waveform; gain adjustable with [ ] in real time, 1.0–10.0), VU Meter, Winamp-style bars, Geiss (with optional beat circles).
 - **Beat detection**: Optional beat detection and BPM estimate; sensitivity and beat circles are configurable and persist.
 - **Real-time display**: Updates every 50 ms.
-- **Settings**: Stored in a local file (e.g. next to the executable); device, visualization mode, beat sensitivity, and beat circles are persisted.
+- **Settings**: Stored in a local file (e.g. next to the executable); device, visualization mode, beat sensitivity, oscilloscope gain, and beat circles are persisted.
 
 ## Dependencies
 
