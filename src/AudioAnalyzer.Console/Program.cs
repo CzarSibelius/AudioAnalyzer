@@ -13,12 +13,11 @@ static int GetConsoleWidth()
 
 var services = new ServiceCollection();
 services.AddSingleton<IDisplayDimensions, ConsoleDisplayDimensions>();
-services.AddSingleton<CompositeVisualizationRenderer>(sp =>
+services.AddSingleton<IVisualizationRenderer>(sp =>
 {
     var dimensions = sp.GetRequiredService<IDisplayDimensions>();
     return new CompositeVisualizationRenderer(dimensions);
 });
-services.AddSingleton<IVisualizationRenderer>(sp => sp.GetRequiredService<CompositeVisualizationRenderer>());
 services.AddSingleton<ISettingsRepository>(_ => new FileSettingsRepository());
 services.AddSingleton<IPaletteRepository>(_ => new FilePaletteRepository());
 services.AddSingleton<IAudioDeviceInfo, NAudioDeviceInfo>();
@@ -34,7 +33,7 @@ var settingsRepo = provider.GetRequiredService<ISettingsRepository>();
 var paletteRepo = provider.GetRequiredService<IPaletteRepository>();
 var deviceInfo = provider.GetRequiredService<IAudioDeviceInfo>();
 var engine = provider.GetRequiredService<AnalysisEngine>();
-var compositeRenderer = provider.GetRequiredService<CompositeVisualizationRenderer>();
+var renderer = provider.GetRequiredService<IVisualizationRenderer>();
 
 var settings = settingsRepo.Load();
 
@@ -72,10 +71,10 @@ static (string? deviceId, string name) TryResolveDeviceFromSettings(IReadOnlyLis
 
 VisualizationMode ParseMode(string? mode)
 {
-    return compositeRenderer.GetModeFromTechnicalName(mode ?? "") ?? VisualizationMode.SpectrumBars;
+    return renderer.GetModeFromTechnicalName(mode ?? "") ?? VisualizationMode.SpectrumBars;
 }
 
-void ResolveAndSetPalette(AppSettings appSettings, IPaletteRepository repo, CompositeVisualizationRenderer renderer)
+void ResolveAndSetPalette(AppSettings appSettings, IPaletteRepository repo, IVisualizationRenderer visRenderer)
 {
     IReadOnlyList<PaletteColor>? palette;
     string? displayName;
@@ -86,10 +85,10 @@ void ResolveAndSetPalette(AppSettings appSettings, IPaletteRepository repo, Comp
         if (def != null && (palette = ColorPaletteParser.Parse(def)) != null && palette.Count > 0)
         {
             displayName = def.Name?.Trim();
-            renderer.SetUnknownPleasuresPalette(palette, string.IsNullOrEmpty(displayName) ? appSettings.SelectedPaletteId : displayName);
+            visRenderer.SetPalette(palette, string.IsNullOrEmpty(displayName) ? appSettings.SelectedPaletteId : displayName);
             return;
         }
-        palette = ColorPaletteParser.DefaultUnknownPleasuresPalette;
+        palette = ColorPaletteParser.DefaultPalette;
         displayName = "Default";
     }
     else
@@ -97,22 +96,22 @@ void ResolveAndSetPalette(AppSettings appSettings, IPaletteRepository repo, Comp
         var legacyPalette = ColorPaletteParser.Parse(appSettings.VisualizerSettings?.UnknownPleasures?.Palette);
         if (legacyPalette != null && legacyPalette.Count > 0)
         {
-            renderer.SetUnknownPleasuresPalette(legacyPalette, "Custom");
+            visRenderer.SetPalette(legacyPalette, "Custom");
             return;
         }
-        palette = ColorPaletteParser.DefaultUnknownPleasuresPalette;
+        palette = ColorPaletteParser.DefaultPalette;
         displayName = "Default";
         appSettings.SelectedPaletteId = "default";
     }
 
-    renderer.SetUnknownPleasuresPalette(palette, displayName);
+    visRenderer.SetPalette(palette, displayName);
 }
 
 engine.SetVisualizationMode(ParseMode(settings.VisualizationMode));
 engine.BeatSensitivity = settings.BeatSensitivity;
-engine.OscilloscopeGain = settings.VisualizerSettings?.Oscilloscope?.Gain ?? settings.OscilloscopeGain;
-compositeRenderer.SetShowBeatCircles(settings.VisualizerSettings?.Geiss?.BeatCircles ?? settings.BeatCircles);
-ResolveAndSetPalette(settings, paletteRepo, compositeRenderer);
+engine.WaveformGain = settings.VisualizerSettings?.Oscilloscope?.Gain ?? settings.OscilloscopeGain;
+engine.ShowBeatCircles = settings.VisualizerSettings?.Geiss?.BeatCircles ?? settings.BeatCircles;
+ResolveAndSetPalette(settings, paletteRepo, renderer);
 
 var devices = deviceInfo.GetDevices();
 var (initialDeviceId, initialName) = TryResolveDeviceFromSettings(devices, settings);
@@ -163,15 +162,15 @@ engine.Redraw();
 
 void SaveSettingsToRepository()
 {
-    settings.VisualizationMode = compositeRenderer.GetTechnicalName(engine.CurrentMode);
+    settings.VisualizationMode = renderer.GetTechnicalName(engine.CurrentMode);
     settings.BeatSensitivity = engine.BeatSensitivity;
-    settings.OscilloscopeGain = engine.OscilloscopeGain;
-    settings.BeatCircles = compositeRenderer.GetShowBeatCircles();
+    settings.OscilloscopeGain = engine.WaveformGain;
+    settings.BeatCircles = engine.ShowBeatCircles;
     settings.VisualizerSettings ??= new VisualizerSettings();
     settings.VisualizerSettings.Geiss ??= new GeissVisualizerSettings();
-    settings.VisualizerSettings.Geiss.BeatCircles = compositeRenderer.GetShowBeatCircles();
+    settings.VisualizerSettings.Geiss.BeatCircles = engine.ShowBeatCircles;
     settings.VisualizerSettings.Oscilloscope ??= new OscilloscopeVisualizerSettings();
-    settings.VisualizerSettings.Oscilloscope.Gain = engine.OscilloscopeGain;
+    settings.VisualizerSettings.Oscilloscope.Gain = engine.WaveformGain;
     settingsRepo.Save(settings);
 }
 
@@ -229,16 +228,16 @@ while (running)
                 SaveSettingsToRepository();
                 break;
             case ConsoleKey.B:
-                compositeRenderer.SetShowBeatCircles(!compositeRenderer.GetShowBeatCircles());
+                engine.ShowBeatCircles = !engine.ShowBeatCircles;
                 SaveSettingsToRepository();
                 break;
             case ConsoleKey.Oem4:   // [ (increase gain)
-                engine.OscilloscopeGain += 0.5;
+                engine.WaveformGain += 0.5;
                 SaveSettingsToRepository();
                 engine.Redraw();
                 break;
             case ConsoleKey.Oem6:   // ] (decrease gain)
-                engine.OscilloscopeGain -= 0.5;
+                engine.WaveformGain -= 0.5;
                 SaveSettingsToRepository();
                 engine.Redraw();
                 break;
@@ -274,7 +273,7 @@ void CyclePalette()
     if (def != null && ColorPaletteParser.Parse(def) is { } palette && palette.Count > 0)
     {
         var displayName = def.Name?.Trim();
-        compositeRenderer.SetUnknownPleasuresPalette(palette, string.IsNullOrEmpty(displayName) ? next.Id : displayName);
+        renderer.SetPalette(palette, string.IsNullOrEmpty(displayName) ? next.Id : displayName);
     }
     SaveSettingsToRepository();
     DrawMainUI(currentDeviceName);
@@ -392,12 +391,12 @@ void ShowHelpMenu()
     foreach (VisualizationMode mode in Enum.GetValues<VisualizationMode>())
     {
         string desc = Desc(mode);
-        if (compositeRenderer.SupportsPaletteCycling(mode))
+        if (renderer.SupportsPaletteCycling(mode))
         {
             desc += " (P = cycle palette)";
         }
 
-        Console.WriteLine($"  {compositeRenderer.GetDisplayName(mode),-22} {desc}");
+        Console.WriteLine($"  {renderer.GetDisplayName(mode),-22} {desc}");
     }
     Console.WriteLine();
     Console.ForegroundColor = ConsoleColor.DarkGray;

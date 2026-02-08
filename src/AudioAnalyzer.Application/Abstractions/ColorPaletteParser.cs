@@ -11,8 +11,8 @@ public static class ColorPaletteParser
     private static readonly ConsoleColor DefaultFallback = ConsoleColor.Gray;
     private static readonly PaletteColor DefaultPaletteColorFallback = PaletteColor.FromConsoleColor(DefaultFallback);
 
-    /// <summary>Default palette for Unknown Pleasures visualizer (magenta, yellow, green, cyan, blue).</summary>
-    public static readonly IReadOnlyList<PaletteColor> DefaultUnknownPleasuresPalette = [
+    /// <summary>Default palette for palette-cycling visualizers (magenta, yellow, green, cyan, blue).</summary>
+    public static readonly IReadOnlyList<PaletteColor> DefaultPalette = [
         PaletteColor.FromConsoleColor(ConsoleColor.Magenta),
         PaletteColor.FromConsoleColor(ConsoleColor.Yellow),
         PaletteColor.FromConsoleColor(ConsoleColor.Green),

@@ -9,28 +9,26 @@ public sealed class CompositeVisualizationRenderer : IVisualizationRenderer
 {
     private readonly IDisplayDimensions _displayDimensions;
     private readonly Dictionary<VisualizationMode, IVisualizer> _visualizers;
-    private readonly GeissVisualizer _geissVisualizer;
-    private IReadOnlyList<PaletteColor>? _unknownPleasuresPalette;
+    private IReadOnlyList<PaletteColor>? _palette;
     private string? _currentPaletteDisplayName;
 
     public CompositeVisualizationRenderer(IDisplayDimensions displayDimensions)
     {
         _displayDimensions = displayDimensions;
-        _geissVisualizer = new GeissVisualizer();
         _visualizers = new Dictionary<VisualizationMode, IVisualizer>
         {
             [VisualizationMode.SpectrumBars] = new SpectrumBarsVisualizer(),
             [VisualizationMode.Oscilloscope] = new OscilloscopeVisualizer(),
             [VisualizationMode.VuMeter] = new VuMeterVisualizer(),
             [VisualizationMode.WinampBars] = new WinampBarsVisualizer(),
-            [VisualizationMode.Geiss] = _geissVisualizer,
+            [VisualizationMode.Geiss] = new GeissVisualizer(),
             [VisualizationMode.UnknownPleasures] = new UnknownPleasuresVisualizer()
         };
     }
 
-    public void SetUnknownPleasuresPalette(IReadOnlyList<PaletteColor>? palette, string? paletteDisplayName = null)
+    public void SetPalette(IReadOnlyList<PaletteColor>? palette, string? paletteDisplayName = null)
     {
-        _unknownPleasuresPalette = palette;
+        _palette = palette;
         _currentPaletteDisplayName = paletteDisplayName;
     }
 
@@ -69,7 +67,7 @@ public sealed class CompositeVisualizationRenderer : IVisualizationRenderer
 
             if (_visualizers.TryGetValue(mode, out var visualizer) && visualizer.SupportsPaletteCycling)
             {
-                snapshot.UnknownPleasuresPalette = _unknownPleasuresPalette ?? ColorPaletteParser.DefaultUnknownPleasuresPalette;
+                snapshot.Palette = _palette ?? ColorPaletteParser.DefaultPalette;
                 snapshot.CurrentPaletteName = _currentPaletteDisplayName;
             }
 
@@ -87,16 +85,6 @@ public sealed class CompositeVisualizationRenderer : IVisualizationRenderer
             }
         }
         catch { }
-    }
-
-    public void SetShowBeatCircles(bool show)
-    {
-        _geissVisualizer.ShowBeatCircles = show;
-    }
-
-    public bool GetShowBeatCircles()
-    {
-        return _geissVisualizer.ShowBeatCircles;
     }
 
     public string GetDisplayName(VisualizationMode mode) =>
@@ -189,17 +177,22 @@ public sealed class CompositeVisualizationRenderer : IVisualizationRenderer
     private string GetToolbarLine2(VisualizationMode mode, AnalysisSnapshot snapshot, int w)
     {
         string displayName = GetDisplayName(mode);
-        string baseLine = $"Mode: {displayName} (V) | H=Help";
-        if (mode == VisualizationMode.Oscilloscope)
+        string baseLine = $"Mode: {displayName} (V)";
+        if (_visualizers.TryGetValue(mode, out var visualizer))
         {
-            baseLine = $"Mode: {displayName} (V) | Gain: {snapshot.OscilloscopeGain:F1} ([ ]) | H=Help";
+            var suffix = visualizer.GetToolbarSuffix(snapshot);
+            if (!string.IsNullOrEmpty(suffix))
+            {
+                baseLine += $" | {suffix}";
+            }
         }
 
         if (SupportsPaletteCycling(mode) && !string.IsNullOrEmpty(snapshot.CurrentPaletteName))
         {
-            baseLine = $"Mode: {displayName} (V) | Palette: {snapshot.CurrentPaletteName} (P) | H=Help";
+            baseLine += $" | Palette: {snapshot.CurrentPaletteName} (P)";
         }
 
+        baseLine += " | H=Help";
         return baseLine;
     }
 }

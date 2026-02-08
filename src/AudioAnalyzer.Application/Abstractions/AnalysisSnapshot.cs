@@ -27,16 +27,19 @@ public sealed class AnalysisSnapshot
     public float[] Waveform { get; set; } = Array.Empty<float>();
     public int WaveformPosition { get; set; }
     public int WaveformSize { get; set; }
-    /// <summary>Amplitude gain for oscilloscope display (user-adjustable, e.g. 1.0–10.0).</summary>
-    public double OscilloscopeGain { get; set; } = 2.5;
+    /// <summary>Amplitude gain for waveform display (user-adjustable, e.g. 1.0–10.0). Used by visualizers that show waveform.</summary>
+    public double WaveformGain { get; set; } = 2.5;
 
     public float LeftChannel { get; set; }
     public float RightChannel { get; set; }
     public float LeftPeakHold { get; set; }
     public float RightPeakHold { get; set; }
 
-    /// <summary>Resolved palette for palette-aware visualizers (e.g. Unknown Pleasures). Set by the renderer from selected palette.</summary>
-    public IReadOnlyList<PaletteColor>? UnknownPleasuresPalette { get; set; }
+    /// <summary>When true, visualizers that support it (e.g. beat circles) may show that feature. Set from settings.</summary>
+    public bool ShowBeatCircles { get; set; } = true;
+
+    /// <summary>Resolved palette for palette-cycling visualizers. Set by the renderer from selected palette.</summary>
+    public IReadOnlyList<PaletteColor>? Palette { get; set; }
 
     /// <summary>Display name of the current palette (for toolbar). Set by the renderer when palette is applied.</summary>
     public string? CurrentPaletteName { get; set; }
