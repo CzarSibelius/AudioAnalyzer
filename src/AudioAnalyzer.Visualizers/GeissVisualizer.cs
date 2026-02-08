@@ -21,10 +21,7 @@ public sealed class GeissVisualizer : IVisualizer
     private double _trebleIntensity;
     private readonly List<BeatCircle> _beatCircles = new();
     private int _lastBeatCount = -1;
-    private bool _showBeatCircles = true;
     private readonly StringBuilder _lineBuffer = new(256);
-
-    public bool ShowBeatCircles { get => _showBeatCircles; set => _showBeatCircles = value; }
 
     public void Render(AnalysisSnapshot snapshot, VisualizerViewport viewport)
     {
@@ -33,7 +30,7 @@ public sealed class GeissVisualizer : IVisualizer
             return;
         }
 
-        var palette = snapshot.UnknownPleasuresPalette;
+        var palette = snapshot.Palette;
         bool usePalette = palette is { Count: > 0 };
 
         _phase += 0.15;
@@ -60,7 +57,7 @@ public sealed class GeissVisualizer : IVisualizer
             _trebleIntensity = _trebleIntensity * 0.7 + (trebleSum / (snapshot.SmoothedMagnitudes.Length - trebleStart)) * 0.3;
         }
 
-        if (snapshot.BeatCount != _lastBeatCount && _showBeatCircles)
+        if (snapshot.BeatCount != _lastBeatCount && snapshot.ShowBeatCircles)
         {
             _lastBeatCount = snapshot.BeatCount;
             SpawnBeatCircle();
@@ -87,7 +84,7 @@ public sealed class GeissVisualizer : IVisualizer
                 bool onCircle = false;
                 ConsoleColor circleColor = ConsoleColor.White;
                 PaletteColor? circlePaletteColor = null;
-                if (_showBeatCircles)
+                if (snapshot.ShowBeatCircles)
                 {
                     double aspectRatio = 2.0;
                     double distFromCenter = Math.Sqrt((nx - 0.5) * (nx - 0.5) + ((ny - 0.5) / aspectRatio) * ((ny - 0.5) / aspectRatio));

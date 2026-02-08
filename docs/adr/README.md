@@ -19,6 +19,7 @@ Decisions are numbered and kept under version control so the rationale stays wit
 | [0001](0001-automatic-save.md) | Automatic persistence of settings (no manual save) | Accepted |
 | [0002](0002-per-visualizer-settings-and-color-palette.md) | Per-visualizer settings and reusable color palette | Accepted |
 | [0003](0003-24bit-palettes-and-cycling.md) | 24-bit true color, JSON palette files, and palette cycling | Accepted |
+| [0004](0004-visualizer-encapsulation.md) | Visualizer encapsulation — keep visualizer logic inside visualizers | Accepted |
 
 ## Process
 

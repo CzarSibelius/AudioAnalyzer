@@ -33,7 +33,7 @@ public sealed class UnknownPleasuresVisualizer : IVisualizer
             return;
         }
 
-        var palette = snapshot.UnknownPleasuresPalette;
+        var palette = snapshot.Palette;
         if (palette is null || palette.Count == 0)
         {
             return;

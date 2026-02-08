@@ -14,4 +14,7 @@ public interface IVisualizer
     bool SupportsPaletteCycling { get; }
 
     void Render(AnalysisSnapshot snapshot, VisualizerViewport viewport);
+
+    /// <summary>Optional toolbar suffix for this mode (e.g. "Gain: 2.5 ([ ])"). Return null to use default toolbar only.</summary>
+    string? GetToolbarSuffix(AnalysisSnapshot snapshot) => null;
 }
