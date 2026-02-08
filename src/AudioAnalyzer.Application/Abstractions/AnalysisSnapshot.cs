@@ -1,3 +1,5 @@
+using AudioAnalyzer.Domain;
+
 namespace AudioAnalyzer.Application.Abstractions;
 
 /// <summary>
@@ -33,6 +35,9 @@ public sealed class AnalysisSnapshot
     public float LeftPeakHold { get; set; }
     public float RightPeakHold { get; set; }
 
-    /// <summary>Resolved palette for the Unknown Pleasures visualizer (set by the renderer from VisualizerSettings.UnknownPleasures.Palette).</summary>
-    public IReadOnlyList<ConsoleColor>? UnknownPleasuresPalette { get; set; }
+    /// <summary>Resolved palette for palette-aware visualizers (e.g. Unknown Pleasures). Set by the renderer from selected palette.</summary>
+    public IReadOnlyList<PaletteColor>? UnknownPleasuresPalette { get; set; }
+
+    /// <summary>Display name of the current palette (for toolbar). Set by the renderer when palette is applied.</summary>
+    public string? CurrentPaletteName { get; set; }
 }

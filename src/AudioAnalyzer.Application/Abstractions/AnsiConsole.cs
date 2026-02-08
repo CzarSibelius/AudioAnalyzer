@@ -1,4 +1,5 @@
 using System.Text;
+using AudioAnalyzer.Domain;
 
 namespace AudioAnalyzer.Application.Abstractions;
 
@@ -33,6 +34,14 @@ public static class AnsiConsole
     /// <summary>Returns the ANSI escape sequence for the given foreground color.</summary>
     public static string ColorCode(ConsoleColor color) => ForegroundCodes[(int)color];
 
+    /// <summary>Returns the ANSI escape sequence for the given palette color (16-color or 24-bit RGB).</summary>
+    public static string ColorCode(PaletteColor color)
+    {
+        if (color.IsRgb)
+            return $"\x1b[38;2;{color.R};{color.G};{color.B}m";
+        return ForegroundCodes[(int)color.ConsoleColor!.Value];
+    }
+
     /// <summary>Returns the ANSI reset sequence.</summary>
     public static string ResetCode => Reset;
 
@@ -52,6 +61,22 @@ public static class AnsiConsole
     public static void AppendColored(StringBuilder sb, char c, ConsoleColor color)
     {
         sb.Append(ForegroundCodes[(int)color]);
+        sb.Append(c);
+        sb.Append(Reset);
+    }
+
+    /// <summary>Appends a colored segment using a palette color (16-color or 24-bit).</summary>
+    public static void AppendColored(StringBuilder sb, string text, PaletteColor color)
+    {
+        sb.Append(ColorCode(color));
+        sb.Append(text);
+        sb.Append(Reset);
+    }
+
+    /// <summary>Appends a single character with palette color (16-color or 24-bit).</summary>
+    public static void AppendColored(StringBuilder sb, char c, PaletteColor color)
+    {
+        sb.Append(ColorCode(color));
         sb.Append(c);
         sb.Append(Reset);
     }

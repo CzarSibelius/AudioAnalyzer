@@ -38,6 +38,11 @@ public class AppSettings
     public double OscilloscopeGain { get; set; } = 2.5;
 
     /// <summary>
+    /// Id of the currently selected palette (e.g. filename without extension). Resolved via IPaletteRepository.
+    /// </summary>
+    public string? SelectedPaletteId { get; set; }
+
+    /// <summary>
     /// Per-visualizer settings. Each visualizer that needs configuration has its own property here.
     /// </summary>
     public VisualizerSettings? VisualizerSettings { get; set; }

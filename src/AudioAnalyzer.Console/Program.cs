@@ -20,6 +20,7 @@ services.AddSingleton<CompositeVisualizationRenderer>(sp =>
 });
 services.AddSingleton<IVisualizationRenderer>(sp => sp.GetRequiredService<CompositeVisualizationRenderer>());
 services.AddSingleton<ISettingsRepository>(_ => new FileSettingsRepository());
+services.AddSingleton<IPaletteRepository>(_ => new FilePaletteRepository());
 services.AddSingleton<IAudioDeviceInfo, NAudioDeviceInfo>();
 services.AddSingleton<AnalysisEngine>(sp =>
 {
@@ -30,6 +31,7 @@ services.AddSingleton<AnalysisEngine>(sp =>
 
 var provider = services.BuildServiceProvider();
 var settingsRepo = provider.GetRequiredService<ISettingsRepository>();
+var paletteRepo = provider.GetRequiredService<IPaletteRepository>();
 var deviceInfo = provider.GetRequiredService<IAudioDeviceInfo>();
 var engine = provider.GetRequiredService<AnalysisEngine>();
 var compositeRenderer = provider.GetRequiredService<CompositeVisualizationRenderer>();
@@ -77,12 +79,44 @@ static VisualizationMode ParseMode(string? mode)
     };
 }
 
+void ResolveAndSetPalette(AppSettings appSettings, IPaletteRepository repo, CompositeVisualizationRenderer renderer)
+{
+    IReadOnlyList<PaletteColor>? palette;
+    string? displayName;
+
+    if (!string.IsNullOrWhiteSpace(appSettings.SelectedPaletteId))
+    {
+        var def = repo.GetById(appSettings.SelectedPaletteId);
+        if (def != null && (palette = ColorPaletteParser.Parse(def)) != null && palette.Count > 0)
+        {
+            displayName = def.Name?.Trim();
+            renderer.SetUnknownPleasuresPalette(palette, string.IsNullOrEmpty(displayName) ? appSettings.SelectedPaletteId : displayName);
+            return;
+        }
+        palette = ColorPaletteParser.DefaultUnknownPleasuresPalette;
+        displayName = "Default";
+    }
+    else
+    {
+        var legacyPalette = ColorPaletteParser.Parse(appSettings.VisualizerSettings?.UnknownPleasures?.Palette);
+        if (legacyPalette != null && legacyPalette.Count > 0)
+        {
+            renderer.SetUnknownPleasuresPalette(legacyPalette, "Custom");
+            return;
+        }
+        palette = ColorPaletteParser.DefaultUnknownPleasuresPalette;
+        displayName = "Default";
+        appSettings.SelectedPaletteId = "default";
+    }
+
+    renderer.SetUnknownPleasuresPalette(palette, displayName);
+}
+
 engine.SetVisualizationMode(ParseMode(settings.VisualizationMode));
 engine.BeatSensitivity = settings.BeatSensitivity;
 engine.OscilloscopeGain = settings.VisualizerSettings?.Oscilloscope?.Gain ?? settings.OscilloscopeGain;
 compositeRenderer.SetShowBeatCircles(settings.VisualizerSettings?.Geiss?.BeatCircles ?? settings.BeatCircles);
-var unknownPleasuresPalette = ColorPaletteParser.Parse(settings.VisualizerSettings?.UnknownPleasures?.Palette);
-compositeRenderer.SetUnknownPleasuresPalette(unknownPleasuresPalette);
+ResolveAndSetPalette(settings, paletteRepo, compositeRenderer);
 
 var devices = deviceInfo.GetDevices();
 var (initialDeviceId, initialName) = TryResolveDeviceFromSettings(devices, settings);
@@ -207,9 +241,39 @@ while (running)
                 SaveSettingsToRepository();
                 engine.Redraw();
                 break;
+            case ConsoleKey.P:
+                CyclePalette();
+                break;
         }
     }
     Thread.Sleep(50);
+}
+
+void CyclePalette()
+{
+    var all = paletteRepo.GetAll();
+    if (all.Count == 0) return;
+    var currentId = settings.SelectedPaletteId ?? "";
+    int index = 0;
+    for (int i = 0; i < all.Count; i++)
+    {
+        if (string.Equals(all[i].Id, currentId, StringComparison.OrdinalIgnoreCase))
+        {
+            index = (i + 1) % all.Count;
+            break;
+        }
+    }
+    var next = all[index];
+    settings.SelectedPaletteId = next.Id;
+    var def = paletteRepo.GetById(next.Id);
+    if (def != null && ColorPaletteParser.Parse(def) is { } palette && palette.Count > 0)
+    {
+        var displayName = def.Name?.Trim();
+        compositeRenderer.SetUnknownPleasuresPalette(palette, string.IsNullOrEmpty(displayName) ? next.Id : displayName);
+    }
+    SaveSettingsToRepository();
+    DrawMainUI(currentDeviceName);
+    engine.Redraw();
 }
 
 lock (deviceLock)
@@ -291,6 +355,7 @@ void ShowHelpMenu()
     Console.WriteLine("  ─────────────────────────────────────");
     Console.WriteLine("  H         Show this help menu");
     Console.WriteLine("  V         Change visualization mode");
+    Console.WriteLine("  P         Cycle color palette (palette-aware visualizers)");
     Console.WriteLine("  B         Toggle beat circles (Geiss mode)");
     Console.WriteLine("  +/-       Adjust beat sensitivity");
     Console.WriteLine("  [ / ]     Adjust oscilloscope gain (Oscilloscope mode)");
@@ -314,7 +379,7 @@ void ShowHelpMenu()
     Console.WriteLine("  VU Meter           Classic stereo level meters");
     Console.WriteLine("  Winamp Style       Classic music player bars");
     Console.WriteLine("  Geiss              Psychedelic plasma visualization");
-    Console.WriteLine("  Unknown Pleasures Stacked waveform snapshots");
+    Console.WriteLine("  Unknown Pleasures Stacked waveform snapshots (P = cycle palette)");
     Console.WriteLine();
     Console.ForegroundColor = ConsoleColor.DarkGray;
     Console.WriteLine("  Press any key to return...");

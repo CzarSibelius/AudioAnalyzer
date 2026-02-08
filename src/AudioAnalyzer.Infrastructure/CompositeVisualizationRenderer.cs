@@ -10,7 +10,8 @@ public sealed class CompositeVisualizationRenderer : IVisualizationRenderer
     private readonly IDisplayDimensions _displayDimensions;
     private readonly Dictionary<VisualizationMode, IVisualizer> _visualizers;
     private readonly GeissVisualizer _geissVisualizer;
-    private IReadOnlyList<ConsoleColor>? _unknownPleasuresPalette;
+    private IReadOnlyList<PaletteColor>? _unknownPleasuresPalette;
+    private string? _currentPaletteDisplayName;
 
     public CompositeVisualizationRenderer(IDisplayDimensions displayDimensions)
     {
@@ -27,9 +28,10 @@ public sealed class CompositeVisualizationRenderer : IVisualizationRenderer
         };
     }
 
-    public void SetUnknownPleasuresPalette(IReadOnlyList<ConsoleColor>? palette)
+    public void SetUnknownPleasuresPalette(IReadOnlyList<PaletteColor>? palette, string? paletteDisplayName = null)
     {
         _unknownPleasuresPalette = palette;
+        _currentPaletteDisplayName = paletteDisplayName;
     }
 
     private const int ToolbarLineCount = 2;
@@ -59,7 +61,10 @@ public sealed class CompositeVisualizationRenderer : IVisualizationRenderer
             }
 
             if (mode == VisualizationMode.UnknownPleasures)
+            {
                 snapshot.UnknownPleasuresPalette = _unknownPleasuresPalette ?? ColorPaletteParser.DefaultUnknownPleasuresPalette;
+                snapshot.CurrentPaletteName = _currentPaletteDisplayName;
+            }
 
             if (_visualizers.TryGetValue(mode, out var visualizer))
             {
@@ -149,6 +154,8 @@ public sealed class CompositeVisualizationRenderer : IVisualizationRenderer
         string baseLine = $"Mode: {GetModeName(mode)} (V) | H=Help";
         if (mode == VisualizationMode.Oscilloscope)
             baseLine = $"Mode: {GetModeName(mode)} (V) | Gain: {snapshot.OscilloscopeGain:F1} ([ ]) | H=Help";
+        if (mode == VisualizationMode.UnknownPleasures && !string.IsNullOrEmpty(snapshot.CurrentPaletteName))
+            baseLine = $"Mode: {GetModeName(mode)} (V) | Palette: {snapshot.CurrentPaletteName} (P) | H=Help";
         return baseLine;
     }
 
