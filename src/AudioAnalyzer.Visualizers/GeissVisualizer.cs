@@ -1,10 +1,15 @@
 using System.Text;
 using AudioAnalyzer.Application.Abstractions;
+using AudioAnalyzer.Domain;
 
 namespace AudioAnalyzer.Visualizers;
 
 public sealed class GeissVisualizer : IVisualizer
 {
+    public string TechnicalName => "geiss";
+    public string DisplayName => "Geiss";
+    public bool SupportsPaletteCycling => true;
+
     private static readonly ConsoleColor[] BeatCircleColors = [
         ConsoleColor.Cyan, ConsoleColor.Magenta, ConsoleColor.Yellow,
         ConsoleColor.Green, ConsoleColor.Red, ConsoleColor.Blue
@@ -24,6 +29,9 @@ public sealed class GeissVisualizer : IVisualizer
     public void Render(AnalysisSnapshot snapshot, VisualizerViewport viewport)
     {
         if (viewport.Width < 30 || viewport.MaxLines < 3) return;
+
+        var palette = snapshot.UnknownPleasuresPalette;
+        bool usePalette = palette is { Count: > 0 };
 
         _phase += 0.15;
         _colorPhase += 0.08;
@@ -68,6 +76,7 @@ public sealed class GeissVisualizer : IVisualizer
                 double nx = (double)x / width, ny = (double)y / height;
                 bool onCircle = false;
                 ConsoleColor circleColor = ConsoleColor.White;
+                PaletteColor? circlePaletteColor = null;
                 if (_showBeatCircles)
                 {
                     double aspectRatio = 2.0;
@@ -78,14 +87,20 @@ public sealed class GeissVisualizer : IVisualizer
                         if (Math.Abs(distFromCenter - circle.Radius) < thickness)
                         {
                             onCircle = true;
-                            circleColor = BeatCircleColors[circle.ColorIndex % BeatCircleColors.Length];
+                            if (usePalette)
+                                circlePaletteColor = palette![circle.ColorIndex % palette.Count];
+                            else
+                                circleColor = BeatCircleColors[circle.ColorIndex % BeatCircleColors.Length];
                             break;
                         }
                     }
                 }
                 if (onCircle)
                 {
-                    AnsiConsole.AppendColored(_lineBuffer, '○', circleColor);
+                    if (usePalette && circlePaletteColor.HasValue)
+                        AnsiConsole.AppendColored(_lineBuffer, '○', circlePaletteColor.Value);
+                    else
+                        AnsiConsole.AppendColored(_lineBuffer, '○', circleColor);
                 }
                 else
                 {
@@ -100,9 +115,18 @@ public sealed class GeissVisualizer : IVisualizer
                     if (snapshot.BeatFlashActive) plasma += 0.3;
                     plasma = Math.Clamp((plasma + 1.5) / 3.0, 0, 1);
                     double hue = ((nx + ny + _colorPhase) + plasma * 0.3) % 1.0;
-                    ConsoleColor color = GetGeissColor(hue, plasma);
                     char ch = plasmaChars[(int)(plasma * (plasmaChars.Length - 1))];
-                    AnsiConsole.AppendColored(_lineBuffer, ch, color);
+                    if (usePalette)
+                    {
+                        int paletteIndex = (int)(hue * palette!.Count) % palette.Count;
+                        if (paletteIndex < 0) paletteIndex = (paletteIndex % palette.Count + palette.Count) % palette.Count;
+                        AnsiConsole.AppendColored(_lineBuffer, ch, palette[paletteIndex]);
+                    }
+                    else
+                    {
+                        ConsoleColor color = GetGeissColor(hue, plasma);
+                        AnsiConsole.AppendColored(_lineBuffer, ch, color);
+                    }
                 }
             }
             int remaining = viewport.Width - width - 3;

@@ -6,6 +6,10 @@ namespace AudioAnalyzer.Visualizers;
 
 public sealed class OscilloscopeVisualizer : IVisualizer
 {
+    public string TechnicalName => "oscilloscope";
+    public string DisplayName => "Oscilloscope";
+    public bool SupportsPaletteCycling => false;
+
     private readonly StringBuilder _lineBuffer = new(256);
 
     public void Render(AnalysisSnapshot snapshot, VisualizerViewport viewport)

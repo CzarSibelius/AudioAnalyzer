@@ -11,6 +11,10 @@ namespace AudioAnalyzer.Visualizers;
 /// </summary>
 public sealed class UnknownPleasuresVisualizer : IVisualizer
 {
+    public string TechnicalName => "unknownpleasures";
+    public string DisplayName => "Unknown Pleasures";
+    public bool SupportsPaletteCycling => true;
+
     private const int SnapshotWidth = 120;
     private const int MaxSnapshots = 14;
 

@@ -6,6 +6,10 @@ namespace AudioAnalyzer.Visualizers;
 
 public sealed class WinampBarsVisualizer : IVisualizer
 {
+    public string TechnicalName => "winamp";
+    public string DisplayName => "Winamp Style";
+    public bool SupportsPaletteCycling => false;
+
     private readonly StringBuilder _lineBuffer = new(512);
 
     public void Render(AnalysisSnapshot snapshot, VisualizerViewport viewport)

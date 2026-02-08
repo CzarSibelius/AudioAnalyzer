@@ -66,17 +66,9 @@ static (string? deviceId, string name) TryResolveDeviceFromSettings(IReadOnlyLis
     return (null, "");
 }
 
-static VisualizationMode ParseMode(string? mode)
+VisualizationMode ParseMode(string? mode)
 {
-    return mode switch
-    {
-        "oscilloscope" => VisualizationMode.Oscilloscope,
-        "vumeter" => VisualizationMode.VuMeter,
-        "winamp" => VisualizationMode.WinampBars,
-        "geiss" => VisualizationMode.Geiss,
-        "unknownpleasures" => VisualizationMode.UnknownPleasures,
-        _ => VisualizationMode.SpectrumBars
-    };
+    return compositeRenderer.GetModeFromTechnicalName(mode ?? "") ?? VisualizationMode.SpectrumBars;
 }
 
 void ResolveAndSetPalette(AppSettings appSettings, IPaletteRepository repo, CompositeVisualizationRenderer renderer)
@@ -161,15 +153,7 @@ engine.Redraw();
 
 void SaveSettingsToRepository()
 {
-    settings.VisualizationMode = engine.CurrentMode switch
-    {
-        VisualizationMode.Oscilloscope => "oscilloscope",
-        VisualizationMode.VuMeter => "vumeter",
-        VisualizationMode.WinampBars => "winamp",
-        VisualizationMode.Geiss => "geiss",
-        VisualizationMode.UnknownPleasures => "unknownpleasures",
-        _ => "spectrum"
-    };
+    settings.VisualizationMode = compositeRenderer.GetTechnicalName(engine.CurrentMode);
     settings.BeatSensitivity = engine.BeatSensitivity;
     settings.OscilloscopeGain = engine.OscilloscopeGain;
     settings.BeatCircles = compositeRenderer.GetShowBeatCircles();
@@ -374,12 +358,23 @@ void ShowHelpMenu()
     Console.WriteLine("  VISUALIZATION MODES (press V to cycle)");
     Console.ResetColor();
     Console.WriteLine("  ─────────────────────────────────────");
-    Console.WriteLine("  Spectrum Analyzer  Frequency bars with peak hold");
-    Console.WriteLine("  Oscilloscope       Waveform display ( [ ] = gain)");
-    Console.WriteLine("  VU Meter           Classic stereo level meters");
-    Console.WriteLine("  Winamp Style       Classic music player bars");
-    Console.WriteLine("  Geiss              Psychedelic plasma visualization");
-    Console.WriteLine("  Unknown Pleasures Stacked waveform snapshots (P = cycle palette)");
+    string Desc(VisualizationMode m) => m switch
+    {
+        VisualizationMode.SpectrumBars => "Frequency bars with peak hold",
+        VisualizationMode.Oscilloscope => "Waveform display ( [ ] = gain)",
+        VisualizationMode.VuMeter => "Classic stereo level meters",
+        VisualizationMode.WinampBars => "Classic music player bars",
+        VisualizationMode.Geiss => "Psychedelic plasma visualization",
+        VisualizationMode.UnknownPleasures => "Stacked waveform snapshots",
+        _ => ""
+    };
+    foreach (VisualizationMode mode in Enum.GetValues<VisualizationMode>())
+    {
+        string desc = Desc(mode);
+        if (compositeRenderer.SupportsPaletteCycling(mode))
+            desc += " (P = cycle palette)";
+        Console.WriteLine($"  {compositeRenderer.GetDisplayName(mode),-22} {desc}");
+    }
     Console.WriteLine();
     Console.ForegroundColor = ConsoleColor.DarkGray;
     Console.WriteLine("  Press any key to return...");

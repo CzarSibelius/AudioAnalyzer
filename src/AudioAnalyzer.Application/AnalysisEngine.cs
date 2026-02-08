@@ -114,20 +114,6 @@ public sealed class AnalysisEngine
         _currentMode = mode;
     }
 
-    public string GetModeName()
-    {
-        return _currentMode switch
-        {
-            VisualizationMode.SpectrumBars => "Spectrum Analyzer",
-            VisualizationMode.Oscilloscope => "Oscilloscope",
-            VisualizationMode.VuMeter => "VU Meter",
-            VisualizationMode.WinampBars => "Winamp Style",
-            VisualizationMode.Geiss => "Geiss",
-            VisualizationMode.UnknownPleasures => "Unknown Pleasures",
-            _ => "Unknown"
-        };
-    }
-
     public void ProcessAudio(byte[] buffer, int bytesRecorded, AudioFormat format)
     {
         int bytesPerFrame = format.BytesPerFrame;

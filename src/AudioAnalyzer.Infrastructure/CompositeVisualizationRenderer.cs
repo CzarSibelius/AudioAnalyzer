@@ -46,7 +46,7 @@ public sealed class CompositeVisualizationRenderer : IVisualizationRenderer
 
             int termWidth = snapshot.TerminalWidth;
             var toolbarViewport = new VisualizerViewport(snapshot.DisplayStartRow, ToolbarLineCount, termWidth);
-            RenderToolbar(snapshot, toolbarViewport, mode);
+            RenderToolbar(snapshot, toolbarViewport, mode, termWidth);
 
             int visualizerStartRow = snapshot.DisplayStartRow + ToolbarLineCount;
             // Reserve one row at the bottom so we never write to the last buffer row and trigger scrolling
@@ -60,13 +60,13 @@ public sealed class CompositeVisualizationRenderer : IVisualizationRenderer
                 _lastRenderedMode = mode;
             }
 
-            if (mode == VisualizationMode.UnknownPleasures)
+            if (_visualizers.TryGetValue(mode, out var visualizer) && visualizer.SupportsPaletteCycling)
             {
                 snapshot.UnknownPleasuresPalette = _unknownPleasuresPalette ?? ColorPaletteParser.DefaultUnknownPleasuresPalette;
                 snapshot.CurrentPaletteName = _currentPaletteDisplayName;
             }
 
-            if (_visualizers.TryGetValue(mode, out var visualizer))
+            if (_visualizers.TryGetValue(mode, out visualizer))
             {
                 try
                 {
@@ -92,6 +92,27 @@ public sealed class CompositeVisualizationRenderer : IVisualizationRenderer
         return _geissVisualizer.ShowBeatCircles;
     }
 
+    public string GetDisplayName(VisualizationMode mode) =>
+        _visualizers.TryGetValue(mode, out var v) ? v.DisplayName : "Unknown";
+
+    public string GetTechnicalName(VisualizationMode mode) =>
+        _visualizers.TryGetValue(mode, out var v) ? v.TechnicalName : "unknown";
+
+    public bool SupportsPaletteCycling(VisualizationMode mode) =>
+        _visualizers.TryGetValue(mode, out var v) && v.SupportsPaletteCycling;
+
+    public VisualizationMode? GetModeFromTechnicalName(string key)
+    {
+        if (string.IsNullOrWhiteSpace(key)) return null;
+        key = key.Trim();
+        foreach (var (mode, visualizer) in _visualizers)
+        {
+            if (string.Equals(visualizer.TechnicalName, key, StringComparison.OrdinalIgnoreCase))
+                return mode;
+        }
+        return null;
+    }
+
     private static void ClearRegion(int startRow, int lineCount, int width)
     {
         if (width <= 0 || lineCount <= 0) return;
@@ -107,9 +128,8 @@ public sealed class CompositeVisualizationRenderer : IVisualizationRenderer
         catch { }
     }
 
-    private static void RenderToolbar(AnalysisSnapshot snapshot, VisualizerViewport toolbarViewport, VisualizationMode mode)
+    private void RenderToolbar(AnalysisSnapshot snapshot, VisualizerViewport toolbarViewport, VisualizationMode mode, int w)
     {
-        int w = toolbarViewport.Width;
         int row0 = toolbarViewport.StartRow;
 
         double db = 20 * Math.Log10(Math.Max(snapshot.Volume, 0.00001));
@@ -149,27 +169,14 @@ public sealed class CompositeVisualizationRenderer : IVisualizationRenderer
         }
     }
 
-    private static string GetToolbarLine2(VisualizationMode mode, AnalysisSnapshot snapshot, int w)
+    private string GetToolbarLine2(VisualizationMode mode, AnalysisSnapshot snapshot, int w)
     {
-        string baseLine = $"Mode: {GetModeName(mode)} (V) | H=Help";
+        string displayName = GetDisplayName(mode);
+        string baseLine = $"Mode: {displayName} (V) | H=Help";
         if (mode == VisualizationMode.Oscilloscope)
-            baseLine = $"Mode: {GetModeName(mode)} (V) | Gain: {snapshot.OscilloscopeGain:F1} ([ ]) | H=Help";
-        if (mode == VisualizationMode.UnknownPleasures && !string.IsNullOrEmpty(snapshot.CurrentPaletteName))
-            baseLine = $"Mode: {GetModeName(mode)} (V) | Palette: {snapshot.CurrentPaletteName} (P) | H=Help";
+            baseLine = $"Mode: {displayName} (V) | Gain: {snapshot.OscilloscopeGain:F1} ([ ]) | H=Help";
+        if (SupportsPaletteCycling(mode) && !string.IsNullOrEmpty(snapshot.CurrentPaletteName))
+            baseLine = $"Mode: {displayName} (V) | Palette: {snapshot.CurrentPaletteName} (P) | H=Help";
         return baseLine;
-    }
-
-    private static string GetModeName(VisualizationMode mode)
-    {
-        return mode switch
-        {
-            VisualizationMode.SpectrumBars => "Spectrum Analyzer",
-            VisualizationMode.Oscilloscope => "Oscilloscope",
-            VisualizationMode.VuMeter => "VU Meter",
-            VisualizationMode.WinampBars => "Winamp Style",
-            VisualizationMode.Geiss => "Geiss",
-            VisualizationMode.UnknownPleasures => "Unknown Pleasures",
-            _ => "Unknown"
-        };
     }
 }
