@@ -136,9 +136,9 @@ public sealed class CompositeVisualizationRenderer : IVisualizationRenderer
 
     private static string GetToolbarLine2(VisualizationMode mode, AnalysisSnapshot snapshot, int w)
     {
-        string baseLine = $"Mode: {GetModeName(mode)} (V) | S=Save | H=Help";
+        string baseLine = $"Mode: {GetModeName(mode)} (V) | H=Help";
         if (mode == VisualizationMode.Oscilloscope)
-            baseLine = $"Mode: {GetModeName(mode)} (V) | Gain: {snapshot.OscilloscopeGain:F1} ([ ]) | S=Save | H=Help";
+            baseLine = $"Mode: {GetModeName(mode)} (V) | Gain: {snapshot.OscilloscopeGain:F1} ([ ]) | H=Help";
         return baseLine;
     }
 
