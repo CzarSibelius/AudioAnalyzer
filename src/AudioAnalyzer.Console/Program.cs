@@ -72,14 +72,17 @@ static VisualizationMode ParseMode(string? mode)
         "vumeter" => VisualizationMode.VuMeter,
         "winamp" => VisualizationMode.WinampBars,
         "geiss" => VisualizationMode.Geiss,
+        "unknownpleasures" => VisualizationMode.UnknownPleasures,
         _ => VisualizationMode.SpectrumBars
     };
 }
 
 engine.SetVisualizationMode(ParseMode(settings.VisualizationMode));
 engine.BeatSensitivity = settings.BeatSensitivity;
-engine.OscilloscopeGain = settings.OscilloscopeGain;
-compositeRenderer.SetShowBeatCircles(settings.BeatCircles);
+engine.OscilloscopeGain = settings.VisualizerSettings?.Oscilloscope?.Gain ?? settings.OscilloscopeGain;
+compositeRenderer.SetShowBeatCircles(settings.VisualizerSettings?.Geiss?.BeatCircles ?? settings.BeatCircles);
+var unknownPleasuresPalette = ColorPaletteParser.Parse(settings.VisualizerSettings?.UnknownPleasures?.Palette);
+compositeRenderer.SetUnknownPleasuresPalette(unknownPleasuresPalette);
 
 var devices = deviceInfo.GetDevices();
 var (initialDeviceId, initialName) = TryResolveDeviceFromSettings(devices, settings);
@@ -130,11 +133,17 @@ void SaveSettingsToRepository()
         VisualizationMode.VuMeter => "vumeter",
         VisualizationMode.WinampBars => "winamp",
         VisualizationMode.Geiss => "geiss",
+        VisualizationMode.UnknownPleasures => "unknownpleasures",
         _ => "spectrum"
     };
     settings.BeatSensitivity = engine.BeatSensitivity;
     settings.OscilloscopeGain = engine.OscilloscopeGain;
     settings.BeatCircles = compositeRenderer.GetShowBeatCircles();
+    settings.VisualizerSettings ??= new VisualizerSettings();
+    settings.VisualizerSettings.Geiss ??= new GeissVisualizerSettings();
+    settings.VisualizerSettings.Geiss.BeatCircles = compositeRenderer.GetShowBeatCircles();
+    settings.VisualizerSettings.Oscilloscope ??= new OscilloscopeVisualizerSettings();
+    settings.VisualizerSettings.Oscilloscope.Gain = engine.OscilloscopeGain;
     settingsRepo.Save(settings);
 }
 
@@ -305,6 +314,7 @@ void ShowHelpMenu()
     Console.WriteLine("  VU Meter           Classic stereo level meters");
     Console.WriteLine("  Winamp Style       Classic music player bars");
     Console.WriteLine("  Geiss              Psychedelic plasma visualization");
+    Console.WriteLine("  Unknown Pleasures Stacked waveform snapshots");
     Console.WriteLine();
     Console.ForegroundColor = ConsoleColor.DarkGray;
     Console.WriteLine("  Press any key to return...");

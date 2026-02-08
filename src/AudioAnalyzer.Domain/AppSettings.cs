@@ -27,11 +27,18 @@ public class AppSettings
 
     /// <summary>
     /// Show expanding circles on beat in Geiss mode.
+    /// Deprecated: use VisualizerSettings.Geiss.BeatCircles. Kept for backward compatibility when loading.
     /// </summary>
     public bool BeatCircles { get; set; } = true;
 
     /// <summary>
     /// Oscilloscope amplitude gain (1.0 = no boost, higher = more visible waveform). Default is 2.5; range typically 1.0–10.0.
+    /// Deprecated: use VisualizerSettings.Oscilloscope.Gain. Kept for backward compatibility when loading.
     /// </summary>
     public double OscilloscopeGain { get; set; } = 2.5;
+
+    /// <summary>
+    /// Per-visualizer settings. Each visualizer that needs configuration has its own property here.
+    /// </summary>
+    public VisualizerSettings? VisualizerSettings { get; set; }
 }

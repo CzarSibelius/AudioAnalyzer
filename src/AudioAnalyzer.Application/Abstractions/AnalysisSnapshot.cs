@@ -32,4 +32,7 @@ public sealed class AnalysisSnapshot
     public float RightChannel { get; set; }
     public float LeftPeakHold { get; set; }
     public float RightPeakHold { get; set; }
+
+    /// <summary>Resolved palette for the Unknown Pleasures visualizer (set by the renderer from VisualizerSettings.UnknownPleasures.Palette).</summary>
+    public IReadOnlyList<ConsoleColor>? UnknownPleasuresPalette { get; set; }
 }

@@ -6,5 +6,6 @@ public enum VisualizationMode
     Oscilloscope,
     VuMeter,
     WinampBars,
-    Geiss
+    Geiss,
+    UnknownPleasures
 }

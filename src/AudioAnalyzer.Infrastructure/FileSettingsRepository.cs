@@ -24,15 +24,27 @@ public sealed class FileSettingsRepository : ISettingsRepository
         try
         {
             var json = File.ReadAllText(_settingsPath);
-            return JsonSerializer.Deserialize<AppSettings>(json, new JsonSerializerOptions
+            var settings = JsonSerializer.Deserialize<AppSettings>(json, new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
             }) ?? new AppSettings();
+            MergeLegacyVisualizerSettings(settings);
+            return settings;
         }
         catch
         {
             return new AppSettings();
         }
+    }
+
+    /// <summary>Merges legacy top-level BeatCircles/OscilloscopeGain into VisualizerSettings for backward compatibility.</summary>
+    private static void MergeLegacyVisualizerSettings(AppSettings settings)
+    {
+        settings.VisualizerSettings ??= new VisualizerSettings();
+        if (settings.VisualizerSettings.Geiss is null)
+            settings.VisualizerSettings.Geiss = new GeissVisualizerSettings { BeatCircles = settings.BeatCircles };
+        if (settings.VisualizerSettings.Oscilloscope is null)
+            settings.VisualizerSettings.Oscilloscope = new OscilloscopeVisualizerSettings { Gain = settings.OscilloscopeGain };
     }
 
     public void Save(AppSettings settings)

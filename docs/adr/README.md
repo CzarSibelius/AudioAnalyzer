@@ -17,6 +17,7 @@ Decisions are numbered and kept under version control so the rationale stays wit
 | ADR | Title | Status |
 |-----|--------|--------|
 | [0001](0001-automatic-save.md) | Automatic persistence of settings (no manual save) | Accepted |
+| [0002](0002-per-visualizer-settings-and-color-palette.md) | Per-visualizer settings and reusable color palette | Accepted |
 
 ## Process
 
