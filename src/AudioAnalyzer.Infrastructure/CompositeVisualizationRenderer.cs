@@ -10,6 +10,7 @@ public sealed class CompositeVisualizationRenderer : IVisualizationRenderer
     private readonly IDisplayDimensions _displayDimensions;
     private readonly Dictionary<VisualizationMode, IVisualizer> _visualizers;
     private readonly GeissVisualizer _geissVisualizer;
+    private IReadOnlyList<ConsoleColor>? _unknownPleasuresPalette;
 
     public CompositeVisualizationRenderer(IDisplayDimensions displayDimensions)
     {
@@ -21,8 +22,14 @@ public sealed class CompositeVisualizationRenderer : IVisualizationRenderer
             [VisualizationMode.Oscilloscope] = new OscilloscopeVisualizer(),
             [VisualizationMode.VuMeter] = new VuMeterVisualizer(),
             [VisualizationMode.WinampBars] = new WinampBarsVisualizer(),
-            [VisualizationMode.Geiss] = _geissVisualizer
+            [VisualizationMode.Geiss] = _geissVisualizer,
+            [VisualizationMode.UnknownPleasures] = new UnknownPleasuresVisualizer()
         };
+    }
+
+    public void SetUnknownPleasuresPalette(IReadOnlyList<ConsoleColor>? palette)
+    {
+        _unknownPleasuresPalette = palette;
     }
 
     private const int ToolbarLineCount = 2;
@@ -50,6 +57,9 @@ public sealed class CompositeVisualizationRenderer : IVisualizationRenderer
                 ClearRegion(visualizerStartRow, maxLines, termWidth);
                 _lastRenderedMode = mode;
             }
+
+            if (mode == VisualizationMode.UnknownPleasures)
+                snapshot.UnknownPleasuresPalette = _unknownPleasuresPalette ?? ColorPaletteParser.DefaultUnknownPleasuresPalette;
 
             if (_visualizers.TryGetValue(mode, out var visualizer))
             {
@@ -151,6 +161,7 @@ public sealed class CompositeVisualizationRenderer : IVisualizationRenderer
             VisualizationMode.VuMeter => "VU Meter",
             VisualizationMode.WinampBars => "Winamp Style",
             VisualizationMode.Geiss => "Geiss",
+            VisualizationMode.UnknownPleasures => "Unknown Pleasures",
             _ => "Unknown"
         };
     }

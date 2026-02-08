@@ -123,6 +123,7 @@ public sealed class AnalysisEngine
             VisualizationMode.VuMeter => "VU Meter",
             VisualizationMode.WinampBars => "Winamp Style",
             VisualizationMode.Geiss => "Geiss",
+            VisualizationMode.UnknownPleasures => "Unknown Pleasures",
             _ => "Unknown"
         };
     }
