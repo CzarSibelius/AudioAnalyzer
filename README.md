@@ -1,6 +1,6 @@
 # Audio Analyzer
 
-A real-time audio analyzer that captures and analyzes system audio output using NAudio. This application captures the audio playing on your system (loopback capture) or from a selected capture device and performs FFT analysis with multiple visualization modes: spectrum bars, oscilloscope, VU meter, Winamp-style bars, Geiss-style visualization, and Unknown Pleasures (stacked waveform snapshots with a configurable palette).
+A real-time audio analyzer that captures and analyzes system audio output using NAudio. This application captures the audio playing on your system (loopback capture) or from a selected capture device and performs FFT analysis with multiple visualization modes: spectrum bars, oscilloscope, VU meter, Winamp-style bars, Geiss-style visualization, Unknown Pleasures (stacked waveform snapshots with a configurable palette), and **Layered text** (configurable text snippets and layer types with beat-reactive behavior).
 
 ## Prerequisites
 
@@ -38,8 +38,8 @@ On Windows you can use backslashes: `src\AudioAnalyzer.Console\AudioAnalyzer.Con
 2. The analyzer shows real-time volume and frequency analysis. Play audio to see it in action.
 3. **Keyboard controls:**
    - **H** – Show help (all keys and visualization modes)
-   - **V** – Cycle visualization mode (Spectrum, Oscilloscope, VU Meter, Winamp Style, Geiss, Unknown Pleasures)
-   - **P** – Cycle color palette (for palette-aware visualizers: Geiss, Unknown Pleasures)
+   - **V** – Cycle visualization mode (Spectrum, Oscilloscope, VU Meter, Winamp Style, Geiss, Unknown Pleasures, Layered text)
+   - **P** – Cycle color palette (for palette-aware visualizers: Geiss, Unknown Pleasures, Layered text)
    - **B** – Toggle beat circles (Geiss mode)
    - **+** / **-** – Increase / decrease beat sensitivity
    - **[** / **]** – Increase / decrease oscilloscope gain (Oscilloscope mode; 1.0–10.0)
@@ -53,8 +53,8 @@ On Windows you can use backslashes: `src\AudioAnalyzer.Console\AudioAnalyzer.Con
 - **Audio input**: Loopback (system output) or a specific WASAPI capture device; choice is saved in settings.
 - **Volume analysis**: Real-time level and peak display; stereo VU-style meters in VU Meter mode.
 - **FFT analysis**: Fast Fourier Transform with log-spaced frequency bands and peak hold.
-- **Visualization modes**: Spectrum bars, Oscilloscope (time-domain waveform; gain adjustable with [ ] in real time, 1.0–10.0), VU Meter, Winamp-style bars, **Geiss** (psychedelic plasma; optional beat circles; uses the selected color palette; press **P** to cycle palettes), and **Unknown Pleasures** (stacked waveform snapshots; uses the selected color palette; press **P** to cycle palettes).
-- **Colors and palettes**: Palette-aware visualizers (Geiss, Unknown Pleasures) support **24-bit true color** (RGB) and 16 console colors. Palettes are stored as JSON files in a **palettes** directory (see below). The selected palette is applied when using Geiss or Unknown Pleasures.
+- **Visualization modes**: Spectrum bars, Oscilloscope (time-domain waveform; gain adjustable with [ ] in real time, 1.0–10.0), VU Meter, Winamp-style bars, **Geiss** (psychedelic plasma; optional beat circles; uses the selected color palette; press **P** to cycle palettes), **Unknown Pleasures** (stacked waveform snapshots; uses the selected color palette; press **P** to cycle palettes), and **Layered text** (multiple independent layers—e.g. scrolling colors, marquee, falling letters—with configurable text snippets and beat reactions; config in settings; press **P** to cycle palettes).
+- **Colors and palettes**: Palette-aware visualizers (Geiss, Unknown Pleasures, Layered text) support **24-bit true color** (RGB) and 16 console colors. Palettes are stored as JSON files in a **palettes** directory (see below). The selected palette is applied when using those modes.
 - **Beat detection**: Optional beat detection and BPM estimate; sensitivity and beat circles are configurable and persist.
 - **Real-time display**: Updates every 50 ms.
 - **Settings**: Stored in a local file (e.g. next to the executable). `SelectedPaletteId` stores the current palette; per-visualizer options live under `VisualizerSettings`. Device, visualization mode, selected palette, beat sensitivity, oscilloscope gain, and beat circles are saved automatically when changed.
@@ -100,6 +100,7 @@ Example with 24-bit colors:
   - **Unknown Pleasures**: Legacy `VisualizerSettings.UnknownPleasures.Palette` (ColorPalette with `ColorNames`) is still read if `SelectedPaletteId` is not set, for backward compatibility.
   - **Geiss**: `VisualizerSettings.Geiss.BeatCircles` — show beat circles (boolean).
   - **Oscilloscope**: `VisualizerSettings.Oscilloscope.Gain` — amplitude gain (1.0–10.0).
+  - **Layered text**: `VisualizerSettings.TextLayers` — list of layers, each with `LayerType`, `ZOrder`, `TextSnippets`, `BeatReaction`, `SpeedMultiplier`, `ColorIndex`. Layer types: `ScrollingColors`, `Marquee`, `FallingLetters`, `MatrixRain`, `WaveText`, `StaticText`. Beat reactions: `None`, `SpeedBurst`, `Flash`, `SpawnMore`, `Pulse`, `ColorPop`. Layers are drawn in ascending `ZOrder` (lower = back). Edit `appsettings.json` to add, remove, or reconfigure layers.
 
 Example JSON:
 
@@ -107,7 +108,13 @@ Example JSON:
 "SelectedPaletteId": "default",
 "VisualizerSettings": {
   "Geiss": { "BeatCircles": true },
-  "Oscilloscope": { "Gain": 2.5 }
+  "Oscilloscope": { "Gain": 2.5 },
+  "TextLayers": {
+    "Layers": [
+      { "LayerType": "ScrollingColors", "ZOrder": 0, "BeatReaction": "ColorPop", "SpeedMultiplier": 1.0 },
+      { "LayerType": "Marquee", "ZOrder": 1, "TextSnippets": ["Layered text", "Audio visualizer"], "BeatReaction": "SpeedBurst", "SpeedMultiplier": 1.0 }
+    ]
+  }
 }
 ```
 
@@ -118,6 +125,7 @@ Legacy top-level `BeatCircles` and `OscilloscopeGain` are still read for backwar
 - Requires Windows with WASAPI support.
 - Use loopback to analyze system playback; use a capture device for microphone or other inputs.
 - Ensure audio is playing (or that the selected device is active) to see meaningful analysis.
+- **Modal dialogs** (help screen, device selection, and any future dialogs) use a shared modal system ([ADR-0006](docs/adr/0006-modal-system.md)): they are drawn on top of the main view, capture input until you dismiss them (e.g. any key for help, ENTER/ESC for device menu), then the main view is redrawn automatically.
 
 ## Visualizer bounds (for developers)
 

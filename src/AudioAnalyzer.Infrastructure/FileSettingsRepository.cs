@@ -50,6 +50,37 @@ public sealed class FileSettingsRepository : ISettingsRepository
         {
             settings.VisualizerSettings.Oscilloscope = new OscilloscopeVisualizerSettings { Gain = settings.OscilloscopeGain };
         }
+
+        if (settings.VisualizerSettings.TextLayers is null)
+        {
+            settings.VisualizerSettings.TextLayers = CreateDefaultTextLayersSettings();
+        }
+    }
+
+    /// <summary>Default layers: ScrollingColors background + Marquee foreground with a snippet.</summary>
+    private static TextLayersVisualizerSettings CreateDefaultTextLayersSettings()
+    {
+        return new TextLayersVisualizerSettings
+        {
+            Layers =
+            [
+                new TextLayerSettings
+                {
+                    LayerType = TextLayerType.ScrollingColors,
+                    ZOrder = 0,
+                    BeatReaction = TextLayerBeatReaction.ColorPop,
+                    SpeedMultiplier = 1.0
+                },
+                new TextLayerSettings
+                {
+                    LayerType = TextLayerType.Marquee,
+                    ZOrder = 1,
+                    TextSnippets = ["Layered text", "Audio visualizer"],
+                    BeatReaction = TextLayerBeatReaction.SpeedBurst,
+                    SpeedMultiplier = 1.0
+                }
+            ]
+        };
     }
 
     public void Save(AppSettings settings)

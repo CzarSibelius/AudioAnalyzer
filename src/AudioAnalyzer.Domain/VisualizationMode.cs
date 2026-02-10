@@ -7,5 +7,6 @@ public enum VisualizationMode
     VuMeter,
     WinampBars,
     Geiss,
-    UnknownPleasures
+    UnknownPleasures,
+    TextLayers
 }

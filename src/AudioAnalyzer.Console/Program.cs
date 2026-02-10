@@ -112,12 +112,13 @@ engine.BeatSensitivity = settings.BeatSensitivity;
 engine.WaveformGain = settings.VisualizerSettings?.Oscilloscope?.Gain ?? settings.OscilloscopeGain;
 engine.ShowBeatCircles = settings.VisualizerSettings?.Geiss?.BeatCircles ?? settings.BeatCircles;
 ResolveAndSetPalette(settings, paletteRepo, renderer);
+renderer.SetTextLayersSettings(settings.VisualizerSettings?.TextLayers);
 
 var devices = deviceInfo.GetDevices();
 var (initialDeviceId, initialName) = TryResolveDeviceFromSettings(devices, settings);
 if (initialName == "")
 {
-    (initialDeviceId, initialName) = ShowDeviceSelectionMenu(deviceInfo, settingsRepo, settings, null);
+    (initialDeviceId, initialName) = ShowDeviceSelectionMenu(deviceInfo, settingsRepo, settings, null, _ => { });
 }
 
 if (initialName == "")
@@ -131,6 +132,8 @@ string currentDeviceName = initialName;
 object deviceLock = new();
 
 engine.SetHeaderCallback(() => DrawMainUI(currentDeviceName), () => DrawHeaderOnly(currentDeviceName), 6);
+bool modalOpen = false;
+engine.SetRenderGuard(() => !modalOpen);
 
 void StartCapture(string? deviceId, string name)
 {
@@ -191,7 +194,7 @@ while (running)
                     currentInput?.StopCapture();
                 }
 
-                var (newId, newName) = ShowDeviceSelectionMenu(deviceInfo, settingsRepo, settings, currentDeviceName);
+                var (newId, newName) = ShowDeviceSelectionMenu(deviceInfo, settingsRepo, settings, currentDeviceName, open => modalOpen = open);
                 if (newName != "")
                 {
                     StartCapture(newId, newName);
@@ -207,9 +210,7 @@ while (running)
                 engine.Redraw();
                 break;
             case ConsoleKey.H:
-                ShowHelpMenu();
-                DrawMainUI(currentDeviceName);
-                engine.Redraw();
+                RunModal(DrawHelpContent, _ => true, onEnter: () => modalOpen = true, onClose: () => { modalOpen = false; DrawMainUI(currentDeviceName); engine.Redraw(); });
                 break;
             case ConsoleKey.V:
                 engine.NextVisualizationMode();
@@ -342,10 +343,28 @@ void DrawHeaderOnly(string deviceName)
     catch { }
 }
 
-void ShowHelpMenu()
+// Modal system per ADR-0006: dialogs drawn on top, capture input until closed, dismiss by key, on close run onClose to restore base view.
+// When onEnter is set, it is called when the modal opens so the console layer can suppress rendering (e.g. engine render guard).
+static void RunModal(Action drawContent, Func<ConsoleKeyInfo, bool> handleKey, Action? onClose = null, Action? onEnter = null)
 {
-    Console.Clear();
     Console.CursorVisible = false;
+    onEnter?.Invoke();
+    while (true)
+    {
+        Console.Clear();
+        drawContent();
+        var key = Console.ReadKey(true);
+        if (handleKey(key))
+        {
+            break;
+        }
+    }
+    onClose?.Invoke();
+}
+
+// Draws help content only; does not clear or read input. Used by RunModal (ADR-0006).
+void DrawHelpContent()
+{
     int width = GetConsoleWidth();
     string title = " HELP ";
     int pad = Math.Max(0, (width - title.Length - 2) / 2);
@@ -386,6 +405,7 @@ void ShowHelpMenu()
         VisualizationMode.WinampBars => "Classic music player bars",
         VisualizationMode.Geiss => "Psychedelic plasma visualization",
         VisualizationMode.UnknownPleasures => "Stacked waveform snapshots",
+        VisualizationMode.TextLayers => "Layered text (config in settings)",
         _ => ""
     };
     foreach (VisualizationMode mode in Enum.GetValues<VisualizationMode>())
@@ -402,10 +422,11 @@ void ShowHelpMenu()
     Console.ForegroundColor = ConsoleColor.DarkGray;
     Console.WriteLine("  Press any key to return...");
     Console.ResetColor();
-    Console.ReadKey(true);
 }
 
-static (string? deviceId, string name) ShowDeviceSelectionMenu(IAudioDeviceInfo deviceInfo, ISettingsRepository settingsRepo, AppSettings settings, string? currentDeviceName)
+// Device selection as a modal per ADR-0006; uses RunModal with draw + handleKey, returns selection via out state.
+// setModalOpen is called with true when the modal opens and false when it closes, so the engine can skip rendering while the modal is visible.
+static (string? deviceId, string name) ShowDeviceSelectionMenu(IAudioDeviceInfo deviceInfo, ISettingsRepository settingsRepo, AppSettings settings, string? currentDeviceName, Action<bool> setModalOpen)
 {
     var devices = deviceInfo.GetDevices();
     if (devices.Count == 0)
@@ -438,12 +459,11 @@ static (string? deviceId, string name) ShowDeviceSelectionMenu(IAudioDeviceInfo 
         }
     }
 
-    Console.Clear();
-    Console.CursorVisible = false;
+    string? resultId = null;
+    string resultName = "";
 
-    while (true)
+    void DrawDeviceContent()
     {
-        Console.SetCursorPosition(0, 0);
         int width = GetConsoleWidth();
         string title = " SELECT AUDIO INPUT ";
         int pad = Math.Max(0, (width - title.Length - 2) / 2);
@@ -483,16 +503,18 @@ static (string? deviceId, string name) ShowDeviceSelectionMenu(IAudioDeviceInfo 
             Console.ResetColor();
         }
         Console.WriteLine(new string(' ', width - 1));
+    }
 
-        var key = Console.ReadKey(true);
+    bool HandleDeviceKey(ConsoleKeyInfo key)
+    {
         switch (key.Key)
         {
             case ConsoleKey.UpArrow:
                 selectedIndex = (selectedIndex - 1 + devices.Count) % devices.Count;
-                break;
+                return false;
             case ConsoleKey.DownArrow:
                 selectedIndex = (selectedIndex + 1) % devices.Count;
-                break;
+                return false;
             case ConsoleKey.Enter:
                 var selected = devices[selectedIndex];
                 settings.InputMode = selected.Id == null ? "loopback" : "device";
@@ -515,23 +537,17 @@ static (string? deviceId, string name) ShowDeviceSelectionMenu(IAudioDeviceInfo 
                 {
                     settings.DeviceName = null;
                 }
-
                 settingsRepo.Save(settings);
-                try
-                {
-                    return (selected.Id, selected.Name);
-                }
-                catch (Exception ex)
-                {
-                    Console.Clear();
-                    Console.WriteLine($"Error opening device: {ex.Message}");
-                    Console.WriteLine("Press any key to try again...");
-                    Console.ReadKey(true);
-                    Console.Clear();
-                }
-                break;
+                resultId = selected.Id;
+                resultName = selected.Name;
+                return true;
             case ConsoleKey.Escape:
-                return (null, "");
+                return true;
+            default:
+                return false;
         }
     }
+
+    RunModal(DrawDeviceContent, HandleDeviceKey, onClose: () => setModalOpen(false), onEnter: () => setModalOpen(true));
+    return (resultId, resultName);
 }

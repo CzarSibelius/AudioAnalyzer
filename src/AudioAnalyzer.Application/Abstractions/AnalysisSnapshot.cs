@@ -43,4 +43,7 @@ public sealed class AnalysisSnapshot
 
     /// <summary>Display name of the current palette (for toolbar). Set by the renderer when palette is applied.</summary>
     public string? CurrentPaletteName { get; set; }
+
+    /// <summary>Config for the layered text visualizer. Set by the renderer when mode is TextLayers.</summary>
+    public TextLayersVisualizerSettings? TextLayersConfig { get; set; }
 }
