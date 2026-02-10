@@ -27,7 +27,9 @@ public sealed class AnalysisEngine
     private DateTime _lastUpdate = DateTime.Now;
     private int _lastTerminalWidth;
     private int _lastTerminalHeight;
+    private int _headerStartRow = 6;
     private int _displayStartRow = 6;
+    private bool _fullScreen;
     private Action? _onRedrawHeader;
     private Action? _onRefreshHeader;
     private Func<bool>? _renderGuard;
@@ -79,13 +81,25 @@ public sealed class AnalysisEngine
     public double WaveformGain { get => _waveformGain; set => _waveformGain = Math.Clamp(value, 1.0, 10.0); }
     public bool ShowBeatCircles { get => _showBeatCircles; set => _showBeatCircles = value; }
 
+    /// <summary>When true, the visualizer uses the full console; header and toolbar are hidden.</summary>
+    public bool FullScreen
+    {
+        get => _fullScreen;
+        set
+        {
+            _fullScreen = value;
+            _displayStartRow = _fullScreen ? 0 : _headerStartRow;
+        }
+    }
+
     /// <param name="redrawHeader">Full redraw (clear + header), e.g. on resize or keypress.</param>
     /// <param name="refreshHeader">Optional: redraw only the header lines (no clear), called before each render so the top never disappears.</param>
     public void SetHeaderCallback(Action? redrawHeader, Action? refreshHeader, int startRow)
     {
         _onRedrawHeader = redrawHeader;
         _onRefreshHeader = refreshHeader;
-        _displayStartRow = startRow;
+        _headerStartRow = startRow;
+        _displayStartRow = _fullScreen ? 0 : _headerStartRow;
     }
 
     /// <summary>
@@ -116,10 +130,14 @@ public sealed class AnalysisEngine
                 return;
             }
 
+            _snapshot.FullScreenMode = _fullScreen;
             _snapshot.DisplayStartRow = _displayStartRow;
             _snapshot.TerminalWidth = w;
             _snapshot.TerminalHeight = h;
-            _onRefreshHeader?.Invoke();
+            if (!_fullScreen)
+            {
+                _onRefreshHeader?.Invoke();
+            }
             try { _renderer.Render(_snapshot, _currentMode); } catch { }
         }
     }
@@ -223,11 +241,17 @@ public sealed class AnalysisEngine
                 if (w != _lastTerminalWidth || h != _lastTerminalHeight)
                 {
                     UpdateDisplayDimensions();
-                    _onRedrawHeader?.Invoke();
+                    if (!_fullScreen)
+                    {
+                        _onRedrawHeader?.Invoke();
+                    }
                 }
                 lock (_renderLock)
                 {
-                    _onRefreshHeader?.Invoke();
+                    if (!_fullScreen)
+                    {
+                        _onRefreshHeader?.Invoke();
+                    }
                     FillSnapshot(maxVolume, w, h);
                     try { _renderer.Render(_snapshot, _currentMode); } catch { }
                 }
@@ -242,6 +266,7 @@ public sealed class AnalysisEngine
 
     private void FillSnapshot(float volume, int termWidth, int termHeight)
     {
+        _snapshot.FullScreenMode = _fullScreen;
         _snapshot.DisplayStartRow = _displayStartRow;
         _snapshot.TerminalWidth = termWidth;
         _snapshot.TerminalHeight = termHeight;

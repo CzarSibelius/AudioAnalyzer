@@ -206,16 +206,34 @@ while (running)
                         currentInput?.Start();
                     }
                 }
-                DrawMainUI(currentDeviceName);
+                if (!engine.FullScreen)
+                {
+                    DrawMainUI(currentDeviceName);
+                }
                 engine.Redraw();
                 break;
             case ConsoleKey.H:
-                RunModal(DrawHelpContent, _ => true, onEnter: () => modalOpen = true, onClose: () => { modalOpen = false; DrawMainUI(currentDeviceName); engine.Redraw(); });
+                RunModal(DrawHelpContent, _ => true, onEnter: () => modalOpen = true, onClose: () =>
+                {
+                    modalOpen = false;
+                    if (engine.FullScreen)
+                    {
+                        engine.Redraw();
+                    }
+                    else
+                    {
+                        DrawMainUI(currentDeviceName);
+                        engine.Redraw();
+                    }
+                });
                 break;
             case ConsoleKey.V:
                 engine.NextVisualizationMode();
                 SaveSettingsToRepository();
-                DrawMainUI(currentDeviceName);
+                if (!engine.FullScreen)
+                {
+                    DrawMainUI(currentDeviceName);
+                }
                 engine.Redraw();
                 break;
             case ConsoleKey.OemPlus:
@@ -244,6 +262,20 @@ while (running)
                 break;
             case ConsoleKey.P:
                 CyclePalette();
+                break;
+            case ConsoleKey.F:
+                engine.FullScreen = !engine.FullScreen;
+                if (engine.FullScreen)
+                {
+                    Console.Clear();
+                    Console.CursorVisible = false;
+                    engine.Redraw();
+                }
+                else
+                {
+                    DrawMainUI(currentDeviceName);
+                    engine.Redraw();
+                }
                 break;
         }
     }
@@ -277,7 +309,10 @@ void CyclePalette()
         renderer.SetPalette(palette, string.IsNullOrEmpty(displayName) ? next.Id : displayName);
     }
     SaveSettingsToRepository();
-    DrawMainUI(currentDeviceName);
+    if (!engine.FullScreen)
+    {
+        DrawMainUI(currentDeviceName);
+    }
     engine.Redraw();
 }
 
@@ -323,7 +358,7 @@ void DrawHeaderOnly(string deviceName)
     string line2 = VisualizerViewport.TruncateToWidth("║" + new string(' ', padding) + title + new string(' ', width - padding - title.Length - 2) + "║", width).PadRight(width);
     string line3 = VisualizerViewport.TruncateToWidth("╚" + new string('═', width - 2) + "╝", width).PadRight(width);
     string line4 = VisualizerViewport.TruncateToWidth($"Input: {deviceName}", width).PadRight(width);
-    string line5 = VisualizerViewport.TruncateToWidth("Press H for help, D to change device, ESC to quit", width).PadRight(width);
+    string line5 = VisualizerViewport.TruncateToWidth("Press H for help, D device, F full screen, ESC quit", width).PadRight(width);
     string line6 = new string(' ', width);
     try
     {
@@ -384,6 +419,7 @@ void DrawHelpContent()
     Console.WriteLine("  [ / ]     Adjust oscilloscope gain (Oscilloscope mode)");
     Console.WriteLine("  D         Change audio input device");
     Console.WriteLine("  ESC       Quit the application");
+    Console.WriteLine("  F         Toggle full screen (visualizer only, no header/toolbar)");
     Console.WriteLine();
     Console.ForegroundColor = ConsoleColor.Cyan;
     Console.WriteLine("  DEVICE SELECTION MENU");

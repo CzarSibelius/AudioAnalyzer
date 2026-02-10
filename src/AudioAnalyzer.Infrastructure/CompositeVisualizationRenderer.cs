@@ -51,18 +51,29 @@ public sealed class CompositeVisualizationRenderer : IVisualizationRenderer
                 return;
             }
 
-            if (snapshot.DisplayStartRow < 0 || snapshot.DisplayStartRow + ToolbarLineCount >= snapshot.TerminalHeight)
+            int termWidth = snapshot.TerminalWidth;
+            int visualizerStartRow;
+            int maxLines;
+
+            if (snapshot.FullScreenMode)
             {
-                return;
+                visualizerStartRow = 0;
+                maxLines = Math.Max(1, snapshot.TerminalHeight - 1);
+            }
+            else
+            {
+                if (snapshot.DisplayStartRow < 0 || snapshot.DisplayStartRow + ToolbarLineCount >= snapshot.TerminalHeight)
+                {
+                    return;
+                }
+
+                var toolbarViewport = new VisualizerViewport(snapshot.DisplayStartRow, ToolbarLineCount, termWidth);
+                RenderToolbar(snapshot, toolbarViewport, mode, termWidth);
+
+                visualizerStartRow = snapshot.DisplayStartRow + ToolbarLineCount;
+                maxLines = Math.Max(1, snapshot.TerminalHeight - visualizerStartRow - 1);
             }
 
-            int termWidth = snapshot.TerminalWidth;
-            var toolbarViewport = new VisualizerViewport(snapshot.DisplayStartRow, ToolbarLineCount, termWidth);
-            RenderToolbar(snapshot, toolbarViewport, mode, termWidth);
-
-            int visualizerStartRow = snapshot.DisplayStartRow + ToolbarLineCount;
-            // Reserve one row at the bottom so we never write to the last buffer row and trigger scrolling
-            int maxLines = Math.Max(1, snapshot.TerminalHeight - visualizerStartRow - 1);
             var viewport = new VisualizerViewport(visualizerStartRow, maxLines, termWidth);
 
             // Clear visualizer area only when mode changed, so we remove leftover content without flickering every frame

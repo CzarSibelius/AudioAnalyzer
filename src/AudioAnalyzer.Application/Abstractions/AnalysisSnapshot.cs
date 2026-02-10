@@ -11,6 +11,8 @@ public sealed class AnalysisSnapshot
     public int DisplayStartRow { get; set; }
     public int TerminalWidth { get; set; }
     public int TerminalHeight { get; set; }
+    /// <summary>When true, the renderer uses the full console for the visualizer and skips the toolbar.</summary>
+    public bool FullScreenMode { get; set; }
 
     public float Volume { get; set; }
     public double CurrentBpm { get; set; }
