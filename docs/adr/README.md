@@ -20,6 +20,8 @@ Decisions are numbered and kept under version control so the rationale stays wit
 | [0002](0002-per-visualizer-settings-and-color-palette.md) | Per-visualizer settings and reusable color palette | Accepted |
 | [0003](0003-24bit-palettes-and-cycling.md) | 24-bit true color, JSON palette files, and palette cycling | Accepted |
 | [0004](0004-visualizer-encapsulation.md) | Visualizer encapsulation — keep visualizer logic inside visualizers | Accepted |
+| [0005](0005-layered-visualizer-cell-buffer.md) | Layered visualizer with cell buffer and per-layer config | Accepted |
+| [0006](0006-modal-system.md) | Modal system for console UI | Accepted |
 
 ## Process
 

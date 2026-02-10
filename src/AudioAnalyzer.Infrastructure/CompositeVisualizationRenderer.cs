@@ -11,6 +11,7 @@ public sealed class CompositeVisualizationRenderer : IVisualizationRenderer
     private readonly Dictionary<VisualizationMode, IVisualizer> _visualizers;
     private IReadOnlyList<PaletteColor>? _palette;
     private string? _currentPaletteDisplayName;
+    private TextLayersVisualizerSettings? _textLayersSettings;
 
     public CompositeVisualizationRenderer(IDisplayDimensions displayDimensions)
     {
@@ -22,7 +23,8 @@ public sealed class CompositeVisualizationRenderer : IVisualizationRenderer
             [VisualizationMode.VuMeter] = new VuMeterVisualizer(),
             [VisualizationMode.WinampBars] = new WinampBarsVisualizer(),
             [VisualizationMode.Geiss] = new GeissVisualizer(),
-            [VisualizationMode.UnknownPleasures] = new UnknownPleasuresVisualizer()
+            [VisualizationMode.UnknownPleasures] = new UnknownPleasuresVisualizer(),
+            [VisualizationMode.TextLayers] = new TextLayersVisualizer()
         };
     }
 
@@ -30,6 +32,11 @@ public sealed class CompositeVisualizationRenderer : IVisualizationRenderer
     {
         _palette = palette;
         _currentPaletteDisplayName = paletteDisplayName;
+    }
+
+    public void SetTextLayersSettings(TextLayersVisualizerSettings? settings)
+    {
+        _textLayersSettings = settings;
     }
 
     private const int ToolbarLineCount = 2;
@@ -69,6 +76,11 @@ public sealed class CompositeVisualizationRenderer : IVisualizationRenderer
             {
                 snapshot.Palette = _palette ?? ColorPaletteParser.DefaultPalette;
                 snapshot.CurrentPaletteName = _currentPaletteDisplayName;
+            }
+
+            if (mode == VisualizationMode.TextLayers)
+            {
+                snapshot.TextLayersConfig = _textLayersSettings;
             }
 
             if (_visualizers.TryGetValue(mode, out visualizer))

@@ -30,6 +30,7 @@ public sealed class AnalysisEngine
     private int _displayStartRow = 6;
     private Action? _onRedrawHeader;
     private Action? _onRefreshHeader;
+    private Func<bool>? _renderGuard;
 
     private VisualizationMode _currentMode = VisualizationMode.SpectrumBars;
     private int _numBands;
@@ -88,11 +89,24 @@ public sealed class AnalysisEngine
     }
 
     /// <summary>
+    /// When set, the engine skips rendering (ProcessAudio and Redraw) when the guard returns false (e.g. when a modal is open).
+    /// </summary>
+    public void SetRenderGuard(Func<bool>? guard)
+    {
+        _renderGuard = guard;
+    }
+
+    /// <summary>
     /// Redraw the toolbar and visualizer once using current dimensions and last snapshot data.
     /// Call after DrawMainUI so the toolbar appears immediately instead of waiting for the next audio-driven frame.
     /// </summary>
     public void Redraw()
     {
+        if (_renderGuard != null && !_renderGuard())
+        {
+            return;
+        }
+
         lock (_renderLock)
         {
             int w = _displayDimensions.Width;
@@ -204,7 +218,7 @@ public sealed class AnalysisEngine
             _displayWaveformPosition = _waveformPosition;
             int w = _displayDimensions.Width;
             int h = _displayDimensions.Height;
-            if (w >= 30 && h >= 15)
+            if (w >= 30 && h >= 15 && (_renderGuard == null || _renderGuard()))
             {
                 if (w != _lastTerminalWidth || h != _lastTerminalHeight)
                 {

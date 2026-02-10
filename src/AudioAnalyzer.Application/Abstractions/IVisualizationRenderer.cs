@@ -9,6 +9,9 @@ public interface IVisualizationRenderer
     /// <summary>Sets the current palette for palette-cycling visualizers. Call when palette selection changes.</summary>
     void SetPalette(IReadOnlyList<PaletteColor>? palette, string? paletteDisplayName = null);
 
+    /// <summary>Sets the layered text visualizer config. Call when TextLayers settings are loaded or changed.</summary>
+    void SetTextLayersSettings(TextLayersVisualizerSettings? settings);
+
     /// <summary>Human-readable name for the given mode (toolbar, help).</summary>
     string GetDisplayName(VisualizationMode mode);
     /// <summary>Stable key for settings and CLI (e.g. "geiss").</summary>

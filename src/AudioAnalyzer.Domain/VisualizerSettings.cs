@@ -8,4 +8,5 @@ public class VisualizerSettings
     public UnknownPleasuresVisualizerSettings? UnknownPleasures { get; set; }
     public GeissVisualizerSettings? Geiss { get; set; }
     public OscilloscopeVisualizerSettings? Oscilloscope { get; set; }
+    public TextLayersVisualizerSettings? TextLayers { get; set; }
 }
