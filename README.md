@@ -44,6 +44,7 @@ On Windows you can use backslashes: `src\AudioAnalyzer.Console\AudioAnalyzer.Con
    - **+** / **-** – Increase / decrease beat sensitivity
    - **[** / **]** – Increase / decrease oscilloscope gain (Oscilloscope mode; 1.0–10.0)
    - **D** – Change audio input device
+   - **F** – Toggle full screen (visualizer only, no header/toolbar)
    - **ESC** – Quit
 
    Settings (device, mode, selected palette, beat sensitivity, oscilloscope gain, beat circles) are saved automatically when you change them.
