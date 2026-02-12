@@ -19,8 +19,7 @@ public sealed class CompositeVisualizationRenderer : IVisualizationRenderer
 
     private readonly IDisplayDimensions _displayDimensions;
     private readonly Dictionary<VisualizationMode, IVisualizer> _visualizers;
-    private IReadOnlyList<PaletteColor>? _palette;
-    private string? _currentPaletteDisplayName;
+    private readonly Dictionary<VisualizationMode, (IReadOnlyList<PaletteColor>? Palette, string? DisplayName)> _palettes = new();
 
     public CompositeVisualizationRenderer(IDisplayDimensions displayDimensions, IEnumerable<IVisualizer> visualizers)
     {
@@ -35,10 +34,9 @@ public sealed class CompositeVisualizationRenderer : IVisualizationRenderer
         }
     }
 
-    public void SetPalette(IReadOnlyList<PaletteColor>? palette, string? paletteDisplayName = null)
+    public void SetPaletteForMode(VisualizationMode mode, IReadOnlyList<PaletteColor>? palette, string? paletteDisplayName = null)
     {
-        _palette = palette;
-        _currentPaletteDisplayName = paletteDisplayName;
+        _palettes[mode] = (palette, paletteDisplayName);
     }
 
     private const int ToolbarLineCount = 2;
@@ -87,8 +85,9 @@ public sealed class CompositeVisualizationRenderer : IVisualizationRenderer
 
             if (_visualizers.TryGetValue(mode, out var visualizer) && visualizer.SupportsPaletteCycling)
             {
-                snapshot.Palette = _palette ?? ColorPaletteParser.DefaultPalette;
-                snapshot.CurrentPaletteName = _currentPaletteDisplayName;
+                var (palette, displayName) = _palettes.TryGetValue(mode, out var entry) ? entry : (default(IReadOnlyList<PaletteColor>?), null);
+                snapshot.Palette = palette ?? ColorPaletteParser.DefaultPalette;
+                snapshot.CurrentPaletteName = displayName;
             }
 
             if (_visualizers.TryGetValue(mode, out visualizer))

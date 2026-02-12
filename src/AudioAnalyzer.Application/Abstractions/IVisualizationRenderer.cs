@@ -6,8 +6,8 @@ public interface IVisualizationRenderer
 {
     void Render(AnalysisSnapshot snapshot, VisualizationMode mode);
 
-    /// <summary>Sets the current palette for palette-cycling visualizers. Call when palette selection changes.</summary>
-    void SetPalette(IReadOnlyList<PaletteColor>? palette, string? paletteDisplayName = null);
+    /// <summary>Sets the palette for a specific visualization mode. Call when palette selection changes.</summary>
+    void SetPaletteForMode(VisualizationMode mode, IReadOnlyList<PaletteColor>? palette, string? paletteDisplayName = null);
 
     /// <summary>Human-readable name for the given mode (toolbar, help).</summary>
     string GetDisplayName(VisualizationMode mode);

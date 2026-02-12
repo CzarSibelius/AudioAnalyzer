@@ -14,6 +14,7 @@ Composites multiple independent layers (e.g. ScrollingColors, Marquee, FallingLe
 ## Settings
 
 - **Schema**: `VisualizerSettings.TextLayers`
+- **PaletteId** (string, optional): Id of the selected color palette (e.g. `"default"`). P key cycles and saves to this setting.
 - **Layers** (array): Each layer has:
   - `LayerType`: ScrollingColors, Marquee, FallingLetters, MatrixRain, WaveText, StaticText
   - `ZOrder`: int (lower = back)
@@ -21,11 +22,10 @@ Composites multiple independent layers (e.g. ScrollingColors, Marquee, FallingLe
   - `BeatReaction`: None, SpeedBurst, Flash, SpawnMore, Pulse, ColorPop
   - `SpeedMultiplier`: double
   - `ColorIndex`: palette index
-- **Related**: `SelectedPaletteId` — palette used when P is pressed
 
 ## Key bindings
 
-- **P** — Cycle color palette
+- **P** — Cycle color palette (affects only Layered text; saved to its settings)
 - **1–9** — Switch (cycle) the text snippet for the Nth frontmost layer.
   1 = frontmost, 2 = second frontmost, etc. Number keys and numpad keys work.
 - Toolbar suffix: "Layers: N (1–9: switch layer text)" or "Layers: (config in settings)" if empty

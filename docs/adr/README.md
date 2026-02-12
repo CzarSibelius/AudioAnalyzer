@@ -24,6 +24,7 @@ Decisions are numbered and kept under version control so the rationale stays wit
 | [0006](0006-modal-system.md) | Modal system for console UI | Accepted |
 | [0007](0007-visualizer-subfolder-structure.md) | Visualizer subfolder structure | Accepted |
 | [0008](0008-visualizer-settings-di.md) | Visualizer settings via Dependency Injection | Accepted |
+| [0009](0009-per-visualizer-palette.md) | Per-visualizer palette selection | Accepted |
 
 ## Process
 
