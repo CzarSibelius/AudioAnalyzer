@@ -1,4 +1,4 @@
-namespace AudioAnalyzer.Domain;
+namespace AudioAnalyzer.Visualizers;
 
 /// <summary>Settings for the layered text visualizer. Layers are drawn in ascending ZOrder.</summary>
 public class TextLayersVisualizerSettings

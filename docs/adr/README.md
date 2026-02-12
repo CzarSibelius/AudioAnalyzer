@@ -25,6 +25,7 @@ Decisions are numbered and kept under version control so the rationale stays wit
 | [0007](0007-visualizer-subfolder-structure.md) | Visualizer subfolder structure | Accepted |
 | [0008](0008-visualizer-settings-di.md) | Visualizer settings via Dependency Injection | Accepted |
 | [0009](0009-per-visualizer-palette.md) | Per-visualizer palette selection | Accepted |
+| [0010](0010-appsettings-visualizer-settings-separation.md) | AppSettings and VisualizerSettings separation | Accepted |
 
 ## Process
 

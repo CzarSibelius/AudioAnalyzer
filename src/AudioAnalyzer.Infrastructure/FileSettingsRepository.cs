@@ -1,10 +1,11 @@
 using System.Text.Json;
 using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Domain;
+using AudioAnalyzer.Visualizers;
 
 namespace AudioAnalyzer.Infrastructure;
 
-public sealed class FileSettingsRepository : ISettingsRepository
+public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSettingsRepository
 {
     private static readonly JsonSerializerOptions s_readOptions = new() { PropertyNameCaseInsensitive = true };
     private static readonly JsonSerializerOptions s_writeOptions = new() { WriteIndented = true };
@@ -16,74 +17,138 @@ public sealed class FileSettingsRepository : ISettingsRepository
         _settingsPath = settingsPath ?? Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "appsettings.json");
     }
 
-    public AppSettings Load()
+    public AppSettings LoadAppSettings()
+    {
+        var file = LoadFile();
+        return MapToAppSettings(file);
+    }
+
+    public void SaveAppSettings(AppSettings settings)
+    {
+        var file = LoadFile();
+        UpdateAppSettings(file, settings);
+        SaveFile(file);
+    }
+
+    public VisualizerSettings LoadVisualizerSettings()
+    {
+        var file = LoadFile();
+        MergeLegacyVisualizerSettings(file);
+        return file.VisualizerSettings ?? CreateDefaultVisualizerSettings();
+    }
+
+    public void SaveVisualizerSettings(VisualizerSettings settings)
+    {
+        var file = LoadFile();
+        file.VisualizerSettings = settings;
+        SaveFile(file);
+    }
+
+    private SettingsFile LoadFile()
     {
         if (!File.Exists(_settingsPath))
         {
-            var defaults = new AppSettings();
-            Save(defaults);
-            return defaults;
+            var file = new SettingsFile();
+            SaveFile(file);
+            return file;
         }
         try
         {
             var json = File.ReadAllText(_settingsPath);
-            var settings = JsonSerializer.Deserialize<AppSettings>(json, s_readOptions) ?? new AppSettings();
-            MergeLegacyVisualizerSettings(settings);
-            return settings;
+            return JsonSerializer.Deserialize<SettingsFile>(json, s_readOptions) ?? new SettingsFile();
         }
         catch
         {
-            return new AppSettings();
+            return new SettingsFile();
         }
+    }
+
+    private void SaveFile(SettingsFile file)
+    {
+        var json = JsonSerializer.Serialize(file, s_writeOptions);
+        File.WriteAllText(_settingsPath, json);
+    }
+
+    private static AppSettings MapToAppSettings(SettingsFile file) =>
+        new()
+        {
+            InputMode = file.InputMode ?? "loopback",
+            DeviceName = file.DeviceName,
+            VisualizationMode = file.VisualizationMode ?? "spectrum",
+            BeatSensitivity = file.BeatSensitivity,
+            BeatCircles = file.BeatCircles,
+            OscilloscopeGain = file.OscilloscopeGain,
+            SelectedPaletteId = file.SelectedPaletteId
+        };
+
+    private static void UpdateAppSettings(SettingsFile file, AppSettings settings)
+    {
+        file.InputMode = settings.InputMode;
+        file.DeviceName = settings.DeviceName;
+        file.VisualizationMode = settings.VisualizationMode;
+        file.BeatSensitivity = settings.BeatSensitivity;
+        file.BeatCircles = settings.BeatCircles;
+        file.OscilloscopeGain = settings.OscilloscopeGain;
+        file.SelectedPaletteId = settings.SelectedPaletteId;
     }
 
     /// <summary>Merges legacy top-level BeatCircles/OscilloscopeGain into VisualizerSettings for backward compatibility. Migrates SelectedPaletteId to per-visualizer PaletteId.</summary>
-    private static void MergeLegacyVisualizerSettings(AppSettings settings)
+    private static void MergeLegacyVisualizerSettings(SettingsFile file)
     {
-        settings.VisualizerSettings ??= new VisualizerSettings();
-        if (settings.VisualizerSettings.Geiss is null)
+        file.VisualizerSettings ??= new VisualizerSettings();
+        if (file.VisualizerSettings.Geiss is null)
         {
-            settings.VisualizerSettings.Geiss = new GeissVisualizerSettings { BeatCircles = settings.BeatCircles };
+            file.VisualizerSettings.Geiss = new GeissVisualizerSettings { BeatCircles = file.BeatCircles };
         }
 
-        if (settings.VisualizerSettings.Oscilloscope is null)
+        if (file.VisualizerSettings.Oscilloscope is null)
         {
-            settings.VisualizerSettings.Oscilloscope = new OscilloscopeVisualizerSettings { Gain = settings.OscilloscopeGain };
+            file.VisualizerSettings.Oscilloscope = new OscilloscopeVisualizerSettings { Gain = file.OscilloscopeGain };
         }
 
-        if (settings.VisualizerSettings.TextLayers is null)
+        if (file.VisualizerSettings.TextLayers is null)
         {
-            settings.VisualizerSettings.TextLayers = CreateDefaultTextLayersSettings();
+            file.VisualizerSettings.TextLayers = CreateDefaultTextLayersSettings();
         }
 
-        if (settings.VisualizerSettings.UnknownPleasures is null)
+        if (file.VisualizerSettings.UnknownPleasures is null)
         {
-            settings.VisualizerSettings.UnknownPleasures = new UnknownPleasuresVisualizerSettings();
+            file.VisualizerSettings.UnknownPleasures = new UnknownPleasuresVisualizerSettings();
         }
 
-        // Migrate global SelectedPaletteId to per-visualizer PaletteId for backward compatibility
-        var globalPaletteId = settings.SelectedPaletteId;
-        if (!string.IsNullOrWhiteSpace(globalPaletteId))
+        var globalPaletteId = file.SelectedPaletteId;
+        if (!string.IsNullOrWhiteSpace(globalPaletteId) && file.VisualizerSettings.Geiss is not null && file.VisualizerSettings.UnknownPleasures is not null && file.VisualizerSettings.TextLayers is not null)
         {
-            if (string.IsNullOrWhiteSpace(settings.VisualizerSettings.Geiss.PaletteId))
+            if (string.IsNullOrWhiteSpace(file.VisualizerSettings.Geiss.PaletteId))
             {
-                settings.VisualizerSettings.Geiss.PaletteId = globalPaletteId;
+                file.VisualizerSettings.Geiss.PaletteId = globalPaletteId;
             }
-            if (string.IsNullOrWhiteSpace(settings.VisualizerSettings.UnknownPleasures.PaletteId))
+            if (string.IsNullOrWhiteSpace(file.VisualizerSettings.UnknownPleasures.PaletteId))
             {
-                settings.VisualizerSettings.UnknownPleasures.PaletteId = globalPaletteId;
+                file.VisualizerSettings.UnknownPleasures.PaletteId = globalPaletteId;
             }
-            if (string.IsNullOrWhiteSpace(settings.VisualizerSettings.TextLayers.PaletteId))
+            if (string.IsNullOrWhiteSpace(file.VisualizerSettings.TextLayers.PaletteId))
             {
-                settings.VisualizerSettings.TextLayers.PaletteId = globalPaletteId;
+                file.VisualizerSettings.TextLayers.PaletteId = globalPaletteId;
             }
         }
     }
 
-    /// <summary>Default layers: ScrollingColors background + Marquee foreground with a snippet.</summary>
-    private static TextLayersVisualizerSettings CreateDefaultTextLayersSettings()
+    private static VisualizerSettings CreateDefaultVisualizerSettings()
     {
-        return new TextLayersVisualizerSettings
+        var s = new VisualizerSettings
+        {
+            Geiss = new GeissVisualizerSettings(),
+            Oscilloscope = new OscilloscopeVisualizerSettings(),
+            TextLayers = CreateDefaultTextLayersSettings(),
+            UnknownPleasures = new UnknownPleasuresVisualizerSettings()
+        };
+        return s;
+    }
+
+    /// <summary>Default layers: ScrollingColors background + Marquee foreground with a snippet.</summary>
+    private static TextLayersVisualizerSettings CreateDefaultTextLayersSettings() =>
+        new()
         {
             Layers =
             [
@@ -104,11 +169,17 @@ public sealed class FileSettingsRepository : ISettingsRepository
                 }
             ]
         };
-    }
 
-    public void Save(AppSettings settings)
+    /// <summary>Internal DTO for JSON serialization. Holds both app-level and visualizer settings.</summary>
+    private sealed class SettingsFile
     {
-        var json = JsonSerializer.Serialize(settings, s_writeOptions);
-        File.WriteAllText(_settingsPath, json);
+        public string InputMode { get; set; } = "loopback";
+        public string? DeviceName { get; set; }
+        public string VisualizationMode { get; set; } = "spectrum";
+        public double BeatSensitivity { get; set; } = 1.3;
+        public bool BeatCircles { get; set; } = true;
+        public double OscilloscopeGain { get; set; } = 2.5;
+        public string? SelectedPaletteId { get; set; }
+        public VisualizerSettings? VisualizerSettings { get; set; }
     }
 }

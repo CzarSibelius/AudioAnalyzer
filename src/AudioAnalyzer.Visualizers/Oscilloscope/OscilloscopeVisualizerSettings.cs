@@ -1,4 +1,4 @@
-namespace AudioAnalyzer.Domain;
+namespace AudioAnalyzer.Visualizers;
 
 /// <summary>Settings for the Oscilloscope visualizer.</summary>
 public class OscilloscopeVisualizerSettings
