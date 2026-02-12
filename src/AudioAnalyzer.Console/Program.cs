@@ -419,7 +419,7 @@ void DrawMainUI(string deviceName)
             }
         }
     }
-    catch { /* Buffer size not supported */ }
+    catch (Exception ex) { _ = ex; /* Buffer size not supported: swallow to avoid crash */ }
 
     Console.Clear();
     Console.CursorVisible = false;
@@ -453,7 +453,7 @@ void DrawHeaderOnly(string deviceName)
         Console.SetCursorPosition(0, 5);
         Console.Write(line6);
     }
-    catch { }
+    catch (Exception ex) { _ = ex; /* Console write unavailable: swallow to avoid crash */ }
 }
 
 // Modal system per ADR-0006: dialogs drawn on top, capture input until closed, dismiss by key, on close run onClose to restore base view.

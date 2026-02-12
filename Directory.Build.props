@@ -5,4 +5,10 @@
     <!-- Use latest recommended analyzer rules -->
     <AnalysisLevel>latest-recommended</AnalysisLevel>
   </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Roslynator.Analyzers" Version="4.15.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>analyzers; build</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
 </Project>

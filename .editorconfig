@@ -14,5 +14,8 @@ tab_width = 4
 csharp_prefer_braces = true
 dotnet_diagnostic.IDE0011.severity = warning
 
+# No empty catch blocks (Roslynator RCS1075)
+dotnet_diagnostic.RCS1075.severity = warning
+
 #### Formatting ####
 trim_trailing_whitespace = true

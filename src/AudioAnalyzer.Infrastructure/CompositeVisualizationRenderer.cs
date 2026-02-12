@@ -96,14 +96,17 @@ public sealed class CompositeVisualizationRenderer : IVisualizationRenderer
                 {
                     visualizer.Render(snapshot, viewport);
                 }
-                catch
+                catch (Exception ex)
                 {
+                    string message = !string.IsNullOrWhiteSpace(ex.Message)
+                        ? ex.Message
+                        : "Visualization error";
                     Console.SetCursorPosition(0, visualizerStartRow);
-                    Console.WriteLine(VisualizerViewport.TruncateToWidth("Visualization error", viewport.Width));
+                    Console.WriteLine(VisualizerViewport.TruncateToWidth(message, viewport.Width));
                 }
             }
         }
-        catch { }
+        catch (Exception ex) { _ = ex; /* Last-resort render failure: swallow to avoid crash */ }
     }
 
     public string GetDisplayName(VisualizationMode mode) =>
@@ -158,7 +161,7 @@ public sealed class CompositeVisualizationRenderer : IVisualizationRenderer
                 Console.Write(blank);
             }
         }
-        catch { }
+        catch (Exception ex) { _ = ex; /* Console write failed in ClearRegion */ }
     }
 
     private void RenderToolbar(AnalysisSnapshot snapshot, VisualizerViewport toolbarViewport, VisualizationMode mode, int w)
@@ -198,7 +201,7 @@ public sealed class CompositeVisualizationRenderer : IVisualizationRenderer
                     Console.WriteLine(AnsiConsole.ToAnsiString(line2, ConsoleColor.DarkGray));
                 }
             }
-            catch { }
+            catch (Exception ex) { _ = ex; /* Toolbar fallback failed: swallow to avoid crash */ }
         }
     }
 
