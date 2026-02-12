@@ -134,7 +134,7 @@ public sealed class AnalysisEngine
             {
                 _onRefreshHeader?.Invoke();
             }
-            try { _renderer.Render(_snapshot, _currentMode); } catch { }
+            try { _renderer.Render(_snapshot, _currentMode); } catch (Exception ex) { _ = ex; /* Render failed: swallow to avoid crash */ }
         }
     }
 
@@ -249,7 +249,7 @@ public sealed class AnalysisEngine
                         _onRefreshHeader?.Invoke();
                     }
                     FillSnapshot(maxVolume, w, h);
-                    try { _renderer.Render(_snapshot, _currentMode); } catch { }
+                    try { _renderer.Render(_snapshot, _currentMode); } catch (Exception ex) { _ = ex; /* Render failed: swallow to avoid crash */ }
                 }
             }
             _lastUpdate = DateTime.Now;

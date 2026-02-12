@@ -26,6 +26,8 @@ Decisions are numbered and kept under version control so the rationale stays wit
 | [0008](0008-visualizer-settings-di.md) | Visualizer settings via Dependency Injection | Accepted |
 | [0009](0009-per-visualizer-palette.md) | Per-visualizer palette selection | Accepted |
 | [0010](0010-appsettings-visualizer-settings-separation.md) | AppSettings and VisualizerSettings separation | Accepted |
+| [0011](0011-no-empty-catch-blocks.md) | No empty try-catch blocks | Accepted |
+| [0012](0012-visualizer-exception-handling.md) | Visualizer exception handling — show error in viewport | Accepted |
 
 ## Process
 
