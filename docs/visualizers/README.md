@@ -16,7 +16,7 @@ This directory contains per-visualizer reference documentation: behavior, settin
 
 ## Implementation layout
 
-Visualizer code lives in `src/AudioAnalyzer.Visualizers/<VisualizerName>/`. Each visualizer has its own subfolder (e.g. `Geiss`, `Oscilloscope`, `SpectrumBars`). See [ADR-0007](../adr/0007-visualizer-subfolder-structure.md) for the rationale.
+Visualizer code lives in `src/AudioAnalyzer.Visualizers/<VisualizerName>/`. Each visualizer has its own subfolder (e.g. `Geiss`, `Oscilloscope`, `SpectrumBars`). Per-visualizer settings types (e.g. `TextLayerSettings`, `GeissVisualizerSettings`) also live in their visualizer subfolder. See [ADR-0007](../adr/0007-visualizer-subfolder-structure.md) and [ADR-0010](../adr/0010-appsettings-visualizer-settings-separation.md) for the rationale.
 
 ## For agents
 

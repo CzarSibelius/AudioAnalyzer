@@ -14,14 +14,14 @@ static int GetConsoleWidth()
 
 // Load settings before building the renderer so visualizer settings are available for DI
 var settingsRepo = new FileSettingsRepository();
-var settings = settingsRepo.Load();
-settings.VisualizerSettings ??= new VisualizerSettings();
-var visualizerSettings = settings.VisualizerSettings;
+var settings = settingsRepo.LoadAppSettings();
+var visualizerSettings = settingsRepo.LoadVisualizerSettings();
 
 var services = new ServiceCollection();
 services.AddSingleton(visualizerSettings);
 services.AddSingleton<IDisplayDimensions, ConsoleDisplayDimensions>();
 services.AddSingleton<ISettingsRepository>(_ => settingsRepo);
+services.AddSingleton<IVisualizerSettingsRepository>(_ => settingsRepo);
 services.AddSingleton<IPaletteRepository>(_ => new FilePaletteRepository());
 services.AddSingleton<IAudioDeviceInfo, NAudioDeviceInfo>();
 
@@ -93,7 +93,7 @@ VisualizationMode ParseMode(string? mode)
     return renderer.GetModeFromTechnicalName(mode ?? "") ?? VisualizationMode.SpectrumBars;
 }
 
-void ResolveAndSetPaletteForMode(VisualizationMode mode, AppSettings appSettings, IPaletteRepository repo, IVisualizationRenderer visRenderer)
+void ResolveAndSetPaletteForMode(VisualizationMode mode, VisualizerSettings visSettings, IPaletteRepository repo, IVisualizationRenderer visRenderer)
 {
     IReadOnlyList<PaletteColor>? palette;
     string? displayName;
@@ -102,13 +102,13 @@ void ResolveAndSetPaletteForMode(VisualizationMode mode, AppSettings appSettings
     switch (mode)
     {
         case VisualizationMode.Geiss:
-            paletteId = appSettings.VisualizerSettings?.Geiss?.PaletteId;
+            paletteId = visSettings.Geiss?.PaletteId;
             break;
         case VisualizationMode.UnknownPleasures:
-            paletteId = appSettings.VisualizerSettings?.UnknownPleasures?.PaletteId;
+            paletteId = visSettings.UnknownPleasures?.PaletteId;
             if (string.IsNullOrWhiteSpace(paletteId))
             {
-                var legacyPalette = ColorPaletteParser.Parse(appSettings.VisualizerSettings?.UnknownPleasures?.Palette);
+                var legacyPalette = ColorPaletteParser.Parse(visSettings.UnknownPleasures?.Palette);
                 if (legacyPalette != null && legacyPalette.Count > 0)
                 {
                     visRenderer.SetPaletteForMode(mode, legacyPalette, "Custom");
@@ -117,7 +117,7 @@ void ResolveAndSetPaletteForMode(VisualizationMode mode, AppSettings appSettings
             }
             break;
         case VisualizationMode.TextLayers:
-            paletteId = appSettings.VisualizerSettings?.TextLayers?.PaletteId;
+            paletteId = visSettings.TextLayers?.PaletteId;
             break;
         default:
             return;
@@ -141,9 +141,9 @@ void ResolveAndSetPaletteForMode(VisualizationMode mode, AppSettings appSettings
 
 engine.SetVisualizationMode(ParseMode(settings.VisualizationMode));
 engine.BeatSensitivity = settings.BeatSensitivity;
-ResolveAndSetPaletteForMode(VisualizationMode.Geiss, settings, paletteRepo, renderer);
-ResolveAndSetPaletteForMode(VisualizationMode.UnknownPleasures, settings, paletteRepo, renderer);
-ResolveAndSetPaletteForMode(VisualizationMode.TextLayers, settings, paletteRepo, renderer);
+ResolveAndSetPaletteForMode(VisualizationMode.Geiss, visualizerSettings, paletteRepo, renderer);
+ResolveAndSetPaletteForMode(VisualizationMode.UnknownPleasures, visualizerSettings, paletteRepo, renderer);
+ResolveAndSetPaletteForMode(VisualizationMode.TextLayers, visualizerSettings, paletteRepo, renderer);
 
 var devices = deviceInfo.GetDevices();
 var (initialDeviceId, initialName) = TryResolveDeviceFromSettings(devices, settings);
@@ -198,14 +198,14 @@ void SaveSettingsToRepository()
 {
     settings.VisualizationMode = renderer.GetTechnicalName(engine.CurrentMode);
     settings.BeatSensitivity = engine.BeatSensitivity;
-    settings.VisualizerSettings ??= new VisualizerSettings();
-    settings.VisualizerSettings.Geiss ??= new GeissVisualizerSettings();
-    settings.VisualizerSettings.Oscilloscope ??= new OscilloscopeVisualizerSettings();
-    settings.VisualizerSettings.UnknownPleasures ??= new UnknownPleasuresVisualizerSettings();
-    settings.VisualizerSettings.TextLayers ??= new TextLayersVisualizerSettings();
-    settings.OscilloscopeGain = settings.VisualizerSettings.Oscilloscope.Gain;
-    settings.BeatCircles = settings.VisualizerSettings.Geiss.BeatCircles;
-    settingsRepo.Save(settings);
+    settings.BeatCircles = visualizerSettings.Geiss?.BeatCircles ?? true;
+    settings.OscilloscopeGain = visualizerSettings.Oscilloscope?.Gain ?? 2.5;
+    settingsRepo.SaveAppSettings(settings);
+    visualizerSettings.Geiss ??= new GeissVisualizerSettings();
+    visualizerSettings.Oscilloscope ??= new OscilloscopeVisualizerSettings();
+    visualizerSettings.UnknownPleasures ??= new UnknownPleasuresVisualizerSettings();
+    visualizerSettings.TextLayers ??= new TextLayersVisualizerSettings();
+    settingsRepo.SaveVisualizerSettings(visualizerSettings);
 }
 
 bool running = true;
@@ -651,7 +651,7 @@ static (string? deviceId, string name) ShowDeviceSelectionMenu(IAudioDeviceInfo 
                 {
                     settings.DeviceName = null;
                 }
-                settingsRepo.Save(settings);
+                settingsRepo.SaveAppSettings(settings);
                 resultId = selected.Id;
                 resultName = selected.Name;
                 return true;

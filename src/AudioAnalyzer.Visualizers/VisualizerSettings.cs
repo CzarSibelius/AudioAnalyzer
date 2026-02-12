@@ -1,4 +1,4 @@
-namespace AudioAnalyzer.Domain;
+namespace AudioAnalyzer.Visualizers;
 
 /// <summary>
 /// Container for per-visualizer settings. Each visualizer that needs configuration has its own property here.

@@ -1,4 +1,6 @@
-namespace AudioAnalyzer.Domain;
+using AudioAnalyzer.Domain;
+
+namespace AudioAnalyzer.Visualizers;
 
 /// <summary>Settings for the Unknown Pleasures visualizer.</summary>
 public class UnknownPleasuresVisualizerSettings
