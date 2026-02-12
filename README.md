@@ -1,6 +1,6 @@
 # Audio Analyzer
 
-A real-time audio analyzer that captures and analyzes system audio output using NAudio. This application captures the audio playing on your system (loopback capture) or from a selected capture device and performs FFT analysis with multiple visualization modes: spectrum bars, oscilloscope, VU meter, Winamp-style bars, Geiss-style visualization, Unknown Pleasures (stacked waveform snapshots with a configurable palette), and **Layered text** (configurable text snippets and layer types with beat-reactive behavior).
+A real-time audio analyzer that captures and analyzes system audio output using NAudio. This application captures the audio playing on your system (loopback capture) or from a selected capture device and performs FFT analysis with multiple visualization modes: spectrum bars, oscilloscope, VU meter, Winamp-style bars, Geiss-style visualization, Unknown Pleasures (stacked waveform snapshots; bottom line realtime, others beat-triggered; configurable palette), and **Layered text** (configurable text snippets and layer types with beat-reactive behavior).
 
 ## Prerequisites
 
@@ -43,6 +43,7 @@ On Windows you can use backslashes: `src\AudioAnalyzer.Console\AudioAnalyzer.Con
    - **B** – Toggle beat circles (Geiss mode)
    - **+** / **-** – Increase / decrease beat sensitivity
    - **[** / **]** – Increase / decrease oscilloscope gain (Oscilloscope mode; 1.0–10.0)
+   - **1–9** – Switch layer text (Layered text mode; 1 = frontmost layer, 2 = second, etc.)
    - **D** – Change audio input device
    - **F** – Toggle full screen (visualizer only, no header/toolbar)
    - **ESC** – Quit
@@ -54,7 +55,7 @@ On Windows you can use backslashes: `src\AudioAnalyzer.Console\AudioAnalyzer.Con
 - **Audio input**: Loopback (system output) or a specific WASAPI capture device; choice is saved in settings.
 - **Volume analysis**: Real-time level and peak display; stereo VU-style meters in VU Meter mode.
 - **FFT analysis**: Fast Fourier Transform with log-spaced frequency bands and peak hold.
-- **Visualization modes**: Spectrum bars, Oscilloscope (time-domain waveform; gain adjustable with [ ] in real time, 1.0–10.0), VU Meter, Winamp-style bars, **Geiss** (psychedelic plasma; optional beat circles; uses the selected color palette; press **P** to cycle palettes), **Unknown Pleasures** (stacked waveform snapshots; uses the selected color palette; press **P** to cycle palettes), and **Layered text** (multiple independent layers—e.g. scrolling colors, marquee, falling letters—with configurable text snippets and beat reactions; config in settings; press **P** to cycle palettes).
+- **Visualization modes**: Spectrum bars, Oscilloscope (time-domain waveform; gain adjustable with [ ] in real time, 1.0–10.0), VU Meter, Winamp-style bars, **Geiss** (psychedelic plasma; optional beat circles; uses the selected color palette; press **P** to cycle palettes), **Unknown Pleasures** (stacked waveform snapshots; bottom line is always realtime, the rest are beat-triggered frozen snapshots; uses the selected color palette; press **P** to cycle palettes), and **Layered text** (multiple independent layers—e.g. scrolling colors, marquee, falling letters—with configurable text snippets and beat reactions; press **1–9** to switch the text for the Nth frontmost layer; press **P** to cycle palettes).
 - **Colors and palettes**: Palette-aware visualizers (Geiss, Unknown Pleasures, Layered text) support **24-bit true color** (RGB) and 16 console colors. Palettes are stored as JSON files in a **palettes** directory (see below). The selected palette is applied when using those modes.
 - **Beat detection**: Optional beat detection and BPM estimate; sensitivity and beat circles are configurable and persist.
 - **Real-time display**: Updates every 50 ms.
@@ -133,3 +134,5 @@ Legacy top-level `BeatCircles` and `OscilloscopeGain` are still read for backwar
 Visualizers implement **`IVisualizer`** and expose **technical name** (stable key for settings/CLI, e.g. `"geiss"`), **display name** (for toolbar and help), and **`SupportsPaletteCycling`** (whether the visualizer uses the global palette when the user presses P). Optional **`GetToolbarSuffix(snapshot)`** can return mode-specific toolbar text (e.g. gain for waveform modes). The composite renderer uses only this interface and the shared snapshot; it does not reference concrete visualizer types (see [ADR-0004](docs/adr/0004-visualizer-encapsulation.md)).
 
 Visualizers receive a **viewport** (`VisualizerViewport`: start row, max lines, width). They must not write more than `viewport.MaxLines` lines and no line longer than `viewport.Width`. The composite renderer validates dimensions and display start row before calling visualizers; if a visualizer throws, a one-line error is shown and the next frame can recover. This keeps resizes and bad data from corrupting the console UI.
+
+Per-visualizer specs (behavior, settings, viewport constraints) are in [docs/visualizers/](docs/visualizers/README.md).

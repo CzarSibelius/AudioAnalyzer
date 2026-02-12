@@ -22,6 +22,7 @@ Decisions are numbered and kept under version control so the rationale stays wit
 | [0004](0004-visualizer-encapsulation.md) | Visualizer encapsulation — keep visualizer logic inside visualizers | Accepted |
 | [0005](0005-layered-visualizer-cell-buffer.md) | Layered visualizer with cell buffer and per-layer config | Accepted |
 | [0006](0006-modal-system.md) | Modal system for console UI | Accepted |
+| [0007](0007-visualizer-subfolder-structure.md) | Visualizer subfolder structure | Accepted |
 
 ## Process
 
@@ -36,3 +37,7 @@ When changing architecture, persistence, or user-facing behavior:
 
 - Read the relevant ADRs in `docs/adr/` and align your implementation with them.
 - When making a new architectural decision, add a new ADR and update this index.
+
+## Related documentation
+
+- **Visualizer specs** ([docs/visualizers/](../visualizers/README.md)): Per-visualizer reference (behavior, settings, viewport constraints). Use when adding or changing visualizers; ADRs describe decisions, specs describe what each visualizer does.

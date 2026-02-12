@@ -183,8 +183,14 @@ while (running)
     if (Console.KeyAvailable)
     {
         var key = Console.ReadKey(true);
-        switch (key.Key)
+        if (renderer.HandleKey(key.Key, engine.CurrentMode))
         {
+            engine.Redraw();
+        }
+        else
+        {
+            switch (key.Key)
+            {
             case ConsoleKey.Escape:
                 running = false;
                 break;
@@ -277,6 +283,7 @@ while (running)
                     engine.Redraw();
                 }
                 break;
+            }
         }
     }
     Thread.Sleep(50);
@@ -441,7 +448,7 @@ void DrawHelpContent()
         VisualizationMode.WinampBars => "Classic music player bars",
         VisualizationMode.Geiss => "Psychedelic plasma visualization",
         VisualizationMode.UnknownPleasures => "Stacked waveform snapshots",
-        VisualizationMode.TextLayers => "Layered text (config in settings)",
+        VisualizationMode.TextLayers => "Layered text (1–9 = switch layer text)",
         _ => ""
     };
     foreach (VisualizationMode mode in Enum.GetValues<VisualizationMode>())

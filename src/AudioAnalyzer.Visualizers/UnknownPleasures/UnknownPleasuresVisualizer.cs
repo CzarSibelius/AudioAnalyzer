@@ -7,7 +7,8 @@ namespace AudioAnalyzer.Visualizers;
 
 /// <summary>
 /// Unknown Pleasures visualizer: multiple stacked waveform snapshots with the most recent
-/// at the bottom, gaps between each pulse (like the pulsar plot).
+/// at the bottom. The bottom line is always realtime; the others are beat-triggered frozen
+/// snapshots. Gaps between each pulse (like the pulsar plot).
 /// </summary>
 public sealed class UnknownPleasuresVisualizer : IVisualizer
 {
@@ -23,8 +24,34 @@ public sealed class UnknownPleasuresVisualizer : IVisualizer
 
     private readonly StringBuilder _lineBuffer = new(2048);
     private readonly List<double[]> _snapshots = new(MaxSnapshots);
+    private readonly double[] _livePulse = new double[SnapshotWidth];
     private int _lastBeatCount = -1;
     private int _colorOffset;
+
+    /// <summary>Builds a single pulse line from spectrum magnitudes into the given buffer (length SnapshotWidth). Applies gain and min-max normalization.</summary>
+    private static void BuildPulseFromMagnitudes(double[] magnitudes, int numBands, double gain, double[] buffer)
+    {
+        for (int c = 0; c < SnapshotWidth; c++)
+        {
+            int band = (c * numBands) / SnapshotWidth;
+            if (band >= magnitudes.Length)
+            {
+                band = magnitudes.Length - 1;
+            }
+
+            buffer[c] = Math.Min(magnitudes[band] * gain * 0.8, 1.0);
+        }
+
+        double min = buffer.Min(), max = buffer.Max();
+        double range = max - min;
+        if (range > 0.0001)
+        {
+            for (int c = 0; c < SnapshotWidth; c++)
+            {
+                buffer[c] = (buffer[c] - min) / range;
+            }
+        }
+    }
 
     public void Render(AnalysisSnapshot snapshot, VisualizerViewport viewport)
     {
@@ -55,31 +82,16 @@ public sealed class UnknownPleasuresVisualizer : IVisualizer
         {
             _lastBeatCount = snapshot.BeatCount;
             var current = new double[SnapshotWidth];
-            for (int c = 0; c < SnapshotWidth; c++)
-            {
-                int band = (c * numBands) / SnapshotWidth;
-                if (band >= magnitudes.Length)
-                {
-                    band = magnitudes.Length - 1;
-                }
-
-                current[c] = Math.Min(magnitudes[band] * gain * 0.8, 1.0);
-            }
-            double min = current.Min(), max = current.Max();
-            double range = max - min;
-            if (range > 0.0001)
-            {
-                for (int c = 0; c < SnapshotWidth; c++)
-                {
-                    current[c] = (current[c] - min) / range;
-                }
-            }
+            BuildPulseFromMagnitudes(magnitudes, numBands, gain, current);
             _snapshots.Add(current);
             while (_snapshots.Count > MaxSnapshots)
             {
                 _snapshots.RemoveAt(0);
             }
         }
+
+        // Bottom line is always realtime; compute live pulse every frame
+        BuildPulseFromMagnitudes(magnitudes, numBands, gain, _livePulse);
 
         int barWidth = viewport.Width;
         int numSnapshots = _snapshots.Count;
@@ -106,7 +118,8 @@ public sealed class UnknownPleasuresVisualizer : IVisualizer
                 break;
             }
 
-            double[] pulse = _snapshots[i];
+            // Bottom block (most recent) uses live data; others use frozen snapshots
+            double[] pulse = (i == numSnapshots - 1) ? _livePulse : _snapshots[i];
             PaletteColor color = palette[(i + _colorOffset) % palette.Count];
 
             for (int line = 0; line < linesPerSnapshot && rowIndex < viewport.MaxLines; line++)
