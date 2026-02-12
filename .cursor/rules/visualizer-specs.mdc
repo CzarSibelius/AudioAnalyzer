@@ -1,0 +1,15 @@
+---
+description: Read visualizer specs when adding or changing visualizers
+globs: "**/Visualizers/**/*.cs,**/CompositeVisualizationRenderer.cs"
+---
+
+# Visualizer specs
+
+When adding or changing a visualizer:
+
+1. **Read the index**: Open `docs/visualizers/README.md` for the list of visualizers and spec files.
+2. **Read the relevant spec**: If modifying an existing visualizer, read its spec file (e.g. `docs/visualizers/geiss.md`). If adding a new visualizer, create a new spec file following the same format.
+3. **Follow the viewport rule**: `.cursor/rules/visualizers-viewport.mdc` — respect viewport bounds.
+4. **Follow ADRs**: ADR-0004 (encapsulation), ADR-0005 (TextLayers cell buffer) as applicable.
+
+Keep the spec in sync with the implementation: when you change behavior, settings, or constraints, update the spec.

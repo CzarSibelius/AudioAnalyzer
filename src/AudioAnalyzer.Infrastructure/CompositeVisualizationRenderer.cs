@@ -137,6 +137,20 @@ public sealed class CompositeVisualizationRenderer : IVisualizationRenderer
         return null;
     }
 
+    public bool HandleKey(ConsoleKey key, VisualizationMode mode)
+    {
+        if (mode != VisualizationMode.TextLayers)
+        {
+            return false;
+        }
+
+        if (_visualizers.TryGetValue(mode, out var visualizer) && visualizer is TextLayersVisualizer textLayers)
+        {
+            return textLayers.HandleKey(key, _textLayersSettings);
+        }
+        return false;
+    }
+
     private static void ClearRegion(int startRow, int lineCount, int width)
     {
         if (width <= 0 || lineCount <= 0)

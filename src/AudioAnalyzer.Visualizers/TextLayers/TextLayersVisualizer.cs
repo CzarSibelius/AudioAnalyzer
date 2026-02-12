@@ -181,7 +181,7 @@ public sealed class TextLayersVisualizer : IVisualizer
     {
         var snippets = layer.TextSnippets?.Where(s => !string.IsNullOrEmpty(s)).ToList() ?? new List<string>();
         string text = snippets.Count > 0
-            ? string.Join("   ", snippets)
+            ? snippets[state.SnippetIndex % Math.Max(1, snippets.Count)]
             : "  Layered text  ";
         if (text.Length == 0)
         {
@@ -437,6 +437,52 @@ public sealed class TextLayersVisualizer : IVisualizer
         {
             return "Layers: (config in settings)";
         }
-        return $"Layers: {config.Layers.Count}";
+        return $"Layers: {config.Layers.Count} (1–9: switch layer text)";
+    }
+
+    /// <summary>
+    /// Handles keys 1–9 to switch (cycle) the text snippet for the Nth frontmost layer.
+    /// 1 = frontmost, 2 = second frontmost, etc. Returns true if the key was handled.
+    /// </summary>
+    public bool HandleKey(ConsoleKey key, TextLayersVisualizerSettings? config)
+    {
+        int digit = key switch
+        {
+            ConsoleKey.D1 or ConsoleKey.NumPad1 => 1,
+            ConsoleKey.D2 or ConsoleKey.NumPad2 => 2,
+            ConsoleKey.D3 or ConsoleKey.NumPad3 => 3,
+            ConsoleKey.D4 or ConsoleKey.NumPad4 => 4,
+            ConsoleKey.D5 or ConsoleKey.NumPad5 => 5,
+            ConsoleKey.D6 or ConsoleKey.NumPad6 => 6,
+            ConsoleKey.D7 or ConsoleKey.NumPad7 => 7,
+            ConsoleKey.D8 or ConsoleKey.NumPad8 => 8,
+            ConsoleKey.D9 or ConsoleKey.NumPad9 => 9,
+            _ => 0
+        };
+        if (digit == 0 || config?.Layers is not { Count: > 0 })
+        {
+            return false;
+        }
+
+        var sortedLayers = config.Layers.OrderBy(l => l.ZOrder).ToList();
+        int frontIndex = sortedLayers.Count - digit; // 1 = last, 2 = second-to-last, etc.
+        if (frontIndex < 0)
+        {
+            return false;
+        }
+
+        // Ensure _layerStates has enough entries
+        while (_layerStates.Count < sortedLayers.Count)
+        {
+            _layerStates.Add((0, 0));
+        }
+
+        var layer = sortedLayers[frontIndex];
+        var snippets = layer.TextSnippets?.Where(s => !string.IsNullOrEmpty(s)).ToList() ?? new List<string>();
+        int count = Math.Max(1, snippets.Count);
+        var state = _layerStates[frontIndex];
+        state.SnippetIndex = (state.SnippetIndex + 1) % count;
+        _layerStates[frontIndex] = state;
+        return true;
     }
 }

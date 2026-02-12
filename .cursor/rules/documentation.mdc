@@ -9,7 +9,9 @@ When adding or changing features:
 
 1. **Update feature documentation**: Update the README and any other feature docs (e.g. `docs/` or a dedicated feature file). Document new capabilities, options, and behavior in the appropriate place.
 
-2. **Update the README**: When changing behavior, dependencies, or usage, update README.md so these sections stay accurate:
+2. **Visualizer specs**: When adding or changing visualizers, create or update the corresponding spec in `docs/visualizers/` (see `docs/visualizers/README.md` for the index and format).
+
+3. **Update the README**: When changing behavior, dependencies, or usage, update README.md so these sections stay accurate:
    - Prerequisites
    - How to Run
    - Usage
