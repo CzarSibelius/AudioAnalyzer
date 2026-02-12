@@ -17,12 +17,12 @@ Psychedelic plasma-style visualization driven by spectrum magnitudes. Bass and t
 
 - **Schema**: `VisualizerSettings.Geiss`
 - **BeatCircles** (bool, default: true): Show expanding circles on beat.
-- **Related**: `SelectedPaletteId` — palette used when `Palette` is set by the renderer.
+- **PaletteId** (string, optional): Id of the selected color palette (e.g. `"default"`). Resolved from palettes directory. P key cycles and saves to this setting.
 
 ## Key bindings
 
 - **B** — Toggle beat circles (global, affects Geiss when in Geiss mode)
-- **P** — Cycle color palette (when in Geiss mode)
+- **P** — Cycle color palette (affects only Geiss; saved to Geiss settings)
 
 ## Viewport constraints
 

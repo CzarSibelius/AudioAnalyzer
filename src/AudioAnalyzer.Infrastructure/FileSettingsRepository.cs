@@ -37,7 +37,7 @@ public sealed class FileSettingsRepository : ISettingsRepository
         }
     }
 
-    /// <summary>Merges legacy top-level BeatCircles/OscilloscopeGain into VisualizerSettings for backward compatibility.</summary>
+    /// <summary>Merges legacy top-level BeatCircles/OscilloscopeGain into VisualizerSettings for backward compatibility. Migrates SelectedPaletteId to per-visualizer PaletteId.</summary>
     private static void MergeLegacyVisualizerSettings(AppSettings settings)
     {
         settings.VisualizerSettings ??= new VisualizerSettings();
@@ -54,6 +54,29 @@ public sealed class FileSettingsRepository : ISettingsRepository
         if (settings.VisualizerSettings.TextLayers is null)
         {
             settings.VisualizerSettings.TextLayers = CreateDefaultTextLayersSettings();
+        }
+
+        if (settings.VisualizerSettings.UnknownPleasures is null)
+        {
+            settings.VisualizerSettings.UnknownPleasures = new UnknownPleasuresVisualizerSettings();
+        }
+
+        // Migrate global SelectedPaletteId to per-visualizer PaletteId for backward compatibility
+        var globalPaletteId = settings.SelectedPaletteId;
+        if (!string.IsNullOrWhiteSpace(globalPaletteId))
+        {
+            if (string.IsNullOrWhiteSpace(settings.VisualizerSettings.Geiss.PaletteId))
+            {
+                settings.VisualizerSettings.Geiss.PaletteId = globalPaletteId;
+            }
+            if (string.IsNullOrWhiteSpace(settings.VisualizerSettings.UnknownPleasures.PaletteId))
+            {
+                settings.VisualizerSettings.UnknownPleasures.PaletteId = globalPaletteId;
+            }
+            if (string.IsNullOrWhiteSpace(settings.VisualizerSettings.TextLayers.PaletteId))
+            {
+                settings.VisualizerSettings.TextLayers.PaletteId = globalPaletteId;
+            }
         }
     }
 

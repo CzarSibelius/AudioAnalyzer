@@ -39,7 +39,7 @@ On Windows you can use backslashes: `src\AudioAnalyzer.Console\AudioAnalyzer.Con
 3. **Keyboard controls:**
    - **H** – Show help (all keys and visualization modes)
    - **V** – Cycle visualization mode (Spectrum, Oscilloscope, VU Meter, Winamp Style, Geiss, Unknown Pleasures, Layered text)
-   - **P** – Cycle color palette (for palette-aware visualizers: Geiss, Unknown Pleasures, Layered text)
+   - **P** – Cycle color palette (for palette-aware visualizers; affects only the current visualizer and persists to that visualizer's settings)
    - **B** – Toggle beat circles (Geiss mode)
    - **+** / **-** – Increase / decrease beat sensitivity
    - **[** / **]** – Increase / decrease oscilloscope gain (Oscilloscope mode; 1.0–10.0)
@@ -48,18 +48,18 @@ On Windows you can use backslashes: `src\AudioAnalyzer.Console\AudioAnalyzer.Con
    - **F** – Toggle full screen (visualizer only, no header/toolbar)
    - **ESC** – Quit
 
-   Settings (device, mode, selected palette, beat sensitivity, oscilloscope gain, beat circles) are saved automatically when you change them.
+   Settings (device, mode, per-visualizer palette, beat sensitivity, oscilloscope gain, beat circles) are saved automatically when you change them.
 
 ## What It Does
 
 - **Audio input**: Loopback (system output) or a specific WASAPI capture device; choice is saved in settings.
 - **Volume analysis**: Real-time level and peak display; stereo VU-style meters in VU Meter mode.
 - **FFT analysis**: Fast Fourier Transform with log-spaced frequency bands and peak hold.
-- **Visualization modes**: Spectrum bars, Oscilloscope (time-domain waveform; gain adjustable with [ ] in real time, 1.0–10.0), VU Meter, Winamp-style bars, **Geiss** (psychedelic plasma; optional beat circles; uses the selected color palette; press **P** to cycle palettes), **Unknown Pleasures** (stacked waveform snapshots; bottom line is always realtime, the rest are beat-triggered frozen snapshots; uses the selected color palette; press **P** to cycle palettes), and **Layered text** (multiple independent layers—e.g. scrolling colors, marquee, falling letters—with configurable text snippets and beat reactions; press **1–9** to switch the text for the Nth frontmost layer; press **P** to cycle palettes).
-- **Colors and palettes**: Palette-aware visualizers (Geiss, Unknown Pleasures, Layered text) support **24-bit true color** (RGB) and 16 console colors. Palettes are stored as JSON files in a **palettes** directory (see below). The selected palette is applied when using those modes.
+- **Visualization modes**: Spectrum bars, Oscilloscope (time-domain waveform; gain adjustable with [ ] in real time, 1.0–10.0), VU Meter, Winamp-style bars, **Geiss** (psychedelic plasma; optional beat circles; uses its own palette; press **P** to cycle), **Unknown Pleasures** (stacked waveform snapshots; bottom line is always realtime, the rest are beat-triggered frozen snapshots; uses its own palette; press **P** to cycle), and **Layered text** (multiple independent layers—e.g. scrolling colors, marquee, falling letters—with configurable text snippets and beat reactions; press **1–9** to switch the text for the Nth frontmost layer; press **P** to cycle palettes).
+- **Colors and palettes**: Palette-aware visualizers (Geiss, Unknown Pleasures, Layered text) support **24-bit true color** (RGB) and 16 console colors. Palettes are stored as JSON files in a **palettes** directory (see below). Each visualizer has its own palette setting; pressing **P** affects only the current visualizer and saves to that visualizer's settings.
 - **Beat detection**: Optional beat detection and BPM estimate; sensitivity and beat circles are configurable and persist.
 - **Real-time display**: Updates every 50 ms.
-- **Settings**: Stored in a local file (e.g. next to the executable). `SelectedPaletteId` stores the current palette; per-visualizer options live under `VisualizerSettings`. Device, visualization mode, selected palette, beat sensitivity, oscilloscope gain, and beat circles are saved automatically when changed.
+- **Settings**: Stored in a local file (e.g. next to the executable). Per-visualizer options live under `VisualizerSettings`; each palette-aware visualizer has its own `PaletteId`. Device, visualization mode, per-visualizer palette, beat sensitivity, oscilloscope gain, and beat circles are saved automatically when changed.
 
 ## Dependencies
 
@@ -68,7 +68,7 @@ On Windows you can use backslashes: `src\AudioAnalyzer.Console\AudioAnalyzer.Con
 
 ## Palettes (JSON files)
 
-Color palettes are stored as **JSON files** in a **`palettes`** directory next to the executable (e.g. `palettes/` in the same folder as the .exe). The app ships with `palettes/default.json`. You can add more `.json` files; each file is one palette. Press **P** to cycle through all available palettes when using a palette-aware visualizer (Geiss or Unknown Pleasures).
+Color palettes are stored as **JSON files** in a **`palettes`** directory next to the executable (e.g. `palettes/` in the same folder as the .exe). The app ships with `palettes/default.json`. You can add more `.json` files; each file is one palette. Press **P** to cycle through all available palettes when using a palette-aware visualizer; the change applies only to the current visualizer and is saved to that visualizer's settings.
 
 **Palette JSON format:**
 
@@ -97,21 +97,21 @@ Example with 24-bit colors:
 
 ## Settings structure (per-visualizer)
 
-- **Selected palette**: `SelectedPaletteId` — id of the current palette (e.g. filename without extension, like `"default"`). Resolved from the palettes directory on startup.
 - **Visualizer-specific options** live under `VisualizerSettings` in the settings file (e.g. `appsettings.json`):
-  - **Unknown Pleasures**: Legacy `VisualizerSettings.UnknownPleasures.Palette` (ColorPalette with `ColorNames`) is still read if `SelectedPaletteId` is not set, for backward compatibility.
-  - **Geiss**: `VisualizerSettings.Geiss.BeatCircles` — show beat circles (boolean).
+  - **Geiss**: `VisualizerSettings.Geiss.BeatCircles` — show beat circles (boolean). `PaletteId` — id of the color palette (e.g. `"default"`).
+  - **Unknown Pleasures**: `VisualizerSettings.UnknownPleasures.PaletteId` — id of the color palette. Legacy `Palette` (ColorPalette with `ColorNames`) is still read if `PaletteId` is not set, for backward compatibility.
   - **Oscilloscope**: `VisualizerSettings.Oscilloscope.Gain` — amplitude gain (1.0–10.0).
-  - **Layered text**: `VisualizerSettings.TextLayers` — list of layers, each with `LayerType`, `ZOrder`, `TextSnippets`, `BeatReaction`, `SpeedMultiplier`, `ColorIndex`. Layer types: `ScrollingColors`, `Marquee`, `FallingLetters`, `MatrixRain`, `WaveText`, `StaticText`. Beat reactions: `None`, `SpeedBurst`, `Flash`, `SpawnMore`, `Pulse`, `ColorPop`. Layers are drawn in ascending `ZOrder` (lower = back). Edit `appsettings.json` to add, remove, or reconfigure layers.
+  - **Layered text**: `VisualizerSettings.TextLayers` — `PaletteId` for palette; list of layers with `LayerType`, `ZOrder`, `TextSnippets`, `BeatReaction`, `SpeedMultiplier`, `ColorIndex`. Layer types: `ScrollingColors`, `Marquee`, `FallingLetters`, `MatrixRain`, `WaveText`, `StaticText`. Beat reactions: `None`, `SpeedBurst`, `Flash`, `SpawnMore`, `Pulse`, `ColorPop`. Layers are drawn in ascending `ZOrder` (lower = back). Edit `appsettings.json` to add, remove, or reconfigure layers.
 
 Example JSON:
 
 ```json
-"SelectedPaletteId": "default",
 "VisualizerSettings": {
-  "Geiss": { "BeatCircles": true },
+  "Geiss": { "BeatCircles": true, "PaletteId": "default" },
   "Oscilloscope": { "Gain": 2.5 },
+  "UnknownPleasures": { "PaletteId": "default" },
   "TextLayers": {
+    "PaletteId": "default",
     "Layers": [
       { "LayerType": "ScrollingColors", "ZOrder": 0, "BeatReaction": "ColorPop", "SpeedMultiplier": 1.0 },
       { "LayerType": "Marquee", "ZOrder": 1, "TextSnippets": ["Layered text", "Audio visualizer"], "BeatReaction": "SpeedBurst", "SpeedMultiplier": 1.0 }
@@ -131,7 +131,7 @@ Legacy top-level `BeatCircles` and `OscilloscopeGain` are still read for backwar
 
 ## Visualizer bounds (for developers)
 
-Visualizers implement **`IVisualizer`** and expose **technical name** (stable key for settings/CLI, e.g. `"geiss"`), **display name** (for toolbar and help), and **`SupportsPaletteCycling`** (whether the visualizer uses the global palette when the user presses P). Optional **`GetToolbarSuffix(snapshot)`** can return mode-specific toolbar text (e.g. gain for waveform modes). Visualizers that need configuration receive their settings via constructor injection (see [ADR-0008](docs/adr/0008-visualizer-settings-di.md)). The composite renderer uses only this interface and the shared snapshot; it does not reference concrete visualizer types (see [ADR-0004](docs/adr/0004-visualizer-encapsulation.md)).
+Visualizers implement **`IVisualizer`** and expose **technical name** (stable key for settings/CLI, e.g. `"geiss"`), **display name** (for toolbar and help), and **`SupportsPaletteCycling`** (whether the visualizer uses a per-visualizer palette when the user presses P). Optional **`GetToolbarSuffix(snapshot)`** can return mode-specific toolbar text (e.g. gain for waveform modes). Visualizers that need configuration receive their settings via constructor injection (see [ADR-0008](docs/adr/0008-visualizer-settings-di.md)). The composite renderer uses only this interface and the shared snapshot; it does not reference concrete visualizer types (see [ADR-0004](docs/adr/0004-visualizer-encapsulation.md)).
 
 Visualizers receive a **viewport** (`VisualizerViewport`: start row, max lines, width). They must not write more than `viewport.MaxLines` lines and no line longer than `viewport.Width`. The composite renderer validates dimensions and display start row before calling visualizers; if a visualizer throws, a one-line error is shown and the next frame can recover. This keeps resizes and bad data from corrupting the console UI.
 

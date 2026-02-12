@@ -93,42 +93,57 @@ VisualizationMode ParseMode(string? mode)
     return renderer.GetModeFromTechnicalName(mode ?? "") ?? VisualizationMode.SpectrumBars;
 }
 
-void ResolveAndSetPalette(AppSettings appSettings, IPaletteRepository repo, IVisualizationRenderer visRenderer)
+void ResolveAndSetPaletteForMode(VisualizationMode mode, AppSettings appSettings, IPaletteRepository repo, IVisualizationRenderer visRenderer)
 {
     IReadOnlyList<PaletteColor>? palette;
     string? displayName;
+    string? paletteId = null;
 
-    if (!string.IsNullOrWhiteSpace(appSettings.SelectedPaletteId))
+    switch (mode)
     {
-        var def = repo.GetById(appSettings.SelectedPaletteId);
+        case VisualizationMode.Geiss:
+            paletteId = appSettings.VisualizerSettings?.Geiss?.PaletteId;
+            break;
+        case VisualizationMode.UnknownPleasures:
+            paletteId = appSettings.VisualizerSettings?.UnknownPleasures?.PaletteId;
+            if (string.IsNullOrWhiteSpace(paletteId))
+            {
+                var legacyPalette = ColorPaletteParser.Parse(appSettings.VisualizerSettings?.UnknownPleasures?.Palette);
+                if (legacyPalette != null && legacyPalette.Count > 0)
+                {
+                    visRenderer.SetPaletteForMode(mode, legacyPalette, "Custom");
+                    return;
+                }
+            }
+            break;
+        case VisualizationMode.TextLayers:
+            paletteId = appSettings.VisualizerSettings?.TextLayers?.PaletteId;
+            break;
+        default:
+            return;
+    }
+
+    if (!string.IsNullOrWhiteSpace(paletteId))
+    {
+        var def = repo.GetById(paletteId);
         if (def != null && (palette = ColorPaletteParser.Parse(def)) != null && palette.Count > 0)
         {
             displayName = def.Name?.Trim();
-            visRenderer.SetPalette(palette, string.IsNullOrEmpty(displayName) ? appSettings.SelectedPaletteId : displayName);
+            visRenderer.SetPaletteForMode(mode, palette, string.IsNullOrEmpty(displayName) ? paletteId : displayName);
             return;
         }
-        palette = ColorPaletteParser.DefaultPalette;
-        displayName = "Default";
-    }
-    else
-    {
-        var legacyPalette = ColorPaletteParser.Parse(appSettings.VisualizerSettings?.UnknownPleasures?.Palette);
-        if (legacyPalette != null && legacyPalette.Count > 0)
-        {
-            visRenderer.SetPalette(legacyPalette, "Custom");
-            return;
-        }
-        palette = ColorPaletteParser.DefaultPalette;
-        displayName = "Default";
-        appSettings.SelectedPaletteId = "default";
     }
 
-    visRenderer.SetPalette(palette, displayName);
+    palette = ColorPaletteParser.DefaultPalette;
+    displayName = "Default";
+    visRenderer.SetPaletteForMode(mode, palette, displayName);
 }
 
 engine.SetVisualizationMode(ParseMode(settings.VisualizationMode));
 engine.BeatSensitivity = settings.BeatSensitivity;
-ResolveAndSetPalette(settings, paletteRepo, renderer);
+ResolveAndSetPaletteForMode(VisualizationMode.Geiss, settings, paletteRepo, renderer);
+ResolveAndSetPaletteForMode(VisualizationMode.UnknownPleasures, settings, paletteRepo, renderer);
+ResolveAndSetPaletteForMode(VisualizationMode.TextLayers, settings, paletteRepo, renderer);
 
 var devices = deviceInfo.GetDevices();
 var (initialDeviceId, initialName) = TryResolveDeviceFromSettings(devices, settings);
@@ -186,6 +201,8 @@ void SaveSettingsToRepository()
     settings.VisualizerSettings ??= new VisualizerSettings();
     settings.VisualizerSettings.Geiss ??= new GeissVisualizerSettings();
     settings.VisualizerSettings.Oscilloscope ??= new OscilloscopeVisualizerSettings();
+    settings.VisualizerSettings.UnknownPleasures ??= new UnknownPleasuresVisualizerSettings();
+    settings.VisualizerSettings.TextLayers ??= new TextLayersVisualizerSettings();
     settings.OscilloscopeGain = settings.VisualizerSettings.Oscilloscope.Gain;
     settings.BeatCircles = settings.VisualizerSettings.Geiss.BeatCircles;
     settingsRepo.Save(settings);
@@ -308,13 +325,37 @@ while (running)
 
 void CyclePalette()
 {
+    if (!renderer.SupportsPaletteCycling(engine.CurrentMode))
+    {
+        return;
+    }
+
     var all = paletteRepo.GetAll();
     if (all.Count == 0)
     {
         return;
     }
 
-    var currentId = settings.SelectedPaletteId ?? "";
+    string? currentId = null;
+    switch (engine.CurrentMode)
+    {
+        case VisualizationMode.Geiss:
+            visualizerSettings.Geiss ??= new GeissVisualizerSettings();
+            currentId = visualizerSettings.Geiss.PaletteId;
+            break;
+        case VisualizationMode.UnknownPleasures:
+            visualizerSettings.UnknownPleasures ??= new UnknownPleasuresVisualizerSettings();
+            currentId = visualizerSettings.UnknownPleasures.PaletteId;
+            break;
+        case VisualizationMode.TextLayers:
+            visualizerSettings.TextLayers ??= new TextLayersVisualizerSettings();
+            currentId = visualizerSettings.TextLayers.PaletteId;
+            break;
+        default:
+            return;
+    }
+
+    currentId ??= "";
     int index = 0;
     for (int i = 0; i < all.Count; i++)
     {
@@ -325,12 +366,25 @@ void CyclePalette()
         }
     }
     var next = all[index];
-    settings.SelectedPaletteId = next.Id;
+
+    switch (engine.CurrentMode)
+    {
+        case VisualizationMode.Geiss:
+            visualizerSettings.Geiss!.PaletteId = next.Id;
+            break;
+        case VisualizationMode.UnknownPleasures:
+            visualizerSettings.UnknownPleasures!.PaletteId = next.Id;
+            break;
+        case VisualizationMode.TextLayers:
+            visualizerSettings.TextLayers!.PaletteId = next.Id;
+            break;
+    }
+
     var def = paletteRepo.GetById(next.Id);
     if (def != null && ColorPaletteParser.Parse(def) is { } palette && palette.Count > 0)
     {
         var displayName = def.Name?.Trim();
-        renderer.SetPalette(palette, string.IsNullOrEmpty(displayName) ? next.Id : displayName);
+        renderer.SetPaletteForMode(engine.CurrentMode, palette, string.IsNullOrEmpty(displayName) ? next.Id : displayName);
     }
     SaveSettingsToRepository();
     if (!engine.FullScreen)

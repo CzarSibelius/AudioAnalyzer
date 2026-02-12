@@ -14,12 +14,13 @@ Multiple stacked waveform snapshots inspired by the pulsar plot. The bottom line
 
 ## Settings
 
-- **Schema**: `VisualizerSettings.UnknownPleasures` (legacy palette fallback if `SelectedPaletteId` not set)
-- **Related**: `SelectedPaletteId` — palette used when cycling with P.
+- **Schema**: `VisualizerSettings.UnknownPleasures`
+- **PaletteId** (string, optional): Id of the selected color palette (e.g. `"default"`). Resolved from palettes directory. P key cycles and saves to this setting.
+- **Palette** (legacy): `ColorPalette` with `ColorNames` — fallback if `PaletteId` not set.
 
 ## Key bindings
 
-- **P** — Cycle color palette
+- **P** — Cycle color palette (affects only Unknown Pleasures; saved to its settings)
 
 ## Viewport constraints
 
