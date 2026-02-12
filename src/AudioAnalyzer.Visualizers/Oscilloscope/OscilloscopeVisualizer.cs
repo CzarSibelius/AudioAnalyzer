@@ -1,6 +1,7 @@
 using System.Text;
 using AudioAnalyzer.Application;
 using AudioAnalyzer.Application.Abstractions;
+using AudioAnalyzer.Domain;
 
 namespace AudioAnalyzer.Visualizers;
 
@@ -10,10 +11,18 @@ public sealed class OscilloscopeVisualizer : IVisualizer
     public string DisplayName => "Oscilloscope";
     public bool SupportsPaletteCycling => false;
 
+    private readonly OscilloscopeVisualizerSettings? _settings;
     private readonly StringBuilder _lineBuffer = new(256);
 
+    public OscilloscopeVisualizer(OscilloscopeVisualizerSettings? settings)
+    {
+        _settings = settings;
+    }
+
+    private double Gain => _settings?.Gain ?? 2.5;
+
     public string? GetToolbarSuffix(AnalysisSnapshot snapshot) =>
-        $"Gain: {snapshot.WaveformGain:F1} ([ ])";
+        $"Gain: {Gain:F1} ([ ])";
 
     public void Render(AnalysisSnapshot snapshot, VisualizerViewport viewport)
     {
@@ -45,7 +54,7 @@ public sealed class OscilloscopeVisualizer : IVisualizer
         {
             int sampleIndex = (snapshot.WaveformPosition + x * step) % snapshot.WaveformSize;
             float sample = snapshot.Waveform[sampleIndex];
-            float gain = (float)Math.Clamp(snapshot.WaveformGain, 1.0, 10.0);
+            float gain = (float)Math.Clamp(Gain, 1.0, 10.0);
             float scaled = Math.Clamp(sample * gain, -1f, 1f);
             int y = centerY - (int)(scaled * (height / 2 - 1));
             y = Math.Clamp(y, 0, height - 1);

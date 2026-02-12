@@ -24,7 +24,7 @@ When adding or changing a visualizer:
 
 1. **Read the relevant spec** in `docs/visualizers/` and the index above.
 2. **Follow the viewport rule**: `.cursor/rules/visualizers-viewport.mdc` — respect viewport bounds.
-3. **Follow ADRs**: [ADR-0004](../adr/0004-visualizer-encapsulation.md) (encapsulation), [ADR-0005](../adr/0005-layered-visualizer-cell-buffer.md) (TextLayers cell buffer).
+3. **Follow ADRs**: [ADR-0004](../adr/0004-visualizer-encapsulation.md) (encapsulation), [ADR-0005](../adr/0005-layered-visualizer-cell-buffer.md) (TextLayers cell buffer), [ADR-0008](../adr/0008-visualizer-settings-di.md) (settings via constructor injection).
 4. **Create or update the spec** when adding or changing a visualizer; keep it in sync with the implementation.
 
 ## Spec format

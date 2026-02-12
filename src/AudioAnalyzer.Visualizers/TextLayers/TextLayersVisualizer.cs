@@ -21,6 +21,13 @@ public sealed class TextLayersVisualizer : IVisualizer
     public string DisplayName => "Layered text";
     public bool SupportsPaletteCycling => true;
 
+    private readonly TextLayersVisualizerSettings? _settings;
+
+    public TextLayersVisualizer(TextLayersVisualizerSettings? settings)
+    {
+        _settings = settings;
+    }
+
     private readonly ViewportCellBuffer _buffer = new();
     /// <summary>Per-layer state: (offset for scroll/marquee/wave, snippet index). Index matches sorted layer list.</summary>
     private readonly List<(double Offset, int SnippetIndex)> _layerStates = new();
@@ -31,7 +38,7 @@ public sealed class TextLayersVisualizer : IVisualizer
 
     public void Render(AnalysisSnapshot snapshot, VisualizerViewport viewport)
     {
-        var config = snapshot.TextLayersConfig;
+        var config = _settings;
         if (config?.Layers is not { Count: > 0 })
         {
             RenderEmpty(viewport);
@@ -432,7 +439,7 @@ public sealed class TextLayersVisualizer : IVisualizer
 
     public string? GetToolbarSuffix(AnalysisSnapshot snapshot)
     {
-        var config = snapshot.TextLayersConfig;
+        var config = _settings;
         if (config?.Layers is not { Count: > 0 })
         {
             return "Layers: (config in settings)";
@@ -444,8 +451,9 @@ public sealed class TextLayersVisualizer : IVisualizer
     /// Handles keys 1–9 to switch (cycle) the text snippet for the Nth frontmost layer.
     /// 1 = frontmost, 2 = second frontmost, etc. Returns true if the key was handled.
     /// </summary>
-    public bool HandleKey(ConsoleKey key, TextLayersVisualizerSettings? config)
+    public bool HandleKey(ConsoleKey key)
     {
+        var config = _settings;
         int digit = key switch
         {
             ConsoleKey.D1 or ConsoleKey.NumPad1 => 1,

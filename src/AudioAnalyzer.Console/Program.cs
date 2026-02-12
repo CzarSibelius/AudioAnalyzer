@@ -3,6 +3,7 @@ using AudioAnalyzer.Application;
 using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Domain;
 using AudioAnalyzer.Infrastructure;
+using AudioAnalyzer.Visualizers;
 using Microsoft.Extensions.DependencyInjection;
 
 static int GetConsoleWidth()
@@ -11,16 +12,37 @@ static int GetConsoleWidth()
     catch (IOException) { return 80; }
 }
 
+// Load settings before building the renderer so visualizer settings are available for DI
+var settingsRepo = new FileSettingsRepository();
+var settings = settingsRepo.Load();
+settings.VisualizerSettings ??= new VisualizerSettings();
+var visualizerSettings = settings.VisualizerSettings;
+
 var services = new ServiceCollection();
+services.AddSingleton(visualizerSettings);
 services.AddSingleton<IDisplayDimensions, ConsoleDisplayDimensions>();
+services.AddSingleton<ISettingsRepository>(_ => settingsRepo);
+services.AddSingleton<IPaletteRepository>(_ => new FilePaletteRepository());
+services.AddSingleton<IAudioDeviceInfo, NAudioDeviceInfo>();
+
+services.AddSingleton<IVisualizer, SpectrumBarsVisualizer>();
+services.AddSingleton<IVisualizer, VuMeterVisualizer>();
+services.AddSingleton<IVisualizer, WinampBarsVisualizer>();
+services.AddSingleton<IVisualizer>(sp => new OscilloscopeVisualizer(
+    sp.GetRequiredService<VisualizerSettings>().Oscilloscope ?? new OscilloscopeVisualizerSettings()));
+services.AddSingleton<IVisualizer>(sp => new GeissVisualizer(
+    sp.GetRequiredService<VisualizerSettings>().Geiss ?? new GeissVisualizerSettings()));
+services.AddSingleton<IVisualizer>(sp => new UnknownPleasuresVisualizer(
+    sp.GetRequiredService<VisualizerSettings>().UnknownPleasures));
+services.AddSingleton<IVisualizer>(sp => new TextLayersVisualizer(
+    sp.GetRequiredService<VisualizerSettings>().TextLayers ?? new TextLayersVisualizerSettings()));
+
 services.AddSingleton<IVisualizationRenderer>(sp =>
 {
     var dimensions = sp.GetRequiredService<IDisplayDimensions>();
-    return new CompositeVisualizationRenderer(dimensions);
+    var visualizers = sp.GetServices<IVisualizer>();
+    return new CompositeVisualizationRenderer(dimensions, visualizers);
 });
-services.AddSingleton<ISettingsRepository>(_ => new FileSettingsRepository());
-services.AddSingleton<IPaletteRepository>(_ => new FilePaletteRepository());
-services.AddSingleton<IAudioDeviceInfo, NAudioDeviceInfo>();
 services.AddSingleton<AnalysisEngine>(sp =>
 {
     var renderer = sp.GetRequiredService<IVisualizationRenderer>();
@@ -29,13 +51,10 @@ services.AddSingleton<AnalysisEngine>(sp =>
 });
 
 var provider = services.BuildServiceProvider();
-var settingsRepo = provider.GetRequiredService<ISettingsRepository>();
 var paletteRepo = provider.GetRequiredService<IPaletteRepository>();
 var deviceInfo = provider.GetRequiredService<IAudioDeviceInfo>();
 var engine = provider.GetRequiredService<AnalysisEngine>();
 var renderer = provider.GetRequiredService<IVisualizationRenderer>();
-
-var settings = settingsRepo.Load();
 
 const string CapturePrefix = "capture:";
 const string LoopbackPrefix = "loopback:";
@@ -109,10 +128,7 @@ void ResolveAndSetPalette(AppSettings appSettings, IPaletteRepository repo, IVis
 
 engine.SetVisualizationMode(ParseMode(settings.VisualizationMode));
 engine.BeatSensitivity = settings.BeatSensitivity;
-engine.WaveformGain = settings.VisualizerSettings?.Oscilloscope?.Gain ?? settings.OscilloscopeGain;
-engine.ShowBeatCircles = settings.VisualizerSettings?.Geiss?.BeatCircles ?? settings.BeatCircles;
 ResolveAndSetPalette(settings, paletteRepo, renderer);
-renderer.SetTextLayersSettings(settings.VisualizerSettings?.TextLayers);
 
 var devices = deviceInfo.GetDevices();
 var (initialDeviceId, initialName) = TryResolveDeviceFromSettings(devices, settings);
@@ -167,13 +183,11 @@ void SaveSettingsToRepository()
 {
     settings.VisualizationMode = renderer.GetTechnicalName(engine.CurrentMode);
     settings.BeatSensitivity = engine.BeatSensitivity;
-    settings.OscilloscopeGain = engine.WaveformGain;
-    settings.BeatCircles = engine.ShowBeatCircles;
     settings.VisualizerSettings ??= new VisualizerSettings();
     settings.VisualizerSettings.Geiss ??= new GeissVisualizerSettings();
-    settings.VisualizerSettings.Geiss.BeatCircles = engine.ShowBeatCircles;
     settings.VisualizerSettings.Oscilloscope ??= new OscilloscopeVisualizerSettings();
-    settings.VisualizerSettings.Oscilloscope.Gain = engine.WaveformGain;
+    settings.OscilloscopeGain = settings.VisualizerSettings.Oscilloscope.Gain;
+    settings.BeatCircles = settings.VisualizerSettings.Geiss.BeatCircles;
     settingsRepo.Save(settings);
 }
 
@@ -253,16 +267,19 @@ while (running)
                 SaveSettingsToRepository();
                 break;
             case ConsoleKey.B:
-                engine.ShowBeatCircles = !engine.ShowBeatCircles;
+                visualizerSettings.Geiss ??= new GeissVisualizerSettings();
+                visualizerSettings.Geiss.BeatCircles = !visualizerSettings.Geiss.BeatCircles;
                 SaveSettingsToRepository();
                 break;
             case ConsoleKey.Oem4:   // [ (increase gain)
-                engine.WaveformGain += 0.5;
+                visualizerSettings.Oscilloscope ??= new OscilloscopeVisualizerSettings();
+                visualizerSettings.Oscilloscope.Gain = Math.Clamp(visualizerSettings.Oscilloscope.Gain + 0.5, 1.0, 10.0);
                 SaveSettingsToRepository();
                 engine.Redraw();
                 break;
             case ConsoleKey.Oem6:   // ] (decrease gain)
-                engine.WaveformGain -= 0.5;
+                visualizerSettings.Oscilloscope ??= new OscilloscopeVisualizerSettings();
+                visualizerSettings.Oscilloscope.Gain = Math.Clamp(visualizerSettings.Oscilloscope.Gain - 0.5, 1.0, 10.0);
                 SaveSettingsToRepository();
                 engine.Redraw();
                 break;

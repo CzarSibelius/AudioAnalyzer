@@ -56,8 +56,6 @@ public sealed class AnalysisEngine
     private readonly Queue<double> _energyHistory = new();
     private readonly Queue<DateTime> _beatTimes = new();
     private double _beatThreshold = 1.3;
-    private double _waveformGain = 2.5;
-    private bool _showBeatCircles = true;
     private DateTime _lastBeatTime = DateTime.MinValue;
     private double _currentBpm;
     private double _instantEnergy;
@@ -78,8 +76,6 @@ public sealed class AnalysisEngine
 
     public VisualizationMode CurrentMode => _currentMode;
     public double BeatSensitivity { get => _beatThreshold; set => _beatThreshold = Math.Clamp(value, 0.5, 3.0); }
-    public double WaveformGain { get => _waveformGain; set => _waveformGain = Math.Clamp(value, 1.0, 10.0); }
-    public bool ShowBeatCircles { get => _showBeatCircles; set => _showBeatCircles = value; }
 
     /// <summary>When true, the visualizer uses the full console; header and toolbar are hidden.</summary>
     public bool FullScreen
@@ -282,8 +278,6 @@ public sealed class AnalysisEngine
         _snapshot.Waveform = _displayWaveform;
         _snapshot.WaveformPosition = _displayWaveformPosition;
         _snapshot.WaveformSize = WaveformSize;
-        _snapshot.WaveformGain = _waveformGain;
-        _snapshot.ShowBeatCircles = _showBeatCircles;
         _snapshot.LeftChannel = _leftChannel;
         _snapshot.RightChannel = _rightChannel;
         _snapshot.LeftPeakHold = _leftPeakHold;

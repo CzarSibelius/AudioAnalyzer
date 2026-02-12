@@ -16,6 +16,11 @@ public sealed class UnknownPleasuresVisualizer : IVisualizer
     public string DisplayName => "Unknown Pleasures";
     public bool SupportsPaletteCycling => true;
 
+    public UnknownPleasuresVisualizer(UnknownPleasuresVisualizerSettings? _)
+    {
+        // Settings reserved for future use (e.g. palette override, style options).
+    }
+
     private const int SnapshotWidth = 120;
     private const int MaxSnapshots = 14;
 
