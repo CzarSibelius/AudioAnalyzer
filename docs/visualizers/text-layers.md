@@ -26,9 +26,8 @@ Composites multiple independent layers (e.g. ScrollingColors, Marquee, FallingLe
 ## Key bindings
 
 - **P** — Cycle color palette (affects only Layered text; saved to its settings)
-- **1–9** — Switch (cycle) the text snippet for the Nth frontmost layer.
-  1 = frontmost, 2 = second frontmost, etc. Number keys and numpad keys work.
-- Toolbar suffix: "Layers: N (1–9: switch layer text)" or "Layers: (config in settings)" if empty
+- **1–9** — Cycle the layer type for layers 1–9. Key 1 = layer 1 (back), key 9 = layer 9 (front). Number keys and numpad keys work. Changes persist to appsettings.json.
+- Toolbar suffix: "Layers: N (1–9: cycle layer type)" or "Layers: (config in settings)" if empty
 
 ## Viewport constraints
 
@@ -41,6 +40,6 @@ Composites multiple independent layers (e.g. ScrollingColors, Marquee, FallingLe
 
 - **Internal state**: `ViewportCellBuffer`; `_layerStates` (offset, snippet index per layer); `_fallingLettersByLayer` (particles for FallingLetters); `_lastBeatCount`; `_beatFlashFrames`.
 - **Cell buffer**: Per [ADR-0005](../adr/0005-layered-visualizer-cell-buffer.md); internal to this visualizer only.
-- **Layer types**: ScrollingColors (color grid), Marquee (scrolling text), FallingLetters (falling particles), MatrixRain (digital rain), WaveText (sinusoidal text), StaticText (centered static).
+- **Layer types**: Each type has its own class implementing `ITextLayerRenderer`: ScrollingColorsLayer (color grid), MarqueeLayer (scrolling text), FallingLettersLayer (falling particles), MatrixRainLayer (digital rain), WaveTextLayer (sinusoidal text), StaticTextLayer (centered static).
 - **Beat reactions**: SpeedBurst (faster), Flash (advance/change), SpawnMore (spawn particles), Pulse (amplitude/color change), ColorPop (color offset).
 - **References**: [ADR-0004](../adr/0004-visualizer-encapsulation.md), [ADR-0005](../adr/0005-layered-visualizer-cell-buffer.md).

@@ -110,6 +110,10 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
         {
             file.VisualizerSettings.TextLayers = CreateDefaultTextLayersSettings();
         }
+        else
+        {
+            EnsureTextLayersHasNineLayers(file.VisualizerSettings.TextLayers);
+        }
 
         if (file.VisualizerSettings.UnknownPleasures is null)
         {
@@ -146,29 +150,42 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
         return s;
     }
 
-    /// <summary>Default layers: ScrollingColors background + Marquee foreground with a snippet.</summary>
-    private static TextLayersVisualizerSettings CreateDefaultTextLayersSettings() =>
-        new()
+    /// <summary>Default: 9 layers with ScrollingColors background and varied foreground types. Keys 1–9 map to layers 1–9.</summary>
+    private static TextLayersVisualizerSettings CreateDefaultTextLayersSettings()
+    {
+        var layers = new List<TextLayerSettings>
         {
-            Layers =
-            [
-                new TextLayerSettings
-                {
-                    LayerType = TextLayerType.ScrollingColors,
-                    ZOrder = 0,
-                    BeatReaction = TextLayerBeatReaction.ColorPop,
-                    SpeedMultiplier = 1.0
-                },
-                new TextLayerSettings
-                {
-                    LayerType = TextLayerType.Marquee,
-                    ZOrder = 1,
-                    TextSnippets = ["Layered text", "Audio visualizer"],
-                    BeatReaction = TextLayerBeatReaction.SpeedBurst,
-                    SpeedMultiplier = 1.0
-                }
-            ]
+            new() { LayerType = TextLayerType.ScrollingColors, ZOrder = 0, BeatReaction = TextLayerBeatReaction.ColorPop, SpeedMultiplier = 1.0 },
+            new() { LayerType = TextLayerType.Marquee, ZOrder = 1, TextSnippets = ["Layered text", "Audio visualizer"], BeatReaction = TextLayerBeatReaction.SpeedBurst, SpeedMultiplier = 1.0 },
+            new() { LayerType = TextLayerType.Marquee, ZOrder = 2, TextSnippets = ["Layer 3"], BeatReaction = TextLayerBeatReaction.None, SpeedMultiplier = 0.8 },
+            new() { LayerType = TextLayerType.WaveText, ZOrder = 3, TextSnippets = ["Wave"], BeatReaction = TextLayerBeatReaction.Pulse, SpeedMultiplier = 1.0 },
+            new() { LayerType = TextLayerType.StaticText, ZOrder = 4, TextSnippets = ["Static"], BeatReaction = TextLayerBeatReaction.None },
+            new() { LayerType = TextLayerType.FallingLetters, ZOrder = 5, TextSnippets = [".*#%"], BeatReaction = TextLayerBeatReaction.SpawnMore, SpeedMultiplier = 1.0 },
+            new() { LayerType = TextLayerType.MatrixRain, ZOrder = 6, BeatReaction = TextLayerBeatReaction.Flash, SpeedMultiplier = 1.0 },
+            new() { LayerType = TextLayerType.Marquee, ZOrder = 7, TextSnippets = ["Layer 8"], BeatReaction = TextLayerBeatReaction.None, SpeedMultiplier = 1.0 },
+            new() { LayerType = TextLayerType.StaticText, ZOrder = 8, TextSnippets = ["Top"], BeatReaction = TextLayerBeatReaction.Pulse }
         };
+        return new TextLayersVisualizerSettings { Layers = layers };
+    }
+
+    /// <summary>Ensures TextLayers has at least 9 layers so keys 1–9 always map to a layer. Pads with default layers if fewer.</summary>
+    private static void EnsureTextLayersHasNineLayers(TextLayersVisualizerSettings textLayers)
+    {
+        textLayers.Layers ??= new List<TextLayerSettings>();
+        int maxZ = textLayers.Layers.Count > 0 ? textLayers.Layers.Max(l => l.ZOrder) : -1;
+        while (textLayers.Layers.Count < 9)
+        {
+            maxZ++;
+            textLayers.Layers.Add(new TextLayerSettings
+            {
+                LayerType = TextLayerType.Marquee,
+                ZOrder = maxZ,
+                TextSnippets = [$"Layer {textLayers.Layers.Count + 1}"],
+                BeatReaction = TextLayerBeatReaction.None,
+                SpeedMultiplier = 1.0
+            });
+        }
+    }
 
     /// <summary>Internal DTO for JSON serialization. Holds both app-level and visualizer settings.</summary>
     private sealed class SettingsFile

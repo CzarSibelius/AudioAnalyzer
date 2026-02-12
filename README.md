@@ -43,7 +43,7 @@ On Windows you can use backslashes: `src\AudioAnalyzer.Console\AudioAnalyzer.Con
    - **B** – Toggle beat circles (Geiss mode)
    - **+** / **-** – Increase / decrease beat sensitivity
    - **[** / **]** – Increase / decrease oscilloscope gain (Oscilloscope mode; 1.0–10.0)
-   - **1–9** – Switch layer text (Layered text mode; 1 = frontmost layer, 2 = second, etc.)
+   - **1–9** – Cycle layer type (Layered text mode; 1 = layer 1 (back), 9 = layer 9 (front))
    - **D** – Change audio input device
    - **F** – Toggle full screen (visualizer only, no header/toolbar)
    - **ESC** – Quit
@@ -55,7 +55,7 @@ On Windows you can use backslashes: `src\AudioAnalyzer.Console\AudioAnalyzer.Con
 - **Audio input**: Loopback (system output) or a specific WASAPI capture device; choice is saved in settings.
 - **Volume analysis**: Real-time level and peak display; stereo VU-style meters in VU Meter mode.
 - **FFT analysis**: Fast Fourier Transform with log-spaced frequency bands and peak hold.
-- **Visualization modes**: Spectrum bars, Oscilloscope (time-domain waveform; gain adjustable with [ ] in real time, 1.0–10.0), VU Meter, Winamp-style bars, **Geiss** (psychedelic plasma; optional beat circles; uses its own palette; press **P** to cycle), **Unknown Pleasures** (stacked waveform snapshots; bottom line is always realtime, the rest are beat-triggered frozen snapshots; uses its own palette; press **P** to cycle), and **Layered text** (multiple independent layers—e.g. scrolling colors, marquee, falling letters—with configurable text snippets and beat reactions; press **1–9** to switch the text for the Nth frontmost layer; press **P** to cycle palettes).
+- **Visualization modes**: Spectrum bars, Oscilloscope (time-domain waveform; gain adjustable with [ ] in real time, 1.0–10.0), VU Meter, Winamp-style bars, **Geiss** (psychedelic plasma; optional beat circles; uses its own palette; press **P** to cycle), **Unknown Pleasures** (stacked waveform snapshots; bottom line is always realtime, the rest are beat-triggered frozen snapshots; uses its own palette; press **P** to cycle), and **Layered text** (multiple independent layers—e.g. scrolling colors, marquee, falling letters—with configurable text snippets and beat reactions; press **1–9** to cycle the layer type for layers 1–9; press **P** to cycle palettes).
 - **Colors and palettes**: Palette-aware visualizers (Geiss, Unknown Pleasures, Layered text) support **24-bit true color** (RGB) and 16 console colors. Palettes are stored as JSON files in a **palettes** directory (see below). Each visualizer has its own palette setting; pressing **P** affects only the current visualizer and saves to that visualizer's settings.
 - **Beat detection**: Optional beat detection and BPM estimate; sensitivity and beat circles are configurable and persist.
 - **Real-time display**: Updates every 50 ms.
@@ -102,7 +102,7 @@ Example with 24-bit colors:
   - **Geiss**: `VisualizerSettings.Geiss.BeatCircles` — show beat circles (boolean). `PaletteId` — id of the color palette (e.g. `"default"`).
   - **Unknown Pleasures**: `VisualizerSettings.UnknownPleasures.PaletteId` — id of the color palette. Legacy `Palette` (ColorPalette with `ColorNames`) is still read if `PaletteId` is not set, for backward compatibility.
   - **Oscilloscope**: `VisualizerSettings.Oscilloscope.Gain` — amplitude gain (1.0–10.0).
-  - **Layered text**: `VisualizerSettings.TextLayers` — `PaletteId` for palette; list of layers with `LayerType`, `ZOrder`, `TextSnippets`, `BeatReaction`, `SpeedMultiplier`, `ColorIndex`. Layer types: `ScrollingColors`, `Marquee`, `FallingLetters`, `MatrixRain`, `WaveText`, `StaticText`. Beat reactions: `None`, `SpeedBurst`, `Flash`, `SpawnMore`, `Pulse`, `ColorPop`. Layers are drawn in ascending `ZOrder` (lower = back). Edit `appsettings.json` to add, remove, or reconfigure layers.
+  - **Layered text**: `VisualizerSettings.TextLayers` — `PaletteId` for palette; list of 9 layers (keys 1–9) with `LayerType`, `ZOrder`, `TextSnippets`, `BeatReaction`, `SpeedMultiplier`, `ColorIndex`. Layer types: `ScrollingColors`, `Marquee`, `FallingLetters`, `MatrixRain`, `WaveText`, `StaticText`. Beat reactions: `None`, `SpeedBurst`, `Flash`, `SpawnMore`, `Pulse`, `ColorPop`. Layers are drawn in ascending `ZOrder` (lower = back). Press 1–9 to cycle each layer's type; changes persist to appsettings.json.
 
 Example JSON:
 
