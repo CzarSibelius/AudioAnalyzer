@@ -23,4 +23,7 @@ public sealed class TextLayerDrawContext
     public required int LayerIndex { get; init; }
     /// <summary>Falling letter particles for the current layer. Only used by FallingLettersLayer.</summary>
     public required List<FallingLetterState> FallingLettersForLayer { get; init; }
+
+    /// <summary>State for the current layer when it is AsciiImage. Only used by AsciiImageLayer.</summary>
+    public required AsciiImageState AsciiImageStateForLayer { get; init; }
 }

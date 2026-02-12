@@ -26,6 +26,8 @@ public sealed class TextLayersVisualizer : IVisualizer
     private readonly List<(double Offset, int SnippetIndex)> _layerStates = new();
     /// <summary>Falling letter particles per layer index (only for FallingLetters layers).</summary>
     private readonly List<List<FallingLetterState>> _fallingLettersByLayer = new();
+    /// <summary>ASCII image state per layer index (only for AsciiImage layers).</summary>
+    private readonly List<AsciiImageState> _asciiImageStateByLayer = new();
     private int _lastBeatCount = -1;
     private int _beatFlashFrames;
 
@@ -38,7 +40,8 @@ public sealed class TextLayersVisualizer : IVisualizer
             new FallingLettersLayer(),
             new WaveTextLayer(),
             new StaticTextLayer(),
-            new MatrixRainLayer()
+            new MatrixRainLayer(),
+            new AsciiImageLayer()
         };
         return list.ToDictionary(r => r.LayerType);
     }
@@ -77,6 +80,10 @@ public sealed class TextLayersVisualizer : IVisualizer
         {
             _fallingLettersByLayer.Add(new List<FallingLetterState>());
         }
+        while (_asciiImageStateByLayer.Count < sortedLayers.Count)
+        {
+            _asciiImageStateByLayer.Add(new AsciiImageState());
+        }
 
         if (snapshot.BeatCount != _lastBeatCount)
         {
@@ -109,7 +116,8 @@ public sealed class TextLayersVisualizer : IVisualizer
                 Width = w,
                 Height = h,
                 LayerIndex = i,
-                FallingLettersForLayer = _fallingLettersByLayer[i]
+                FallingLettersForLayer = _fallingLettersByLayer[i],
+                AsciiImageStateForLayer = _asciiImageStateByLayer[i]
             };
             state = renderer.Draw(layer, ref state, ctx);
             _layerStates[i] = state;
@@ -145,17 +153,46 @@ public sealed class TextLayersVisualizer : IVisualizer
         {
             return "Layers: (config in settings)";
         }
-        return $"Layers: {config.Layers.Count} (1–9: cycle layer type)";
+        var hasAscii = config.Layers.Any(l => l.LayerType == TextLayerType.AsciiImage);
+        if (hasAscii)
+        {
+            return $"Layers: {config.Layers.Count} (1–9: cycle, Shift+1–9: None, I: next image)";
+        }
+        return $"Layers: {config.Layers.Count} (1–9: cycle, Shift+1–9: None)";
     }
 
     /// <summary>
-    /// Handles keys 1–9 to cycle the layer type for the corresponding layer slot.
+    /// Handles keys 1–9 to cycle the layer type for the corresponding layer slot;
+    /// Shift+1–9 to set layer to None; I to cycle to the next picture in AsciiImage layers.
     /// 1 = layer 1 (back), 9 = layer 9 (front). Returns true if the key was handled.
     /// </summary>
-    public bool HandleKey(ConsoleKey key)
+    public bool HandleKey(ConsoleKeyInfo key)
     {
         var config = _settings;
-        int digit = key switch
+        if (config?.Layers is not { Count: > 0 })
+        {
+            return false;
+        }
+
+        if (key.Key is ConsoleKey.I)
+        {
+            var layers = config.Layers.OrderBy(l => l.ZOrder).ToList();
+            bool anyAdvanced = false;
+            for (int i = 0; i < layers.Count && i < _layerStates.Count; i++)
+            {
+                if (layers[i].LayerType != TextLayerType.AsciiImage)
+                {
+                    continue;
+                }
+                var state = _layerStates[i];
+                state.SnippetIndex++;
+                _layerStates[i] = state;
+                anyAdvanced = true;
+            }
+            return anyAdvanced;
+        }
+
+        int digit = key.Key switch
         {
             ConsoleKey.D1 or ConsoleKey.NumPad1 => 1,
             ConsoleKey.D2 or ConsoleKey.NumPad2 => 2,
@@ -181,16 +218,30 @@ public sealed class TextLayersVisualizer : IVisualizer
         }
 
         var layer = sortedLayers[layerIndex];
-        var types = Enum.GetValues<TextLayerType>();
-        int currentIndex = Array.IndexOf(types, layer.LayerType);
-        int nextIndex = (currentIndex + 1) % types.Length;
         var previousType = layer.LayerType;
-        layer.LayerType = types[nextIndex];
+
+        if (key.Modifiers.HasFlag(ConsoleModifiers.Shift))
+        {
+            layer.LayerType = TextLayerType.None;
+        }
+        else
+        {
+            var types = Enum.GetValues<TextLayerType>();
+            int currentIndex = Array.IndexOf(types, layer.LayerType);
+            int nextIndex = (currentIndex + 1) % types.Length;
+            layer.LayerType = types[nextIndex];
+        }
 
         // Clear per-layer state when switching away from FallingLetters to avoid artifacts
         if (previousType == TextLayerType.FallingLetters && layerIndex < _fallingLettersByLayer.Count)
         {
             _fallingLettersByLayer[layerIndex].Clear();
+        }
+
+        // Reset ASCII image state when switching away from AsciiImage
+        if (previousType == TextLayerType.AsciiImage && layerIndex < _asciiImageStateByLayer.Count)
+        {
+            _asciiImageStateByLayer[layerIndex] = new AsciiImageState();
         }
 
         return true;

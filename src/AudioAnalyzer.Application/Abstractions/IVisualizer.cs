@@ -19,5 +19,5 @@ public interface IVisualizer
     string? GetToolbarSuffix(AnalysisSnapshot snapshot) => null;
 
     /// <summary>Handles mode-specific key bindings (e.g. 1–9 for TextLayers). Returns true if the key was consumed.</summary>
-    bool HandleKey(ConsoleKey key) => false;
+    bool HandleKey(ConsoleKeyInfo key) => false;
 }

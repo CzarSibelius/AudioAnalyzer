@@ -19,5 +19,5 @@ public interface IVisualizationRenderer
     VisualizationMode? GetModeFromTechnicalName(string key);
 
     /// <summary>Handles mode-specific key bindings (e.g. 1–9 for TextLayers). Returns true if the key was consumed.</summary>
-    bool HandleKey(ConsoleKey key, VisualizationMode mode);
+    bool HandleKey(ConsoleKeyInfo key, VisualizationMode mode);
 }

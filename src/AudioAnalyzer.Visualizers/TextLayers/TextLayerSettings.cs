@@ -20,4 +20,10 @@ public class TextLayerSettings
 
     /// <summary>Optional palette color index or start index for gradient. Used by some layer types.</summary>
     public int ColorIndex { get; set; }
+
+    /// <summary>Path to folder containing images. Used when LayerType is AsciiImage.</summary>
+    public string? ImageFolderPath { get; set; }
+
+    /// <summary>Movement mode for AsciiImage layer. Default Scroll.</summary>
+    public AsciiImageMovement AsciiImageMovement { get; set; } = AsciiImageMovement.Scroll;
 }
