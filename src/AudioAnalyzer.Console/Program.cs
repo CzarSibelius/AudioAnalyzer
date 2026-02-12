@@ -214,7 +214,7 @@ while (running)
     if (Console.KeyAvailable)
     {
         var key = Console.ReadKey(true);
-        if (renderer.HandleKey(key.Key, engine.CurrentMode))
+        if (renderer.HandleKey(key, engine.CurrentMode))
         {
             if (engine.CurrentMode == VisualizationMode.TextLayers)
             {
@@ -523,7 +523,7 @@ void DrawHelpContent()
         VisualizationMode.WinampBars => "Classic music player bars",
         VisualizationMode.Geiss => "Psychedelic plasma visualization",
         VisualizationMode.UnknownPleasures => "Stacked waveform snapshots",
-        VisualizationMode.TextLayers => "Layered text (1–9 = cycle layer type)",
+        VisualizationMode.TextLayers => "Layered text (1–9 = cycle, Shift+1–9 = None, I = next image)",
         _ => ""
     };
     foreach (VisualizationMode mode in Enum.GetValues<VisualizationMode>())

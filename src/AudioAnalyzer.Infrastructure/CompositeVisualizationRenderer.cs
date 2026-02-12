@@ -136,7 +136,7 @@ public sealed class CompositeVisualizationRenderer : IVisualizationRenderer
         return null;
     }
 
-    public bool HandleKey(ConsoleKey key, VisualizationMode mode)
+    public bool HandleKey(ConsoleKeyInfo key, VisualizationMode mode)
     {
         if (_visualizers.TryGetValue(mode, out var visualizer))
         {
