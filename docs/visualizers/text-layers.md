@@ -40,6 +40,6 @@ Composites multiple independent layers (e.g. ScrollingColors, Marquee, FallingLe
 
 - **Internal state**: `ViewportCellBuffer`; `_layerStates` (offset, snippet index per layer); `_fallingLettersByLayer` (particles for FallingLetters); `_lastBeatCount`; `_beatFlashFrames`.
 - **Cell buffer**: Per [ADR-0005](../adr/0005-layered-visualizer-cell-buffer.md); internal to this visualizer only.
-- **Layer types**: Each type has its own class implementing `ITextLayerRenderer`: ScrollingColorsLayer (color grid), MarqueeLayer (scrolling text), FallingLettersLayer (falling particles), MatrixRainLayer (digital rain), WaveTextLayer (sinusoidal text), StaticTextLayer (centered static).
+- **Layer types**: Each type has its own class implementing `ITextLayerRenderer`, in a per-layer subfolder: `ScrollingColors/ScrollingColorsLayer`, `Marquee/MarqueeLayer`, `FallingLetters/FallingLettersLayer`, `MatrixRain/MatrixRainLayer`, `WaveText/WaveTextLayer`, `StaticText/StaticTextLayer`. Shared infrastructure (ITextLayerRenderer, TextLayerSettings, TextLayerDrawContext, etc.) stays in the TextLayers root.
 - **Beat reactions**: SpeedBurst (faster), Flash (advance/change), SpawnMore (spawn particles), Pulse (amplitude/color change), ColorPop (color offset).
 - **References**: [ADR-0004](../adr/0004-visualizer-encapsulation.md), [ADR-0005](../adr/0005-layered-visualizer-cell-buffer.md).
