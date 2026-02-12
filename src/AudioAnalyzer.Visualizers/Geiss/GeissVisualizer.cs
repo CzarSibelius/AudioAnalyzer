@@ -10,6 +10,15 @@ public sealed class GeissVisualizer : IVisualizer
     public string DisplayName => "Geiss";
     public bool SupportsPaletteCycling => true;
 
+    private readonly GeissVisualizerSettings? _settings;
+
+    public GeissVisualizer(GeissVisualizerSettings? settings)
+    {
+        _settings = settings;
+    }
+
+    private bool ShowBeatCircles => _settings?.BeatCircles ?? true;
+
     private static readonly ConsoleColor[] BeatCircleColors = [
         ConsoleColor.Cyan, ConsoleColor.Magenta, ConsoleColor.Yellow,
         ConsoleColor.Green, ConsoleColor.Red, ConsoleColor.Blue
@@ -57,7 +66,7 @@ public sealed class GeissVisualizer : IVisualizer
             _trebleIntensity = _trebleIntensity * 0.7 + (trebleSum / (snapshot.SmoothedMagnitudes.Length - trebleStart)) * 0.3;
         }
 
-        if (snapshot.BeatCount != _lastBeatCount && snapshot.ShowBeatCircles)
+        if (snapshot.BeatCount != _lastBeatCount && ShowBeatCircles)
         {
             _lastBeatCount = snapshot.BeatCount;
             SpawnBeatCircle();
@@ -84,7 +93,7 @@ public sealed class GeissVisualizer : IVisualizer
                 bool onCircle = false;
                 ConsoleColor circleColor = ConsoleColor.White;
                 PaletteColor? circlePaletteColor = null;
-                if (snapshot.ShowBeatCircles)
+                if (ShowBeatCircles)
                 {
                     double aspectRatio = 2.0;
                     double distFromCenter = Math.Sqrt((nx - 0.5) * (nx - 0.5) + ((ny - 0.5) / aspectRatio) * ((ny - 0.5) / aspectRatio));

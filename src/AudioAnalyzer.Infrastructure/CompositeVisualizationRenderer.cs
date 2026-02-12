@@ -1,42 +1,44 @@
 using AudioAnalyzer.Application;
 using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Domain;
-using AudioAnalyzer.Visualizers;
 
 namespace AudioAnalyzer.Infrastructure;
 
 public sealed class CompositeVisualizationRenderer : IVisualizationRenderer
 {
+    private static readonly Dictionary<string, VisualizationMode> s_technicalNameToMode = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["spectrum"] = VisualizationMode.SpectrumBars,
+        ["oscilloscope"] = VisualizationMode.Oscilloscope,
+        ["vumeter"] = VisualizationMode.VuMeter,
+        ["winamp"] = VisualizationMode.WinampBars,
+        ["geiss"] = VisualizationMode.Geiss,
+        ["unknownpleasures"] = VisualizationMode.UnknownPleasures,
+        ["textlayers"] = VisualizationMode.TextLayers,
+    };
+
     private readonly IDisplayDimensions _displayDimensions;
     private readonly Dictionary<VisualizationMode, IVisualizer> _visualizers;
     private IReadOnlyList<PaletteColor>? _palette;
     private string? _currentPaletteDisplayName;
-    private TextLayersVisualizerSettings? _textLayersSettings;
 
-    public CompositeVisualizationRenderer(IDisplayDimensions displayDimensions)
+    public CompositeVisualizationRenderer(IDisplayDimensions displayDimensions, IEnumerable<IVisualizer> visualizers)
     {
         _displayDimensions = displayDimensions;
-        _visualizers = new Dictionary<VisualizationMode, IVisualizer>
+        _visualizers = new Dictionary<VisualizationMode, IVisualizer>();
+        foreach (var v in visualizers)
         {
-            [VisualizationMode.SpectrumBars] = new SpectrumBarsVisualizer(),
-            [VisualizationMode.Oscilloscope] = new OscilloscopeVisualizer(),
-            [VisualizationMode.VuMeter] = new VuMeterVisualizer(),
-            [VisualizationMode.WinampBars] = new WinampBarsVisualizer(),
-            [VisualizationMode.Geiss] = new GeissVisualizer(),
-            [VisualizationMode.UnknownPleasures] = new UnknownPleasuresVisualizer(),
-            [VisualizationMode.TextLayers] = new TextLayersVisualizer()
-        };
+            if (s_technicalNameToMode.TryGetValue(v.TechnicalName, out var mode))
+            {
+                _visualizers[mode] = v;
+            }
+        }
     }
 
     public void SetPalette(IReadOnlyList<PaletteColor>? palette, string? paletteDisplayName = null)
     {
         _palette = palette;
         _currentPaletteDisplayName = paletteDisplayName;
-    }
-
-    public void SetTextLayersSettings(TextLayersVisualizerSettings? settings)
-    {
-        _textLayersSettings = settings;
     }
 
     private const int ToolbarLineCount = 2;
@@ -89,11 +91,6 @@ public sealed class CompositeVisualizationRenderer : IVisualizationRenderer
                 snapshot.CurrentPaletteName = _currentPaletteDisplayName;
             }
 
-            if (mode == VisualizationMode.TextLayers)
-            {
-                snapshot.TextLayersConfig = _textLayersSettings;
-            }
-
             if (_visualizers.TryGetValue(mode, out visualizer))
             {
                 try
@@ -139,14 +136,9 @@ public sealed class CompositeVisualizationRenderer : IVisualizationRenderer
 
     public bool HandleKey(ConsoleKey key, VisualizationMode mode)
     {
-        if (mode != VisualizationMode.TextLayers)
+        if (_visualizers.TryGetValue(mode, out var visualizer))
         {
-            return false;
-        }
-
-        if (_visualizers.TryGetValue(mode, out var visualizer) && visualizer is TextLayersVisualizer textLayers)
-        {
-            return textLayers.HandleKey(key, _textLayersSettings);
+            return visualizer.HandleKey(key);
         }
         return false;
     }

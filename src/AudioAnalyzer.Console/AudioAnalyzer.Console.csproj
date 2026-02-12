@@ -15,6 +15,7 @@
   <ItemGroup>
     <ProjectReference Include="..\AudioAnalyzer.Application\AudioAnalyzer.Application.csproj" />
     <ProjectReference Include="..\AudioAnalyzer.Infrastructure\AudioAnalyzer.Infrastructure.csproj" />
+    <ProjectReference Include="..\AudioAnalyzer.Visualizers\AudioAnalyzer.Visualizers.csproj" />
     <ProjectReference Include="..\AudioAnalyzer.Domain\AudioAnalyzer.Domain.csproj" />
   </ItemGroup>
 

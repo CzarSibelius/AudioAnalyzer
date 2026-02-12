@@ -17,4 +17,7 @@ public interface IVisualizer
 
     /// <summary>Optional toolbar suffix for this mode (e.g. "Gain: 2.5 ([ ])"). Return null to use default toolbar only.</summary>
     string? GetToolbarSuffix(AnalysisSnapshot snapshot) => null;
+
+    /// <summary>Handles mode-specific key bindings (e.g. 1–9 for TextLayers). Returns true if the key was consumed.</summary>
+    bool HandleKey(ConsoleKey key) => false;
 }
