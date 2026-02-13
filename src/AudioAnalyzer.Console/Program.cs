@@ -325,7 +325,7 @@ while (running)
             case ConsoleKey.S:
                 if (engine.CurrentMode == VisualizationMode.TextLayers)
                 {
-                    ShowTextLayersSettingsModal(engine, visualizerSettings, consoleLock);
+                    ShowTextLayersSettingsModal(engine, visualizerSettings, consoleLock, SaveSettingsToRepository);
                     lock (consoleLock)
                     {
                         if (!engine.FullScreen)
@@ -569,7 +569,10 @@ void DrawHelpContent()
     Console.WriteLine("  TEXTLAYERS SETTINGS MODAL (S when in Layered text)");
     Console.ResetColor();
     Console.WriteLine("  ─────────────────────────────────────");
-    Console.WriteLine("  ↑/↓       Select layer");
+    Console.WriteLine("  1-9       Select layer");
+    Console.WriteLine("  \u2190\u2192       Change layer type");
+    Console.WriteLine("  Shift+1-9 Toggle layer enabled/disabled");
+    Console.WriteLine("  \u2191\u2193       Select layer (alternate)");
     Console.WriteLine("  ESC       Close modal");
     Console.WriteLine();
     Console.ForegroundColor = ConsoleColor.Cyan;
@@ -592,7 +595,7 @@ void DrawHelpContent()
         VisualizationMode.WinampBars => "Classic music player bars",
         VisualizationMode.Geiss => "Psychedelic plasma visualization",
         VisualizationMode.UnknownPleasures => "Stacked waveform snapshots",
-        VisualizationMode.TextLayers => "Layered text (1–9 = cycle, Shift+1–9 = None, I = next image, S = settings)",
+        VisualizationMode.TextLayers => "Layered text (1-9 select, \u2190\u2192 type, Shift+1-9 toggle, I = next image, S = settings)",
         _ => ""
     };
     foreach (VisualizationMode mode in Enum.GetValues<VisualizationMode>())
@@ -741,7 +744,7 @@ static (string? deviceId, string name) ShowDeviceSelectionMenu(IAudioDeviceInfo 
 
 const int TextLayersSettingsOverlayRows = 14;
 
-static void ShowTextLayersSettingsModal(AnalysisEngine analysisEngine, VisualizerSettings visualizerSettings, object consoleLock)
+static void ShowTextLayersSettingsModal(AnalysisEngine analysisEngine, VisualizerSettings visualizerSettings, object consoleLock, Action saveSettings)
 {
     var textLayers = visualizerSettings.TextLayers ?? new TextLayersVisualizerSettings();
     var layers = textLayers.Layers ?? new List<TextLayerSettings>();
@@ -783,7 +786,7 @@ static void ShowTextLayersSettingsModal(AnalysisEngine analysisEngine, Visualize
             Console.SetCursorPosition(0, 2);
             Console.Write(VisualizerViewport.TruncateToWidth("╚" + new string('═', width - 2) + "╝", width).PadRight(width));
             Console.SetCursorPosition(0, 3);
-            Console.Write(VisualizerViewport.TruncateToWidth("  ↑/↓ select layer, ESC close", width).PadRight(width));
+            Console.Write(VisualizerViewport.TruncateToWidth("  1-9 select, \u2190\u2192 type, Shift+1-9 toggle, ESC close", width).PadRight(width));
             Console.SetCursorPosition(0, 4);
             Console.Write(VisualizerViewport.TruncateToWidth("  ─" + new string('─', LeftColWidth - 2) + "┬" + new string('─', rightColWidth) + "─", width).PadRight(width));
 
@@ -807,7 +810,8 @@ static void ShowTextLayersSettingsModal(AnalysisEngine analysisEngine, Visualize
 
                 var layer = sortedLayers[i];
                 string prefix = i == selectedIndex ? " ► " : "   ";
-                string leftLine = $"{prefix}{i + 1}. {layer.LayerType}";
+                string enabledMark = layer.Enabled ? "●" : "○";
+                string leftLine = $"{prefix}{enabledMark} {i + 1}. {layer.LayerType}";
                 leftLine = VisualizerViewport.TruncateToWidth(leftLine, LeftColWidth).PadRight(LeftColWidth);
 
                 Console.SetCursorPosition(0, row);
@@ -826,6 +830,7 @@ static void ShowTextLayersSettingsModal(AnalysisEngine analysisEngine, Visualize
             {
                 var rightLines = new List<string>
                 {
+                    $"Enabled: {selectedLayer.Enabled}",
                     $"Layer type: {selectedLayer.LayerType}",
                     $"Z order: {selectedLayer.ZOrder}",
                     $"Beat reaction: {selectedLayer.BeatReaction}",
@@ -859,6 +864,23 @@ static void ShowTextLayersSettingsModal(AnalysisEngine analysisEngine, Visualize
         catch (Exception ex) { _ = ex; /* Draw settings modal failed */ }
     }
 
+    int DigitFromKey(ConsoleKey key)
+    {
+        return key switch
+        {
+            ConsoleKey.D1 or ConsoleKey.NumPad1 => 1,
+            ConsoleKey.D2 or ConsoleKey.NumPad2 => 2,
+            ConsoleKey.D3 or ConsoleKey.NumPad3 => 3,
+            ConsoleKey.D4 or ConsoleKey.NumPad4 => 4,
+            ConsoleKey.D5 or ConsoleKey.NumPad5 => 5,
+            ConsoleKey.D6 or ConsoleKey.NumPad6 => 6,
+            ConsoleKey.D7 or ConsoleKey.NumPad7 => 7,
+            ConsoleKey.D8 or ConsoleKey.NumPad8 => 8,
+            ConsoleKey.D9 or ConsoleKey.NumPad9 => 9,
+            _ => 0
+        };
+    }
+
     bool HandleSettingsKey(ConsoleKeyInfo key)
     {
         switch (key.Key)
@@ -873,9 +895,45 @@ static void ShowTextLayersSettingsModal(AnalysisEngine analysisEngine, Visualize
                     ? (selectedIndex + 1) % sortedLayers.Count
                     : 0;
                 return false;
+            case ConsoleKey.LeftArrow:
+                if (sortedLayers.Count > 0 && selectedIndex < sortedLayers.Count)
+                {
+                    var layer = sortedLayers[selectedIndex];
+                    layer.LayerType = TextLayerSettings.CycleTypeBackward(layer);
+                    saveSettings();
+                }
+                return false;
+            case ConsoleKey.RightArrow:
+                if (sortedLayers.Count > 0 && selectedIndex < sortedLayers.Count)
+                {
+                    var layer = sortedLayers[selectedIndex];
+                    layer.LayerType = TextLayerSettings.CycleTypeForward(layer);
+                    saveSettings();
+                }
+                return false;
             case ConsoleKey.Escape:
                 return true;
             default:
+                int digit = DigitFromKey(key.Key);
+                if (digit == 0)
+                {
+                    return false;
+                }
+                int layerIdx = digit - 1;
+                if (layerIdx >= sortedLayers.Count)
+                {
+                    return false;
+                }
+                if (key.Modifiers.HasFlag(ConsoleModifiers.Shift))
+                {
+                    var l = sortedLayers[layerIdx];
+                    l.Enabled = !l.Enabled;
+                    saveSettings();
+                }
+                else
+                {
+                    selectedIndex = layerIdx;
+                }
                 return false;
         }
     }

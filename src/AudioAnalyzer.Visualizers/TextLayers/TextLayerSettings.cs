@@ -6,6 +6,9 @@ public class TextLayerSettings
     /// <summary>Kind of layer (e.g. ScrollingColors, Marquee).</summary>
     public TextLayerType LayerType { get; set; } = TextLayerType.Marquee;
 
+    /// <summary>When false, the layer is not rendered. Default true.</summary>
+    public bool Enabled { get; set; } = true;
+
     /// <summary>Draw order; lower values are drawn first (back).</summary>
     public int ZOrder { get; set; }
 
@@ -29,4 +32,20 @@ public class TextLayerSettings
 
     /// <summary>Movement mode for AsciiImage layer. Default Scroll.</summary>
     public AsciiImageMovement AsciiImageMovement { get; set; } = AsciiImageMovement.Scroll;
+
+    /// <summary>Cycles the layer's type to the next value (wraps). Includes None.</summary>
+    public static TextLayerType CycleTypeForward(TextLayerSettings layer)
+    {
+        var types = Enum.GetValues<TextLayerType>();
+        int idx = Array.IndexOf(types, layer.LayerType);
+        return types[(idx + 1) % types.Length];
+    }
+
+    /// <summary>Cycles the layer's type to the previous value (wraps). Includes None.</summary>
+    public static TextLayerType CycleTypeBackward(TextLayerSettings layer)
+    {
+        var types = Enum.GetValues<TextLayerType>();
+        int idx = Array.IndexOf(types, layer.LayerType);
+        return types[(idx - 1 + types.Length) % types.Length];
+    }
 }
