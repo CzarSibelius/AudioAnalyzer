@@ -29,10 +29,11 @@ Composites multiple independent layers (e.g. ScrollingColors, Marquee, FallingLe
 ## Key bindings
 
 - **P** — Cycle color palette (affects only Layered text; saved to its settings)
+- **S** — Open settings modal (two-column: layer list on left, selected layer settings on right; ↑/↓ select layer, ESC close). The modal replaces the header/toolbar region while keeping the visualizer visible below.
 - **1–9** — Cycle the layer type for layers 1–9. Key 1 = layer 1 (back), key 9 = layer 9 (front). Number keys and numpad keys work. Changes persist to appsettings.json.
 - **Shift+1–9** — Set the corresponding layer to None (invisible). Changes persist to appsettings.json.
 - **I** — Cycle to the next picture in AsciiImage layers (only when at least one layer is AsciiImage).
-- Toolbar suffix: "Layers: N (1–9: cycle, Shift+1–9: None, I: next image)" when AsciiImage layers exist; otherwise "Layers: N (1–9: cycle, Shift+1–9: None)" or "Layers: (config in settings)" if empty
+- Toolbar suffix: "Layers: N (1–9: cycle, Shift+1–9: None, I: next image, S: settings)" when AsciiImage layers exist; otherwise "Layers: N (1–9: cycle, Shift+1–9: None, S: settings)" or "Layers: (config in settings)" if empty
 
 ## Viewport constraints
 

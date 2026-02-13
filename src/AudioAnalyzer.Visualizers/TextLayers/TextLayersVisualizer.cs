@@ -167,14 +167,14 @@ public sealed class TextLayersVisualizer : IVisualizer
         var config = _settings;
         if (config?.Layers is not { Count: > 0 })
         {
-            return "Layers: (config in settings)";
+            return "Layers: (config in settings, S: settings)";
         }
         var hasAscii = config.Layers.Any(l => l.LayerType == TextLayerType.AsciiImage);
         if (hasAscii)
         {
-            return $"Layers: {config.Layers.Count} (1–9: cycle, Shift+1–9: None, I: next image)";
+            return $"Layers: {config.Layers.Count} (1–9: cycle, Shift+1–9: None, I: next image, S: settings)";
         }
-        return $"Layers: {config.Layers.Count} (1–9: cycle, Shift+1–9: None)";
+        return $"Layers: {config.Layers.Count} (1–9: cycle, Shift+1–9: None, S: settings)";
     }
 
     /// <summary>
