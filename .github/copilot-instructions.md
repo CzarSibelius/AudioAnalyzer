@@ -21,6 +21,7 @@ After making code changes, check linter diagnostics for the modified files and f
 - **Follow docs/adr/**: When changing architecture, persistence, or user-facing behavior, read the relevant ADRs in `docs/adr/` and align implementation with them.
 - If a change would conflict with an accepted ADR, either update/supersede the ADR or align the implementation with it; do not silently contradict documented decisions.
 - **NuGet packages**: When adding or changing NuGet dependencies, follow ADR-0013 — avoid insecure or obsolete packages. Check `dotnet list package --vulnerable` before merging.
+- **New visualizers**: Implement `ITextLayerRenderer` and add to TextLayersVisualizer; do not create new standalone `IVisualizer` modes (see ADR-0014 in docs/adr/).
 
 ### User Control Requirements
 - **Every feature must be toggleable by the user in realtime** via keyboard shortcuts
