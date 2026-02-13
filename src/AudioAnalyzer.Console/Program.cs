@@ -35,7 +35,8 @@ services.AddSingleton<IVisualizer>(sp => new GeissVisualizer(
 services.AddSingleton<IVisualizer>(sp => new UnknownPleasuresVisualizer(
     sp.GetRequiredService<VisualizerSettings>().UnknownPleasures));
 services.AddSingleton<IVisualizer>(sp => new TextLayersVisualizer(
-    sp.GetRequiredService<VisualizerSettings>().TextLayers ?? new TextLayersVisualizerSettings()));
+    sp.GetRequiredService<VisualizerSettings>().TextLayers ?? new TextLayersVisualizerSettings(),
+    sp.GetRequiredService<IPaletteRepository>()));
 
 services.AddSingleton<IVisualizationRenderer>(sp =>
 {
@@ -117,8 +118,7 @@ void ResolveAndSetPaletteForMode(VisualizationMode mode, VisualizerSettings visS
             }
             break;
         case VisualizationMode.TextLayers:
-            paletteId = visSettings.TextLayers?.PaletteId;
-            break;
+            return;
         default:
             return;
     }
@@ -143,7 +143,6 @@ engine.SetVisualizationMode(ParseMode(settings.VisualizationMode));
 engine.BeatSensitivity = settings.BeatSensitivity;
 ResolveAndSetPaletteForMode(VisualizationMode.Geiss, visualizerSettings, paletteRepo, renderer);
 ResolveAndSetPaletteForMode(VisualizationMode.UnknownPleasures, visualizerSettings, paletteRepo, renderer);
-ResolveAndSetPaletteForMode(VisualizationMode.TextLayers, visualizerSettings, paletteRepo, renderer);
 
 var devices = deviceInfo.GetDevices();
 var (initialDeviceId, initialName) = TryResolveDeviceFromSettings(devices, settings);
@@ -832,6 +831,7 @@ static void ShowTextLayersSettingsModal(AnalysisEngine analysisEngine, Visualize
                     $"Beat reaction: {selectedLayer.BeatReaction}",
                     $"Speed: {selectedLayer.SpeedMultiplier:F1}",
                     $"Color index: {selectedLayer.ColorIndex}",
+                    $"Palette: {selectedLayer.PaletteId ?? "(inherit)"}",
                     selectedLayer.TextSnippets is { Count: > 0 }
                         ? $"Snippets: {string.Join(", ", selectedLayer.TextSnippets.Take(3))}{(selectedLayer.TextSnippets.Count > 3 ? "..." : "")}"
                         : "Snippets: (none)"

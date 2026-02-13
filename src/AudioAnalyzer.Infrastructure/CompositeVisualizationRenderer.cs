@@ -83,7 +83,8 @@ public sealed class CompositeVisualizationRenderer : IVisualizationRenderer
                 _lastRenderedMode = mode;
             }
 
-            if (_visualizers.TryGetValue(mode, out var visualizer) && visualizer.SupportsPaletteCycling)
+            if (_visualizers.TryGetValue(mode, out var visualizer) && visualizer.SupportsPaletteCycling
+                && mode != VisualizationMode.TextLayers)
             {
                 var (palette, displayName) = _palettes.TryGetValue(mode, out var entry) ? entry : (default(IReadOnlyList<PaletteColor>?), null);
                 snapshot.Palette = palette ?? ColorPaletteParser.DefaultPalette;

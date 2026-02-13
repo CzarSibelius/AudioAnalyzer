@@ -14,11 +14,15 @@ public sealed class TextLayersVisualizer : IVisualizer
     public bool SupportsPaletteCycling => true;
 
     private readonly TextLayersVisualizerSettings? _settings;
+    private readonly IPaletteRepository _paletteRepo;
     private static readonly Dictionary<TextLayerType, ITextLayerRenderer> s_renderers = CreateRenderers();
+    /// <summary>Index of the layer whose palette P cycles. Updated when user presses 1–9.</summary>
+    private int _paletteCycleLayerIndex;
 
-    public TextLayersVisualizer(TextLayersVisualizerSettings? settings)
+    public TextLayersVisualizer(TextLayersVisualizerSettings? settings, IPaletteRepository paletteRepo)
     {
         _settings = settings;
+        _paletteRepo = paletteRepo;
     }
 
     private readonly ViewportCellBuffer _buffer = new();
@@ -68,16 +72,11 @@ public sealed class TextLayersVisualizer : IVisualizer
             return;
         }
 
-        var palette = snapshot.Palette;
-        var colors = palette is { Count: > 0 }
-            ? palette
-            : (IReadOnlyList<PaletteColor>)GetDefaultPalette();
-
-        var defaultColor = colors[0];
+        var sortedLayers = config.Layers.OrderBy(l => l.ZOrder).ToList();
+        var defaultColors = ResolvePaletteForLayer(sortedLayers.Count > 0 ? sortedLayers[0] : null, config);
+        var defaultColor = defaultColors[0];
         _buffer.EnsureSize(w, h);
         _buffer.Clear(defaultColor);
-
-        var sortedLayers = config.Layers.OrderBy(l => l.ZOrder).ToList();
         while (_layerStates.Count < sortedLayers.Count)
         {
             _layerStates.Add((0, 0));
@@ -121,11 +120,12 @@ public sealed class TextLayersVisualizer : IVisualizer
             }
 
             var state = _layerStates[i];
+            var layerColors = ResolvePaletteForLayer(layer, config);
             var ctx = new TextLayerDrawContext
             {
                 Buffer = _buffer,
                 Snapshot = snapshot,
-                Palette = colors,
+                Palette = layerColors,
                 SpeedBurst = speedBurst,
                 Width = w,
                 Height = h,
@@ -149,6 +149,21 @@ public sealed class TextLayersVisualizer : IVisualizer
         _buffer.WriteToConsole(viewport.StartRow);
     }
 
+    private IReadOnlyList<PaletteColor> ResolvePaletteForLayer(TextLayerSettings? layer, TextLayersVisualizerSettings? config)
+    {
+        var paletteId = layer?.PaletteId ?? config?.PaletteId ?? "default";
+        if (string.IsNullOrWhiteSpace(paletteId))
+        {
+            return GetDefaultPalette();
+        }
+        var def = _paletteRepo.GetById(paletteId);
+        if (def != null && ColorPaletteParser.Parse(def) is { } palette && palette.Count > 0)
+        {
+            return palette;
+        }
+        return GetDefaultPalette();
+    }
+
     private static IReadOnlyList<PaletteColor> GetDefaultPalette()
     {
         return
@@ -169,12 +184,24 @@ public sealed class TextLayersVisualizer : IVisualizer
         {
             return "Layers: (config in settings, S: settings)";
         }
+        var sortedLayers = config.Layers.OrderBy(l => l.ZOrder).ToList();
+        int idx = Math.Clamp(_paletteCycleLayerIndex, 0, sortedLayers.Count - 1);
+        var layer = sortedLayers[idx];
+        var paletteId = layer.PaletteId ?? config.PaletteId ?? "default";
+        var paletteDef = _paletteRepo.GetById(paletteId);
+        var paletteName = paletteDef?.Name?.Trim() ?? paletteId;
+        if (string.IsNullOrWhiteSpace(paletteName))
+        {
+            paletteName = "Default";
+        }
+        var baseSuffix = $"Layers: {config.Layers.Count} (1–9: cycle, Shift+1–9: None";
         var hasAscii = config.Layers.Any(l => l.LayerType == TextLayerType.AsciiImage);
         if (hasAscii)
         {
-            return $"Layers: {config.Layers.Count} (1–9: cycle, Shift+1–9: None, I: next image, S: settings)";
+            baseSuffix += ", I: next image";
         }
-        return $"Layers: {config.Layers.Count} (1–9: cycle, Shift+1–9: None, S: settings)";
+        baseSuffix += $", S: settings) | Palette (L{idx + 1}): {paletteName} (P)";
+        return baseSuffix;
     }
 
     /// <summary>
@@ -188,6 +215,35 @@ public sealed class TextLayersVisualizer : IVisualizer
         if (config?.Layers is not { Count: > 0 })
         {
             return false;
+        }
+
+        if (key.Key is ConsoleKey.P)
+        {
+            var paletteLayers = config.Layers.OrderBy(l => l.ZOrder).ToList();
+            if (paletteLayers.Count == 0)
+            {
+                return false;
+            }
+            int idx = Math.Clamp(_paletteCycleLayerIndex, 0, paletteLayers.Count - 1);
+            var paletteLayer = paletteLayers[idx];
+            var currentId = paletteLayer.PaletteId ?? config.PaletteId ?? "";
+            var all = _paletteRepo.GetAll();
+            if (all.Count == 0)
+            {
+                return true;
+            }
+            int nextIndex = 0;
+            for (int i = 0; i < all.Count; i++)
+            {
+                if (string.Equals(all[i].Id, currentId, StringComparison.OrdinalIgnoreCase))
+                {
+                    nextIndex = (i + 1) % all.Count;
+                    break;
+                }
+            }
+            var next = all[nextIndex];
+            paletteLayer.PaletteId = next.Id;
+            return true;
         }
 
         if (key.Key is ConsoleKey.I)
@@ -235,6 +291,7 @@ public sealed class TextLayersVisualizer : IVisualizer
 
         var layer = sortedLayers[layerIndex];
         var previousType = layer.LayerType;
+        _paletteCycleLayerIndex = layerIndex;
 
         if (key.Modifiers.HasFlag(ConsoleModifiers.Shift))
         {
