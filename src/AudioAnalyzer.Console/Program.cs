@@ -165,6 +165,8 @@ object deviceLock = new();
 engine.SetHeaderCallback(() => DrawMainUI(currentDeviceName), () => DrawHeaderOnly(currentDeviceName), 6);
 bool modalOpen = false;
 engine.SetRenderGuard(() => !modalOpen);
+object consoleLock = new();
+engine.SetConsoleLock(consoleLock);
 
 void StartCapture(string? deviceId, string name)
 {
@@ -319,6 +321,20 @@ while (running)
                 {
                     DrawMainUI(currentDeviceName);
                     engine.Redraw();
+                }
+                break;
+            case ConsoleKey.S:
+                if (engine.CurrentMode == VisualizationMode.TextLayers)
+                {
+                    ShowTextLayersSettingsModal(engine, visualizerSettings, consoleLock);
+                    lock (consoleLock)
+                    {
+                        if (!engine.FullScreen)
+                        {
+                            DrawMainUI(currentDeviceName);
+                        }
+                        engine.Redraw();
+                    }
                 }
                 break;
             }
@@ -479,6 +495,52 @@ static void RunModal(Action drawContent, Func<ConsoleKeyInfo, bool> handleKey, A
     onClose?.Invoke();
 }
 
+// Overlay modal: does NOT clear the whole screen; draws only into the top overlayRowCount rows.
+// Leaves the visualizer area visible below. Same lifecycle as RunModal (onEnter, onClose).
+// consoleLock: when set, acquired during clear+draw so overlay and engine render don't interleave on the console.
+static void RunOverlayModal(int overlayRowCount, Action drawContent, Func<ConsoleKeyInfo, bool> handleKey, object? consoleLock = null, Action? onClose = null, Action? onEnter = null)
+{
+    Console.CursorVisible = false;
+    onEnter?.Invoke();
+    while (true)
+    {
+        void ClearAndDraw()
+        {
+            int width = GetConsoleWidth();
+            string blank = new string(' ', width);
+            for (int r = 0; r < overlayRowCount; r++)
+            {
+                try
+                {
+                    Console.SetCursorPosition(0, r);
+                    Console.Write(blank);
+                }
+                catch (Exception ex) { _ = ex; /* Console write failed in overlay clear */ }
+            }
+            drawContent();
+        }
+
+        if (consoleLock != null)
+        {
+            lock (consoleLock)
+            {
+                ClearAndDraw();
+            }
+        }
+        else
+        {
+            ClearAndDraw();
+        }
+
+        var key = Console.ReadKey(true);
+        if (handleKey(key))
+        {
+            break;
+        }
+    }
+    onClose?.Invoke();
+}
+
 // Draws help content only; does not clear or read input. Used by RunModal (ADR-0006).
 void DrawHelpContent()
 {
@@ -500,8 +562,16 @@ void DrawHelpContent()
     Console.WriteLine("  +/-       Adjust beat sensitivity");
     Console.WriteLine("  [ / ]     Adjust oscilloscope gain (Oscilloscope mode)");
     Console.WriteLine("  D         Change audio input device");
+    Console.WriteLine("  S         TextLayers settings modal (Layered text mode; ↑/↓ select, ESC close)");
     Console.WriteLine("  ESC       Quit the application");
     Console.WriteLine("  F         Toggle full screen (visualizer only, no header/toolbar)");
+    Console.WriteLine();
+    Console.ForegroundColor = ConsoleColor.Cyan;
+    Console.WriteLine("  TEXTLAYERS SETTINGS MODAL (S when in Layered text)");
+    Console.ResetColor();
+    Console.WriteLine("  ─────────────────────────────────────");
+    Console.WriteLine("  ↑/↓       Select layer");
+    Console.WriteLine("  ESC       Close modal");
     Console.WriteLine();
     Console.ForegroundColor = ConsoleColor.Cyan;
     Console.WriteLine("  DEVICE SELECTION MENU");
@@ -523,7 +593,7 @@ void DrawHelpContent()
         VisualizationMode.WinampBars => "Classic music player bars",
         VisualizationMode.Geiss => "Psychedelic plasma visualization",
         VisualizationMode.UnknownPleasures => "Stacked waveform snapshots",
-        VisualizationMode.TextLayers => "Layered text (1–9 = cycle, Shift+1–9 = None, I = next image)",
+        VisualizationMode.TextLayers => "Layered text (1–9 = cycle, Shift+1–9 = None, I = next image, S = settings)",
         _ => ""
     };
     foreach (VisualizationMode mode in Enum.GetValues<VisualizationMode>())
@@ -668,4 +738,153 @@ static (string? deviceId, string name) ShowDeviceSelectionMenu(IAudioDeviceInfo 
 
     RunModal(DrawDeviceContent, HandleDeviceKey, onClose: () => setModalOpen(false), onEnter: () => setModalOpen(true));
     return (resultId, resultName);
+}
+
+const int TextLayersSettingsOverlayRows = 14;
+
+static void ShowTextLayersSettingsModal(AnalysisEngine analysisEngine, VisualizerSettings visualizerSettings, object consoleLock)
+{
+    var textLayers = visualizerSettings.TextLayers ?? new TextLayersVisualizerSettings();
+    var layers = textLayers.Layers ?? new List<TextLayerSettings>();
+    var sortedLayers = layers.OrderBy(l => l.ZOrder).ToList();
+    if (sortedLayers.Count == 0)
+    {
+        sortedLayers = new List<TextLayerSettings>();
+    }
+
+    int selectedIndex = 0;
+    const int LeftColWidth = 28;
+    int width = GetConsoleWidth();
+    int rightColWidth = Math.Max(10, width - LeftColWidth - 2);
+
+    void DrawSettingsContent()
+    {
+        for (int r = 0; r < TextLayersSettingsOverlayRows; r++)
+        {
+            try
+            {
+                Console.SetCursorPosition(0, r);
+            }
+            catch (Exception ex) { _ = ex; /* Console position failed */ }
+        }
+
+        if (width < 40)
+        {
+            return;
+        }
+
+        try
+        {
+            string title = " TextLayers Settings ";
+            int pad = Math.Max(0, (width - title.Length - 2) / 2);
+            Console.SetCursorPosition(0, 0);
+            Console.Write(VisualizerViewport.TruncateToWidth("╔" + new string('═', width - 2) + "╗", width).PadRight(width));
+            Console.SetCursorPosition(0, 1);
+            Console.Write(VisualizerViewport.TruncateToWidth("║" + new string(' ', pad) + title + new string(' ', width - pad - title.Length - 2) + "║", width).PadRight(width));
+            Console.SetCursorPosition(0, 2);
+            Console.Write(VisualizerViewport.TruncateToWidth("╚" + new string('═', width - 2) + "╝", width).PadRight(width));
+            Console.SetCursorPosition(0, 3);
+            Console.Write(VisualizerViewport.TruncateToWidth("  ↑/↓ select layer, ESC close", width).PadRight(width));
+            Console.SetCursorPosition(0, 4);
+            Console.Write(VisualizerViewport.TruncateToWidth("  ─" + new string('─', LeftColWidth - 2) + "┬" + new string('─', rightColWidth) + "─", width).PadRight(width));
+
+            var selectedLayer = sortedLayers.Count > 0 && selectedIndex < sortedLayers.Count
+                ? sortedLayers[selectedIndex]
+                : null;
+
+            for (int r = 5; r < TextLayersSettingsOverlayRows; r++)
+            {
+                Console.SetCursorPosition(LeftColWidth + 3, r);
+                Console.Write(new string(' ', rightColWidth));
+            }
+
+            for (int i = 0; i < sortedLayers.Count && i < 9; i++)
+            {
+                int row = 5 + i;
+                if (row >= TextLayersSettingsOverlayRows)
+                {
+                    break;
+                }
+
+                var layer = sortedLayers[i];
+                string prefix = i == selectedIndex ? " ► " : "   ";
+                string leftLine = $"{prefix}{i + 1}. {layer.LayerType}";
+                leftLine = VisualizerViewport.TruncateToWidth(leftLine, LeftColWidth).PadRight(LeftColWidth);
+
+                Console.SetCursorPosition(0, row);
+                if (i == selectedIndex)
+                {
+                    Console.BackgroundColor = ConsoleColor.DarkBlue;
+                    Console.ForegroundColor = ConsoleColor.White;
+                }
+                Console.Write(leftLine);
+                Console.ResetColor();
+                Console.Write(" │ ");
+                Console.Write(new string(' ', rightColWidth));
+            }
+
+            if (selectedLayer != null)
+            {
+                var rightLines = new List<string>
+                {
+                    $"Layer type: {selectedLayer.LayerType}",
+                    $"Z order: {selectedLayer.ZOrder}",
+                    $"Beat reaction: {selectedLayer.BeatReaction}",
+                    $"Speed: {selectedLayer.SpeedMultiplier:F1}",
+                    $"Color index: {selectedLayer.ColorIndex}",
+                    selectedLayer.TextSnippets is { Count: > 0 }
+                        ? $"Snippets: {string.Join(", ", selectedLayer.TextSnippets.Take(3))}{(selectedLayer.TextSnippets.Count > 3 ? "..." : "")}"
+                        : "Snippets: (none)"
+                };
+                if (selectedLayer.LayerType == TextLayerType.AsciiImage)
+                {
+                    rightLines.Add($"Image path: {selectedLayer.ImageFolderPath ?? "(none)"}");
+                    rightLines.Add($"Image movement: {selectedLayer.AsciiImageMovement}");
+                }
+
+                for (int i = 0; i < rightLines.Count && (5 + i) < TextLayersSettingsOverlayRows; i++)
+                {
+                    Console.SetCursorPosition(LeftColWidth + 3, 5 + i);
+                    string line = VisualizerViewport.TruncateToWidth(rightLines[i], rightColWidth);
+                    Console.Write(line.PadRight(rightColWidth));
+                }
+            }
+
+            for (int row = 5 + sortedLayers.Count; row < TextLayersSettingsOverlayRows; row++)
+            {
+                Console.SetCursorPosition(0, row);
+                Console.Write(new string(' ', width));
+            }
+        }
+        catch (Exception ex) { _ = ex; /* Draw settings modal failed */ }
+    }
+
+    bool HandleSettingsKey(ConsoleKeyInfo key)
+    {
+        switch (key.Key)
+        {
+            case ConsoleKey.UpArrow:
+                selectedIndex = sortedLayers.Count > 0
+                    ? (selectedIndex - 1 + sortedLayers.Count) % sortedLayers.Count
+                    : 0;
+                return false;
+            case ConsoleKey.DownArrow:
+                selectedIndex = sortedLayers.Count > 0
+                    ? (selectedIndex + 1) % sortedLayers.Count
+                    : 0;
+                return false;
+            case ConsoleKey.Escape:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    RunOverlayModal(
+        TextLayersSettingsOverlayRows,
+        DrawSettingsContent,
+        HandleSettingsKey,
+        consoleLock,
+        onClose: () => analysisEngine.SetOverlayActive(false),
+        onEnter: () => analysisEngine.SetOverlayActive(true, TextLayersSettingsOverlayRows));
 }

@@ -30,6 +30,7 @@ public sealed class AnalysisEngine
     private int _headerStartRow = 6;
     private int _displayStartRow = 6;
     private bool _fullScreen;
+    private int _overlayRowCount;
     private Action? _onRedrawHeader;
     private Action? _onRefreshHeader;
     private Func<bool>? _renderGuard;
@@ -66,6 +67,7 @@ public sealed class AnalysisEngine
     private readonly IDisplayDimensions _displayDimensions;
     private readonly AnalysisSnapshot _snapshot = new();
     private readonly object _renderLock = new();
+    private object? _consoleLock;
 
     public AnalysisEngine(IVisualizationRenderer renderer, IDisplayDimensions displayDimensions)
     {
@@ -84,7 +86,33 @@ public sealed class AnalysisEngine
         set
         {
             _fullScreen = value;
-            _displayStartRow = _fullScreen ? 0 : _headerStartRow;
+            UpdateDisplayStartRow();
+        }
+    }
+
+    /// <summary>
+    /// When overlay is active, the engine uses overlayRowCount as DisplayStartRow and skips the header refresh,
+    /// so an overlay can occupy the top rows while the visualizer keeps running below. Call with active=false to restore.
+    /// </summary>
+    public void SetOverlayActive(bool active, int overlayRowCount = 0)
+    {
+        _overlayRowCount = active ? overlayRowCount : 0;
+        UpdateDisplayStartRow();
+    }
+
+    private void UpdateDisplayStartRow()
+    {
+        if (_overlayRowCount > 0)
+        {
+            _displayStartRow = _overlayRowCount;
+        }
+        else if (_fullScreen)
+        {
+            _displayStartRow = 0;
+        }
+        else
+        {
+            _displayStartRow = _headerStartRow;
         }
     }
 
@@ -95,7 +123,7 @@ public sealed class AnalysisEngine
         _onRedrawHeader = redrawHeader;
         _onRefreshHeader = refreshHeader;
         _headerStartRow = startRow;
-        _displayStartRow = _fullScreen ? 0 : _headerStartRow;
+        UpdateDisplayStartRow();
     }
 
     /// <summary>
@@ -104,6 +132,15 @@ public sealed class AnalysisEngine
     public void SetRenderGuard(Func<bool>? guard)
     {
         _renderGuard = guard;
+    }
+
+    /// <summary>
+    /// Optional lock for console output. When set, the engine acquires it before header refresh and render,
+    /// so overlays and other console writers can serialize their output and avoid interleaved corruption.
+    /// </summary>
+    public void SetConsoleLock(object? consoleLock)
+    {
+        _consoleLock = consoleLock;
     }
 
     /// <summary>
@@ -117,7 +154,7 @@ public sealed class AnalysisEngine
             return;
         }
 
-        lock (_renderLock)
+        void DoRender()
         {
             int w = _displayDimensions.Width;
             int h = _displayDimensions.Height;
@@ -130,11 +167,29 @@ public sealed class AnalysisEngine
             _snapshot.DisplayStartRow = _displayStartRow;
             _snapshot.TerminalWidth = w;
             _snapshot.TerminalHeight = h;
-            if (!_fullScreen)
+            if (!_fullScreen && _overlayRowCount == 0)
             {
                 _onRefreshHeader?.Invoke();
             }
             try { _renderer.Render(_snapshot, _currentMode); } catch (Exception ex) { _ = ex; /* Render failed: swallow to avoid crash */ }
+        }
+
+        if (_consoleLock != null)
+        {
+            lock (_consoleLock)
+            {
+                lock (_renderLock)
+                {
+                    DoRender();
+                }
+            }
+        }
+        else
+        {
+            lock (_renderLock)
+            {
+                DoRender();
+            }
         }
     }
 
@@ -237,19 +292,38 @@ public sealed class AnalysisEngine
                 if (w != _lastTerminalWidth || h != _lastTerminalHeight)
                 {
                     UpdateDisplayDimensions();
-                    if (!_fullScreen)
+                    if (!_fullScreen && _overlayRowCount == 0)
                     {
                         _onRedrawHeader?.Invoke();
                     }
                 }
-                lock (_renderLock)
+
+                void DoProcessAudioRender()
                 {
-                    if (!_fullScreen)
+                    if (!_fullScreen && _overlayRowCount == 0)
                     {
                         _onRefreshHeader?.Invoke();
                     }
                     FillSnapshot(maxVolume, w, h);
                     try { _renderer.Render(_snapshot, _currentMode); } catch (Exception ex) { _ = ex; /* Render failed: swallow to avoid crash */ }
+                }
+
+                if (_consoleLock != null)
+                {
+                    lock (_consoleLock)
+                    {
+                        lock (_renderLock)
+                        {
+                            DoProcessAudioRender();
+                        }
+                    }
+                }
+                else
+                {
+                    lock (_renderLock)
+                    {
+                        DoProcessAudioRender();
+                    }
                 }
             }
             _lastUpdate = DateTime.Now;

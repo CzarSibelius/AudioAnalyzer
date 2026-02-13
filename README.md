@@ -46,6 +46,7 @@ On Windows you can use backslashes: `src\AudioAnalyzer.Console\AudioAnalyzer.Con
    - **1–9** – Cycle layer type (Layered text mode; 1 = layer 1 (back), 9 = layer 9 (front))
    - **Shift+1–9** – Set layer to None (Layered text mode)
    - **I** – Cycle to next picture (Layered text mode, when an AsciiImage layer is active)
+   - **S** – Open TextLayers settings modal (Layered text mode only; ↑/↓ select layer, ESC close)
    - **D** – Change audio input device
    - **F** – Toggle full screen (visualizer only, no header/toolbar)
    - **ESC** – Quit
