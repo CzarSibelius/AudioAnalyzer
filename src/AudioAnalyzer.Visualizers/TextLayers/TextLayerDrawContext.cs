@@ -26,4 +26,27 @@ public sealed class TextLayerDrawContext
 
     /// <summary>State for the current layer when it is AsciiImage. Only used by AsciiImageLayer.</summary>
     public required AsciiImageState AsciiImageStateForLayer { get; init; }
+
+    /// <summary>State for the current layer when it is GeissBackground. Only used by GeissBackgroundLayer.</summary>
+    public required GeissBackgroundState GeissBackgroundStateForLayer { get; init; }
+
+    /// <summary>State for the current layer when it is BeatCircles. Only used by BeatCirclesLayer.</summary>
+    public required BeatCirclesState BeatCirclesStateForLayer { get; init; }
+}
+
+/// <summary>State for GeissBackground layer: phase, colorPhase, bass/treble intensity.</summary>
+public sealed class GeissBackgroundState
+{
+    public double Phase { get; set; }
+    public double ColorPhase { get; set; }
+    public double BassIntensity { get; set; }
+    public double TrebleIntensity { get; set; }
+}
+
+/// <summary>State for BeatCircles layer: circle list, last beat count for spawn detection, and smoothed bass intensity.</summary>
+public sealed class BeatCirclesState
+{
+    public List<BeatCircle> Circles { get; } = new();
+    public int LastBeatCount { get; set; } = -1;
+    public double BassIntensity { get; set; }
 }

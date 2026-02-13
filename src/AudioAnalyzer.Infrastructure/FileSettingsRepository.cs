@@ -150,19 +150,19 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
         return s;
     }
 
-    /// <summary>Default: 9 layers with ScrollingColors background and varied foreground types. Keys 1–9 map to layers 1–9.</summary>
+    /// <summary>Default: 9 layers with GeissBackground + BeatCircles, then varied foreground types. Keys 1–9 map to layers 1–9.</summary>
     private static TextLayersVisualizerSettings CreateDefaultTextLayersSettings()
     {
         var layers = new List<TextLayerSettings>
         {
-            new() { LayerType = TextLayerType.ScrollingColors, ZOrder = 0, BeatReaction = TextLayerBeatReaction.ColorPop, SpeedMultiplier = 1.0 },
-            new() { LayerType = TextLayerType.Marquee, ZOrder = 1, TextSnippets = ["Layered text", "Audio visualizer"], BeatReaction = TextLayerBeatReaction.SpeedBurst, SpeedMultiplier = 1.0 },
-            new() { LayerType = TextLayerType.Marquee, ZOrder = 2, TextSnippets = ["Layer 3"], BeatReaction = TextLayerBeatReaction.None, SpeedMultiplier = 0.8 },
-            new() { LayerType = TextLayerType.WaveText, ZOrder = 3, TextSnippets = ["Wave"], BeatReaction = TextLayerBeatReaction.Pulse, SpeedMultiplier = 1.0 },
-            new() { LayerType = TextLayerType.StaticText, ZOrder = 4, TextSnippets = ["Static"], BeatReaction = TextLayerBeatReaction.None },
-            new() { LayerType = TextLayerType.FallingLetters, ZOrder = 5, TextSnippets = [".*#%"], BeatReaction = TextLayerBeatReaction.SpawnMore, SpeedMultiplier = 1.0 },
-            new() { LayerType = TextLayerType.MatrixRain, ZOrder = 6, BeatReaction = TextLayerBeatReaction.Flash, SpeedMultiplier = 1.0 },
-            new() { LayerType = TextLayerType.Marquee, ZOrder = 7, TextSnippets = ["Layer 8"], BeatReaction = TextLayerBeatReaction.None, SpeedMultiplier = 1.0 },
+            new() { LayerType = TextLayerType.GeissBackground, ZOrder = 0, BeatReaction = TextLayerBeatReaction.Flash, SpeedMultiplier = 1.0 },
+            new() { LayerType = TextLayerType.BeatCircles, ZOrder = 1, BeatReaction = TextLayerBeatReaction.None, SpeedMultiplier = 1.0 },
+            new() { LayerType = TextLayerType.Marquee, ZOrder = 2, TextSnippets = ["Layered text", "Audio visualizer"], BeatReaction = TextLayerBeatReaction.SpeedBurst, SpeedMultiplier = 1.0 },
+            new() { LayerType = TextLayerType.Marquee, ZOrder = 3, TextSnippets = ["Layer 3"], BeatReaction = TextLayerBeatReaction.None, SpeedMultiplier = 0.8 },
+            new() { LayerType = TextLayerType.WaveText, ZOrder = 4, TextSnippets = ["Wave"], BeatReaction = TextLayerBeatReaction.Pulse, SpeedMultiplier = 1.0 },
+            new() { LayerType = TextLayerType.StaticText, ZOrder = 5, TextSnippets = ["Static"], BeatReaction = TextLayerBeatReaction.None },
+            new() { LayerType = TextLayerType.FallingLetters, ZOrder = 6, TextSnippets = [".*#%"], BeatReaction = TextLayerBeatReaction.SpawnMore, SpeedMultiplier = 1.0 },
+            new() { LayerType = TextLayerType.MatrixRain, ZOrder = 7, BeatReaction = TextLayerBeatReaction.Flash, SpeedMultiplier = 1.0 },
             new() { LayerType = TextLayerType.StaticText, ZOrder = 8, TextSnippets = ["Top"], BeatReaction = TextLayerBeatReaction.Pulse }
         };
         return new TextLayersVisualizerSettings { Layers = layers };
