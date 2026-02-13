@@ -21,6 +21,9 @@ public class TextLayerSettings
     /// <summary>Optional palette color index or start index for gradient. Used by some layer types.</summary>
     public int ColorIndex { get; set; }
 
+    /// <summary>Id of the color palette for this layer (e.g. "default"). Falls back to TextLayers.PaletteId when null/empty.</summary>
+    public string? PaletteId { get; set; }
+
     /// <summary>Path to folder containing images. Used when LayerType is AsciiImage.</summary>
     public string? ImageFolderPath { get; set; }
 
