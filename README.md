@@ -43,10 +43,11 @@ On Windows you can use backslashes: `src\AudioAnalyzer.Console\AudioAnalyzer.Con
    - **B** – Toggle beat circles (Geiss mode)
    - **+** / **-** – Increase / decrease beat sensitivity
    - **[** / **]** – Increase / decrease oscilloscope gain (Oscilloscope mode; 1.0–10.0)
-   - **1–9** – Cycle layer type (Layered text mode; 1 = layer 1 (back), 9 = layer 9 (front))
-   - **Shift+1–9** – Set layer to None (Layered text mode)
+   - **1–9** – Select layer as active (Layered text mode; 1 = layer 1 (back), 9 = layer 9 (front))
+   - **←/→** – Cycle active layer's type (Layered text mode)
+   - **Shift+1–9** – Toggle layer enabled/disabled (Layered text mode)
    - **I** – Cycle to next picture (Layered text mode, when an AsciiImage layer is active)
-   - **S** – Open TextLayers settings modal (Layered text mode only; ↑/↓ select layer, ESC close)
+   - **S** – Open TextLayers settings modal (Layered text mode only; 1–9 select, ←→ type, Shift+1–9 toggle, ESC close)
    - **D** – Change audio input device
    - **F** – Toggle full screen (visualizer only, no header/toolbar)
    - **ESC** – Quit
@@ -58,7 +59,7 @@ On Windows you can use backslashes: `src\AudioAnalyzer.Console\AudioAnalyzer.Con
 - **Audio input**: Loopback (system output) or a specific WASAPI capture device; choice is saved in settings.
 - **Volume analysis**: Real-time level and peak display; stereo VU-style meters in VU Meter mode.
 - **FFT analysis**: Fast Fourier Transform with log-spaced frequency bands and peak hold.
-- **Visualization modes**: Spectrum bars, Oscilloscope (time-domain waveform; gain adjustable with [ ] in real time, 1.0–10.0), VU Meter, Winamp-style bars, **Geiss** (psychedelic plasma; optional beat circles; uses its own palette; press **P** to cycle), **Unknown Pleasures** (stacked waveform snapshots; bottom line is always realtime, the rest are beat-triggered frozen snapshots; uses its own palette; press **P** to cycle), and **Layered text** (multiple independent layers—e.g. Geiss plasma background, beat circles, scrolling colors, marquee, falling letters, ASCII images from a folder—with configurable text snippets and beat reactions; each layer has its own palette; press **1–9** to cycle the layer type for layers 1–9; press **P** to cycle the focused layer's palette).
+- **Visualization modes**: Spectrum bars, Oscilloscope (time-domain waveform; gain adjustable with [ ] in real time, 1.0–10.0), VU Meter, Winamp-style bars, **Geiss** (psychedelic plasma; optional beat circles; uses its own palette; press **P** to cycle), **Unknown Pleasures** (stacked waveform snapshots; bottom line is always realtime, the rest are beat-triggered frozen snapshots; uses its own palette; press **P** to cycle), and **Layered text** (multiple independent layers—e.g. Geiss plasma background, beat circles, scrolling colors, marquee, falling letters, ASCII images from a folder—with configurable text snippets and beat reactions; each layer has its own palette; press **1–9** to select a layer, **←/→** to change its type, **Shift+1–9** to toggle enabled; press **P** to cycle the active layer's palette).
 - **Colors and palettes**: Palette-aware visualizers (Geiss, Unknown Pleasures, Layered text) support **24-bit true color** (RGB) and 16 console colors. Palettes are stored as JSON files in a **palettes** directory (see below). Each visualizer has its own palette setting; pressing **P** affects only the current visualizer and saves to that visualizer's settings.
 - **Beat detection**: Optional beat detection and BPM estimate; sensitivity and beat circles are configurable and persist.
 - **Real-time display**: Updates every 50 ms.
@@ -106,7 +107,7 @@ Example with 24-bit colors:
   - **Geiss**: `VisualizerSettings.Geiss.BeatCircles` — show beat circles (boolean). `PaletteId` — id of the color palette (e.g. `"default"`).
   - **Unknown Pleasures**: `VisualizerSettings.UnknownPleasures.PaletteId` — id of the color palette. Legacy `Palette` (ColorPalette with `ColorNames`) is still read if `PaletteId` is not set, for backward compatibility.
   - **Oscilloscope**: `VisualizerSettings.Oscilloscope.Gain` — amplitude gain (1.0–10.0).
-  - **Layered text**: `VisualizerSettings.TextLayers` — `PaletteId` fallback for layers; list of 9 layers (keys 1–9) with `LayerType`, `ZOrder`, `TextSnippets`, `BeatReaction`, `SpeedMultiplier`, `ColorIndex`, `PaletteId` (per-layer palette; inherits from TextLayers.PaletteId when empty), and for AsciiImage: `ImageFolderPath`, `AsciiImageMovement`. Layer types: `None`, `ScrollingColors`, `Marquee`, `FallingLetters`, `MatrixRain`, `WaveText`, `StaticText`, `AsciiImage`, `GeissBackground`, `BeatCircles`. Beat reactions: `None`, `SpeedBurst`, `Flash`, `SpawnMore`, `Pulse`, `ColorPop`. Layers are drawn in ascending `ZOrder` (lower = back). Press 1–9 to cycle each layer's type (and focus it for P); Shift+1–9 to set to None; P cycles the focused layer's palette; changes persist to appsettings.json.
+  - **Layered text**: `VisualizerSettings.TextLayers` — `PaletteId` fallback for layers; list of 9 layers (keys 1–9) with `LayerType`, `Enabled`, `ZOrder`, `TextSnippets`, `BeatReaction`, `SpeedMultiplier`, `ColorIndex`, `PaletteId` (per-layer palette; inherits from TextLayers.PaletteId when empty), and for AsciiImage: `ImageFolderPath`, `AsciiImageMovement`. Layer types: `None`, `ScrollingColors`, `Marquee`, `FallingLetters`, `MatrixRain`, `WaveText`, `StaticText`, `AsciiImage`, `GeissBackground`, `BeatCircles`. Beat reactions: `None`, `SpeedBurst`, `Flash`, `SpawnMore`, `Pulse`, `ColorPop`. Layers are drawn in ascending `ZOrder` (lower = back). Press 1–9 to select a layer, ←/→ to change its type, Shift+1–9 to toggle enabled; P cycles the active layer's palette; changes persist to appsettings.json.
 
 Example JSON:
 

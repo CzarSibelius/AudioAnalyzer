@@ -1,3 +1,4 @@
+using System.Text;
 using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Domain;
 
@@ -114,7 +115,7 @@ public sealed class TextLayersVisualizer : IVisualizer
         for (int i = 0; i < sortedLayers.Count; i++)
         {
             var layer = sortedLayers[i];
-            if (!s_renderers.TryGetValue(layer.LayerType, out var renderer))
+            if (!layer.Enabled || !s_renderers.TryGetValue(layer.LayerType, out var renderer))
             {
                 continue;
             }
@@ -194,19 +195,54 @@ public sealed class TextLayersVisualizer : IVisualizer
         {
             paletteName = "Default";
         }
-        var baseSuffix = $"Layers: {config.Layers.Count} (1–9: cycle, Shift+1–9: None";
+
+        var sb = new StringBuilder();
+        sb.Append("Layers: ");
+        const string dimCode = "\x1b[2m";
+        const string resetCode = "\x1b[0m";
+        for (int i = 0; i < 9; i++)
+        {
+            char digit = (char)('1' + i);
+            if (i >= sortedLayers.Count)
+            {
+                AnsiConsole.AppendColored(sb, digit, ConsoleColor.DarkGray);
+            }
+            else
+            {
+                var l = sortedLayers[i];
+                if (!l.Enabled)
+                {
+                    sb.Append(dimCode);
+                    sb.Append(digit);
+                    sb.Append(resetCode);
+                }
+                else if (i == idx)
+                {
+                    AnsiConsole.AppendColored(sb, digit, ConsoleColor.Yellow);
+                }
+                else
+                {
+                    AnsiConsole.AppendColored(sb, digit, ConsoleColor.DarkGray);
+                }
+            }
+        }
+        sb.Append(" (1-9 select, \u2190\u2192 type, Shift+1-9 toggle");
         var hasAscii = config.Layers.Any(l => l.LayerType == TextLayerType.AsciiImage);
         if (hasAscii)
         {
-            baseSuffix += ", I: next image";
+            sb.Append(", I: next image");
         }
-        baseSuffix += $", S: settings) | Palette (L{idx + 1}): {paletteName} (P)";
-        return baseSuffix;
+        sb.Append(", S: settings) | Palette (L");
+        sb.Append(idx + 1);
+        sb.Append("): ");
+        sb.Append(paletteName);
+        sb.Append(" (P)");
+        return sb.ToString();
     }
 
     /// <summary>
-    /// Handles keys 1–9 to cycle the layer type for the corresponding layer slot;
-    /// Shift+1–9 to set layer to None; I to cycle to the next picture in AsciiImage layers.
+    /// Handles keys 1–9 to select the active layer; Left/Right to cycle the active layer's type;
+    /// Shift+1–9 to toggle layer enabled/disabled; I to cycle to the next picture in AsciiImage layers.
     /// 1 = layer 1 (back), 9 = layer 9 (front). Returns true if the key was handled.
     /// </summary>
     public bool HandleKey(ConsoleKeyInfo key)
@@ -217,15 +253,16 @@ public sealed class TextLayersVisualizer : IVisualizer
             return false;
         }
 
+        var sortedLayers = config.Layers.OrderBy(l => l.ZOrder).ToList();
+
         if (key.Key is ConsoleKey.P)
         {
-            var paletteLayers = config.Layers.OrderBy(l => l.ZOrder).ToList();
-            if (paletteLayers.Count == 0)
+            if (sortedLayers.Count == 0)
             {
                 return false;
             }
-            int idx = Math.Clamp(_paletteCycleLayerIndex, 0, paletteLayers.Count - 1);
-            var paletteLayer = paletteLayers[idx];
+            int idx = Math.Clamp(_paletteCycleLayerIndex, 0, sortedLayers.Count - 1);
+            var paletteLayer = sortedLayers[idx];
             var currentId = paletteLayer.PaletteId ?? config.PaletteId ?? "";
             var all = _paletteRepo.GetAll();
             if (all.Count == 0)
@@ -248,11 +285,10 @@ public sealed class TextLayersVisualizer : IVisualizer
 
         if (key.Key is ConsoleKey.I)
         {
-            var layers = config.Layers.OrderBy(l => l.ZOrder).ToList();
             bool anyAdvanced = false;
-            for (int i = 0; i < layers.Count && i < _layerStates.Count; i++)
+            for (int i = 0; i < sortedLayers.Count && i < _layerStates.Count; i++)
             {
-                if (layers[i].LayerType != TextLayerType.AsciiImage)
+                if (sortedLayers[i].LayerType != TextLayerType.AsciiImage)
                 {
                     continue;
                 }
@@ -262,6 +298,22 @@ public sealed class TextLayersVisualizer : IVisualizer
                 anyAdvanced = true;
             }
             return anyAdvanced;
+        }
+
+        if (key.Key is ConsoleKey.LeftArrow or ConsoleKey.RightArrow)
+        {
+            if (sortedLayers.Count == 0)
+            {
+                return false;
+            }
+            int layerIndex = Math.Clamp(_paletteCycleLayerIndex, 0, sortedLayers.Count - 1);
+            var layer = sortedLayers[layerIndex];
+            var previousType = layer.LayerType;
+            layer.LayerType = key.Key is ConsoleKey.LeftArrow
+                ? TextLayerSettings.CycleTypeBackward(layer)
+                : TextLayerSettings.CycleTypeForward(layer);
+            ClearLayerStateWhenSwitching(layerIndex, previousType);
+            return true;
         }
 
         int digit = key.Key switch
@@ -282,53 +334,41 @@ public sealed class TextLayersVisualizer : IVisualizer
             return false;
         }
 
-        var sortedLayers = config.Layers.OrderBy(l => l.ZOrder).ToList();
-        int layerIndex = digit - 1; // Key 1 -> index 0, Key 9 -> index 8
-        if (layerIndex >= sortedLayers.Count)
+        int layerIdx = digit - 1;
+        if (layerIdx >= sortedLayers.Count)
         {
             return false;
         }
 
-        var layer = sortedLayers[layerIndex];
-        var previousType = layer.LayerType;
-        _paletteCycleLayerIndex = layerIndex;
+        _paletteCycleLayerIndex = layerIdx;
 
         if (key.Modifiers.HasFlag(ConsoleModifiers.Shift))
         {
-            layer.LayerType = TextLayerType.None;
-        }
-        else
-        {
-            var types = Enum.GetValues<TextLayerType>();
-            int currentIndex = Array.IndexOf(types, layer.LayerType);
-            int nextIndex = (currentIndex + 1) % types.Length;
-            layer.LayerType = types[nextIndex];
+            var l = sortedLayers[layerIdx];
+            l.Enabled = !l.Enabled;
+            return true;
         }
 
-        // Clear per-layer state when switching away from FallingLetters to avoid artifacts
+        return true;
+    }
+
+    private void ClearLayerStateWhenSwitching(int layerIndex, TextLayerType previousType)
+    {
         if (previousType == TextLayerType.FallingLetters && layerIndex < _fallingLettersByLayer.Count)
         {
             _fallingLettersByLayer[layerIndex].Clear();
         }
-
-        // Reset ASCII image state when switching away from AsciiImage
         if (previousType == TextLayerType.AsciiImage && layerIndex < _asciiImageStateByLayer.Count)
         {
             _asciiImageStateByLayer[layerIndex] = new AsciiImageState();
         }
-
-        // Reset Geiss background state when switching away from GeissBackground
         if (previousType == TextLayerType.GeissBackground && layerIndex < _geissBackgroundStateByLayer.Count)
         {
             _geissBackgroundStateByLayer[layerIndex] = new GeissBackgroundState();
         }
-
-        // Reset beat circles state when switching away from BeatCircles
         if (previousType == TextLayerType.BeatCircles && layerIndex < _beatCirclesStateByLayer.Count)
         {
             _beatCirclesStateByLayer[layerIndex] = new BeatCirclesState();
         }
-
-        return true;
     }
 }
