@@ -10,5 +10,7 @@ public enum TextLayerType
     MatrixRain,
     WaveText,
     StaticText,
-    AsciiImage
+    AsciiImage,
+    GeissBackground,
+    BeatCircles
 }

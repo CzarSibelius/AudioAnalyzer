@@ -28,6 +28,10 @@ public sealed class TextLayersVisualizer : IVisualizer
     private readonly List<List<FallingLetterState>> _fallingLettersByLayer = new();
     /// <summary>ASCII image state per layer index (only for AsciiImage layers).</summary>
     private readonly List<AsciiImageState> _asciiImageStateByLayer = new();
+    /// <summary>Geiss background state per layer index (only for GeissBackground layers).</summary>
+    private readonly List<GeissBackgroundState> _geissBackgroundStateByLayer = new();
+    /// <summary>Beat circles state per layer index (only for BeatCircles layers).</summary>
+    private readonly List<BeatCirclesState> _beatCirclesStateByLayer = new();
     private int _lastBeatCount = -1;
     private int _beatFlashFrames;
 
@@ -41,7 +45,9 @@ public sealed class TextLayersVisualizer : IVisualizer
             new WaveTextLayer(),
             new StaticTextLayer(),
             new MatrixRainLayer(),
-            new AsciiImageLayer()
+            new AsciiImageLayer(),
+            new GeissBackgroundLayer(),
+            new BeatCirclesLayer()
         };
         return list.ToDictionary(r => r.LayerType);
     }
@@ -84,6 +90,14 @@ public sealed class TextLayersVisualizer : IVisualizer
         {
             _asciiImageStateByLayer.Add(new AsciiImageState());
         }
+        while (_geissBackgroundStateByLayer.Count < sortedLayers.Count)
+        {
+            _geissBackgroundStateByLayer.Add(new GeissBackgroundState());
+        }
+        while (_beatCirclesStateByLayer.Count < sortedLayers.Count)
+        {
+            _beatCirclesStateByLayer.Add(new BeatCirclesState());
+        }
 
         if (snapshot.BeatCount != _lastBeatCount)
         {
@@ -117,7 +131,9 @@ public sealed class TextLayersVisualizer : IVisualizer
                 Height = h,
                 LayerIndex = i,
                 FallingLettersForLayer = _fallingLettersByLayer[i],
-                AsciiImageStateForLayer = _asciiImageStateByLayer[i]
+                AsciiImageStateForLayer = _asciiImageStateByLayer[i],
+                GeissBackgroundStateForLayer = _geissBackgroundStateByLayer[i],
+                BeatCirclesStateForLayer = _beatCirclesStateByLayer[i]
             };
             state = renderer.Draw(layer, ref state, ctx);
             _layerStates[i] = state;
@@ -242,6 +258,18 @@ public sealed class TextLayersVisualizer : IVisualizer
         if (previousType == TextLayerType.AsciiImage && layerIndex < _asciiImageStateByLayer.Count)
         {
             _asciiImageStateByLayer[layerIndex] = new AsciiImageState();
+        }
+
+        // Reset Geiss background state when switching away from GeissBackground
+        if (previousType == TextLayerType.GeissBackground && layerIndex < _geissBackgroundStateByLayer.Count)
+        {
+            _geissBackgroundStateByLayer[layerIndex] = new GeissBackgroundState();
+        }
+
+        // Reset beat circles state when switching away from BeatCircles
+        if (previousType == TextLayerType.BeatCircles && layerIndex < _beatCirclesStateByLayer.Count)
+        {
+            _beatCirclesStateByLayer[layerIndex] = new BeatCirclesState();
         }
 
         return true;
