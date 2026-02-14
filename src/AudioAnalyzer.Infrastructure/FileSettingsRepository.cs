@@ -71,7 +71,8 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
     private static AppSettings MapToAppSettings(SettingsFile file)
     {
         var mode = file.VisualizationMode ?? "spectrum";
-        if (string.Equals(mode, "oscilloscope", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(mode, "oscilloscope", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(mode, "unknownpleasures", StringComparison.OrdinalIgnoreCase))
         {
             mode = "textlayers";
         }
@@ -116,18 +117,11 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
             ApplyLegacyOscilloscopeGain(file.VisualizerSettings.TextLayers, file.OscilloscopeGain);
         }
 
-        if (file.VisualizerSettings.UnknownPleasures is null)
-        {
-            file.VisualizerSettings.UnknownPleasures = new UnknownPleasuresVisualizerSettings();
-        }
+        MigrateUnknownPleasuresToLayer(file);
 
         var globalPaletteId = file.SelectedPaletteId;
-        if (!string.IsNullOrWhiteSpace(globalPaletteId) && file.VisualizerSettings.UnknownPleasures is not null && file.VisualizerSettings.TextLayers is not null)
+        if (!string.IsNullOrWhiteSpace(globalPaletteId) && file.VisualizerSettings.TextLayers is not null)
         {
-            if (string.IsNullOrWhiteSpace(file.VisualizerSettings.UnknownPleasures.PaletteId))
-            {
-                file.VisualizerSettings.UnknownPleasures.PaletteId = globalPaletteId;
-            }
             if (string.IsNullOrWhiteSpace(file.VisualizerSettings.TextLayers.PaletteId))
             {
                 file.VisualizerSettings.TextLayers.PaletteId = globalPaletteId;
@@ -135,12 +129,46 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
         }
     }
 
+    /// <summary>Migrates users from standalone Unknown Pleasures mode to TextLayers with an UnknownPleasures layer.</summary>
+    private static void MigrateUnknownPleasuresToLayer(SettingsFile file)
+    {
+        if (!string.Equals(file.VisualizationMode, "unknownpleasures", StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        file.VisualizationMode = "textlayers";
+
+        var textLayers = file.VisualizerSettings?.TextLayers;
+        if (textLayers is null)
+        {
+            return;
+        }
+
+        var legacyPaletteId = file.VisualizerSettings?.UnknownPleasures?.PaletteId;
+        if (string.IsNullOrWhiteSpace(legacyPaletteId))
+        {
+            return;
+        }
+
+        textLayers.Layers ??= new List<TextLayerSettings>();
+        int maxZ = textLayers.Layers.Count > 0 ? textLayers.Layers.Max(l => l.ZOrder) : -1;
+        textLayers.Layers.Insert(0, new TextLayerSettings
+        {
+            LayerType = TextLayerType.UnknownPleasures,
+            ZOrder = maxZ + 1,
+            Enabled = true,
+            PaletteId = legacyPaletteId,
+            BeatReaction = TextLayerBeatReaction.None,
+            SpeedMultiplier = 1.0
+        });
+    }
+
     private static VisualizerSettings CreateDefaultVisualizerSettings()
     {
         var s = new VisualizerSettings
         {
-            TextLayers = CreateDefaultTextLayersSettings(),
-            UnknownPleasures = new UnknownPleasuresVisualizerSettings()
+            TextLayers = CreateDefaultTextLayersSettings()
         };
         return s;
     }

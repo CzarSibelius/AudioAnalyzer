@@ -24,4 +24,7 @@ public sealed class TextLayerDrawContext
 
     /// <summary>State for the current layer when it is BeatCircles. Only used by BeatCirclesLayer.</summary>
     public required BeatCirclesState BeatCirclesStateForLayer { get; init; }
+
+    /// <summary>State for the current layer when it is UnknownPleasures. Only used by UnknownPleasuresLayer.</summary>
+    public required UnknownPleasuresState UnknownPleasuresStateForLayer { get; init; }
 }

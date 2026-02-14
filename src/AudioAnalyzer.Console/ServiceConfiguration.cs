@@ -26,8 +26,6 @@ internal static class ServiceConfiguration
         services.AddSingleton<IVisualizer, SpectrumBarsVisualizer>();
         services.AddSingleton<IVisualizer, VuMeterVisualizer>();
         services.AddSingleton<IVisualizer, WinampBarsVisualizer>();
-        services.AddSingleton<IVisualizer>(sp => new UnknownPleasuresVisualizer(
-            sp.GetRequiredService<VisualizerSettings>().UnknownPleasures));
         services.AddSingleton<IVisualizer>(sp => new TextLayersVisualizer(
             sp.GetRequiredService<VisualizerSettings>().TextLayers ?? new TextLayersVisualizerSettings(),
             sp.GetRequiredService<IPaletteRepository>()));

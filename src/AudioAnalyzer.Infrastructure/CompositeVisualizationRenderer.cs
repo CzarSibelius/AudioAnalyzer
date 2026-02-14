@@ -11,7 +11,6 @@ public sealed class CompositeVisualizationRenderer : IVisualizationRenderer
         ["spectrum"] = VisualizationMode.SpectrumBars,
         ["vumeter"] = VisualizationMode.VuMeter,
         ["winamp"] = VisualizationMode.WinampBars,
-        ["unknownpleasures"] = VisualizationMode.UnknownPleasures,
         ["textlayers"] = VisualizationMode.TextLayers,
     };
 

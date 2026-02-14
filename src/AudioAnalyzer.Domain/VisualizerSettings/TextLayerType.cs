@@ -13,5 +13,6 @@ public enum TextLayerType
     AsciiImage,
     GeissBackground,
     BeatCircles,
-    Oscilloscope
+    Oscilloscope,
+    UnknownPleasures
 }

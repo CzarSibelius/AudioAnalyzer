@@ -37,6 +37,8 @@ public sealed class TextLayersVisualizer : IVisualizer
     private readonly List<GeissBackgroundState> _geissBackgroundStateByLayer = new();
     /// <summary>Beat circles state per layer index (only for BeatCircles layers).</summary>
     private readonly List<BeatCirclesState> _beatCirclesStateByLayer = new();
+    /// <summary>Unknown Pleasures state per layer index (only for UnknownPleasures layers).</summary>
+    private readonly List<UnknownPleasuresState> _unknownPleasuresStateByLayer = new();
     private int _lastBeatCount = -1;
     private int _beatFlashFrames;
 
@@ -53,7 +55,8 @@ public sealed class TextLayersVisualizer : IVisualizer
             new AsciiImageLayer(),
             new GeissBackgroundLayer(),
             new BeatCirclesLayer(),
-            new OscilloscopeLayer()
+            new OscilloscopeLayer(),
+            new UnknownPleasuresLayer()
         };
         return list.ToDictionary(r => r.LayerType);
     }
@@ -99,6 +102,10 @@ public sealed class TextLayersVisualizer : IVisualizer
         {
             _beatCirclesStateByLayer.Add(new BeatCirclesState());
         }
+        while (_unknownPleasuresStateByLayer.Count < sortedLayers.Count)
+        {
+            _unknownPleasuresStateByLayer.Add(new UnknownPleasuresState());
+        }
 
         if (snapshot.BeatCount != _lastBeatCount)
         {
@@ -135,7 +142,8 @@ public sealed class TextLayersVisualizer : IVisualizer
                 FallingLettersForLayer = _fallingLettersByLayer[i],
                 AsciiImageStateForLayer = _asciiImageStateByLayer[i],
                 GeissBackgroundStateForLayer = _geissBackgroundStateByLayer[i],
-                BeatCirclesStateForLayer = _beatCirclesStateByLayer[i]
+                BeatCirclesStateForLayer = _beatCirclesStateByLayer[i],
+                UnknownPleasuresStateForLayer = _unknownPleasuresStateByLayer[i]
             };
             state = renderer.Draw(layer, ref state, ctx);
             _layerStates[i] = state;
@@ -389,6 +397,10 @@ public sealed class TextLayersVisualizer : IVisualizer
         if (previousType == TextLayerType.BeatCircles && layerIndex < _beatCirclesStateByLayer.Count)
         {
             _beatCirclesStateByLayer[layerIndex] = new BeatCirclesState();
+        }
+        if (previousType == TextLayerType.UnknownPleasures && layerIndex < _unknownPleasuresStateByLayer.Count)
+        {
+            _unknownPleasuresStateByLayer[layerIndex] = new UnknownPleasuresState();
         }
     }
 }

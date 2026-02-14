@@ -11,8 +11,8 @@ This directory contains per-visualizer reference documentation: behavior, settin
 | vumeter | VU Meter | [vu-meter.md](vu-meter.md) | Stereo channel levels and balance |
 | winamp | Winamp Style | [winamp-bars.md](winamp-bars.md) | Classic spectrum bars |
 | geiss | Geiss (deprecated) | [geiss.md](geiss.md) | Removed; use GeissBackground and BeatCircles layers in Layered text |
-| unknownpleasures | Unknown Pleasures | [unknown-pleasures.md](unknown-pleasures.md) | Stacked waveform snapshots, beat-triggered |
-| textlayers | Layered text | [text-layers.md](text-layers.md) | Multiple configurable layers (GeissBackground, BeatCircles, Oscilloscope, etc.) with beat reactions |
+| unknownpleasures | Unknown Pleasures (layer) | [unknown-pleasures.md](unknown-pleasures.md) | Stacked waveform snapshots, beat-triggered; use in Layered text via layer type |
+| textlayers | Layered text | [text-layers.md](text-layers.md) | Multiple configurable layers (GeissBackground, BeatCircles, Oscilloscope, UnknownPleasures, etc.) with beat reactions |
 
 ## Implementation layout
 
