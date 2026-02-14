@@ -11,4 +11,6 @@ After making code changes, check linter diagnostics for the modified files (use 
 - **Fix all reported errors.**
 - **Fix warnings** unless the rule is explicitly disabled for that line (e.g. pragma or editorconfig).
 
+Code style rules enforced at build time include: empty catch blocks (RCS1075), one file per class (RCS1060), and braces for control flow (IDE0011). See `.editorconfig` and `.cursor/rules/csharp-standards.mdc`.
+
 Do not complete code edits without addressing any linter errors in the files you changed.

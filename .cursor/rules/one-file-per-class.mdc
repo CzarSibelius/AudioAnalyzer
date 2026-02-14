@@ -1,0 +1,32 @@
+---
+description: Prefer one file per class, interface, or struct
+globs: "**/*.cs"
+alwaysApply: false
+---
+
+# One File Per Class
+
+Prefer one file per class, interface, or struct.
+
+- Each top-level type in a `.cs` file should generally have its own file.
+- File name should match the primary type (e.g. `TextLayerDrawContext.cs` contains `TextLayerDrawContext`).
+
+**Allowed exceptions:** Small, tightly coupled types (e.g. DTOs used only by one consumer) may be kept in the same file when justified. Prefer splitting when types grow or gain their own consumers.
+
+```csharp
+// BAD: multiple unrelated types in one file
+// TextLayerDrawContext.cs
+public struct FallingLetterState { }
+public sealed class TextLayerDrawContext { }
+public sealed class GeissBackgroundState { }
+public sealed class BeatCirclesState { }
+
+// GOOD: one primary type per file
+// FallingLetterState.cs
+public struct FallingLetterState { }
+
+// TextLayerDrawContext.cs
+public sealed class TextLayerDrawContext { }
+```
+
+Enforced by Roslynator RCS1060 at build time.

@@ -17,5 +17,8 @@ dotnet_diagnostic.IDE0011.severity = warning
 # No empty catch blocks (Roslynator RCS1075)
 dotnet_diagnostic.RCS1075.severity = warning
 
+# One file per class (Roslynator RCS1060)
+dotnet_diagnostic.RCS1060.severity = warning
+
 #### Formatting ####
 trim_trailing_whitespace = true
