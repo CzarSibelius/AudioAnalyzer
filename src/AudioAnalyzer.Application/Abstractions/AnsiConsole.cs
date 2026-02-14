@@ -83,4 +83,165 @@ public static class AnsiConsole
         sb.Append(c);
         sb.Append(Reset);
     }
+
+    /// <summary>
+    /// Returns the number of visible (printed) characters, excluding ANSI escape sequences.
+    /// </summary>
+    public static int GetVisibleLength(string text)
+    {
+        if (string.IsNullOrEmpty(text))
+        {
+            return 0;
+        }
+
+        int count = 0;
+        int i = 0;
+        while (i < text.Length)
+        {
+            if (text[i] == '\x1b' && i + 1 < text.Length && text[i + 1] == '[')
+            {
+                i += 2;
+                while (i < text.Length && (text[i] is >= '0' and <= '9' or ';' or '?' or ' '))
+                {
+                    i++;
+                }
+                if (i < text.Length)
+                {
+                    i++;
+                }
+                continue;
+            }
+
+            count++;
+            i++;
+        }
+        return count;
+    }
+
+    /// <summary>
+    /// Pads the text with spaces so its visible length equals <paramref name="width"/>. Preserves embedded ANSI codes.
+    /// </summary>
+    public static string PadToVisibleWidth(string text, int width)
+    {
+        int visible = GetVisibleLength(text);
+        if (visible >= width)
+        {
+            return text;
+        }
+
+        return text + new string(' ', width - visible);
+    }
+
+    /// <summary>
+    /// Returns the substring that displays exactly the visible characters in range [startVisible, startVisible + widthVisible).
+    /// Preserves ANSI escape sequences so colors are maintained; never cuts through an escape sequence.
+    /// Pads with spaces to <paramref name="widthVisible"/> if the range extends past the end.
+    /// </summary>
+    public static string GetVisibleSubstring(string text, int startVisible, int widthVisible)
+    {
+        if (widthVisible <= 0)
+        {
+            return "";
+        }
+
+        var sb = new StringBuilder();
+        int visibleIndex = 0;
+        int visibleOutput = 0;
+        string? pendingEscape = null;
+        int i = 0;
+
+        while (i < text.Length && visibleOutput < widthVisible)
+        {
+            if (text[i] == '\x1b' && i + 1 < text.Length && text[i + 1] == '[')
+            {
+                int escStart = i;
+                i += 2;
+                while (i < text.Length && (text[i] is >= '0' and <= '9' or ';' or '?' or ' '))
+                {
+                    i++;
+                }
+                if (i < text.Length)
+                {
+                    i++;
+                }
+                string escape = text[escStart..i];
+                if (visibleIndex >= startVisible)
+                {
+                    if (pendingEscape != null)
+                    {
+                        sb.Append(pendingEscape);
+                        pendingEscape = null;
+                    }
+                    sb.Append(escape);
+                }
+                else
+                {
+                    pendingEscape = escape;
+                }
+                continue;
+            }
+
+            if (visibleIndex >= startVisible)
+            {
+                if (pendingEscape != null)
+                {
+                    sb.Append(pendingEscape);
+                    pendingEscape = null;
+                }
+                sb.Append(text[i]);
+                visibleOutput++;
+            }
+            else
+            {
+                pendingEscape = null;
+            }
+
+            visibleIndex++;
+            i++;
+        }
+
+        while (visibleOutput < widthVisible)
+        {
+            sb.Append(Reset);
+            sb.Append(' ', widthVisible - visibleOutput);
+            visibleOutput = widthVisible;
+        }
+
+        return sb.ToString();
+    }
+
+    /// <summary>
+    /// Strips ANSI escape sequences from a string so the result contains only printable characters.
+    /// Use before scrolling text that may contain embedded escape codes, to avoid cutting sequences in half.
+    /// </summary>
+    public static string StripEscapes(string text)
+    {
+        if (string.IsNullOrEmpty(text))
+        {
+            return text;
+        }
+
+        var sb = new StringBuilder(text.Length);
+        int i = 0;
+        while (i < text.Length)
+        {
+            if (text[i] == '\x1b' && i + 1 < text.Length && text[i + 1] == '[')
+            {
+                i += 2;
+                while (i < text.Length && (text[i] is >= '0' and <= '9' or ';' or '?' or ' '))
+                {
+                    i++;
+                }
+                if (i < text.Length)
+                {
+                    i++;
+                }
+                continue;
+            }
+
+            sb.Append(text[i]);
+            i++;
+        }
+        return sb.ToString();
+    }
 }
