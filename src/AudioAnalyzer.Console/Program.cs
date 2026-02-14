@@ -28,7 +28,6 @@ VisualizationMode ParseMode(string? mode) =>
 
 engine.SetVisualizationMode(ParseMode(settings.VisualizationMode));
 engine.BeatSensitivity = settings.BeatSensitivity;
-PaletteResolver.ResolveAndSetForMode(VisualizationMode.UnknownPleasures, visualizerSettings, paletteRepo, renderer);
 
 var devices = deviceInfo.GetDevices();
 var (initialDeviceId, initialName) = DeviceResolver.TryResolveFromSettings(devices, settings);
@@ -88,7 +87,6 @@ void SaveSettingsToRepository()
     settings.BeatCircles = visualizerSettings.TextLayers?.Layers?.FirstOrDefault(l => l.LayerType == TextLayerType.BeatCircles)?.Enabled ?? true;
     settings.OscilloscopeGain = visualizerSettings.TextLayers?.Layers?.FirstOrDefault(l => l.LayerType == TextLayerType.Oscilloscope)?.Gain ?? 2.5;
     settingsRepo.SaveAppSettings(settings);
-    visualizerSettings.UnknownPleasures ??= new UnknownPleasuresVisualizerSettings();
     visualizerSettings.TextLayers ??= new TextLayersVisualizerSettings();
     settingsRepo.SaveVisualizerSettings(visualizerSettings);
 }
@@ -225,10 +223,6 @@ void CyclePalette()
     string? currentId = null;
     switch (engine.CurrentMode)
     {
-        case VisualizationMode.UnknownPleasures:
-            visualizerSettings.UnknownPleasures ??= new UnknownPleasuresVisualizerSettings();
-            currentId = visualizerSettings.UnknownPleasures.PaletteId;
-            break;
         case VisualizationMode.TextLayers:
             visualizerSettings.TextLayers ??= new TextLayersVisualizerSettings();
             currentId = visualizerSettings.TextLayers.PaletteId;
@@ -251,9 +245,6 @@ void CyclePalette()
 
     switch (engine.CurrentMode)
     {
-        case VisualizationMode.UnknownPleasures:
-            visualizerSettings.UnknownPleasures!.PaletteId = next.Id;
-            break;
         case VisualizationMode.TextLayers:
             visualizerSettings.TextLayers!.PaletteId = next.Id;
             break;
@@ -451,8 +442,7 @@ void DrawHelpContent()
         VisualizationMode.SpectrumBars => "Frequency bars with peak hold",
         VisualizationMode.VuMeter => "Classic stereo level meters",
         VisualizationMode.WinampBars => "Classic music player bars",
-        VisualizationMode.UnknownPleasures => "Stacked waveform snapshots",
-        VisualizationMode.TextLayers => "Layered text (1-9 select, \u2190\u2192 type, Shift+1-9 toggle, I = next image, S = settings)",
+        VisualizationMode.TextLayers => "Layered text (1-9 select, \u2190\u2192 type, Shift+1-9 toggle, I = next image, S = settings; Unknown Pleasures as layer)",
         _ => ""
     };
     foreach (VisualizationMode mode in Enum.GetValues<VisualizationMode>())
