@@ -56,7 +56,9 @@ public sealed class TextLayersVisualizer : IVisualizer
             new GeissBackgroundLayer(),
             new BeatCirclesLayer(),
             new OscilloscopeLayer(),
-            new UnknownPleasuresLayer()
+            new UnknownPleasuresLayer(),
+            new VuMeterLayer(),
+            new LlamaStyleLayer()
         };
         return list.ToDictionary(r => r.LayerType);
     }

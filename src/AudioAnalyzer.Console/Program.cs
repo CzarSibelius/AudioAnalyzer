@@ -24,7 +24,7 @@ var engine = provider.GetRequiredService<AnalysisEngine>();
 var renderer = provider.GetRequiredService<IVisualizationRenderer>();
 
 VisualizationMode ParseMode(string? mode) =>
-    renderer.GetModeFromTechnicalName(mode ?? "") ?? VisualizationMode.SpectrumBars;
+    renderer.GetModeFromTechnicalName(mode ?? "") ?? VisualizationMode.TextLayers;
 
 engine.SetVisualizationMode(ParseMode(settings.VisualizationMode));
 engine.BeatSensitivity = settings.BeatSensitivity;
@@ -450,10 +450,7 @@ void DrawHelpContent()
     Console.WriteLine("  ─────────────────────────────────────");
     string Desc(VisualizationMode m) => m switch
     {
-        VisualizationMode.SpectrumBars => "Frequency bars with peak hold",
-        VisualizationMode.VuMeter => "Classic stereo level meters",
-        VisualizationMode.WinampBars => "Classic music player bars",
-        VisualizationMode.TextLayers => "Layered text (1-9 select, \u2190\u2192 type, Shift+1-9 toggle, I = next image, S = settings; Unknown Pleasures as layer)",
+        VisualizationMode.TextLayers => "Layered text (1-9 select, \u2190\u2192 type, Shift+1-9 toggle, I = next image, S = settings; VuMeter, LlamaStyle, Oscilloscope, etc. as layers)",
         _ => ""
     };
     foreach (VisualizationMode mode in Enum.GetValues<VisualizationMode>())

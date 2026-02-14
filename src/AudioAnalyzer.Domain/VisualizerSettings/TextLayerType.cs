@@ -14,5 +14,7 @@ public enum TextLayerType
     GeissBackground,
     BeatCircles,
     Oscilloscope,
-    UnknownPleasures
+    UnknownPleasures,
+    VuMeter,
+    LlamaStyle
 }

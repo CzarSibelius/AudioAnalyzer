@@ -35,7 +35,7 @@ public sealed class AnalysisEngine
     private Action? _onRefreshHeader;
     private Func<bool>? _renderGuard;
 
-    private VisualizationMode _currentMode = VisualizationMode.SpectrumBars;
+    private VisualizationMode _currentMode = VisualizationMode.TextLayers;
     private int _numBands;
     private double[] _bandMagnitudes = Array.Empty<double>();
     private double[] _smoothedMagnitudes = Array.Empty<double>();

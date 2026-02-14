@@ -8,9 +8,6 @@ public sealed class VisualizationPaneLayout : IVisualizationRenderer
 {
     private static readonly Dictionary<string, VisualizationMode> s_technicalNameToMode = new(StringComparer.OrdinalIgnoreCase)
     {
-        ["spectrum"] = VisualizationMode.SpectrumBars,
-        ["vumeter"] = VisualizationMode.VuMeter,
-        ["winamp"] = VisualizationMode.WinampBars,
         ["textlayers"] = VisualizationMode.TextLayers,
     };
 

@@ -1,8 +1,8 @@
-# VU Meter (vumeter)
+# VU Meter (layer)
 
 ## Description
 
-Classic stereo VU-style meters. Shows left and right channel levels with peak hold markers, dB scale, and a balance indicator (L–C–R).
+Classic stereo VU-style meters. Shows left and right channel levels with peak hold markers, dB scale, and a balance indicator (L–C–R). Available as a layer type in Layered text mode.
 
 ## Snapshot usage
 
@@ -13,23 +13,22 @@ Classic stereo VU-style meters. Shows left and right channel levels with peak ho
 
 ## Settings
 
-- **Schema**: None (no per-visualizer settings)
+- Uses shared `TextLayerSettings`; no layer-specific options.
 
 ## Key bindings
 
-- None mode-specific
+- None layer-specific
 
 ## Viewport constraints
 
 - Minimum width: 30
 - Minimum height: 7 lines
 - Meter width: `min(60, viewport.Width - 20)`
-- Uses `WriteLineSafe` to cap output at `viewport.MaxLines` lines
-- Line length: `VisualizerViewport.TruncateToWidth` for non-ANSI lines
 
 ## Implementation notes
 
-- **Internal state**: `StringBuilder` only; stateless.
+- **Stateless**: No per-frame state; draws into cell buffer.
 - **Colors**: Green (0–75%), yellow (75–90%), red (90–100%); white peak marker.
 - **dB display**: `20 * log10(level)` for each channel.
 - **Balance**: `(R - L) / (L + R)` mapped to L–C–R bar.
+- **Location**: `TextLayers/VuMeter/VuMeterLayer.cs`

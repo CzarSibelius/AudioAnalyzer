@@ -36,6 +36,24 @@ public class TextLayerSettings
     /// <summary>Amplitude gain for Oscilloscope layer (1.0–10.0). Default 2.5.</summary>
     public double Gain { get; set; } = 2.5;
 
+    /// <summary>Show volume bar at top for LlamaStyle layer. Default false.</summary>
+    public bool LlamaStyleShowVolumeBar { get; set; }
+
+    /// <summary>Show row labels (100%, 75%, etc.) for LlamaStyle layer. Default false.</summary>
+    public bool LlamaStyleShowRowLabels { get; set; }
+
+    /// <summary>Show frequency labels (Hz) at bottom for LlamaStyle layer. Default false.</summary>
+    public bool LlamaStyleShowFrequencyLabels { get; set; }
+
+    /// <summary>Color scheme for LlamaStyle layer: "Winamp" (green→red) or "Spectrum" (red→blue). Default "Winamp".</summary>
+    public string LlamaStyleColorScheme { get; set; } = "Winamp";
+
+    /// <summary>Peak marker style for LlamaStyle layer: "Blocks" (▀▀) or "DoubleLine" (══). Default "Blocks".</summary>
+    public string LlamaStylePeakMarkerStyle { get; set; } = "Blocks";
+
+    /// <summary>Chars per band for LlamaStyle layer: 2 or 3. Default 3.</summary>
+    public int LlamaStyleBarWidth { get; set; } = 3;
+
     /// <summary>Cycles the layer's type to the next value (wraps). Includes None.</summary>
     public static TextLayerType CycleTypeForward(TextLayerSettings layer)
     {
