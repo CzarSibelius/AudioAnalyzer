@@ -70,9 +70,12 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
 
     private static AppSettings MapToAppSettings(SettingsFile file)
     {
-        var mode = file.VisualizationMode ?? "spectrum";
+        var mode = file.VisualizationMode ?? "textlayers";
         if (string.Equals(mode, "oscilloscope", StringComparison.OrdinalIgnoreCase) ||
-            string.Equals(mode, "unknownpleasures", StringComparison.OrdinalIgnoreCase))
+            string.Equals(mode, "unknownpleasures", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(mode, "spectrum", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(mode, "vumeter", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(mode, "winamp", StringComparison.OrdinalIgnoreCase))
         {
             mode = "textlayers";
         }
@@ -118,6 +121,7 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
         }
 
         MigrateUnknownPleasuresToLayer(file);
+        MigrateSpectrumVuMeterWinampToLayers(file);
 
         var globalPaletteId = file.SelectedPaletteId;
         if (!string.IsNullOrWhiteSpace(globalPaletteId) && file.VisualizerSettings.TextLayers is not null)
@@ -162,6 +166,69 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
             BeatReaction = TextLayerBeatReaction.None,
             SpeedMultiplier = 1.0
         });
+    }
+
+    /// <summary>Migrates users from standalone spectrum/vumeter/winamp mode to TextLayers with the corresponding layer.</summary>
+    private static void MigrateSpectrumVuMeterWinampToLayers(SettingsFile file)
+    {
+        var legacyMode = file.VisualizationMode ?? "";
+        if (!string.Equals(legacyMode, "spectrum", StringComparison.OrdinalIgnoreCase) &&
+            !string.Equals(legacyMode, "vumeter", StringComparison.OrdinalIgnoreCase) &&
+            !string.Equals(legacyMode, "winamp", StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        file.VisualizationMode = "textlayers";
+
+        var textLayers = file.VisualizerSettings?.TextLayers;
+        if (textLayers is null)
+        {
+            return;
+        }
+
+        textLayers.Layers ??= new List<TextLayerSettings>();
+        int maxZ = textLayers.Layers.Count > 0 ? textLayers.Layers.Max(l => l.ZOrder) : -1;
+
+        if (string.Equals(legacyMode, "vumeter", StringComparison.OrdinalIgnoreCase))
+        {
+            textLayers.Layers.Add(new TextLayerSettings
+            {
+                LayerType = TextLayerType.VuMeter,
+                ZOrder = maxZ + 1,
+                Enabled = true,
+                BeatReaction = TextLayerBeatReaction.None,
+                SpeedMultiplier = 1.0
+            });
+        }
+        else if (string.Equals(legacyMode, "spectrum", StringComparison.OrdinalIgnoreCase))
+        {
+            textLayers.Layers.Add(new TextLayerSettings
+            {
+                LayerType = TextLayerType.LlamaStyle,
+                ZOrder = maxZ + 1,
+                Enabled = true,
+                LlamaStyleShowVolumeBar = true,
+                LlamaStyleShowRowLabels = true,
+                LlamaStyleShowFrequencyLabels = true,
+                LlamaStyleColorScheme = "Spectrum",
+                LlamaStylePeakMarkerStyle = "DoubleLine",
+                LlamaStyleBarWidth = 2,
+                BeatReaction = TextLayerBeatReaction.None,
+                SpeedMultiplier = 1.0
+            });
+        }
+        else if (string.Equals(legacyMode, "winamp", StringComparison.OrdinalIgnoreCase))
+        {
+            textLayers.Layers.Add(new TextLayerSettings
+            {
+                LayerType = TextLayerType.LlamaStyle,
+                ZOrder = maxZ + 1,
+                Enabled = true,
+                BeatReaction = TextLayerBeatReaction.None,
+                SpeedMultiplier = 1.0
+            });
+        }
     }
 
     private static VisualizerSettings CreateDefaultVisualizerSettings()
@@ -258,7 +325,7 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
     {
         public string InputMode { get; set; } = "loopback";
         public string? DeviceName { get; set; }
-        public string VisualizationMode { get; set; } = "spectrum";
+        public string VisualizationMode { get; set; } = "textlayers";
         public double BeatSensitivity { get; set; } = 1.3;
         public bool BeatCircles { get; set; } = true;
         public double OscilloscopeGain { get; set; } = 2.5;

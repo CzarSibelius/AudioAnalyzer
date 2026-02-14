@@ -18,7 +18,7 @@ Composites multiple independent layers (e.g. ScrollingColors, Marquee, FallingLe
 - **Schema**: `VisualizerSettings.TextLayers`
 - **PaletteId** (string, optional): Default palette id for layers that do not have their own. Fallback when a layer's `PaletteId` is null/empty.
 - **Layers** (array): Each layer has:
-  - `LayerType`: None, ScrollingColors, Marquee, FallingLetters, MatrixRain, WaveText, StaticText, AsciiImage, GeissBackground, BeatCircles, Oscilloscope, UnknownPleasures
+  - `LayerType`: None, ScrollingColors, Marquee, FallingLetters, MatrixRain, WaveText, StaticText, AsciiImage, GeissBackground, BeatCircles, Oscilloscope, UnknownPleasures, VuMeter, LlamaStyle
   - `Enabled`: bool (default true; when false, layer is not rendered)
   - `ZOrder`: int (lower = back)
   - `TextSnippets`: optional string array (text for marquee/wave/falling/matrix)
@@ -29,6 +29,7 @@ Composites multiple independent layers (e.g. ScrollingColors, Marquee, FallingLe
   - `ImageFolderPath`: optional string (path to folder with images; for AsciiImage only)
   - `AsciiImageMovement`: None, Scroll, Zoom, Both (for AsciiImage; default Scroll)
   - `Gain`: double (1.0–10.0, default 2.5; for Oscilloscope layer only)
+  - LlamaStyle options (for LlamaStyle layer only): `LlamaStyleShowVolumeBar`, `LlamaStyleShowRowLabels`, `LlamaStyleShowFrequencyLabels` (bool); `LlamaStyleColorScheme` ("Winamp" | "Spectrum"); `LlamaStylePeakMarkerStyle` ("Blocks" | "DoubleLine"); `LlamaStyleBarWidth` (2 | 3)
 
 ## Key bindings
 
@@ -53,11 +54,13 @@ Composites multiple independent layers (e.g. ScrollingColors, Marquee, FallingLe
 - **Internal state**: `ViewportCellBuffer`; `_layerStates` (offset, snippet index per layer); `_fallingLettersByLayer` (particles for FallingLetters); `_asciiImageStateByLayer` (scroll, zoom, cache for AsciiImage); `_geissBackgroundStateByLayer` (phase, colorPhase, bass/treble for GeissBackground); `_beatCirclesStateByLayer` (circles, lastBeatCount for BeatCircles); `_paletteCycleLayerIndex` (layer whose palette P cycles); `_lastBeatCount`; `_beatFlashFrames`.
 - **Cell buffer**: Per [ADR-0005](../adr/0005-layered-visualizer-cell-buffer.md); internal to this visualizer only.
 - **None layer**: `LayerType.None` renders nothing; no renderer registered. Use ←/→ to cycle type (includes None). Use Shift+1–9 to toggle layer enabled/disabled.
-- **Layer types**: Each type has its own class implementing `ITextLayerRenderer`, in a per-layer subfolder: `ScrollingColors/ScrollingColorsLayer`, `Marquee/MarqueeLayer`, `FallingLetters/FallingLettersLayer`, `MatrixRain/MatrixRainLayer`, `WaveText/WaveTextLayer`, `StaticText/StaticTextLayer`, `AsciiImage/AsciiImageLayer`, `GeissBackground/GeissBackgroundLayer`, `BeatCircles/BeatCirclesLayer`, `Oscilloscope/OscilloscopeLayer`, `UnknownPleasures/UnknownPleasuresLayer`. Shared infrastructure (ITextLayerRenderer, TextLayerSettings, TextLayerDrawContext, etc.) stays in the TextLayers root.
+- **Layer types**: Each type has its own class implementing `ITextLayerRenderer`, in a per-layer subfolder: `ScrollingColors/ScrollingColorsLayer`, `Marquee/MarqueeLayer`, `FallingLetters/FallingLettersLayer`, `MatrixRain/MatrixRainLayer`, `WaveText/WaveTextLayer`, `StaticText/StaticTextLayer`, `AsciiImage/AsciiImageLayer`, `GeissBackground/GeissBackgroundLayer`, `BeatCircles/BeatCirclesLayer`, `Oscilloscope/OscilloscopeLayer`, `UnknownPleasures/UnknownPleasuresLayer`, `VuMeter/VuMeterLayer`, `LlamaStyle/LlamaStyleLayer`. Shared infrastructure (ITextLayerRenderer, TextLayerSettings, TextLayerDrawContext, etc.) stays in the TextLayers root.
 - **GeissBackground layer**: Psychedelic plasma-style background; sine-based plasma with bass/treble modulation; uses SmoothedMagnitudes and TargetMaxMagnitude; Flash beat reaction boosts plasma intensity; palette or GetGeissColor fallback.
 - **BeatCircles layer**: Expanding circles spawned on beat; draws only circle pixels (transparent elsewhere); uses BeatCount, SmoothedMagnitudes for maxRadius; up to 5 circles; aspect ratio 2.0 for elliptical appearance.
 - **Oscilloscope layer**: Time-domain waveform; uses Waveform, WaveformPosition, WaveformSize; per-layer Gain (1.0–10.0); [ ] adjusts gain when layer is selected; per-layer palette (distance from center maps to palette index); `oscilloscope` palette provides classic gradient.
 - **AsciiImage layer**: Reads images (BMP, GIF, JPEG, PNG, WebP) from `ImageFolderPath`, converts to ASCII via grayscale-to-character mapping; supports scroll, zoom, or both via `AsciiImageMovement`; uses palette gradient for colored output; Flash beat reaction cycles to next image. Depends on SixLabors.ImageSharp.
 - **UnknownPleasures layer**: Stacked waveform snapshots; bottom line realtime, others beat-triggered; uses SmoothedMagnitudes, NumBands, TargetMaxMagnitude, BeatCount; per-layer palette.
+- **VuMeter layer**: Classic stereo VU meters; Left/Right channel levels, peak hold, dB scale, balance indicator; uses LeftChannel, RightChannel, LeftPeakHold, RightPeakHold.
+- **LlamaStyle layer**: Spectrum bars (ex-Winamp/Spectrum Analyzer); configurable volume bar, row labels, frequency labels, color scheme (Winamp vs Spectrum), peak marker style, bar width; uses SmoothedMagnitudes, PeakHold, TargetMaxMagnitude, NumBands, Volume.
 - **Beat reactions**: SpeedBurst (faster), Flash (advance/change), SpawnMore (spawn particles), Pulse (amplitude/color change), ColorPop (color offset).
 - **References**: [ADR-0004](../adr/0004-visualizer-encapsulation.md), [ADR-0005](../adr/0005-layered-visualizer-cell-buffer.md).

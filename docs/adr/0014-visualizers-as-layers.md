@@ -8,7 +8,7 @@ The current `IVisualizer` model creates standalone visualization modes: each vis
 
 ## Decision
 
-1. **Legacy approach (deprecated for new development)**: Implementing `IVisualizer` directly to create a standalone visualization mode is the old way. Existing implementations (SpectrumBars, VuMeter, WinampBars, Oscilloscope, Geiss, UnknownPleasures) remain for backward compatibility. No new standalone `IVisualizer` modes should be added.
+1. **Legacy approach (deprecated for new development)**: Implementing `IVisualizer` directly to create a standalone visualization mode is the old way. SpectrumBars, VuMeter, and WinampBars have been migrated to layers (VuMeter, LlamaStyle). The app now uses only TextLayers mode; all visualizer content is implemented as `ITextLayerRenderer` layers. No new standalone `IVisualizer` modes should be added.
 
 2. **Preferred approach**: New visualizers must be created as `ITextLayerRenderer` implementations, hosted by `TextLayersVisualizer`. To add a new layer:
    - Implement `ITextLayerRenderer` with a distinct `LayerType`
@@ -19,11 +19,11 @@ The current `IVisualizer` model creates standalone visualization modes: each vis
 
    Layers plug into the Layered text mode where users can combine them with other layers.
 
-3. **Migration**: Existing standalone modes may be migrated to layers over time. The long-term direction is layers-only; migration is optional and incremental.
+3. **Migration**: SpectrumBars, VuMeter, and WinampBars were migrated to layers (VuMeter, LlamaStyle). Users with legacy `spectrum`, `vumeter`, or `winamp` in settings are auto-migrated to TextLayers with the corresponding layer added.
 
 ## Consequences
 
 - **New development**: Agents and developers must create new visualizer content as `ITextLayerRenderer` layers, not as new `IVisualizer` implementations.
-- **Existing modes**: Standalone `IVisualizer` modes stay; no removal required. They remain separate modes until (and if) migrated.
+- **Existing modes**: The app uses only TextLayers; all visualizer content (VuMeter, LlamaStyle, Oscilloscope, UnknownPleasures, GeissBackground, BeatCircles, etc.) is provided as layers.
 - **Documentation**: README, agent instructions, and visualizer specs reference ADR-0014 and steer toward the layer approach.
 - **References**: [ITextLayerRenderer](../../src/AudioAnalyzer.Visualizers/TextLayers/ITextLayerRenderer.cs), [TextLayersVisualizer.CreateRenderers()](../../src/AudioAnalyzer.Visualizers/TextLayers/TextLayersVisualizer.cs), [ADR-0005](0005-layered-visualizer-cell-buffer.md).

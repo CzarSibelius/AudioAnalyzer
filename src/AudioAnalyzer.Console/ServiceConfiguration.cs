@@ -23,9 +23,6 @@ internal static class ServiceConfiguration
         services.AddSingleton<IPaletteRepository>(_ => new FilePaletteRepository());
         services.AddSingleton<IAudioDeviceInfo, NAudioDeviceInfo>();
 
-        services.AddSingleton<IVisualizer, SpectrumBarsVisualizer>();
-        services.AddSingleton<IVisualizer, VuMeterVisualizer>();
-        services.AddSingleton<IVisualizer, WinampBarsVisualizer>();
         services.AddSingleton<IVisualizer>(sp => new TextLayersVisualizer(
             sp.GetRequiredService<VisualizerSettings>().TextLayers ?? new TextLayersVisualizerSettings(),
             sp.GetRequiredService<IPaletteRepository>()));
