@@ -1,4 +1,4 @@
-namespace AudioAnalyzer.Visualizers;
+namespace AudioAnalyzer.Domain;
 
 /// <summary>Per-layer configuration for the layered text visualizer.</summary>
 public class TextLayerSettings

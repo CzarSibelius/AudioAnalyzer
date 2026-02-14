@@ -1,4 +1,6 @@
-namespace AudioAnalyzer.Visualizers;
+using AudioAnalyzer.Domain;
+
+namespace AudioAnalyzer.Application.Abstractions;
 
 /// <summary>Loads and saves per-visualizer settings. Persisted separately from app-level settings.</summary>
 public interface IVisualizerSettingsRepository

@@ -1,3 +1,5 @@
+using AudioAnalyzer.Domain;
+
 namespace AudioAnalyzer.Visualizers;
 
 /// <summary>Renders text with sinusoidal wave motion.</summary>

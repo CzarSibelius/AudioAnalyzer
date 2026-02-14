@@ -1,9 +1,9 @@
 using System.IO;
 using AudioAnalyzer.Application;
 using AudioAnalyzer.Application.Abstractions;
+using AudioAnalyzer.Console;
 using AudioAnalyzer.Domain;
 using AudioAnalyzer.Infrastructure;
-using AudioAnalyzer.Visualizers;
 using Microsoft.Extensions.DependencyInjection;
 
 static int GetConsoleWidth()
@@ -17,135 +17,22 @@ var settingsRepo = new FileSettingsRepository();
 var settings = settingsRepo.LoadAppSettings();
 var visualizerSettings = settingsRepo.LoadVisualizerSettings();
 
-var services = new ServiceCollection();
-services.AddSingleton(visualizerSettings);
-services.AddSingleton<IDisplayDimensions, ConsoleDisplayDimensions>();
-services.AddSingleton<ISettingsRepository>(_ => settingsRepo);
-services.AddSingleton<IVisualizerSettingsRepository>(_ => settingsRepo);
-services.AddSingleton<IPaletteRepository>(_ => new FilePaletteRepository());
-services.AddSingleton<IAudioDeviceInfo, NAudioDeviceInfo>();
-
-services.AddSingleton<IVisualizer, SpectrumBarsVisualizer>();
-services.AddSingleton<IVisualizer, VuMeterVisualizer>();
-services.AddSingleton<IVisualizer, WinampBarsVisualizer>();
-services.AddSingleton<IVisualizer>(sp => new OscilloscopeVisualizer(
-    sp.GetRequiredService<VisualizerSettings>().Oscilloscope ?? new OscilloscopeVisualizerSettings()));
-services.AddSingleton<IVisualizer>(sp => new GeissVisualizer(
-    sp.GetRequiredService<VisualizerSettings>().Geiss ?? new GeissVisualizerSettings()));
-services.AddSingleton<IVisualizer>(sp => new UnknownPleasuresVisualizer(
-    sp.GetRequiredService<VisualizerSettings>().UnknownPleasures));
-services.AddSingleton<IVisualizer>(sp => new TextLayersVisualizer(
-    sp.GetRequiredService<VisualizerSettings>().TextLayers ?? new TextLayersVisualizerSettings(),
-    sp.GetRequiredService<IPaletteRepository>()));
-
-services.AddSingleton<IVisualizationRenderer>(sp =>
-{
-    var dimensions = sp.GetRequiredService<IDisplayDimensions>();
-    var visualizers = sp.GetServices<IVisualizer>();
-    return new CompositeVisualizationRenderer(dimensions, visualizers);
-});
-services.AddSingleton<AnalysisEngine>(sp =>
-{
-    var renderer = sp.GetRequiredService<IVisualizationRenderer>();
-    var dimensions = sp.GetRequiredService<IDisplayDimensions>();
-    return new AnalysisEngine(renderer, dimensions);
-});
-
-var provider = services.BuildServiceProvider();
+var provider = ServiceConfiguration.Build(settingsRepo, settings, visualizerSettings);
 var paletteRepo = provider.GetRequiredService<IPaletteRepository>();
 var deviceInfo = provider.GetRequiredService<IAudioDeviceInfo>();
 var engine = provider.GetRequiredService<AnalysisEngine>();
 var renderer = provider.GetRequiredService<IVisualizationRenderer>();
 
-const string CapturePrefix = "capture:";
-const string LoopbackPrefix = "loopback:";
-
-static (string? deviceId, string name) TryResolveDeviceFromSettings(IReadOnlyList<AudioDeviceEntry> devices, AppSettings settings)
-{
-    if (devices.Count == 0)
-    {
-        return (null, "");
-    }
-
-    if (settings.InputMode == "loopback" && string.IsNullOrEmpty(settings.DeviceName))
-    {
-        var first = devices[0];
-        return (first.Id, first.Name);
-    }
-
-    if (settings.InputMode == "device" && !string.IsNullOrEmpty(settings.DeviceName))
-    {
-        var captureId = CapturePrefix + settings.DeviceName;
-        var loopbackId = LoopbackPrefix + settings.DeviceName;
-        foreach (var d in devices)
-        {
-            if (d.Id == captureId || d.Id == loopbackId)
-            {
-                return (d.Id, d.Name);
-            }
-        }
-    }
-
-    return (null, "");
-}
-
-VisualizationMode ParseMode(string? mode)
-{
-    return renderer.GetModeFromTechnicalName(mode ?? "") ?? VisualizationMode.SpectrumBars;
-}
-
-void ResolveAndSetPaletteForMode(VisualizationMode mode, VisualizerSettings visSettings, IPaletteRepository repo, IVisualizationRenderer visRenderer)
-{
-    IReadOnlyList<PaletteColor>? palette;
-    string? displayName;
-    string? paletteId = null;
-
-    switch (mode)
-    {
-        case VisualizationMode.Geiss:
-            paletteId = visSettings.Geiss?.PaletteId;
-            break;
-        case VisualizationMode.UnknownPleasures:
-            paletteId = visSettings.UnknownPleasures?.PaletteId;
-            if (string.IsNullOrWhiteSpace(paletteId))
-            {
-                var legacyPalette = ColorPaletteParser.Parse(visSettings.UnknownPleasures?.Palette);
-                if (legacyPalette != null && legacyPalette.Count > 0)
-                {
-                    visRenderer.SetPaletteForMode(mode, legacyPalette, "Custom");
-                    return;
-                }
-            }
-            break;
-        case VisualizationMode.TextLayers:
-            return;
-        default:
-            return;
-    }
-
-    if (!string.IsNullOrWhiteSpace(paletteId))
-    {
-        var def = repo.GetById(paletteId);
-        if (def != null && (palette = ColorPaletteParser.Parse(def)) != null && palette.Count > 0)
-        {
-            displayName = def.Name?.Trim();
-            visRenderer.SetPaletteForMode(mode, palette, string.IsNullOrEmpty(displayName) ? paletteId : displayName);
-            return;
-        }
-    }
-
-    palette = ColorPaletteParser.DefaultPalette;
-    displayName = "Default";
-    visRenderer.SetPaletteForMode(mode, palette, displayName);
-}
+VisualizationMode ParseMode(string? mode) =>
+    renderer.GetModeFromTechnicalName(mode ?? "") ?? VisualizationMode.SpectrumBars;
 
 engine.SetVisualizationMode(ParseMode(settings.VisualizationMode));
 engine.BeatSensitivity = settings.BeatSensitivity;
-ResolveAndSetPaletteForMode(VisualizationMode.Geiss, visualizerSettings, paletteRepo, renderer);
-ResolveAndSetPaletteForMode(VisualizationMode.UnknownPleasures, visualizerSettings, paletteRepo, renderer);
+PaletteResolver.ResolveAndSetForMode(VisualizationMode.Geiss, visualizerSettings, paletteRepo, renderer);
+PaletteResolver.ResolveAndSetForMode(VisualizationMode.UnknownPleasures, visualizerSettings, paletteRepo, renderer);
 
 var devices = deviceInfo.GetDevices();
-var (initialDeviceId, initialName) = TryResolveDeviceFromSettings(devices, settings);
+var (initialDeviceId, initialName) = DeviceResolver.TryResolveFromSettings(devices, settings);
 if (initialName == "")
 {
     (initialDeviceId, initialName) = ShowDeviceSelectionMenu(deviceInfo, settingsRepo, settings, null, _ => { });
@@ -227,39 +114,93 @@ while (running)
         {
             switch (key.Key)
             {
-            case ConsoleKey.Escape:
-                running = false;
-                break;
-            case ConsoleKey.D:
-                lock (deviceLock)
-                {
-                    currentInput?.StopCapture();
-                }
-
-                var (newId, newName) = ShowDeviceSelectionMenu(deviceInfo, settingsRepo, settings, currentDeviceName, open => modalOpen = open);
-                if (newName != "")
-                {
-                    StartCapture(newId, newName);
-                }
-                else
-                {
+                case ConsoleKey.Escape:
+                    running = false;
+                    break;
+                case ConsoleKey.D:
                     lock (deviceLock)
                     {
-                        currentInput?.Start();
+                        currentInput?.StopCapture();
                     }
-                }
-                if (!engine.FullScreen)
-                {
-                    DrawMainUI(currentDeviceName);
-                }
-                engine.Redraw();
-                break;
-            case ConsoleKey.H:
-                RunModal(DrawHelpContent, _ => true, onEnter: () => modalOpen = true, onClose: () =>
-                {
-                    modalOpen = false;
+
+                    var (newId, newName) = ShowDeviceSelectionMenu(deviceInfo, settingsRepo, settings, currentDeviceName, open => modalOpen = open);
+                    if (newName != "")
+                    {
+                        StartCapture(newId, newName);
+                    }
+                    else
+                    {
+                        lock (deviceLock)
+                        {
+                            currentInput?.Start();
+                        }
+                    }
+                    if (!engine.FullScreen)
+                    {
+                        DrawMainUI(currentDeviceName);
+                    }
+                    engine.Redraw();
+                    break;
+                case ConsoleKey.H:
+                    RunModal(DrawHelpContent, _ => true, onEnter: () => modalOpen = true, onClose: () =>
+                    {
+                        modalOpen = false;
+                        if (engine.FullScreen)
+                        {
+                            engine.Redraw();
+                        }
+                        else
+                        {
+                            DrawMainUI(currentDeviceName);
+                            engine.Redraw();
+                        }
+                    });
+                    break;
+                case ConsoleKey.V:
+                    engine.NextVisualizationMode();
+                    SaveSettingsToRepository();
+                    if (!engine.FullScreen)
+                    {
+                        DrawMainUI(currentDeviceName);
+                    }
+                    engine.Redraw();
+                    break;
+                case ConsoleKey.OemPlus:
+                case ConsoleKey.Add:
+                    engine.BeatSensitivity += 0.1;
+                    SaveSettingsToRepository();
+                    break;
+                case ConsoleKey.OemMinus:
+                case ConsoleKey.Subtract:
+                    engine.BeatSensitivity -= 0.1;
+                    SaveSettingsToRepository();
+                    break;
+                case ConsoleKey.B:
+                    visualizerSettings.Geiss ??= new GeissVisualizerSettings();
+                    visualizerSettings.Geiss.BeatCircles = !visualizerSettings.Geiss.BeatCircles;
+                    SaveSettingsToRepository();
+                    break;
+                case ConsoleKey.Oem4:   // [ (increase gain)
+                    visualizerSettings.Oscilloscope ??= new OscilloscopeVisualizerSettings();
+                    visualizerSettings.Oscilloscope.Gain = Math.Clamp(visualizerSettings.Oscilloscope.Gain + 0.5, 1.0, 10.0);
+                    SaveSettingsToRepository();
+                    engine.Redraw();
+                    break;
+                case ConsoleKey.Oem6:   // ] (decrease gain)
+                    visualizerSettings.Oscilloscope ??= new OscilloscopeVisualizerSettings();
+                    visualizerSettings.Oscilloscope.Gain = Math.Clamp(visualizerSettings.Oscilloscope.Gain - 0.5, 1.0, 10.0);
+                    SaveSettingsToRepository();
+                    engine.Redraw();
+                    break;
+                case ConsoleKey.P:
+                    CyclePalette();
+                    break;
+                case ConsoleKey.F:
+                    engine.FullScreen = !engine.FullScreen;
                     if (engine.FullScreen)
                     {
+                        Console.Clear();
+                        Console.CursorVisible = false;
                         engine.Redraw();
                     }
                     else
@@ -267,75 +208,21 @@ while (running)
                         DrawMainUI(currentDeviceName);
                         engine.Redraw();
                     }
-                });
-                break;
-            case ConsoleKey.V:
-                engine.NextVisualizationMode();
-                SaveSettingsToRepository();
-                if (!engine.FullScreen)
-                {
-                    DrawMainUI(currentDeviceName);
-                }
-                engine.Redraw();
-                break;
-            case ConsoleKey.OemPlus:
-            case ConsoleKey.Add:
-                engine.BeatSensitivity += 0.1;
-                SaveSettingsToRepository();
-                break;
-            case ConsoleKey.OemMinus:
-            case ConsoleKey.Subtract:
-                engine.BeatSensitivity -= 0.1;
-                SaveSettingsToRepository();
-                break;
-            case ConsoleKey.B:
-                visualizerSettings.Geiss ??= new GeissVisualizerSettings();
-                visualizerSettings.Geiss.BeatCircles = !visualizerSettings.Geiss.BeatCircles;
-                SaveSettingsToRepository();
-                break;
-            case ConsoleKey.Oem4:   // [ (increase gain)
-                visualizerSettings.Oscilloscope ??= new OscilloscopeVisualizerSettings();
-                visualizerSettings.Oscilloscope.Gain = Math.Clamp(visualizerSettings.Oscilloscope.Gain + 0.5, 1.0, 10.0);
-                SaveSettingsToRepository();
-                engine.Redraw();
-                break;
-            case ConsoleKey.Oem6:   // ] (decrease gain)
-                visualizerSettings.Oscilloscope ??= new OscilloscopeVisualizerSettings();
-                visualizerSettings.Oscilloscope.Gain = Math.Clamp(visualizerSettings.Oscilloscope.Gain - 0.5, 1.0, 10.0);
-                SaveSettingsToRepository();
-                engine.Redraw();
-                break;
-            case ConsoleKey.P:
-                CyclePalette();
-                break;
-            case ConsoleKey.F:
-                engine.FullScreen = !engine.FullScreen;
-                if (engine.FullScreen)
-                {
-                    Console.Clear();
-                    Console.CursorVisible = false;
-                    engine.Redraw();
-                }
-                else
-                {
-                    DrawMainUI(currentDeviceName);
-                    engine.Redraw();
-                }
-                break;
-            case ConsoleKey.S:
-                if (engine.CurrentMode == VisualizationMode.TextLayers)
-                {
-                    ShowTextLayersSettingsModal(engine, visualizerSettings, consoleLock, SaveSettingsToRepository);
-                    lock (consoleLock)
+                    break;
+                case ConsoleKey.S:
+                    if (engine.CurrentMode == VisualizationMode.TextLayers)
                     {
-                        if (!engine.FullScreen)
+                        ShowTextLayersSettingsModal(engine, visualizerSettings, consoleLock, SaveSettingsToRepository);
+                        lock (consoleLock)
                         {
-                            DrawMainUI(currentDeviceName);
+                            if (!engine.FullScreen)
+                            {
+                                DrawMainUI(currentDeviceName);
+                            }
+                            engine.Redraw();
                         }
-                        engine.Redraw();
                     }
-                }
-                break;
+                    break;
             }
         }
     }

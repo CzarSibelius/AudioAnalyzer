@@ -1,3 +1,5 @@
+using AudioAnalyzer.Domain;
+
 namespace AudioAnalyzer.Visualizers;
 
 /// <summary>Renderer for a single text layer type. Each layer type (ScrollingColors, Marquee, etc.) has its own implementation.</summary>

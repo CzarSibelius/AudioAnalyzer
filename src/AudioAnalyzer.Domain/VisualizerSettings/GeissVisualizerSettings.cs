@@ -1,4 +1,4 @@
-namespace AudioAnalyzer.Visualizers;
+namespace AudioAnalyzer.Domain;
 
 /// <summary>Settings for the Geiss visualizer.</summary>
 public class GeissVisualizerSettings

@@ -1,7 +1,6 @@
 using System.Text.Json;
 using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Domain;
-using AudioAnalyzer.Visualizers;
 
 namespace AudioAnalyzer.Infrastructure;
 
