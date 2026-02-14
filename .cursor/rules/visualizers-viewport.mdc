@@ -1,6 +1,6 @@
 ---
 description: Visualizers must respect viewport bounds to avoid corrupting the UI
-globs: **/Visualizers/**/*.cs,**/CompositeVisualizationRenderer.cs,**/IVisualizer.cs,**/VisualizerViewport.cs
+globs: **/Visualizers/**/*.cs,**/VisualizationPaneLayout.cs,**/IVisualizer.cs,**/VisualizerViewport.cs
 ---
 
 # Visualizer viewport contract

@@ -10,12 +10,12 @@ Visualizers can throw exceptions (null refs, bad data, edge cases). If exception
 
 1. **No crash on visualizer exception**: When `IVisualizer.Render` throws, the program must not crash.
 2. **Show error in viewport**: The error message must be displayed in the visualizer viewport area (where the visualization would normally appear), using viewport bounds (start row, width, max lines).
-3. **Centralized logic**: Exception handling is implemented once in the renderer (`CompositeVisualizationRenderer`). Individual visualizers do not add their own try-catch for this purpose.
+3. **Centralized logic**: Exception handling is implemented once in the renderer (`VisualizationPaneLayout`). Individual visualizers do not add their own try-catch for this purpose.
 4. **Message display**: Show the exception message (`ex.Message`) when available and non-empty, truncated to viewport width. Fallback to a generic label (e.g. "Visualization error") if the message is empty.
 
 ## Consequences
 
-- **CompositeVisualizationRenderer**: Keeps the try-catch around `visualizer.Render()`; on catch, renders `ex.Message` (or fallback) truncated to `viewport.Width` at the visualizer start row.
+- **VisualizationPaneLayout**: Keeps the try-catch around `visualizer.Render()`; on catch, renders `ex.Message` (or fallback) truncated to `viewport.Width` at the visualizer start row.
 - **Individual visualizers**: No requirement to add try-catch for rendering; they may throw and the renderer handles it.
 - **Consistency with ADR-0011**: The catch block is not empty—it performs meaningful handling (display error in viewport).
 - **HandleKey**: Out of scope for this ADR. Key handling has no viewport; could be a future ADR if needed.

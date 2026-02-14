@@ -16,7 +16,7 @@ The renderer, console, and application layer need to drive multiple visualizers 
 
 ## Consequences
 
-- **Renderer** (`CompositeVisualizationRenderer`): Should not hold references to concrete visualizer types (e.g. `_geissVisualizer`) for features like beat circles; such behavior should be driven via snapshot or a generic mechanism so the renderer only uses `IVisualizer` and mode.
+- **Renderer** (`VisualizationPaneLayout`): Should not hold references to concrete visualizer types (e.g. `_geissVisualizer`) for features like beat circles; such behavior should be driven via snapshot or a generic mechanism so the renderer only uses `IVisualizer` and mode.
 - **Application/Domain**: Snapshot and interfaces may gain capability-based or generic properties so that visualizer-specific options (e.g. "show beat circles", palette, gain) are supplied in a uniform way rather than via visualizer-specific APIs.
 - **Visualizers**: Remain the single place that implement mode-specific behavior; they read from the snapshot and viewport and do not require callers to know their internals.
 - **Documentation**: When adding or changing visualizers, agents and developers should prefer extending the shared contract and keeping logic inside the visualizer.

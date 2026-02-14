@@ -32,7 +32,7 @@ The following sections described the state **before** the refactor. They are kep
 | Renderer: visualizer-specific API | **Violation** | `SetShowBeatCircles` / `GetShowBeatCircles` |
 | Renderer: toolbar branch on mode | **Violation** | `mode == VisualizationMode.Oscilloscope` for Gain line |
 | Renderer: palette method name | **Partial** | `SetUnknownPleasuresPalette` is visualizer-specific naming |
-| Console: concrete renderer + visualizer-specific calls | **Violation** | Uses `CompositeVisualizationRenderer` and Geiss/Oscilloscope/palette APIs |
+| Console: concrete renderer + visualizer-specific calls | **Violation** | Uses `VisualizationPaneLayout` and Geiss/Oscilloscope/palette APIs |
 | Application (engine): Oscilloscope-named property | **Violation** | `OscilloscopeGain` on engine and snapshot |
 | Snapshot: visualizer-specific property names | **Partial** | `UnknownPleasuresPalette`, `OscilloscopeGain` |
 | Settings / repository | **OK** | Per-visualizer settings (ADR-0002); no logic tied to internals |
@@ -44,7 +44,7 @@ The following sections described the state **before** the refactor. They are kep
 
 **ADR**: "The renderer … must not reference concrete visualizer types (e.g. `GeissVisualizer`) for behavior that could be expressed via the shared interface or via the snapshot."
 
-**Current code** ([CompositeVisualizationRenderer.cs](../../src/AudioAnalyzer.Infrastructure/CompositeVisualizationRenderer.cs)):
+**Current code** ([VisualizationPaneLayout.cs](../../src/AudioAnalyzer.Infrastructure/VisualizationPaneLayout.cs)):
 
 - Holds `private readonly GeissVisualizer _geissVisualizer` and uses it in the mode dictionary and for `SetShowBeatCircles` / `GetShowBeatCircles`.
 - Those methods directly get/set `_geissVisualizer.ShowBeatCircles`.
@@ -57,7 +57,7 @@ The following sections described the state **before** the refactor. They are kep
 
 **ADR**: "They must not branch on visualizer identity for logic that belongs inside the visualizer."
 
-**Current code** ([CompositeVisualizationRenderer.cs](../../src/AudioAnalyzer.Infrastructure/CompositeVisualizationRenderer.cs) – `GetToolbarLine2`):
+**Current code** ([VisualizationPaneLayout.cs](../../src/AudioAnalyzer.Infrastructure/VisualizationPaneLayout.cs) – `GetToolbarLine2`):
 
 ```csharp
 if (mode == VisualizationMode.Oscilloscope)
@@ -84,7 +84,7 @@ if (mode == VisualizationMode.Oscilloscope)
 
 **Current code** ([Program.cs](../../src/AudioAnalyzer.Console/Program.cs)):
 
-- Resolves `CompositeVisualizationRenderer` and calls `SetShowBeatCircles`, `GetShowBeatCircles`, `SetUnknownPleasuresPalette`.
+- Resolves `VisualizationPaneLayout` and calls `SetShowBeatCircles`, `GetShowBeatCircles`, `SetUnknownPleasuresPalette`.
 - On load/save: reads/writes `settings.VisualizerSettings.Geiss.BeatCircles`, `settings.VisualizerSettings.Oscilloscope.Gain` and pushes them into the renderer/engine via these methods.
 - Key handlers: B toggles beat circles via renderer, [ / ] change gain via engine.
 
@@ -130,5 +130,5 @@ The following changes were implemented to align with ADR-0004:
 1. **Beat circles**: `ShowBeatCircles` added to `AnalysisSnapshot` and `AnalysisEngine`. Engine fills the snapshot; `GeissVisualizer` reads `snapshot.ShowBeatCircles` in `Render`. Renderer no longer holds `_geissVisualizer`; `SetShowBeatCircles` / `GetShowBeatCircles` removed. Console uses `engine.ShowBeatCircles` only.
 2. **Gain**: Snapshot and engine use `WaveformGain` (capability-based). `IVisualizer` gained optional `GetToolbarSuffix(snapshot)`; `OscilloscopeVisualizer` returns the gain line; renderer no longer branches on `VisualizationMode.Oscilloscope`.
 3. **Palette**: `IVisualizationRenderer.SetPalette`; snapshot property `Palette`; renderer internal `_palette`. `ColorPaletteParser.DefaultPalette` used.
-4. **Console**: Resolves only `IVisualizationRenderer` (and `AnalysisEngine`). No `CompositeVisualizationRenderer` reference; palette via `renderer.SetPalette`, beat circles and gain via engine.
+4. **Console**: Resolves only `IVisualizationRenderer` (and `AnalysisEngine`). No `VisualizationPaneLayout` reference; palette via `renderer.SetPalette`, beat circles and gain via engine.
 5. **Naming**: Snapshot/engine use `Palette`, `WaveformGain`, `ShowBeatCircles`. Settings file and Domain still use `VisualizerSettings.Geiss.BeatCircles`, `VisualizerSettings.Oscilloscope.Gain`, and legacy `OscilloscopeGain` / `BeatCircles` for backward compatibility.
