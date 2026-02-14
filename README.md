@@ -62,6 +62,7 @@ On Windows you can use backslashes: `src\AudioAnalyzer.Console\AudioAnalyzer.Con
 - **Colors and palettes**: Palette-aware visualizers (Layered text layers) support **24-bit true color** (RGB) and 16 console colors. Palettes are stored as JSON files in a **palettes** directory (see below). Each layer has its own palette setting; pressing **P** affects only the active layer and saves to that layer's settings.
 - **Beat detection**: Optional beat detection and BPM estimate; sensitivity and beat circles are configurable and persist.
 - **Real-time display**: Updates every 50 ms.
+- **Toolbar**: Shows volume, mode, layer hints, palette, and H=Help. When the help line exceeds the terminal width, it scrolls slowly back and forth instead of truncating.
 - **Settings**: Stored in a local file (e.g. next to the executable). Per-visualizer options live under `VisualizerSettings`; each palette-aware visualizer has its own `PaletteId`. Device, visualization mode, per-visualizer palette, beat sensitivity, and oscilloscope gain are saved automatically when changed.
 
 ## Dependencies

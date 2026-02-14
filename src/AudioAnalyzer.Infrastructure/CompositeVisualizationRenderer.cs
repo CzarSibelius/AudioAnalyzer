@@ -38,6 +38,8 @@ public sealed class CompositeVisualizationRenderer : IVisualizationRenderer
 
     private const int ToolbarLineCount = 2;
     private VisualizationMode? _lastRenderedMode;
+    private ScrollingTextViewportState _toolbarLine2ScrollState;
+    private string? _toolbarLine2LastText;
 
     public void Render(AnalysisSnapshot snapshot, VisualizationMode mode)
     {
@@ -173,9 +175,25 @@ public sealed class CompositeVisualizationRenderer : IVisualizationRenderer
         string line1 = VisualizerViewport.TruncateToWidth(
             $"Volume: {snapshot.Volume * 100:F1}% ({db:F1} dB){bpmDisplay}{sensitivityDisplay}{beatIndicator}",
             w).PadRight(w);
-        string line2 = toolbarViewport.MaxLines >= 2
-            ? VisualizerViewport.TruncateToWidth(GetToolbarLine2(mode, snapshot, w), w).PadRight(w)
-            : new string(' ', w);
+        string line2;
+        if (toolbarViewport.MaxLines >= 2)
+        {
+            string line2Full = GetToolbarLine2(mode, snapshot, w);
+            int visibleLen = AnsiConsole.GetVisibleLength(line2Full);
+            if (line2Full != _toolbarLine2LastText)
+            {
+                _toolbarLine2ScrollState.Reset();
+                _toolbarLine2LastText = line2Full;
+            }
+            line2 = visibleLen > w
+                ? ScrollingTextViewport.RenderWithAnsi(line2Full, w, ref _toolbarLine2ScrollState, 0.25)
+                : AnsiConsole.PadToVisibleWidth(line2Full, w);
+            _toolbarLine2LastText = line2Full;
+        }
+        else
+        {
+            line2 = new string(' ', w);
+        }
 
         try
         {
@@ -184,7 +202,10 @@ public sealed class CompositeVisualizationRenderer : IVisualizationRenderer
             if (toolbarViewport.MaxLines >= 2)
             {
                 Console.SetCursorPosition(0, row0 + 1);
-                Console.Write(AnsiConsole.ToAnsiString(line2, ConsoleColor.DarkGray));
+                string toWrite = line2.Contains('\x1b')
+                    ? line2
+                    : AnsiConsole.ToAnsiString(line2, ConsoleColor.DarkGray);
+                Console.Write(toWrite);
             }
         }
         catch
@@ -196,7 +217,10 @@ public sealed class CompositeVisualizationRenderer : IVisualizationRenderer
                 if (toolbarViewport.MaxLines >= 2)
                 {
                     Console.SetCursorPosition(0, row0 + 1);
-                    Console.WriteLine(AnsiConsole.ToAnsiString(line2, ConsoleColor.DarkGray));
+                    string fallbackWrite = line2.Contains('\x1b')
+                        ? line2
+                        : AnsiConsole.ToAnsiString(line2, ConsoleColor.DarkGray);
+                    Console.WriteLine(fallbackWrite);
                 }
             }
             catch (Exception ex) { _ = ex; /* Toolbar fallback failed: swallow to avoid crash */ }
