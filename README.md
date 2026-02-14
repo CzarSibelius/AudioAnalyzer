@@ -1,6 +1,6 @@
 # Audio Analyzer
 
-A real-time audio analyzer that captures and analyzes system audio output using NAudio. This application captures the audio playing on your system (loopback capture) or from a selected capture device and performs FFT analysis with multiple visualization modes: spectrum bars, VU meter, Winamp-style bars, and **Layered text** (configurable text snippets and layer types—Geiss plasma background, beat circles, oscilloscope, Unknown Pleasures stacked waveforms, marquee, falling letters, ASCII images, etc.—with beat-reactive behavior).
+A real-time audio analyzer that captures and analyzes system audio output using NAudio. This application captures the audio playing on your system (loopback capture), from a selected capture device, or uses **Demo Mode** (synthetic BPM stream for testing without audio). It performs FFT analysis with multiple visualization modes: spectrum bars, VU meter, Winamp-style bars, and **Layered text** (configurable text snippets and layer types—Geiss plasma background, beat circles, oscilloscope, Unknown Pleasures stacked waveforms, marquee, falling letters, ASCII images, etc.—with beat-reactive behavior).
 
 ## Prerequisites
 
@@ -34,7 +34,7 @@ On Windows you can use backslashes: `src\AudioAnalyzer.Console\AudioAnalyzer.Con
 
 ## Usage
 
-1. On first run (or if no device was saved), choose an audio input: loopback (system output) or a specific capture device (↑/↓ to move, ENTER to select, ESC to cancel).
+1. On first run (or if no device was saved), choose an audio input: **Demo Mode** (synthetic stream at 90/120/140 BPM for testing without audio), loopback (system output), or a specific capture device (↑/↓ to move, ENTER to select, ESC to cancel).
 2. The analyzer shows real-time volume and frequency analysis. Play audio to see it in action.
 3. **Keyboard controls:**
    - **H** – Show help (all keys and visualization modes)
@@ -55,7 +55,7 @@ On Windows you can use backslashes: `src\AudioAnalyzer.Console\AudioAnalyzer.Con
 
 ## What It Does
 
-- **Audio input**: Loopback (system output) or a specific WASAPI capture device; choice is saved in settings.
+- **Audio input**: Demo Mode (synthetic BPM stream for testing), loopback (system output), or a specific WASAPI capture device; choice is saved in settings.
 - **Volume analysis**: Real-time level and peak display; stereo VU-style meters in VU Meter mode.
 - **FFT analysis**: Fast Fourier Transform with log-spaced frequency bands and peak hold.
 - **Visualization modes**: Spectrum bars, VU Meter, Winamp-style bars, and **Layered text** (multiple independent layers—e.g. Geiss plasma background, beat circles, oscilloscope, Unknown Pleasures stacked waveforms, scrolling colors, marquee, falling letters, ASCII images from a folder—with configurable text snippets and beat reactions; each layer has its own palette; press **1–9** to select a layer, **←/→** to change its type, **Shift+1–9** to toggle enabled; **[ / ]** to adjust oscilloscope gain when that layer is selected; press **P** to cycle the active layer's palette).
@@ -126,7 +126,7 @@ Legacy top-level `BeatCircles` (migrated into TextLayers BeatCircles layer enabl
 
 - Requires Windows with WASAPI support.
 - Use loopback to analyze system playback; use a capture device for microphone or other inputs.
-- Ensure audio is playing (or that the selected device is active) to see meaningful analysis.
+- Ensure audio is playing (or that the selected device is active) to see meaningful analysis. Use **Demo Mode** when you want to test visualizers without playing music.
 - **Modal dialogs** (help screen, device selection, and any future dialogs) use a shared modal system ([ADR-0006](docs/adr/0006-modal-system.md)): they are drawn on top of the main view, capture input until you dismiss them (e.g. any key for help, ENTER/ESC for device menu), then the main view is redrawn automatically.
 
 ## Visualizer bounds (for developers)
