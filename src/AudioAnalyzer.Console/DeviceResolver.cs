@@ -21,8 +21,12 @@ internal static class DeviceResolver
 
         if (settings.InputMode == "loopback" && string.IsNullOrEmpty(settings.DeviceName))
         {
-            var first = devices[0];
-            return (first.Id, first.Name);
+            var systemAudio = devices.FirstOrDefault(d => d.Id == null);
+            if (systemAudio != null)
+            {
+                return (systemAudio.Id, systemAudio.Name);
+            }
+            return (devices[0].Id, devices[0].Name);
         }
 
         if (settings.InputMode == "device" && !string.IsNullOrEmpty(settings.DeviceName))
@@ -31,7 +35,7 @@ internal static class DeviceResolver
             var loopbackId = LoopbackPrefix + settings.DeviceName;
             foreach (var d in devices)
             {
-                if (d.Id == captureId || d.Id == loopbackId)
+                if (d.Id == captureId || d.Id == loopbackId || d.Id == settings.DeviceName)
                 {
                     return (d.Id, d.Name);
                 }
