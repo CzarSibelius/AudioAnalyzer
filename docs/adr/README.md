@@ -33,6 +33,7 @@ Decisions are numbered and kept under version control so the rationale stays wit
 | [0015](0015-visualizer-settings-in-domain.md) | Visualizer settings in Domain, IVisualizerSettingsRepository in Application | Accepted |
 | [0016](0016-csharp-documentation-and-file-organization.md) | C# documentation and file organization | Accepted |
 | [0017](0017-demo-mode-synthetic-audio.md) | Demo mode — synthetic audio input | Accepted |
+| [0018](0018-shutdown-lock-ordering.md) | Shutdown and device-switch lock ordering | Accepted |
 
 ## Process
 

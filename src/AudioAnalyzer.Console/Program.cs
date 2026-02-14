@@ -54,10 +54,17 @@ engine.SetConsoleLock(consoleLock);
 
 void StartCapture(string? deviceId, string name)
 {
+    IAudioInput? oldInput;
     lock (deviceLock)
     {
-        currentInput?.StopCapture();
-        currentInput?.Dispose();
+        oldInput = currentInput;
+        currentInput = null;
+    }
+    oldInput?.StopCapture();
+    oldInput?.Dispose();
+
+    lock (deviceLock)
+    {
         currentInput = deviceInfo.CreateCapture(deviceId);
         currentDeviceName = name;
         currentInput.DataAvailable += (_, e) =>
@@ -113,10 +120,12 @@ while (running)
                     running = false;
                     break;
                 case ConsoleKey.D:
+                    IAudioInput? inputToStop;
                     lock (deviceLock)
                     {
-                        currentInput?.StopCapture();
+                        inputToStop = currentInput;
                     }
+                    inputToStop?.StopCapture();
 
                     var (newId, newName) = ShowDeviceSelectionMenu(deviceInfo, settingsRepo, settings, currentDeviceName, open => modalOpen = open);
                     if (newName != "")
@@ -264,12 +273,14 @@ void CyclePalette()
     engine.Redraw();
 }
 
+IAudioInput? toDispose;
 lock (deviceLock)
 {
-    currentInput?.StopCapture();
-    currentInput?.Dispose();
+    toDispose = currentInput;
     currentInput = null;
 }
+toDispose?.StopCapture();
+toDispose?.Dispose();
 Console.Clear();
 Console.CursorVisible = true;
 Console.WriteLine("Recording stopped.");
