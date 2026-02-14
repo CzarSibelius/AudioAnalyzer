@@ -15,9 +15,3 @@ public interface IAudioDeviceInfo
     /// </summary>
     IAudioInput CreateCapture(string? deviceId);
 }
-
-public sealed class AudioDeviceEntry
-{
-    public string Name { get; init; } = "";
-    public string? Id { get; init; }
-}

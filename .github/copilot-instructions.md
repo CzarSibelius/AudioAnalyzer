@@ -34,6 +34,7 @@ After making code changes, check linter diagnostics for the modified files and f
 - Prefer explicit types over `var` for clarity in audio processing code
 - Keep methods under 50 lines; extract complex logic into separate methods
 - Use meaningful variable names (e.g., `barHeight`, `normalizedMag`, not `h`, `n`)
+- Non-empty XML summaries for classes and interfaces; prefer one file per class (see ADR-0016 in docs/adr/)
 
 ### Terminal Output Requirements
 - **All output must scale dynamically with terminal size**

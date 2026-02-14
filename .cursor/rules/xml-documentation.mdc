@@ -1,0 +1,32 @@
+---
+description: XML summaries for classes and interfaces must not be empty
+globs: "**/*.cs"
+alwaysApply: false
+---
+
+# XML Documentation
+
+Summaries for public classes and interfaces must not be empty.
+
+- If a documentation comment exists, the `<summary>` tag must contain meaningful text.
+- Both single-line (`/// <summary>Description.</summary>`) and multi-line format are allowed.
+- Do not leave `/// <summary></summary>` or `/// <summary>   </summary>` with no or only whitespace content.
+
+```csharp
+// BAD
+/// <summary></summary>
+public class Foo { }
+
+/// <summary>
+/// </summary>
+public interface IBar { }
+
+// GOOD
+/// <summary>Application configuration (domain model).</summary>
+public class AppSettings { }
+
+/// <summary>
+/// Renders one visualization mode from an analysis snapshot.
+/// </summary>
+public interface IVisualizer { }
+```

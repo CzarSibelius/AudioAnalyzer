@@ -23,7 +23,7 @@ From the solution root (the folder containing `AudioAnalyzer.sln`):
    ```bash
    dotnet build
    ```
-   The solution uses static analysis: code style from `.editorconfig` and Roslynator rules (e.g. RCS1075: no empty catch blocks) are enforced at build time (`Directory.Build.props`). To verify formatting without changing files, run `dotnet format .\AudioAnalyzer.sln --verify-no-changes` (or `dotnet format .\AudioAnalyzer.sln` to fix).
+   The solution uses static analysis: code style from `.editorconfig` and Roslynator rules (e.g. RCS1075: no empty catch blocks, RCS1060: one file per class) are enforced at build time (`Directory.Build.props`). To verify formatting without changing files, run `dotnet format .\AudioAnalyzer.sln --verify-no-changes` (or `dotnet format .\AudioAnalyzer.sln` to fix).
 
 2. Run the application:
    ```bash
@@ -69,7 +69,7 @@ On Windows you can use backslashes: `src\AudioAnalyzer.Console\AudioAnalyzer.Con
 - **NAudio 2.2.1**: WASAPI capture/loopback and audio processing
 - **SixLabors.ImageSharp 3.1.12**: Image loading and processing for ASCII image layer (BMP, GIF, JPEG, PNG, WebP)
 - **Microsoft.Extensions.DependencyInjection 10.0.3**: Used by the Console host (dependency injection)
-- **Roslynator.Analyzers 4.15.0**: Code analyzers (e.g. RCS1075: no empty catch blocks), enforced via `.editorconfig`
+- **Roslynator.Analyzers 4.15.0**: Code analyzers (e.g. RCS1075: no empty catch blocks, RCS1060: one file per class), enforced via `.editorconfig`
 
 ## Palettes (JSON files)
 
@@ -137,4 +137,4 @@ Visualizers implement **`IVisualizer`** and expose **technical name** (stable ke
 
 Visualizers receive a **viewport** (`VisualizerViewport`: start row, max lines, width). They must not write more than `viewport.MaxLines` lines and no line longer than `viewport.Width`. The composite renderer validates dimensions and display start row before calling visualizers; if a visualizer throws, the exception message is shown in the viewport (one line, truncated to width) and the next frame can recover — see [ADR-0012](docs/adr/0012-visualizer-exception-handling.md). This keeps resizes and bad data from corrupting the console UI.
 
-Per-visualizer specs (behavior, settings, viewport constraints) are in [docs/visualizers/](docs/visualizers/README.md). C# coding standards (including no empty try-catch) are in `.cursor/rules/csharp-standards.mdc` and `.cursor/rules/no-empty-catch.mdc`.
+Per-visualizer specs (behavior, settings, viewport constraints) are in [docs/visualizers/](docs/visualizers/README.md). C# coding standards (including no empty try-catch, non-empty XML summaries, one file per class) are in `.cursor/rules/csharp-standards.mdc`, `.cursor/rules/no-empty-catch.mdc`, and [ADR-0016](docs/adr/0016-csharp-documentation-and-file-organization.md).

@@ -39,3 +39,11 @@ foreach (var x in items) Process(x);
 if (flag) { DoSomething(); }
 foreach (var x in items) { Process(x); }
 ```
+
+## XML Documentation
+
+Summaries for public classes and interfaces must not be empty. If a documentation comment exists, the `<summary>` tag must contain meaningful text. See `.cursor/rules/xml-documentation.mdc` for details.
+
+## One file per class
+
+Prefer one file per class, interface, or struct. Each top-level type should generally have its own file. See `.cursor/rules/one-file-per-class.mdc` for details.

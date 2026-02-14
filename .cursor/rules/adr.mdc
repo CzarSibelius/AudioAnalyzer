@@ -16,3 +16,5 @@ alwaysApply: true
 5. **NuGet packages**: When adding or changing NuGet dependencies, follow [ADR-0013](docs/adr/0013-secure-nuget-packages.md) — avoid insecure or obsolete packages.
 
 6. **New visualizers**: Create new visualizer content as `ITextLayerRenderer` layers in TextLayersVisualizer, not as standalone `IVisualizer` implementations. See [ADR-0014](docs/adr/0014-visualizers-as-layers.md).
+
+7. **C# documentation and file organization**: Non-empty XML summaries for classes and interfaces; prefer one file per class. See [ADR-0016](docs/adr/0016-csharp-documentation-and-file-organization.md).
