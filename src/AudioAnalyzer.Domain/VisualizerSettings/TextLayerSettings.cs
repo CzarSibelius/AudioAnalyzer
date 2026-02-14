@@ -33,6 +33,9 @@ public class TextLayerSettings
     /// <summary>Movement mode for AsciiImage layer. Default Scroll.</summary>
     public AsciiImageMovement AsciiImageMovement { get; set; } = AsciiImageMovement.Scroll;
 
+    /// <summary>Amplitude gain for Oscilloscope layer (1.0–10.0). Default 2.5.</summary>
+    public double Gain { get; set; } = 2.5;
+
     /// <summary>Cycles the layer's type to the next value (wraps). Includes None.</summary>
     public static TextLayerType CycleTypeForward(TextLayerSettings layer)
     {

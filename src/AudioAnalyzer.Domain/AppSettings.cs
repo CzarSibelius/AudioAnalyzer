@@ -16,7 +16,7 @@ public class AppSettings
     public string? DeviceName { get; set; }
 
     /// <summary>
-    /// Visualization mode: "spectrum", "oscilloscope", "vumeter", "winamp", or "geiss".
+    /// Visualization mode: "spectrum", "vumeter", "winamp", "unknownpleasures", or "textlayers".
     /// </summary>
     public string VisualizationMode { get; set; } = "spectrum";
 

@@ -12,5 +12,6 @@ public enum TextLayerType
     StaticText,
     AsciiImage,
     GeissBackground,
-    BeatCircles
+    BeatCircles,
+    Oscilloscope
 }

@@ -1,39 +1,35 @@
-# Oscilloscope (oscilloscope)
+# Oscilloscope (layer only)
 
 ## Description
 
-Time-domain waveform display showing audio amplitude over time. Renders a 2D grid with center line; waveform amplitude is scaled by user-adjustable gain. Color gradient from center (cyan) to edges (red).
+Time-domain waveform display showing audio amplitude over time. Available as an **Oscilloscope** layer type in **Layered text** (`TextLayersVisualizer`). Renders a waveform trace; amplitude is scaled by per-layer gain. Color gradient from center (cyan) to edges (red).
 
 ## Snapshot usage
 
 - `Waveform` — raw waveform samples
 - `WaveformPosition` — current read position (circular buffer)
 - `WaveformSize` — buffer size
-- `WaveformGain` — amplitude gain (1.0–10.0), adjustable in real time
 
 ## Settings
 
-- **Schema**: `VisualizerSettings.Oscilloscope`
-- **Gain** (double, default: 2.5): Amplitude gain (1.0–10.0). Persisted and used for `WaveformGain` in snapshot.
+- **Schema**: `TextLayerSettings` when `LayerType == Oscilloscope`
+- **Gain** (double, default: 2.5): Amplitude gain (1.0–10.0). Per-layer; adjustable with [ ] when that layer is selected.
 
 ## Key bindings
 
-- **[** — Decrease oscilloscope gain
+- **[** — Decrease oscilloscope gain (when Oscilloscope layer is selected in Layered text)
 - **]** — Increase oscilloscope gain
-- Toolbar suffix: "Gain: X.X ([ ])"
+- Toolbar suffix (when Oscilloscope layer selected): "Gain: X.X ([ ])"
 
 ## Viewport constraints
 
-- Minimum width: 30
-- Minimum height: 5 lines
-- Uses `viewport.MaxLines - 4` for grid height (top border, grid, bottom border, footer)
-- Grid height clamped to 10–25
-- Width: `viewport.Width - 4` (2-char margin each side); clamped to `WaveformSize`
-- Total lines: 1 (top border) + height + 1 (bottom border) + 1 (footer)
+- Uses full `viewport.Width` × `viewport.Height` (cell buffer); draws trace across width
+- No minimum; layer composites with others
 
 ## Implementation notes
 
-- **Internal state**: None beyond `StringBuilder`; stateless except for line buffer.
-- **Rendering**: Fills a 2D `char`/`ConsoleColor` grid; draws horizontal line segments between consecutive waveform points.
-- **Color**: Distance from center determines color (cyan → green → yellow → red).
-- **References**: [ADR-0004](../adr/0004-visualizer-encapsulation.md).
+- **Layer**: `OscilloscopeLayer` in `TextLayers/Oscilloscope/OscilloscopeLayer.cs`
+- **Internal state**: None; stateless.
+- **Rendering**: Samples waveform across buffer width; draws horizontal line segments between consecutive points; uses `Buffer.Set` for each cell.
+- **Color**: Distance from center determines color (cyan → green → yellow → red) via `PaletteColor.FromConsoleColor`.
+- **References**: [text-layers.md](text-layers.md), [ADR-0014](../adr/0014-visualizers-as-layers.md).

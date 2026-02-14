@@ -28,7 +28,6 @@ VisualizationMode ParseMode(string? mode) =>
 
 engine.SetVisualizationMode(ParseMode(settings.VisualizationMode));
 engine.BeatSensitivity = settings.BeatSensitivity;
-PaletteResolver.ResolveAndSetForMode(VisualizationMode.Geiss, visualizerSettings, paletteRepo, renderer);
 PaletteResolver.ResolveAndSetForMode(VisualizationMode.UnknownPleasures, visualizerSettings, paletteRepo, renderer);
 
 var devices = deviceInfo.GetDevices();
@@ -86,11 +85,9 @@ void SaveSettingsToRepository()
 {
     settings.VisualizationMode = renderer.GetTechnicalName(engine.CurrentMode);
     settings.BeatSensitivity = engine.BeatSensitivity;
-    settings.BeatCircles = visualizerSettings.Geiss?.BeatCircles ?? true;
-    settings.OscilloscopeGain = visualizerSettings.Oscilloscope?.Gain ?? 2.5;
+    settings.BeatCircles = visualizerSettings.TextLayers?.Layers?.FirstOrDefault(l => l.LayerType == TextLayerType.BeatCircles)?.Enabled ?? true;
+    settings.OscilloscopeGain = visualizerSettings.TextLayers?.Layers?.FirstOrDefault(l => l.LayerType == TextLayerType.Oscilloscope)?.Gain ?? 2.5;
     settingsRepo.SaveAppSettings(settings);
-    visualizerSettings.Geiss ??= new GeissVisualizerSettings();
-    visualizerSettings.Oscilloscope ??= new OscilloscopeVisualizerSettings();
     visualizerSettings.UnknownPleasures ??= new UnknownPleasuresVisualizerSettings();
     visualizerSettings.TextLayers ??= new TextLayersVisualizerSettings();
     settingsRepo.SaveVisualizerSettings(visualizerSettings);
@@ -175,23 +172,6 @@ while (running)
                     engine.BeatSensitivity -= 0.1;
                     SaveSettingsToRepository();
                     break;
-                case ConsoleKey.B:
-                    visualizerSettings.Geiss ??= new GeissVisualizerSettings();
-                    visualizerSettings.Geiss.BeatCircles = !visualizerSettings.Geiss.BeatCircles;
-                    SaveSettingsToRepository();
-                    break;
-                case ConsoleKey.Oem4:   // [ (increase gain)
-                    visualizerSettings.Oscilloscope ??= new OscilloscopeVisualizerSettings();
-                    visualizerSettings.Oscilloscope.Gain = Math.Clamp(visualizerSettings.Oscilloscope.Gain + 0.5, 1.0, 10.0);
-                    SaveSettingsToRepository();
-                    engine.Redraw();
-                    break;
-                case ConsoleKey.Oem6:   // ] (decrease gain)
-                    visualizerSettings.Oscilloscope ??= new OscilloscopeVisualizerSettings();
-                    visualizerSettings.Oscilloscope.Gain = Math.Clamp(visualizerSettings.Oscilloscope.Gain - 0.5, 1.0, 10.0);
-                    SaveSettingsToRepository();
-                    engine.Redraw();
-                    break;
                 case ConsoleKey.P:
                     CyclePalette();
                     break;
@@ -245,10 +225,6 @@ void CyclePalette()
     string? currentId = null;
     switch (engine.CurrentMode)
     {
-        case VisualizationMode.Geiss:
-            visualizerSettings.Geiss ??= new GeissVisualizerSettings();
-            currentId = visualizerSettings.Geiss.PaletteId;
-            break;
         case VisualizationMode.UnknownPleasures:
             visualizerSettings.UnknownPleasures ??= new UnknownPleasuresVisualizerSettings();
             currentId = visualizerSettings.UnknownPleasures.PaletteId;
@@ -275,9 +251,6 @@ void CyclePalette()
 
     switch (engine.CurrentMode)
     {
-        case VisualizationMode.Geiss:
-            visualizerSettings.Geiss!.PaletteId = next.Id;
-            break;
         case VisualizationMode.UnknownPleasures:
             visualizerSettings.UnknownPleasures!.PaletteId = next.Id;
             break;
@@ -444,9 +417,8 @@ void DrawHelpContent()
     Console.WriteLine("  H         Show this help menu");
     Console.WriteLine("  V         Change visualization mode");
     Console.WriteLine("  P         Cycle color palette (palette-aware visualizers)");
-    Console.WriteLine("  B         Toggle beat circles (Geiss mode)");
     Console.WriteLine("  +/-       Adjust beat sensitivity");
-    Console.WriteLine("  [ / ]     Adjust oscilloscope gain (Oscilloscope mode)");
+    Console.WriteLine("  [ / ]     Adjust oscilloscope gain (Layered text, when Oscilloscope layer selected)");
     Console.WriteLine("  D         Change audio input device");
     Console.WriteLine("  S         TextLayers settings modal (Layered text mode; ↑/↓ select, ESC close)");
     Console.WriteLine("  ESC       Quit the application");
@@ -477,10 +449,8 @@ void DrawHelpContent()
     string Desc(VisualizationMode m) => m switch
     {
         VisualizationMode.SpectrumBars => "Frequency bars with peak hold",
-        VisualizationMode.Oscilloscope => "Waveform display ( [ ] = gain)",
         VisualizationMode.VuMeter => "Classic stereo level meters",
         VisualizationMode.WinampBars => "Classic music player bars",
-        VisualizationMode.Geiss => "Psychedelic plasma visualization",
         VisualizationMode.UnknownPleasures => "Stacked waveform snapshots",
         VisualizationMode.TextLayers => "Layered text (1-9 select, \u2190\u2192 type, Shift+1-9 toggle, I = next image, S = settings)",
         _ => ""
