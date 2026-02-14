@@ -68,17 +68,24 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
         File.WriteAllText(_settingsPath, json);
     }
 
-    private static AppSettings MapToAppSettings(SettingsFile file) =>
-        new()
+    private static AppSettings MapToAppSettings(SettingsFile file)
+    {
+        var mode = file.VisualizationMode ?? "spectrum";
+        if (string.Equals(mode, "oscilloscope", StringComparison.OrdinalIgnoreCase))
+        {
+            mode = "textlayers";
+        }
+        return new AppSettings
         {
             InputMode = file.InputMode ?? "loopback",
             DeviceName = file.DeviceName,
-            VisualizationMode = file.VisualizationMode ?? "spectrum",
+            VisualizationMode = mode,
             BeatSensitivity = file.BeatSensitivity,
             BeatCircles = file.BeatCircles,
             OscilloscopeGain = file.OscilloscopeGain,
             SelectedPaletteId = file.SelectedPaletteId
         };
+    }
 
     private static void UpdateAppSettings(SettingsFile file, AppSettings settings)
     {
@@ -95,23 +102,18 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
     private static void MergeLegacyVisualizerSettings(SettingsFile file)
     {
         file.VisualizerSettings ??= new VisualizerSettings();
-        if (file.VisualizerSettings.Geiss is null)
-        {
-            file.VisualizerSettings.Geiss = new GeissVisualizerSettings { BeatCircles = file.BeatCircles };
-        }
-
-        if (file.VisualizerSettings.Oscilloscope is null)
-        {
-            file.VisualizerSettings.Oscilloscope = new OscilloscopeVisualizerSettings { Gain = file.OscilloscopeGain };
-        }
 
         if (file.VisualizerSettings.TextLayers is null)
         {
             file.VisualizerSettings.TextLayers = CreateDefaultTextLayersSettings();
+            ApplyLegacyBeatCircles(file.VisualizerSettings.TextLayers, file.BeatCircles);
+            ApplyLegacyOscilloscopeGain(file.VisualizerSettings.TextLayers, file.OscilloscopeGain);
         }
         else
         {
             EnsureTextLayersHasNineLayers(file.VisualizerSettings.TextLayers);
+            ApplyLegacyBeatCircles(file.VisualizerSettings.TextLayers, file.BeatCircles);
+            ApplyLegacyOscilloscopeGain(file.VisualizerSettings.TextLayers, file.OscilloscopeGain);
         }
 
         if (file.VisualizerSettings.UnknownPleasures is null)
@@ -120,12 +122,8 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
         }
 
         var globalPaletteId = file.SelectedPaletteId;
-        if (!string.IsNullOrWhiteSpace(globalPaletteId) && file.VisualizerSettings.Geiss is not null && file.VisualizerSettings.UnknownPleasures is not null && file.VisualizerSettings.TextLayers is not null)
+        if (!string.IsNullOrWhiteSpace(globalPaletteId) && file.VisualizerSettings.UnknownPleasures is not null && file.VisualizerSettings.TextLayers is not null)
         {
-            if (string.IsNullOrWhiteSpace(file.VisualizerSettings.Geiss.PaletteId))
-            {
-                file.VisualizerSettings.Geiss.PaletteId = globalPaletteId;
-            }
             if (string.IsNullOrWhiteSpace(file.VisualizerSettings.UnknownPleasures.PaletteId))
             {
                 file.VisualizerSettings.UnknownPleasures.PaletteId = globalPaletteId;
@@ -141,8 +139,6 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
     {
         var s = new VisualizerSettings
         {
-            Geiss = new GeissVisualizerSettings(),
-            Oscilloscope = new OscilloscopeVisualizerSettings(),
             TextLayers = CreateDefaultTextLayersSettings(),
             UnknownPleasures = new UnknownPleasuresVisualizerSettings()
         };
@@ -165,6 +161,49 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
             new() { LayerType = TextLayerType.StaticText, ZOrder = 8, TextSnippets = ["Top"], BeatReaction = TextLayerBeatReaction.Pulse }
         };
         return new TextLayersVisualizerSettings { Layers = layers };
+    }
+
+    /// <summary>Applies legacy OscilloscopeGain to the first Oscilloscope layer in TextLayers. If none exists and legacy gain differs from default, adds an Oscilloscope layer.</summary>
+    private static void ApplyLegacyOscilloscopeGain(TextLayersVisualizerSettings textLayers, double legacyGain)
+    {
+        textLayers.Layers ??= new List<TextLayerSettings>();
+        var firstOsc = textLayers.Layers.FirstOrDefault(l => l.LayerType == TextLayerType.Oscilloscope);
+        if (firstOsc != null)
+        {
+            firstOsc.Gain = Math.Clamp(legacyGain, 1.0, 10.0);
+        }
+        else if (Math.Abs(legacyGain - 2.5) > 0.01)
+        {
+            int maxZ = textLayers.Layers.Count > 0 ? textLayers.Layers.Max(l => l.ZOrder) : -1;
+            textLayers.Layers.Add(new TextLayerSettings
+            {
+                LayerType = TextLayerType.Oscilloscope,
+                ZOrder = maxZ + 1,
+                Gain = Math.Clamp(legacyGain, 1.0, 10.0),
+                BeatReaction = TextLayerBeatReaction.None,
+                SpeedMultiplier = 1.0
+            });
+        }
+    }
+
+    /// <summary>Applies legacy BeatCircles setting to TextLayers. When file.BeatCircles is false, disables BeatCircles layers.</summary>
+    private static void ApplyLegacyBeatCircles(TextLayersVisualizerSettings textLayers, bool legacyBeatCircles)
+    {
+        if (legacyBeatCircles)
+        {
+            return;
+        }
+        if (textLayers.Layers is null)
+        {
+            return;
+        }
+        foreach (var layer in textLayers.Layers)
+        {
+            if (layer.LayerType == TextLayerType.BeatCircles)
+            {
+                layer.Enabled = false;
+            }
+        }
     }
 
     /// <summary>Ensures TextLayers has at least 9 layers so keys 1–9 always map to a layer. Pads with default layers if fewer.</summary>

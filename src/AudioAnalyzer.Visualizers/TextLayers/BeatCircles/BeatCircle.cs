@@ -1,7 +1,7 @@
 namespace AudioAnalyzer.Visualizers;
 
 /// <summary>
-/// Beat circle for Geiss visualization. ColorIndex is 0-5 (renderer maps to ConsoleColor).
+/// Beat circle for BeatCircles layer. ColorIndex is 0-5 (renderer maps to palette or ConsoleColor).
 /// </summary>
 public readonly struct BeatCircle
 {

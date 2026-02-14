@@ -9,10 +9,8 @@ public sealed class CompositeVisualizationRenderer : IVisualizationRenderer
     private static readonly Dictionary<string, VisualizationMode> s_technicalNameToMode = new(StringComparer.OrdinalIgnoreCase)
     {
         ["spectrum"] = VisualizationMode.SpectrumBars,
-        ["oscilloscope"] = VisualizationMode.Oscilloscope,
         ["vumeter"] = VisualizationMode.VuMeter,
         ["winamp"] = VisualizationMode.WinampBars,
-        ["geiss"] = VisualizationMode.Geiss,
         ["unknownpleasures"] = VisualizationMode.UnknownPleasures,
         ["textlayers"] = VisualizationMode.TextLayers,
     };

@@ -19,9 +19,6 @@ internal static class PaletteResolver
 
         switch (mode)
         {
-            case VisualizationMode.Geiss:
-                paletteId = visSettings.Geiss?.PaletteId;
-                break;
             case VisualizationMode.UnknownPleasures:
                 paletteId = visSettings.UnknownPleasures?.PaletteId;
                 if (string.IsNullOrWhiteSpace(paletteId))

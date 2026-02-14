@@ -52,7 +52,8 @@ public sealed class TextLayersVisualizer : IVisualizer
             new MatrixRainLayer(),
             new AsciiImageLayer(),
             new GeissBackgroundLayer(),
-            new BeatCirclesLayer()
+            new BeatCirclesLayer(),
+            new OscilloscopeLayer()
         };
         return list.ToDictionary(r => r.LayerType);
     }
@@ -232,7 +233,14 @@ public sealed class TextLayersVisualizer : IVisualizer
         {
             sb.Append(", I: next image");
         }
-        sb.Append(", S: settings) | Palette (L");
+        sb.Append(", S: settings)");
+        if (layer.LayerType == TextLayerType.Oscilloscope)
+        {
+            sb.Append(" | Gain: ");
+            sb.Append(layer.Gain.ToString("F1", System.Globalization.CultureInfo.InvariantCulture));
+            sb.Append(" ([ ])");
+        }
+        sb.Append(" | Palette (L");
         sb.Append(idx + 1);
         sb.Append("): ");
         sb.Append(paletteName);
@@ -281,6 +289,18 @@ public sealed class TextLayersVisualizer : IVisualizer
             var next = all[nextIndex];
             paletteLayer.PaletteId = next.Id;
             return true;
+        }
+
+        if (key.Key is ConsoleKey.Oem4 or ConsoleKey.Oem6)
+        {
+            int layerIndex = Math.Clamp(_paletteCycleLayerIndex, 0, sortedLayers.Count - 1);
+            var layer = sortedLayers[layerIndex];
+            if (layer.LayerType == TextLayerType.Oscilloscope)
+            {
+                double delta = key.Key is ConsoleKey.Oem6 ? 0.5 : -0.5;
+                layer.Gain = Math.Clamp(layer.Gain + delta, 1.0, 10.0);
+                return true;
+            }
         }
 
         if (key.Key is ConsoleKey.I)
