@@ -10,9 +10,9 @@ Visualizer implementations were previously stored flat in `src/AudioAnalyzer.Vis
 
 Each visualizer has its own subfolder under `src/AudioAnalyzer.Visualizers/`. The folder name matches the visualizer (e.g. `Geiss`, `Oscilloscope`, `SpectrumBars`). All files belonging to a visualizer—including helper types like `BeatCircle` for Geiss—live in that visualizer’s folder.
 
-- **Namespace**: Keep `AudioAnalyzer.Visualizers` for all visualizer types. Folder structure is for organization; the flat namespace preserves the public API and avoids changes to `CompositeVisualizationRenderer` and other consumers.
+- **Namespace**: Keep `AudioAnalyzer.Visualizers` for all visualizer types. Folder structure is for organization; the flat namespace preserves the public API and avoids changes to `VisualizationPaneLayout` and other consumers.
 - **New visualizers**: Add a new subfolder with the same name pattern as the visualizer. Supporting types stay in the same subfolder.
-- **Registration**: Visualizers remain registered in `CompositeVisualizationRenderer` via the dictionary; no reflection or assembly scanning is required.
+- **Registration**: Visualizers remain registered in `VisualizationPaneLayout` via the dictionary; no reflection or assembly scanning is required.
 
 ## Consequences
 

@@ -4,7 +4,7 @@ using AudioAnalyzer.Domain;
 
 namespace AudioAnalyzer.Infrastructure;
 
-public sealed class CompositeVisualizationRenderer : IVisualizationRenderer
+public sealed class VisualizationPaneLayout : IVisualizationRenderer
 {
     private static readonly Dictionary<string, VisualizationMode> s_technicalNameToMode = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -18,7 +18,7 @@ public sealed class CompositeVisualizationRenderer : IVisualizationRenderer
     private readonly Dictionary<VisualizationMode, IVisualizer> _visualizers;
     private readonly Dictionary<VisualizationMode, (IReadOnlyList<PaletteColor>? Palette, string? DisplayName)> _palettes = new();
 
-    public CompositeVisualizationRenderer(IDisplayDimensions displayDimensions, IEnumerable<IVisualizer> visualizers)
+    public VisualizationPaneLayout(IDisplayDimensions displayDimensions, IEnumerable<IVisualizer> visualizers)
     {
         _displayDimensions = displayDimensions;
         _visualizers = new Dictionary<VisualizationMode, IVisualizer>();

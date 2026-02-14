@@ -19,7 +19,7 @@ Previously, `AppSettings.SelectedPaletteId` stored a single palette for all pale
 ## Consequences
 
 - **Domain**: `PaletteId` added to `GeissVisualizerSettings`, `UnknownPleasuresVisualizerSettings`, `TextLayersVisualizerSettings`. `SelectedPaletteId` in `AppSettings` is deprecated for palette selection but retained for migration.
-- **Application/Infrastructure**: `IVisualizationRenderer.SetPalette` replaced with `SetPaletteForMode(mode, palette, displayName)`; composite renderer uses a per-mode palette dictionary.
+- **Application/Infrastructure**: `IVisualizationRenderer.SetPalette` replaced with `SetPaletteForMode(mode, palette, displayName)`; VisualizationPaneLayout uses a per-mode palette dictionary.
 - **Console**: Startup resolves and sets palette for each palette-aware mode; `CyclePalette` guards on current mode, updates that visualizer's `PaletteId`, and calls `SetPaletteForMode` for the current mode only.
 - **TextLayers (later amendment)**: Each layer has its own `PaletteId` in `TextLayerSettings`. P cycles the focused layer (last selected with 1–9). `TextLayers.PaletteId` is the fallback when a layer has no `PaletteId`. TextLayers does not use `SetPaletteForMode`; it resolves palettes per-layer at render time via `IPaletteRepository`.
 - **Settings repository**: `MergeLegacyVisualizerSettings` migrates `SelectedPaletteId` to each visualizer's `PaletteId` when empty; ensures `UnknownPleasures` is initialized.

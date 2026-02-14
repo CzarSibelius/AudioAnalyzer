@@ -1,6 +1,6 @@
 ---
 description: Read visualizer specs when adding or changing visualizers
-globs: "**/Visualizers/**/*.cs,**/CompositeVisualizationRenderer.cs"
+globs: "**/Visualizers/**/*.cs,**/VisualizationPaneLayout.cs"
 ---
 
 # Visualizer specs
