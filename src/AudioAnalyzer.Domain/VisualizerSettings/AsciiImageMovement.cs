@@ -1,4 +1,4 @@
-namespace AudioAnalyzer.Visualizers;
+namespace AudioAnalyzer.Domain;
 
 /// <summary>Movement mode for the ASCII image layer.</summary>
 public enum AsciiImageMovement

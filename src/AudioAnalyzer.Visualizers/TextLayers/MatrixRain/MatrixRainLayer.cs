@@ -1,3 +1,5 @@
+using AudioAnalyzer.Domain;
+
 namespace AudioAnalyzer.Visualizers;
 
 /// <summary>Renders matrix-style falling digits.</summary>

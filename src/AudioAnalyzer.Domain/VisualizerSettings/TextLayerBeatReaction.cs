@@ -1,4 +1,4 @@
-namespace AudioAnalyzer.Visualizers;
+namespace AudioAnalyzer.Domain;
 
 /// <summary>How a beat affects a text layer (interpretation is per layer type).</summary>
 public enum TextLayerBeatReaction

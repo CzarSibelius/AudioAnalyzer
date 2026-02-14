@@ -30,6 +30,7 @@ Decisions are numbered and kept under version control so the rationale stays wit
 | [0012](0012-visualizer-exception-handling.md) | Visualizer exception handling — show error in viewport | Accepted |
 | [0013](0013-secure-nuget-packages.md) | Avoid insecure or obsolete NuGet packages | Accepted |
 | [0014](0014-visualizers-as-layers.md) | Visualizers as layers — deprecate IVisualizer for new development | Accepted |
+| [0015](0015-visualizer-settings-in-domain.md) | Visualizer settings in Domain, IVisualizerSettingsRepository in Application | Accepted |
 
 ## Process
 

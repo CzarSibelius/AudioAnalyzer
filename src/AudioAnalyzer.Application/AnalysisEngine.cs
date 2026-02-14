@@ -116,6 +116,9 @@ public sealed class AnalysisEngine
         }
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
     /// <param name="redrawHeader">Full redraw (clear + header), e.g. on resize or keypress.</param>
     /// <param name="refreshHeader">Optional: redraw only the header lines (no clear), called before each render so the top never disappears.</param>
     public void SetHeaderCallback(Action? redrawHeader, Action? refreshHeader, int startRow)
