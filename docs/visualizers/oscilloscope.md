@@ -14,6 +14,7 @@ Time-domain waveform display showing audio amplitude over time. Available as an 
 
 - **Schema**: `TextLayerSettings` when `LayerType == Oscilloscope`
 - **Gain** (double, default: 2.5): Amplitude gain (1.0–10.0). Per-layer; adjustable with [ ] when that layer is selected.
+- **PaletteId** (string, optional): Id of the color palette for this layer. Inherits from `TextLayers.PaletteId` when null/empty. Use `"oscilloscope"` for the classic gradient (Cyan → Green → Yellow → Red). Press **P** when this layer is selected to cycle and save.
 
 ## Key bindings
 
@@ -31,5 +32,5 @@ Time-domain waveform display showing audio amplitude over time. Available as an 
 - **Layer**: `OscilloscopeLayer` in `TextLayers/Oscilloscope/OscilloscopeLayer.cs`
 - **Internal state**: None; stateless.
 - **Rendering**: Samples waveform across buffer width; draws horizontal line segments between consecutive points; uses `Buffer.Set` for each cell.
-- **Color**: Distance from center determines color (cyan → green → yellow → red) via `PaletteColor.FromConsoleColor`.
+- **Color**: Palette-based; maps distance from center (0 = center, 1 = edges) to palette index. Uses the layer's palette (`ctx.Palette` from `PaletteId`). Falls back to the hardcoded gradient (cyan → green → yellow → red) when palette is null/empty. The `oscilloscope.json` palette provides the classic gradient and is available for any layer.
 - **References**: [text-layers.md](text-layers.md), [ADR-0014](../adr/0014-visualizers-as-layers.md).
