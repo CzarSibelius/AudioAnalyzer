@@ -74,7 +74,7 @@ On Windows you can use backslashes: `src\AudioAnalyzer.Console\AudioAnalyzer.Con
 
 ## Palettes (JSON files)
 
-Color palettes are stored as **JSON files** in a **`palettes`** directory next to the executable (e.g. `palettes/` in the same folder as the .exe). The app ships with `palettes/default.json`. You can add more `.json` files; each file is one palette. Press **P** to cycle through all available palettes when using a palette-aware visualizer; the change applies only to the current visualizer and is saved to that visualizer's settings.
+Color palettes are stored as **JSON files** in a **`palettes`** directory next to the executable (e.g. `palettes/` in the same folder as the .exe). The app ships with `palettes/default.json` and `palettes/oscilloscope.json` (classic waveform gradient: Cyan → Green → Yellow → Red). You can add more `.json` files; each file is one palette. Press **P** to cycle through all available palettes when using a palette-aware visualizer; the change applies only to the current visualizer and is saved to that visualizer's settings.
 
 **Palette JSON format:**
 

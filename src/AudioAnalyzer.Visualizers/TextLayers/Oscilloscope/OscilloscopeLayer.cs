@@ -38,13 +38,24 @@ public sealed class OscilloscopeLayer : ITextLayerRenderer
             int maxY = Math.Max(prevY, y);
             for (int lineY = minY; lineY <= maxY; lineY++)
             {
-                var color = GetOscilloscopeColor(lineY, centerY, h);
+                var color = GetColorFromPalette(lineY, centerY, h, ctx.Palette);
                 ctx.Buffer.Set(x, lineY, '█', color);
             }
             prevY = y;
         }
 
         return state;
+    }
+
+    private static PaletteColor GetColorFromPalette(int y, int centerY, int height, IReadOnlyList<PaletteColor>? palette)
+    {
+        if (palette is { Count: > 0 })
+        {
+            double distance = (height / 2 <= 0) ? 0 : Math.Abs(y - centerY) / (double)(height / 2);
+            int idx = Math.Min((int)(distance * palette.Count), Math.Max(0, palette.Count - 1));
+            return palette[idx];
+        }
+        return GetOscilloscopeColor(y, centerY, height);
     }
 
     private static PaletteColor GetOscilloscopeColor(int y, int centerY, int height)
