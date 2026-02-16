@@ -23,7 +23,8 @@ public sealed class OscilloscopeLayer : ITextLayerRenderer
 
         int width = Math.Min(w, snapshot.WaveformSize);
         int centerY = h / 2;
-        double gain = Math.Clamp(layer.Gain > 0 ? layer.Gain : 2.5, 1.0, 10.0);
+        var s = layer.GetCustom<OscilloscopeSettings>() ?? new OscilloscopeSettings();
+        double gain = Math.Clamp(s.Gain > 0 ? s.Gain : 2.5, 1.0, 10.0);
         int step = Math.Max(1, snapshot.WaveformSize / width);
         int prevY = centerY;
 

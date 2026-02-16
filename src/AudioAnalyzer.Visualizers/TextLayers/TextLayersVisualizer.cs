@@ -246,8 +246,9 @@ public sealed class TextLayersVisualizer : IVisualizer
         sb.Append(", S: settings)");
         if (layer.LayerType == TextLayerType.Oscilloscope)
         {
+            var osc = layer.GetCustom<OscilloscopeSettings>() ?? new OscilloscopeSettings();
             sb.Append(" | Gain: ");
-            sb.Append(layer.Gain.ToString("F1", System.Globalization.CultureInfo.InvariantCulture));
+            sb.Append(osc.Gain.ToString("F1", System.Globalization.CultureInfo.InvariantCulture));
             sb.Append(" ([ ])");
         }
         sb.Append(" | Palette (L");
@@ -307,8 +308,10 @@ public sealed class TextLayersVisualizer : IVisualizer
             var layer = sortedLayers[layerIndex];
             if (layer.LayerType == TextLayerType.Oscilloscope)
             {
+                var osc = layer.GetCustom<OscilloscopeSettings>() ?? new OscilloscopeSettings();
                 double delta = key.Key is ConsoleKey.Oem6 ? 0.5 : -0.5;
-                layer.Gain = Math.Clamp(layer.Gain + delta, 1.0, 10.0);
+                osc.Gain = Math.Clamp(osc.Gain + delta, 1.0, 10.0);
+                layer.SetCustom(osc);
                 return true;
             }
         }

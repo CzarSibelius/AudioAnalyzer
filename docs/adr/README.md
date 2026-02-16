@@ -36,6 +36,8 @@ Decisions are numbered and kept under version control so the rationale stays wit
 | [0018](0018-shutdown-lock-ordering.md) | Shutdown and device-switch lock ordering | Accepted |
 | [0019](0019-preset-textlayers-configuration.md) | Preset — named TextLayers configuration | Accepted |
 | [0020](0020-ui-text-components-scrolling-and-ellipsis.md) | UI text components — scrolling for dynamic, ellipsis for static | Accepted |
+| [0021](0021-textlayer-settings-common-custom.md) | TextLayerSettings — common properties plus Custom JSON | Accepted |
+| [0022](0022-presets-in-own-files.md) | Presets in own files (palette-style storage) | Accepted |
 
 ## Process
 

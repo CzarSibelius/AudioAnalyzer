@@ -15,29 +15,22 @@ Composites multiple independent layers (e.g. ScrollingColors, Marquee, FallingLe
 
 ## Presets
 
-A **Preset** is a named TextLayers configuration (9 layers + PaletteId). Users can maintain multiple presets and switch with **V**. The active preset's config is the live editing buffer (`TextLayers`). See [ADR-0019](../adr/0019-preset-textlayers-configuration.md).
+A **Preset** is a named TextLayers configuration (9 layers + PaletteId). Users can maintain multiple presets and switch with **V**. The active preset's config is the live editing buffer (`TextLayers`). Presets are stored as individual JSON files in the **`presets`** directory (like palettes). See [ADR-0019](../adr/0019-preset-textlayers-configuration.md) and [ADR-0022](../adr/0022-presets-in-own-files.md).
 
 - **V** — Cycle to next preset (toolbar shows "Preset: {name} (V)")
 - Settings modal title shows current preset; **R** to rename, **N** to create new preset (duplicate of current)
 
 ## Settings
 
-- **Schema**: `VisualizerSettings.Presets` (list of Preset), `VisualizerSettings.ActivePresetId`, `VisualizerSettings.TextLayers` (live buffer)
-- **Preset**: `Id`, `Name`, `Config` (TextLayersVisualizerSettings)
+- **Schema**: Presets live in `presets/*.json`; `VisualizerSettings.ActivePresetId` references the active preset; `VisualizerSettings.Presets` and `TextLayers` are populated at runtime from preset files.
+- **Preset file format**: `Name`, `Config` (TextLayersVisualizerSettings); id = filename without extension.
 - **TextLayers.PaletteId** (string, optional): Default palette id for layers that do not have their own. Fallback when a layer's `PaletteId` is null/empty.
 - **TextLayers.Layers** (array): Each layer has:
-  - `LayerType`: None, ScrollingColors, Marquee, FallingLetters, MatrixRain, WaveText, StaticText, AsciiImage, GeissBackground, BeatCircles, Oscilloscope, UnknownPleasures, VuMeter, LlamaStyle
-  - `Enabled`: bool (default true; when false, layer is not rendered)
-  - `ZOrder`: int (lower = back)
-  - `TextSnippets`: optional string array (text for marquee/wave/falling/matrix)
-  - `BeatReaction`: None, SpeedBurst, Flash, SpawnMore, Pulse, ColorPop
-  - `SpeedMultiplier`: double
-  - `ColorIndex`: palette index
-  - `PaletteId`: optional string — id of the palette for this layer (e.g. `"default"`). When null/empty, inherits from `TextLayers.PaletteId`.
-  - `ImageFolderPath`: optional string (path to folder with images; for AsciiImage only)
-  - `AsciiImageMovement`: None, Scroll, Zoom, Both (for AsciiImage; default Scroll)
-  - `Gain`: double (1.0–10.0, default 2.5; for Oscilloscope layer only)
-  - LlamaStyle options (for LlamaStyle layer only): `LlamaStyleShowVolumeBar`, `LlamaStyleShowRowLabels`, `LlamaStyleShowFrequencyLabels` (bool); `LlamaStyleColorScheme` ("Winamp" | "Spectrum"); `LlamaStylePeakMarkerStyle` ("Blocks" | "DoubleLine"); `LlamaStyleBarWidth` (2 | 3)
+  - Common: `LayerType`, `Enabled`, `ZOrder`, `TextSnippets`, `BeatReaction`, `SpeedMultiplier`, `ColorIndex`, `PaletteId`
+  - `Custom`: Layer-specific settings as a JSON object. Only the owning layer deserializes it. Per [ADR-0021](../adr/0021-textlayer-settings-common-custom.md):
+    - AsciiImage: `ImageFolderPath`, `Movement` (None/Scroll/Zoom/Both)
+    - Oscilloscope: `Gain` (1.0–10.0)
+    - LlamaStyle: `ShowVolumeBar`, `ShowRowLabels`, `ShowFrequencyLabels` (bool); `ColorScheme` ("Winamp"|"Spectrum"); `PeakMarkerStyle` ("Blocks"|"DoubleLine"); `BarWidth` (2|3)
 
 ## Key bindings
 
@@ -45,8 +38,8 @@ A **Preset** is a named TextLayers configuration (9 layers + PaletteId). Users c
 - **P** — Cycle the color palette of the **active layer** (the layer last selected with 1–9). Saved to that layer's settings.
 - **S** — Open preset settings modal (title shows preset name; two-column: layer list on left, selected layer settings on right; 1–9 select, ↑/↓ select, ←/→ change type, Shift+1–9 toggle enabled, R rename preset, N new preset, ESC close). The modal replaces the header/toolbar region while keeping the visualizer visible below.
 - **1–9** — Select the corresponding layer as active (no type change). Key 1 = layer 1 (back), key 9 = layer 9 (front). Number keys and numpad keys work.
-- **←/→** (Left/Right arrow) — Cycle the active layer's type forward or backward (includes None). Changes persist to appsettings.json.
-- **Shift+1–9** — Toggle the corresponding layer enabled/disabled. Disabled layers are not rendered. Changes persist to appsettings.json.
+- **←/→** (Left/Right arrow) — Cycle the active layer's type forward or backward (includes None). Changes persist to the active preset file.
+- **Shift+1–9** — Toggle the corresponding layer enabled/disabled. Disabled layers are not rendered. Changes persist to the active preset file.
 - **I** — Cycle to the next picture in AsciiImage layers (only when at least one layer is AsciiImage).
 - **[ / ]** — Adjust gain (1.0–10.0) when the selected layer is Oscilloscope.
 - Toolbar suffix: shows layers as "123456789" (active in highlight, disabled dimmed); key hints (1–9 select, ←→ type, Shift+1–9 toggle); "Gain: X.X ([ ])" when Oscilloscope layer is selected; "Palette (LN): name (P)" for the active layer; "I: next image" when AsciiImage exists
@@ -63,7 +56,7 @@ A **Preset** is a named TextLayers configuration (9 layers + PaletteId). Users c
 - **Internal state**: `ViewportCellBuffer`; `_layerStates` (offset, snippet index per layer); `_fallingLettersByLayer` (particles for FallingLetters); `_asciiImageStateByLayer` (scroll, zoom, cache for AsciiImage); `_geissBackgroundStateByLayer` (phase, colorPhase, bass/treble for GeissBackground); `_beatCirclesStateByLayer` (circles, lastBeatCount for BeatCircles); `_paletteCycleLayerIndex` (layer whose palette P cycles); `_lastBeatCount`; `_beatFlashFrames`.
 - **Cell buffer**: Per [ADR-0005](../adr/0005-layered-visualizer-cell-buffer.md); internal to this visualizer only.
 - **None layer**: `LayerType.None` renders nothing; no renderer registered. Use ←/→ to cycle type (includes None). Use Shift+1–9 to toggle layer enabled/disabled.
-- **Layer types**: Each type has its own class implementing `ITextLayerRenderer`, in a per-layer subfolder: `ScrollingColors/ScrollingColorsLayer`, `Marquee/MarqueeLayer`, `FallingLetters/FallingLettersLayer`, `MatrixRain/MatrixRainLayer`, `WaveText/WaveTextLayer`, `StaticText/StaticTextLayer`, `AsciiImage/AsciiImageLayer`, `GeissBackground/GeissBackgroundLayer`, `BeatCircles/BeatCirclesLayer`, `Oscilloscope/OscilloscopeLayer`, `UnknownPleasures/UnknownPleasuresLayer`, `VuMeter/VuMeterLayer`, `LlamaStyle/LlamaStyleLayer`. Shared infrastructure (ITextLayerRenderer, TextLayerSettings, TextLayerDrawContext, etc.) stays in the TextLayers root.
+- **Layer types**: Each type has its own class implementing `ITextLayerRenderer`, in a per-layer subfolder: `ScrollingColors/ScrollingColorsLayer`, `Marquee/MarqueeLayer`, etc. Layers with custom settings have a *Settings.cs (e.g. `LlamaStyleSettings`, `OscilloscopeSettings`, `AsciiImageSettings`) and use `layer.GetCustom<TSettings>()` in Draw. Shared infrastructure (ITextLayerRenderer, TextLayerSettings, TextLayerDrawContext) stays in the TextLayers root.
 - **GeissBackground layer**: Psychedelic plasma-style background; sine-based plasma with bass/treble modulation; uses SmoothedMagnitudes and TargetMaxMagnitude; Flash beat reaction boosts plasma intensity; palette or GetGeissColor fallback.
 - **BeatCircles layer**: Expanding circles spawned on beat; draws only circle pixels (transparent elsewhere); uses BeatCount, SmoothedMagnitudes for maxRadius; up to 5 circles; aspect ratio 2.0 for elliptical appearance.
 - **Oscilloscope layer**: Time-domain waveform; uses Waveform, WaveformPosition, WaveformSize; per-layer Gain (1.0–10.0); [ ] adjusts gain when layer is selected; per-layer palette (distance from center maps to palette index); `oscilloscope` palette provides classic gradient.
@@ -72,4 +65,4 @@ A **Preset** is a named TextLayers configuration (9 layers + PaletteId). Users c
 - **VuMeter layer**: Classic stereo VU meters; Left/Right channel levels, peak hold, dB scale, balance indicator; uses LeftChannel, RightChannel, LeftPeakHold, RightPeakHold.
 - **LlamaStyle layer**: Spectrum bars (ex-Winamp/Spectrum Analyzer); configurable volume bar, row labels, frequency labels, color scheme (Winamp vs Spectrum), peak marker style, bar width; uses SmoothedMagnitudes, PeakHold, TargetMaxMagnitude, NumBands, Volume.
 - **Beat reactions**: SpeedBurst (faster), Flash (advance/change), SpawnMore (spawn particles), Pulse (amplitude/color change), ColorPop (color offset).
-- **References**: [ADR-0004](../adr/0004-visualizer-encapsulation.md), [ADR-0005](../adr/0005-layered-visualizer-cell-buffer.md).
+- **References**: [ADR-0004](../adr/0004-visualizer-encapsulation.md), [ADR-0005](../adr/0005-layered-visualizer-cell-buffer.md), [ADR-0021](../adr/0021-textlayer-settings-common-custom.md).

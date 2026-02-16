@@ -12,6 +12,7 @@ internal static class ServiceConfiguration
 {
     public static ServiceProvider Build(
         FileSettingsRepository settingsRepo,
+        IPresetRepository presetRepo,
         AppSettings settings,
         VisualizerSettings visualizerSettings)
     {
@@ -21,6 +22,7 @@ internal static class ServiceConfiguration
         services.AddSingleton<ISettingsRepository>(_ => settingsRepo);
         services.AddSingleton<IVisualizerSettingsRepository>(_ => settingsRepo);
         services.AddSingleton<IPaletteRepository>(_ => new FilePaletteRepository());
+        services.AddSingleton<IPresetRepository>(presetRepo);
         services.AddSingleton<IAudioDeviceInfo, NAudioDeviceInfo>();
 
         services.AddSingleton<IVisualizer>(sp => new TextLayersVisualizer(

@@ -73,6 +73,24 @@ On Windows you can use backslashes: `src\AudioAnalyzer.Console\AudioAnalyzer.Con
 - **Microsoft.Extensions.DependencyInjection 10.0.3**: Used by the Console host (dependency injection)
 - **Roslynator.Analyzers 4.15.0**: Code analyzers (e.g. RCS1075: no empty catch blocks, RCS1060: one file per class), enforced via `.editorconfig`
 
+## Presets (JSON files)
+
+TextLayers presets are stored as **JSON files** in a **`presets`** directory next to the executable (e.g. `presets/` in the same folder as the .exe). Each file is one preset. Press **V** to cycle presets; **S** to edit (R rename, N new preset). Presets are created automatically on first run.
+
+**Preset JSON format:**
+
+- **`Name`** (optional): Display name (e.g. `"Preset 1"`).
+- **`Config`**: TextLayersVisualizerSettings — `PaletteId` plus `Layers` array (9 layers with `LayerType`, `Enabled`, `ZOrder`, `TextSnippets`, `BeatReaction`, etc.).
+
+Example (`presets/preset-1.json`):
+
+```json
+{
+  "Name": "Preset 1",
+  "Config": { "PaletteId": "default", "Layers": [...] }
+}
+```
+
 ## Palettes (JSON files)
 
 Color palettes are stored as **JSON files** in a **`palettes`** directory next to the executable (e.g. `palettes/` in the same folder as the .exe). The app ships with `palettes/default.json` and `palettes/oscilloscope.json` (classic waveform gradient: Cyan → Green → Yellow → Red). You can add more `.json` files; each file is one palette. Press **P** to cycle through all available palettes when using a palette-aware visualizer; the change applies only to the current visualizer and is saved to that visualizer's settings.
@@ -105,17 +123,13 @@ Example with 24-bit colors:
 ## Settings structure (per-visualizer)
 
 - **Visualizer-specific options** live under `VisualizerSettings` in the settings file (e.g. `appsettings.json`):
-  - **Presets**: `VisualizerSettings.Presets` — list of Preset (Id, Name, Config); `ActivePresetId` — id of the active preset; `TextLayers` — live editing buffer (synced from active preset). Each Preset.Config = TextLayersVisualizerSettings: `PaletteId` fallback; list of 9 layers (keys 1–9) with `LayerType`, `Enabled`, `ZOrder`, `TextSnippets`, `BeatReaction`, `SpeedMultiplier`, `ColorIndex`, `PaletteId` (per-layer; inherits from Config.PaletteId when empty), and for AsciiImage: `ImageFolderPath`, `AsciiImageMovement`; for Oscilloscope: `Gain` (1.0–10.0); for LlamaStyle: `LlamaStyleShowVolumeBar`, etc. Layer types: `None`, `ScrollingColors`, `Marquee`, `FallingLetters`, `MatrixRain`, `WaveText`, `StaticText`, `AsciiImage`, `GeissBackground`, `BeatCircles`, `Oscilloscope`, `UnknownPleasures`, `VuMeter`, `LlamaStyle`. Press **V** to cycle presets; **S** to edit (R rename, N new preset); changes persist automatically.
+  - **Presets**: Stored as individual JSON files in the `presets/` directory (see above). `ActivePresetId` in `VisualizerSettings` references the active preset (id = filename without extension). Each preset file contains `Name` and `Config` (TextLayersVisualizerSettings: `PaletteId` fallback; list of 9 layers with common props plus `Custom`). Press **V** to cycle presets; **S** to edit (R rename, N new preset); changes persist automatically.
 
-Example JSON:
+Example `appsettings.json` (presets live in `presets/*.json`):
 
 ```json
 "VisualizerSettings": {
-  "Presets": [
-    { "Id": "abc123", "Name": "Preset 1", "Config": { "PaletteId": "default", "Layers": [...] } }
-  ],
-  "ActivePresetId": "abc123",
-  "TextLayers": { "PaletteId": "default", "Layers": [...] }
+  "ActivePresetId": "preset-1"
 }
 ```
 
