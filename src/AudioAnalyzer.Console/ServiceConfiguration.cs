@@ -31,7 +31,8 @@ internal static class ServiceConfiguration
         {
             var dimensions = sp.GetRequiredService<IDisplayDimensions>();
             var visualizers = sp.GetServices<IVisualizer>();
-            return new VisualizationPaneLayout(dimensions, visualizers);
+            var visualizerSettings = sp.GetRequiredService<VisualizerSettings>();
+            return new VisualizationPaneLayout(dimensions, visualizers, visualizerSettings);
         });
         services.AddSingleton<AnalysisEngine>(sp =>
         {

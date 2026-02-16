@@ -22,10 +22,12 @@ After making code changes, check linter diagnostics for the modified files and f
 - If a change would conflict with an accepted ADR, either update/supersede the ADR or align the implementation with it; do not silently contradict documented decisions.
 - **NuGet packages**: When adding or changing NuGet dependencies, follow ADR-0013 — avoid insecure or obsolete packages. Check `dotnet list package --vulnerable` before merging.
 - **New visualizers**: Implement `ITextLayerRenderer` and add to TextLayersVisualizer; do not create new standalone `IVisualizer` modes (see ADR-0014 in docs/adr/).
+- **Presets**: TextLayers configs are Presets; V cycles presets; S modal: R rename, N new preset (see ADR-0019 in docs/adr/).
+- **UI text overflow**: Use ScrollingTextViewport for dynamic text that may exceed width; use ellipsis truncation for static text (see ADR-0020 in docs/adr/).
 
 ### User Control Requirements
 - **Every feature must be toggleable by the user in realtime** via keyboard shortcuts
-- New features should have a dedicated key binding (e.g., B for beat circles, V for visualization mode)
+- New features should have a dedicated key binding (e.g., B for beat circles, V for preset cycling)
 - **Help menu (H key) must document every available command** - always update `ShowHelpMenu()` when adding new controls
 - Settings are persisted automatically when changed (see ADR-0001 in docs/adr/); no manual save key is required
 

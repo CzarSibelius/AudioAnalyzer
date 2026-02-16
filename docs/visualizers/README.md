@@ -6,7 +6,7 @@ This directory contains per-visualizer reference documentation: behavior, settin
 
 | TechnicalName | Display Name | Spec | Description |
 |--------------|--------------|------|--------------|
-| textlayers | Layered text | [text-layers.md](text-layers.md) | Multiple configurable layers (GeissBackground, BeatCircles, Oscilloscope, VuMeter, LlamaStyle, UnknownPleasures, etc.) with beat reactions |
+| textlayers | Layered text | [text-layers.md](text-layers.md) | Presets (V to cycle); multiple configurable layers (GeissBackground, BeatCircles, Oscilloscope, VuMeter, LlamaStyle, UnknownPleasures, etc.) with beat reactions |
 | oscilloscope | Oscilloscope (layer) | [oscilloscope.md](oscilloscope.md) | Time-domain waveform layer in Layered text; gain adjustable with [ ] when selected |
 | vumeter | VU Meter (layer) | [vu-meter-layer.md](vu-meter-layer.md) | Stereo channel levels and balance |
 | llamastyle | Llama Style (layer) | [llama-style.md](llama-style.md) | Classic spectrum bars with configurable options (volume bar, labels, color scheme) |

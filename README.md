@@ -37,8 +37,8 @@ On Windows you can use backslashes: `src\AudioAnalyzer.Console\AudioAnalyzer.Con
 1. On first run (or if no device was saved), choose an audio input: **Demo Mode** (synthetic stream at 90/120/140 BPM for testing without audio), loopback (system output), or a specific capture device (↑/↓ to move, ENTER to select, ESC to cancel).
 2. The analyzer shows real-time volume and frequency analysis. Play audio to see it in action.
 3. **Keyboard controls:**
-   - **H** – Show help (all keys and visualization modes)
-   - **V** – Cycle visualization mode (Layered text)
+   - **H** – Show help (all keys and presets)
+   - **V** – Cycle to next preset (Layered text; toolbar shows preset name)
    - **P** – Cycle color palette (for palette-aware visualizers; affects only the current visualizer and persists to that visualizer's settings)
    - **+** / **-** – Increase / decrease beat sensitivity
    - **[** / **]** – Increase / decrease oscilloscope gain (Layered text when Oscilloscope layer is selected; 1.0–10.0)
@@ -46,7 +46,7 @@ On Windows you can use backslashes: `src\AudioAnalyzer.Console\AudioAnalyzer.Con
    - **←/→** – Cycle active layer's type (Layered text mode)
    - **Shift+1–9** – Toggle layer enabled/disabled (Layered text mode)
    - **I** – Cycle to next picture (Layered text mode, when an AsciiImage layer is active)
-   - **S** – Open TextLayers settings modal (Layered text mode only; 1–9 select, ←→ type, Shift+1–9 toggle, ESC close)
+   - **S** – Open preset settings modal (1–9 select, ←→ type, Shift+1–9 toggle, R rename, N new preset, ESC close)
    - **D** – Change audio input device
    - **F** – Toggle full screen (visualizer only, no header/toolbar)
    - **ESC** – Quit
@@ -58,12 +58,13 @@ On Windows you can use backslashes: `src\AudioAnalyzer.Console\AudioAnalyzer.Con
 - **Audio input**: Demo Mode (synthetic BPM stream for testing), loopback (system output), or a specific WASAPI capture device; choice is saved in settings.
 - **Volume analysis**: Real-time level and peak display; stereo VU-style meters in VU Meter mode.
 - **FFT analysis**: Fast Fourier Transform with log-spaced frequency bands and peak hold.
-- **Visualization mode**: **Layered text** — multiple independent layers (Geiss plasma background, beat circles, oscilloscope, VU meter, Llama-style spectrum bars, Unknown Pleasures stacked waveforms, scrolling colors, marquee, falling letters, ASCII images from a folder) with configurable text snippets and beat reactions; each layer has its own palette; press **1–9** to select a layer, **←/→** to change its type, **Shift+1–9** to toggle enabled; **[ / ]** to adjust oscilloscope gain when that layer is selected; press **P** to cycle the active layer's palette.
+- **Presets**: **V** cycles between named TextLayers configurations (each preset = 9 layers + palette). Toolbar shows "Preset: {name} (V)".
+- **Layered text**: Multiple independent layers (Geiss plasma background, beat circles, oscilloscope, VU meter, Llama-style spectrum bars, Unknown Pleasures stacked waveforms, scrolling colors, marquee, falling letters, ASCII images from a folder) with configurable text snippets and beat reactions; each layer has its own palette; press **1–9** to select a layer, **←/→** to change its type, **Shift+1–9** to toggle enabled; **[ / ]** to adjust oscilloscope gain when that layer is selected; press **P** to cycle the active layer's palette. **S** opens the preset modal (R rename, N new preset).
 - **Colors and palettes**: Palette-aware visualizers (Layered text layers) support **24-bit true color** (RGB) and 16 console colors. Palettes are stored as JSON files in a **palettes** directory (see below). Each layer has its own palette setting; pressing **P** affects only the active layer and saves to that layer's settings.
 - **Beat detection**: Optional beat detection and BPM estimate; sensitivity and beat circles are configurable and persist.
 - **Real-time display**: Updates every 50 ms.
-- **Toolbar**: Shows volume, mode, layer hints, palette, and H=Help. When the help line exceeds the terminal width, it scrolls slowly back and forth instead of truncating.
-- **Settings**: Stored in a local file (e.g. next to the executable). Per-visualizer options live under `VisualizerSettings`; each palette-aware visualizer has its own `PaletteId`. Device, visualization mode, per-visualizer palette, beat sensitivity, and oscilloscope gain are saved automatically when changed.
+- **Toolbar**: Shows volume, preset name, layer hints, palette, and H=Help. Both toolbar lines use scrolling text when they exceed the terminal width (per [ADR-0020](docs/adr/0020-ui-text-components-scrolling-and-ellipsis.md)); static text elsewhere truncates with ellipsis.
+- **Settings**: Stored in a local file (e.g. next to the executable). Per-visualizer options live under `VisualizerSettings`; each palette-aware visualizer has its own `PaletteId`. Device, per-visualizer palette, beat sensitivity, and oscilloscope gain are saved automatically when changed.
 
 ## Dependencies
 
@@ -104,20 +105,17 @@ Example with 24-bit colors:
 ## Settings structure (per-visualizer)
 
 - **Visualizer-specific options** live under `VisualizerSettings` in the settings file (e.g. `appsettings.json`):
-  - **Layered text**: `VisualizerSettings.TextLayers` — `PaletteId` fallback for layers; list of 9 layers (keys 1–9) with `LayerType`, `Enabled`, `ZOrder`, `TextSnippets`, `BeatReaction`, `SpeedMultiplier`, `ColorIndex`, `PaletteId` (per-layer palette; inherits from TextLayers.PaletteId when empty), and for AsciiImage: `ImageFolderPath`, `AsciiImageMovement`; for Oscilloscope: `Gain` (1.0–10.0); for LlamaStyle: `LlamaStyleShowVolumeBar`, `LlamaStyleShowRowLabels`, `LlamaStyleShowFrequencyLabels`, `LlamaStyleColorScheme`, `LlamaStylePeakMarkerStyle`, `LlamaStyleBarWidth`. Layer types: `None`, `ScrollingColors`, `Marquee`, `FallingLetters`, `MatrixRain`, `WaveText`, `StaticText`, `AsciiImage`, `GeissBackground`, `BeatCircles`, `Oscilloscope`, `UnknownPleasures`, `VuMeter`, `LlamaStyle`. Beat reactions: `None`, `SpeedBurst`, `Flash`, `SpawnMore`, `Pulse`, `ColorPop`. Layers are drawn in ascending `ZOrder` (lower = back). Press 1–9 to select a layer, ←/→ to change its type, Shift+1–9 to toggle enabled; [ ] adjust Oscilloscope layer gain; P cycles the active layer's palette; changes persist to appsettings.json.
+  - **Presets**: `VisualizerSettings.Presets` — list of Preset (Id, Name, Config); `ActivePresetId` — id of the active preset; `TextLayers` — live editing buffer (synced from active preset). Each Preset.Config = TextLayersVisualizerSettings: `PaletteId` fallback; list of 9 layers (keys 1–9) with `LayerType`, `Enabled`, `ZOrder`, `TextSnippets`, `BeatReaction`, `SpeedMultiplier`, `ColorIndex`, `PaletteId` (per-layer; inherits from Config.PaletteId when empty), and for AsciiImage: `ImageFolderPath`, `AsciiImageMovement`; for Oscilloscope: `Gain` (1.0–10.0); for LlamaStyle: `LlamaStyleShowVolumeBar`, etc. Layer types: `None`, `ScrollingColors`, `Marquee`, `FallingLetters`, `MatrixRain`, `WaveText`, `StaticText`, `AsciiImage`, `GeissBackground`, `BeatCircles`, `Oscilloscope`, `UnknownPleasures`, `VuMeter`, `LlamaStyle`. Press **V** to cycle presets; **S** to edit (R rename, N new preset); changes persist automatically.
 
 Example JSON:
 
 ```json
 "VisualizerSettings": {
-  "TextLayers": {
-    "PaletteId": "default",
-    "Layers": [
-      { "LayerType": "ScrollingColors", "ZOrder": 0, "BeatReaction": "ColorPop", "SpeedMultiplier": 1.0 },
-      { "LayerType": "Marquee", "ZOrder": 1, "TextSnippets": ["Layered text", "Audio visualizer"], "BeatReaction": "SpeedBurst", "SpeedMultiplier": 1.0 },
-      { "LayerType": "AsciiImage", "ZOrder": 2, "ImageFolderPath": "C:\\Pictures", "AsciiImageMovement": "Both", "BeatReaction": "SpeedBurst", "SpeedMultiplier": 1.0 }
-    ]
-  }
+  "Presets": [
+    { "Id": "abc123", "Name": "Preset 1", "Config": { "PaletteId": "default", "Layers": [...] } }
+  ],
+  "ActivePresetId": "abc123",
+  "TextLayers": { "PaletteId": "default", "Layers": [...] }
 }
 ```
 
@@ -134,6 +132,6 @@ Legacy top-level `BeatCircles` (migrated into TextLayers BeatCircles layer enabl
 
 Visualizers implement **`IVisualizer`** and expose **technical name** (stable key for settings/CLI, e.g. `"geiss"`), **display name** (for toolbar and help), and **`SupportsPaletteCycling`** (whether the visualizer uses a per-visualizer palette when the user presses P). Optional **`GetToolbarSuffix(snapshot)`** can return mode-specific toolbar text (e.g. gain for waveform modes). Visualizers that need configuration receive their settings via constructor injection (see [ADR-0008](docs/adr/0008-visualizer-settings-di.md)). The composite renderer uses only this interface and the shared snapshot; it does not reference concrete visualizer types (see [ADR-0004](docs/adr/0004-visualizer-encapsulation.md)). **New visualizer content** should be created as `ITextLayerRenderer` layers in TextLayersVisualizer, not as standalone IVisualizer modes — see [ADR-0014](docs/adr/0014-visualizers-as-layers.md).
 
-Visualizers receive a **viewport** (`VisualizerViewport`: start row, max lines, width). They must not write more than `viewport.MaxLines` lines and no line longer than `viewport.Width`. The composite renderer validates dimensions and display start row before calling visualizers; if a visualizer throws, the exception message is shown in the viewport (one line, truncated to width) and the next frame can recover — see [ADR-0012](docs/adr/0012-visualizer-exception-handling.md). This keeps resizes and bad data from corrupting the console UI.
+Visualizers receive a **viewport** (`VisualizerViewport`: start row, max lines, width). They must not write more than `viewport.MaxLines` lines and no line longer than `viewport.Width`. The composite renderer validates dimensions and display start row before calling visualizers; if a visualizer throws, the exception message is shown in the viewport (one line, truncated with ellipsis) and the next frame can recover — see [ADR-0012](docs/adr/0012-visualizer-exception-handling.md). Text overflow: use `ScrollingTextViewport` for dynamic text, `TruncateWithEllipsis` for static text — see [ADR-0020](docs/adr/0020-ui-text-components-scrolling-and-ellipsis.md). This keeps resizes and bad data from corrupting the console UI.
 
 Per-visualizer specs (behavior, settings, viewport constraints) are in [docs/visualizers/](docs/visualizers/README.md). C# coding standards (including no empty try-catch, non-empty XML summaries, one file per class) are in `.cursor/rules/csharp-standards.mdc`, `.cursor/rules/no-empty-catch.mdc`, and [ADR-0016](docs/adr/0016-csharp-documentation-and-file-organization.md).

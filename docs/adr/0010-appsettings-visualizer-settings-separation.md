@@ -8,7 +8,7 @@ Per-visualizer settings types (e.g. `TextLayerSettings`, `GeissVisualizerSetting
 
 ## Decision
 
-1. **Separate AppSettings from VisualizerSettings**: `AppSettings` (Domain) contains only app-level configuration: `InputMode`, `DeviceName`, `VisualizationMode`, `BeatSensitivity`, `SelectedPaletteId`, and deprecated `BeatCircles`/`OscilloscopeGain` for backward compatibility. It does **not** reference `VisualizerSettings`.
+1. **Separate AppSettings from VisualizerSettings**: `AppSettings` (Domain) contains only app-level configuration: `InputMode`, `DeviceName`, `BeatSensitivity`, `SelectedPaletteId`, and deprecated `BeatCircles`/`OscilloscopeGain` for backward compatibility. It does **not** reference `VisualizerSettings`. (*VisualizationMode* was removed from AppSettings; the app uses a single TextLayers visualizer only—see [ADR-0014](0014-visualizers-as-layers.md), [ADR-0019](0019-preset-textlayers-configuration.md).)
 
 2. **VisualizerSettings and per-visualizer types in Visualizers**: `VisualizerSettings`, `TextLayerSettings`, `TextLayersVisualizerSettings`, `GeissVisualizerSettings`, `OscilloscopeVisualizerSettings`, `UnknownPleasuresVisualizerSettings`, `TextLayerType`, and `TextLayerBeatReaction` live in the Visualizers project. Each per-visualizer settings type resides in its visualizer subfolder (e.g. `TextLayers/`, `Geiss/`).
 

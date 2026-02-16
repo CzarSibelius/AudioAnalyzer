@@ -16,11 +16,6 @@ public class AppSettings
     public string? DeviceName { get; set; }
 
     /// <summary>
-    /// Visualization mode: "spectrum", "vumeter", "winamp", "unknownpleasures", or "textlayers".
-    /// </summary>
-    public string VisualizationMode { get; set; } = "spectrum";
-
-    /// <summary>
     /// Beat detection sensitivity (0.5 = very sensitive, 2.0 = less sensitive). Default is 1.3.
     /// </summary>
     public double BeatSensitivity { get; set; } = 1.3;

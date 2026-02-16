@@ -13,11 +13,19 @@ Composites multiple independent layers (e.g. ScrollingColors, Marquee, FallingLe
 - `SmoothedMagnitudes`, `TargetMaxMagnitude` — used by GeissBackground, BeatCircles, and UnknownPleasures for bass/treble intensity, plasma modulation, and pulse lines
 - `Waveform`, `WaveformPosition`, `WaveformSize` — used by Oscilloscope layer for time-domain waveform
 
+## Presets
+
+A **Preset** is a named TextLayers configuration (9 layers + PaletteId). Users can maintain multiple presets and switch with **V**. The active preset's config is the live editing buffer (`TextLayers`). See [ADR-0019](../adr/0019-preset-textlayers-configuration.md).
+
+- **V** — Cycle to next preset (toolbar shows "Preset: {name} (V)")
+- Settings modal title shows current preset; **R** to rename, **N** to create new preset (duplicate of current)
+
 ## Settings
 
-- **Schema**: `VisualizerSettings.TextLayers`
-- **PaletteId** (string, optional): Default palette id for layers that do not have their own. Fallback when a layer's `PaletteId` is null/empty.
-- **Layers** (array): Each layer has:
+- **Schema**: `VisualizerSettings.Presets` (list of Preset), `VisualizerSettings.ActivePresetId`, `VisualizerSettings.TextLayers` (live buffer)
+- **Preset**: `Id`, `Name`, `Config` (TextLayersVisualizerSettings)
+- **TextLayers.PaletteId** (string, optional): Default palette id for layers that do not have their own. Fallback when a layer's `PaletteId` is null/empty.
+- **TextLayers.Layers** (array): Each layer has:
   - `LayerType`: None, ScrollingColors, Marquee, FallingLetters, MatrixRain, WaveText, StaticText, AsciiImage, GeissBackground, BeatCircles, Oscilloscope, UnknownPleasures, VuMeter, LlamaStyle
   - `Enabled`: bool (default true; when false, layer is not rendered)
   - `ZOrder`: int (lower = back)
@@ -33,8 +41,9 @@ Composites multiple independent layers (e.g. ScrollingColors, Marquee, FallingLe
 
 ## Key bindings
 
+- **V** — Cycle to next preset (toolbar shows active preset name).
 - **P** — Cycle the color palette of the **active layer** (the layer last selected with 1–9). Saved to that layer's settings.
-- **S** — Open settings modal (two-column: layer list on left, selected layer settings on right; 1–9 select, ↑/↓ select, ←/→ change type, Shift+1–9 toggle enabled, ESC close). The modal replaces the header/toolbar region while keeping the visualizer visible below.
+- **S** — Open preset settings modal (title shows preset name; two-column: layer list on left, selected layer settings on right; 1–9 select, ↑/↓ select, ←/→ change type, Shift+1–9 toggle enabled, R rename preset, N new preset, ESC close). The modal replaces the header/toolbar region while keeping the visualizer visible below.
 - **1–9** — Select the corresponding layer as active (no type change). Key 1 = layer 1 (back), key 9 = layer 9 (front). Number keys and numpad keys work.
 - **←/→** (Left/Right arrow) — Cycle the active layer's type forward or backward (includes None). Changes persist to appsettings.json.
 - **Shift+1–9** — Toggle the corresponding layer enabled/disabled. Disabled layers are not rendered. Changes persist to appsettings.json.
