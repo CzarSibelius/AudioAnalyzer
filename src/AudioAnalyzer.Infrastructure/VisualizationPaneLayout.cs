@@ -6,39 +6,29 @@ namespace AudioAnalyzer.Infrastructure;
 
 public sealed class VisualizationPaneLayout : IVisualizationRenderer
 {
-    private static readonly Dictionary<string, VisualizationMode> s_technicalNameToMode = new(StringComparer.OrdinalIgnoreCase)
-    {
-        ["textlayers"] = VisualizationMode.TextLayers,
-    };
+    private readonly IVisualizer? _visualizer;
+    private readonly VisualizerSettings? _visualizerSettings;
+    private (IReadOnlyList<PaletteColor>? Palette, string? DisplayName) _palette;
 
-    private readonly IDisplayDimensions _displayDimensions;
-    private readonly Dictionary<VisualizationMode, IVisualizer> _visualizers;
-    private readonly Dictionary<VisualizationMode, (IReadOnlyList<PaletteColor>? Palette, string? DisplayName)> _palettes = new();
-
-    public VisualizationPaneLayout(IDisplayDimensions displayDimensions, IEnumerable<IVisualizer> visualizers)
+    public VisualizationPaneLayout(IDisplayDimensions displayDimensions, IEnumerable<IVisualizer> visualizers, VisualizerSettings? visualizerSettings = null)
     {
-        _displayDimensions = displayDimensions;
-        _visualizers = new Dictionary<VisualizationMode, IVisualizer>();
-        foreach (var v in visualizers)
-        {
-            if (s_technicalNameToMode.TryGetValue(v.TechnicalName, out var mode))
-            {
-                _visualizers[mode] = v;
-            }
-        }
+        _visualizerSettings = visualizerSettings;
+        _visualizer = visualizers.FirstOrDefault(v => string.Equals(v.TechnicalName, "textlayers", StringComparison.OrdinalIgnoreCase));
     }
 
-    public void SetPaletteForMode(VisualizationMode mode, IReadOnlyList<PaletteColor>? palette, string? paletteDisplayName = null)
+    public void SetPalette(IReadOnlyList<PaletteColor>? palette, string? paletteDisplayName = null)
     {
-        _palettes[mode] = (palette, paletteDisplayName);
+        _palette = (palette, paletteDisplayName);
     }
 
     private const int ToolbarLineCount = 2;
-    private VisualizationMode? _lastRenderedMode;
+    private bool _hasRendered;
+    private ScrollingTextViewportState _toolbarLine1ScrollState;
+    private string? _toolbarLine1LastText;
     private ScrollingTextViewportState _toolbarLine2ScrollState;
     private string? _toolbarLine2LastText;
 
-    public void Render(AnalysisSnapshot snapshot, VisualizationMode mode)
+    public void Render(AnalysisSnapshot snapshot)
     {
         try
         {
@@ -64,7 +54,7 @@ public sealed class VisualizationPaneLayout : IVisualizationRenderer
                 }
 
                 var toolbarViewport = new VisualizerViewport(snapshot.DisplayStartRow, ToolbarLineCount, termWidth);
-                RenderToolbar(snapshot, toolbarViewport, mode, termWidth);
+                RenderToolbar(snapshot, toolbarViewport, termWidth);
 
                 visualizerStartRow = snapshot.DisplayStartRow + ToolbarLineCount;
                 maxLines = Math.Max(1, snapshot.TerminalHeight - visualizerStartRow - 1);
@@ -72,26 +62,24 @@ public sealed class VisualizationPaneLayout : IVisualizationRenderer
 
             var viewport = new VisualizerViewport(visualizerStartRow, maxLines, termWidth);
 
-            // Clear visualizer area only when mode changed, so we remove leftover content without flickering every frame
-            if (_lastRenderedMode != mode)
+            if (!_hasRendered)
             {
                 ClearRegion(visualizerStartRow, maxLines, termWidth);
-                _lastRenderedMode = mode;
+                _hasRendered = true;
             }
 
-            if (_visualizers.TryGetValue(mode, out var visualizer) && visualizer.SupportsPaletteCycling
-                && mode != VisualizationMode.TextLayers)
+            if (_visualizer is { SupportsPaletteCycling: true })
             {
-                var (palette, displayName) = _palettes.TryGetValue(mode, out var entry) ? entry : (default(IReadOnlyList<PaletteColor>?), null);
+                var (palette, displayName) = _palette;
                 snapshot.Palette = palette ?? ColorPaletteParser.DefaultPalette;
                 snapshot.CurrentPaletteName = displayName;
             }
 
-            if (_visualizers.TryGetValue(mode, out visualizer))
+            if (_visualizer != null)
             {
                 try
                 {
-                    visualizer.Render(snapshot, viewport);
+                    _visualizer.Render(snapshot, viewport);
                 }
                 catch (Exception ex)
                 {
@@ -99,45 +87,33 @@ public sealed class VisualizationPaneLayout : IVisualizationRenderer
                         ? ex.Message
                         : "Visualization error";
                     Console.SetCursorPosition(0, visualizerStartRow);
-                    Console.WriteLine(VisualizerViewport.TruncateToWidth(message, viewport.Width));
+                    Console.WriteLine(VisualizerViewport.TruncateWithEllipsis(message, viewport.Width));
                 }
             }
         }
         catch (Exception ex) { _ = ex; /* Last-resort render failure: swallow to avoid crash */ }
     }
 
-    public string GetDisplayName(VisualizationMode mode) =>
-        _visualizers.TryGetValue(mode, out var v) ? v.DisplayName : "Unknown";
-
-    public string GetTechnicalName(VisualizationMode mode) =>
-        _visualizers.TryGetValue(mode, out var v) ? v.TechnicalName : "unknown";
-
-    public bool SupportsPaletteCycling(VisualizationMode mode) =>
-        _visualizers.TryGetValue(mode, out var v) && v.SupportsPaletteCycling;
-
-    public VisualizationMode? GetModeFromTechnicalName(string key)
+    private string GetActivePresetName()
     {
-        if (string.IsNullOrWhiteSpace(key))
+        if (_visualizerSettings?.Presets is not { Count: > 0 })
         {
-            return null;
+            return "Preset 1";
         }
-
-        key = key.Trim();
-        foreach (var (mode, visualizer) in _visualizers)
-        {
-            if (string.Equals(visualizer.TechnicalName, key, StringComparison.OrdinalIgnoreCase))
-            {
-                return mode;
-            }
-        }
-        return null;
+        var active = _visualizerSettings.Presets.FirstOrDefault(p =>
+            string.Equals(p.Id, _visualizerSettings.ActivePresetId, StringComparison.OrdinalIgnoreCase))
+            ?? _visualizerSettings.Presets[0];
+        return string.IsNullOrWhiteSpace(active.Name) ? "Preset 1" : active.Name.Trim();
     }
 
-    public bool HandleKey(ConsoleKeyInfo key, VisualizationMode mode)
+    public bool SupportsPaletteCycling() =>
+        _visualizer is { SupportsPaletteCycling: true };
+
+    public bool HandleKey(ConsoleKeyInfo key)
     {
-        if (_visualizers.TryGetValue(mode, out var visualizer))
+        if (_visualizer != null)
         {
-            return visualizer.HandleKey(key);
+            return _visualizer.HandleKey(key);
         }
         return false;
     }
@@ -161,7 +137,7 @@ public sealed class VisualizationPaneLayout : IVisualizationRenderer
         catch (Exception ex) { _ = ex; /* Console write failed in ClearRegion */ }
     }
 
-    private void RenderToolbar(AnalysisSnapshot snapshot, VisualizerViewport toolbarViewport, VisualizationMode mode, int w)
+    private void RenderToolbar(AnalysisSnapshot snapshot, VisualizerViewport toolbarViewport, int w)
     {
         int row0 = toolbarViewport.StartRow;
 
@@ -169,13 +145,19 @@ public sealed class VisualizationPaneLayout : IVisualizationRenderer
         string bpmDisplay = snapshot.CurrentBpm > 0 ? $" | BPM: {snapshot.CurrentBpm:F0}" : "";
         string sensitivityDisplay = $" | Beat: {snapshot.BeatSensitivity:F1} (+/-)";
         string beatIndicator = snapshot.BeatFlashActive ? " *BEAT*" : "";
-        string line1 = VisualizerViewport.TruncateToWidth(
-            $"Volume: {snapshot.Volume * 100:F1}% ({db:F1} dB){bpmDisplay}{sensitivityDisplay}{beatIndicator}",
-            w).PadRight(w);
+        string line1Full = $"Volume: {snapshot.Volume * 100:F1}% ({db:F1} dB){bpmDisplay}{sensitivityDisplay}{beatIndicator}";
+        if (line1Full != _toolbarLine1LastText)
+        {
+            _toolbarLine1ScrollState.Reset();
+            _toolbarLine1LastText = line1Full;
+        }
+        string line1 = line1Full.Length > w
+            ? ScrollingTextViewport.Render(line1Full, w, ref _toolbarLine1ScrollState, 0.25)
+            : line1Full.PadRight(w);
         string line2;
         if (toolbarViewport.MaxLines >= 2)
         {
-            string line2Full = GetToolbarLine2(mode, snapshot, w);
+            string line2Full = GetToolbarLine2(snapshot, w);
             int visibleLen = AnsiConsole.GetVisibleLength(line2Full);
             if (line2Full != _toolbarLine2LastText)
             {
@@ -224,20 +206,21 @@ public sealed class VisualizationPaneLayout : IVisualizationRenderer
         }
     }
 
-    private string GetToolbarLine2(VisualizationMode mode, AnalysisSnapshot snapshot, int w)
+    private string GetToolbarLine2(AnalysisSnapshot snapshot, int w)
     {
-        string displayName = GetDisplayName(mode);
-        string baseLine = $"Mode: {displayName} (V)";
-        if (_visualizers.TryGetValue(mode, out var visualizer))
+        string baseLine = _visualizerSettings?.Presets is { Count: > 0 }
+            ? $"Preset: {GetActivePresetName()} (V)"
+            : $"Mode: {_visualizer?.DisplayName ?? "Layered text"} (V)";
+        if (_visualizer != null)
         {
-            var suffix = visualizer.GetToolbarSuffix(snapshot);
+            var suffix = _visualizer.GetToolbarSuffix(snapshot);
             if (!string.IsNullOrEmpty(suffix))
             {
                 baseLine += $" | {suffix}";
             }
         }
 
-        if (SupportsPaletteCycling(mode) && !string.IsNullOrEmpty(snapshot.CurrentPaletteName))
+        if (SupportsPaletteCycling() && !string.IsNullOrEmpty(snapshot.CurrentPaletteName))
         {
             baseLine += $" | Palette: {snapshot.CurrentPaletteName} (P)";
         }

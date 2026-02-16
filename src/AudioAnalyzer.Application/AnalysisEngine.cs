@@ -1,6 +1,5 @@
 using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Application.Fft;
-using AudioAnalyzer.Domain;
 
 namespace AudioAnalyzer.Application;
 
@@ -35,7 +34,6 @@ public sealed class AnalysisEngine
     private Action? _onRefreshHeader;
     private Func<bool>? _renderGuard;
 
-    private VisualizationMode _currentMode = VisualizationMode.TextLayers;
     private int _numBands;
     private double[] _bandMagnitudes = Array.Empty<double>();
     private double[] _smoothedMagnitudes = Array.Empty<double>();
@@ -76,7 +74,6 @@ public sealed class AnalysisEngine
         UpdateDisplayDimensions();
     }
 
-    public VisualizationMode CurrentMode => _currentMode;
     public double BeatSensitivity { get => _beatThreshold; set => _beatThreshold = Math.Clamp(value, 0.5, 3.0); }
 
     /// <summary>When true, the visualizer uses the full console; header and toolbar are hidden.</summary>
@@ -174,7 +171,7 @@ public sealed class AnalysisEngine
             {
                 _onRefreshHeader?.Invoke();
             }
-            try { _renderer.Render(_snapshot, _currentMode); } catch (Exception ex) { _ = ex; /* Render failed: swallow to avoid crash */ }
+            try { _renderer.Render(_snapshot); } catch (Exception ex) { _ = ex; /* Render failed: swallow to avoid crash */ }
         }
 
         if (_consoleLock != null)
@@ -194,16 +191,6 @@ public sealed class AnalysisEngine
                 DoRender();
             }
         }
-    }
-
-    public void NextVisualizationMode()
-    {
-        _currentMode = (VisualizationMode)(((int)_currentMode + 1) % Enum.GetValues<VisualizationMode>().Length);
-    }
-
-    public void SetVisualizationMode(VisualizationMode mode)
-    {
-        _currentMode = mode;
     }
 
     public void ProcessAudio(byte[] buffer, int bytesRecorded, AudioFormat format)
@@ -308,7 +295,7 @@ public sealed class AnalysisEngine
                         _onRefreshHeader?.Invoke();
                     }
                     FillSnapshot(maxVolume, w, h);
-                    try { _renderer.Render(_snapshot, _currentMode); } catch (Exception ex) { _ = ex; /* Render failed: swallow to avoid crash */ }
+                    try { _renderer.Render(_snapshot); } catch (Exception ex) { _ = ex; /* Render failed: swallow to avoid crash */ }
                 }
 
                 if (_consoleLock != null)

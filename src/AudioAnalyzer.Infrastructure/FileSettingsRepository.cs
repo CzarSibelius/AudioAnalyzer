@@ -38,9 +38,23 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
 
     public void SaveVisualizerSettings(VisualizerSettings settings)
     {
+        SyncActivePresetFromTextLayers(settings);
         var file = LoadFile();
         file.VisualizerSettings = settings;
         SaveFile(file);
+    }
+
+    /// <summary>Copies the live TextLayers buffer into the active preset's Config so persisted Presets reflect current edits.</summary>
+    private static void SyncActivePresetFromTextLayers(VisualizerSettings vs)
+    {
+        if (vs.TextLayers is null || vs.Presets is not { Count: > 0 })
+        {
+            return;
+        }
+
+        var active = vs.Presets.FirstOrDefault(p => string.Equals(p.Id, vs.ActivePresetId, StringComparison.OrdinalIgnoreCase))
+            ?? vs.Presets[0];
+        active.Config.CopyFrom(vs.TextLayers);
     }
 
     private SettingsFile LoadFile()
@@ -70,20 +84,10 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
 
     private static AppSettings MapToAppSettings(SettingsFile file)
     {
-        var mode = file.VisualizationMode ?? "textlayers";
-        if (string.Equals(mode, "oscilloscope", StringComparison.OrdinalIgnoreCase) ||
-            string.Equals(mode, "unknownpleasures", StringComparison.OrdinalIgnoreCase) ||
-            string.Equals(mode, "spectrum", StringComparison.OrdinalIgnoreCase) ||
-            string.Equals(mode, "vumeter", StringComparison.OrdinalIgnoreCase) ||
-            string.Equals(mode, "winamp", StringComparison.OrdinalIgnoreCase))
-        {
-            mode = "textlayers";
-        }
         return new AppSettings
         {
             InputMode = file.InputMode ?? "loopback",
             DeviceName = file.DeviceName,
-            VisualizationMode = mode,
             BeatSensitivity = file.BeatSensitivity,
             BeatCircles = file.BeatCircles,
             OscilloscopeGain = file.OscilloscopeGain,
@@ -95,14 +99,14 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
     {
         file.InputMode = settings.InputMode;
         file.DeviceName = settings.DeviceName;
-        file.VisualizationMode = settings.VisualizationMode;
+        file.VisualizationMode = "textlayers";
         file.BeatSensitivity = settings.BeatSensitivity;
         file.BeatCircles = settings.BeatCircles;
         file.OscilloscopeGain = settings.OscilloscopeGain;
         file.SelectedPaletteId = settings.SelectedPaletteId;
     }
 
-    /// <summary>Merges legacy top-level BeatCircles/OscilloscopeGain into VisualizerSettings for backward compatibility. Migrates SelectedPaletteId to per-visualizer PaletteId.</summary>
+    /// <summary>Merges legacy top-level BeatCircles/OscilloscopeGain into VisualizerSettings for backward compatibility. Migrates SelectedPaletteId to per-visualizer PaletteId. Migrates TextLayers to Presets when Presets is empty.</summary>
     private static void MergeLegacyVisualizerSettings(SettingsFile file)
     {
         file.VisualizerSettings ??= new VisualizerSettings();
@@ -122,6 +126,7 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
 
         MigrateUnknownPleasuresToLayer(file);
         MigrateSpectrumVuMeterWinampToLayers(file);
+        MigrateToPresets(file);
 
         var globalPaletteId = file.SelectedPaletteId;
         if (!string.IsNullOrWhiteSpace(globalPaletteId) && file.VisualizerSettings.TextLayers is not null)
@@ -131,6 +136,46 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
                 file.VisualizerSettings.TextLayers.PaletteId = globalPaletteId;
             }
         }
+
+        SyncTextLayersFromActivePreset(file.VisualizerSettings);
+    }
+
+    /// <summary>If Presets is empty, creates one preset from current TextLayers ("Preset 1") and sets it as active.</summary>
+    private static void MigrateToPresets(SettingsFile file)
+    {
+        var vs = file.VisualizerSettings;
+        if (vs is null)
+        {
+            return;
+        }
+
+        if (vs.Presets is not { Count: > 0 })
+        {
+            vs.Presets = new List<Preset>();
+            var preset = new Preset
+            {
+                Id = Guid.NewGuid().ToString("N"),
+                Name = "Preset 1",
+                Config = (vs.TextLayers ?? CreateDefaultTextLayersSettings()).DeepCopy()
+            };
+            vs.Presets.Add(preset);
+            vs.ActivePresetId = preset.Id;
+        }
+    }
+
+    /// <summary>Ensures TextLayers is populated from the active preset. When loading, the live buffer gets the preset's saved config.</summary>
+    private static void SyncTextLayersFromActivePreset(VisualizerSettings vs)
+    {
+        if (vs.Presets is not { Count: > 0 })
+        {
+            return;
+        }
+
+        var active = vs.Presets.FirstOrDefault(p => string.Equals(p.Id, vs.ActivePresetId, StringComparison.OrdinalIgnoreCase))
+            ?? vs.Presets[0];
+        vs.ActivePresetId = active.Id;
+        vs.TextLayers ??= new TextLayersVisualizerSettings();
+        vs.TextLayers.CopyFrom(active.Config);
     }
 
     /// <summary>Migrates users from standalone Unknown Pleasures mode to TextLayers with an UnknownPleasures layer.</summary>
@@ -233,9 +278,18 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
 
     private static VisualizerSettings CreateDefaultVisualizerSettings()
     {
+        var defaultConfig = CreateDefaultTextLayersSettings();
+        var preset = new Preset
+        {
+            Id = Guid.NewGuid().ToString("N"),
+            Name = "Preset 1",
+            Config = defaultConfig.DeepCopy()
+        };
         var s = new VisualizerSettings
         {
-            TextLayers = CreateDefaultTextLayersSettings()
+            Presets = new List<Preset> { preset },
+            ActivePresetId = preset.Id,
+            TextLayers = defaultConfig
         };
         return s;
     }

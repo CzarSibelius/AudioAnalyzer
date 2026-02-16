@@ -32,4 +32,28 @@ public readonly struct VisualizerViewport
 
         return line[..maxWidth];
     }
+
+    /// <summary>
+    /// Truncates a line to at most maxWidth characters and appends "…" when the text exceeds the width.
+    /// Use for static text (titles, labels) where ellipsis indicates truncation. Per ADR-0020.
+    /// </summary>
+    public static string TruncateWithEllipsis(string line, int maxWidth)
+    {
+        if (string.IsNullOrEmpty(line) || maxWidth <= 0)
+        {
+            return "";
+        }
+
+        if (line.Length <= maxWidth)
+        {
+            return line;
+        }
+
+        if (maxWidth <= 1)
+        {
+            return "…";
+        }
+
+        return line[..(maxWidth - 1)] + "…";
+    }
 }

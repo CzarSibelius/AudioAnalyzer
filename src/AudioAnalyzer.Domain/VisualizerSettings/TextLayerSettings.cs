@@ -69,4 +69,29 @@ public class TextLayerSettings
         int idx = Array.IndexOf(types, layer.LayerType);
         return types[(idx - 1 + types.Length) % types.Length];
     }
+
+    /// <summary>Creates a deep copy of this layer settings instance.</summary>
+    public TextLayerSettings DeepCopy()
+    {
+        return new TextLayerSettings
+        {
+            LayerType = LayerType,
+            Enabled = Enabled,
+            ZOrder = ZOrder,
+            TextSnippets = new List<string>(TextSnippets),
+            BeatReaction = BeatReaction,
+            SpeedMultiplier = SpeedMultiplier,
+            ColorIndex = ColorIndex,
+            PaletteId = PaletteId,
+            ImageFolderPath = ImageFolderPath,
+            AsciiImageMovement = AsciiImageMovement,
+            Gain = Gain,
+            LlamaStyleShowVolumeBar = LlamaStyleShowVolumeBar,
+            LlamaStyleShowRowLabels = LlamaStyleShowRowLabels,
+            LlamaStyleShowFrequencyLabels = LlamaStyleShowFrequencyLabels,
+            LlamaStyleColorScheme = LlamaStyleColorScheme,
+            LlamaStylePeakMarkerStyle = LlamaStylePeakMarkerStyle,
+            LlamaStyleBarWidth = LlamaStyleBarWidth
+        };
+    }
 }

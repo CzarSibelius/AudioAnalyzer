@@ -23,10 +23,6 @@ var deviceInfo = provider.GetRequiredService<IAudioDeviceInfo>();
 var engine = provider.GetRequiredService<AnalysisEngine>();
 var renderer = provider.GetRequiredService<IVisualizationRenderer>();
 
-VisualizationMode ParseMode(string? mode) =>
-    renderer.GetModeFromTechnicalName(mode ?? "") ?? VisualizationMode.TextLayers;
-
-engine.SetVisualizationMode(ParseMode(settings.VisualizationMode));
 engine.BeatSensitivity = settings.BeatSensitivity;
 
 var devices = deviceInfo.GetDevices();
@@ -89,7 +85,6 @@ engine.Redraw();
 
 void SaveSettingsToRepository()
 {
-    settings.VisualizationMode = renderer.GetTechnicalName(engine.CurrentMode);
     settings.BeatSensitivity = engine.BeatSensitivity;
     settings.BeatCircles = visualizerSettings.TextLayers?.Layers?.FirstOrDefault(l => l.LayerType == TextLayerType.BeatCircles)?.Enabled ?? true;
     settings.OscilloscopeGain = visualizerSettings.TextLayers?.Layers?.FirstOrDefault(l => l.LayerType == TextLayerType.Oscilloscope)?.Gain ?? 2.5;
@@ -104,12 +99,9 @@ while (running)
     if (Console.KeyAvailable)
     {
         var key = Console.ReadKey(true);
-        if (renderer.HandleKey(key, engine.CurrentMode))
+        if (renderer.HandleKey(key))
         {
-            if (engine.CurrentMode == VisualizationMode.TextLayers)
-            {
-                SaveSettingsToRepository();
-            }
+            SaveSettingsToRepository();
             engine.Redraw();
         }
         else
@@ -161,7 +153,7 @@ while (running)
                     });
                     break;
                 case ConsoleKey.V:
-                    engine.NextVisualizationMode();
+                    CycleToNextPreset();
                     SaveSettingsToRepository();
                     if (!engine.FullScreen)
                     {
@@ -197,17 +189,14 @@ while (running)
                     }
                     break;
                 case ConsoleKey.S:
-                    if (engine.CurrentMode == VisualizationMode.TextLayers)
+                    ShowTextLayersSettingsModal(engine, visualizerSettings, consoleLock, SaveSettingsToRepository);
+                    lock (consoleLock)
                     {
-                        ShowTextLayersSettingsModal(engine, visualizerSettings, consoleLock, SaveSettingsToRepository);
-                        lock (consoleLock)
+                        if (!engine.FullScreen)
                         {
-                            if (!engine.FullScreen)
-                            {
-                                DrawMainUI(currentDeviceName);
-                            }
-                            engine.Redraw();
+                            DrawMainUI(currentDeviceName);
                         }
+                        engine.Redraw();
                     }
                     break;
             }
@@ -216,9 +205,33 @@ while (running)
     Thread.Sleep(50);
 }
 
+void CycleToNextPreset()
+{
+    if (visualizerSettings.Presets is not { Count: > 0 })
+    {
+        return;
+    }
+
+    int currentIndex = 0;
+    for (int i = 0; i < visualizerSettings.Presets.Count; i++)
+    {
+        if (string.Equals(visualizerSettings.Presets[i].Id, visualizerSettings.ActivePresetId, StringComparison.OrdinalIgnoreCase))
+        {
+            currentIndex = i;
+            break;
+        }
+    }
+
+    int nextIndex = (currentIndex + 1) % visualizerSettings.Presets.Count;
+    var nextPreset = visualizerSettings.Presets[nextIndex];
+    visualizerSettings.ActivePresetId = nextPreset.Id;
+    visualizerSettings.TextLayers ??= new TextLayersVisualizerSettings();
+    visualizerSettings.TextLayers.CopyFrom(nextPreset.Config);
+}
+
 void CyclePalette()
 {
-    if (!renderer.SupportsPaletteCycling(engine.CurrentMode))
+    if (!renderer.SupportsPaletteCycling())
     {
         return;
     }
@@ -229,18 +242,8 @@ void CyclePalette()
         return;
     }
 
-    string? currentId = null;
-    switch (engine.CurrentMode)
-    {
-        case VisualizationMode.TextLayers:
-            visualizerSettings.TextLayers ??= new TextLayersVisualizerSettings();
-            currentId = visualizerSettings.TextLayers.PaletteId;
-            break;
-        default:
-            return;
-    }
-
-    currentId ??= "";
+    visualizerSettings.TextLayers ??= new TextLayersVisualizerSettings();
+    string? currentId = visualizerSettings.TextLayers.PaletteId ?? "";
     int index = 0;
     for (int i = 0; i < all.Count; i++)
     {
@@ -252,18 +255,13 @@ void CyclePalette()
     }
     var next = all[index];
 
-    switch (engine.CurrentMode)
-    {
-        case VisualizationMode.TextLayers:
-            visualizerSettings.TextLayers!.PaletteId = next.Id;
-            break;
-    }
+    visualizerSettings.TextLayers.PaletteId = next.Id;
 
     var def = paletteRepo.GetById(next.Id);
     if (def != null && ColorPaletteParser.Parse(def) is { } palette && palette.Count > 0)
     {
         var displayName = def.Name?.Trim();
-        renderer.SetPaletteForMode(engine.CurrentMode, palette, string.IsNullOrEmpty(displayName) ? next.Id : displayName);
+        renderer.SetPalette(palette, string.IsNullOrEmpty(displayName) ? next.Id : displayName);
     }
     SaveSettingsToRepository();
     if (!engine.FullScreen)
@@ -311,13 +309,13 @@ void DrawHeaderOnly(string deviceName)
 {
     int width = Math.Max(10, GetConsoleWidth());
     string title = " AUDIO ANALYZER - Real-time Frequency Spectrum ";
-    title = VisualizerViewport.TruncateToWidth(title, width - 2);
+    title = VisualizerViewport.TruncateWithEllipsis(title, width - 2);
     int padding = Math.Max(0, (width - title.Length - 2) / 2);
     string line1 = VisualizerViewport.TruncateToWidth("╔" + new string('═', width - 2) + "╗", width).PadRight(width);
     string line2 = VisualizerViewport.TruncateToWidth("║" + new string(' ', padding) + title + new string(' ', width - padding - title.Length - 2) + "║", width).PadRight(width);
     string line3 = VisualizerViewport.TruncateToWidth("╚" + new string('═', width - 2) + "╝", width).PadRight(width);
-    string line4 = VisualizerViewport.TruncateToWidth($"Input: {deviceName}", width).PadRight(width);
-    string line5 = VisualizerViewport.TruncateToWidth("Press H for help, D device, F full screen, ESC quit", width).PadRight(width);
+    string line4 = VisualizerViewport.TruncateWithEllipsis($"Input: {deviceName}", width).PadRight(width);
+    string line5 = VisualizerViewport.TruncateWithEllipsis("Press H for help, D device, F full screen, ESC quit", width).PadRight(width);
     string line6 = new string(' ', width);
     try
     {
@@ -417,7 +415,7 @@ void DrawHelpContent()
     Console.ResetColor();
     Console.WriteLine("  ─────────────────────────────────────");
     Console.WriteLine("  H         Show this help menu");
-    Console.WriteLine("  V         Change visualization mode");
+    Console.WriteLine("  V         Cycle to next preset");
     Console.WriteLine("  P         Cycle color palette (palette-aware visualizers)");
     Console.WriteLine("  +/-       Adjust beat sensitivity");
     Console.WriteLine("  [ / ]     Adjust oscilloscope gain (Layered text, when Oscilloscope layer selected)");
@@ -427,13 +425,15 @@ void DrawHelpContent()
     Console.WriteLine("  F         Toggle full screen (visualizer only, no header/toolbar)");
     Console.WriteLine();
     Console.ForegroundColor = ConsoleColor.Cyan;
-    Console.WriteLine("  TEXTLAYERS SETTINGS MODAL (S when in Layered text)");
+    Console.WriteLine("  PRESET SETTINGS MODAL (S)");
     Console.ResetColor();
     Console.WriteLine("  ─────────────────────────────────────");
     Console.WriteLine("  1-9       Select layer");
     Console.WriteLine("  \u2190\u2192       Change layer type");
     Console.WriteLine("  Shift+1-9 Toggle layer enabled/disabled");
     Console.WriteLine("  \u2191\u2193       Select layer (alternate)");
+    Console.WriteLine("  R         Rename preset");
+    Console.WriteLine("  N         New preset (duplicate of current)");
     Console.WriteLine("  ESC       Close modal");
     Console.WriteLine();
     Console.ForegroundColor = ConsoleColor.Cyan;
@@ -445,24 +445,11 @@ void DrawHelpContent()
     Console.WriteLine("  ESC       Cancel and return");
     Console.WriteLine();
     Console.ForegroundColor = ConsoleColor.Cyan;
-    Console.WriteLine("  VISUALIZATION MODES (press V to cycle)");
+    Console.WriteLine("  PRESETS (press V to cycle)");
     Console.ResetColor();
     Console.WriteLine("  ─────────────────────────────────────");
-    string Desc(VisualizationMode m) => m switch
-    {
-        VisualizationMode.TextLayers => "Layered text (1-9 select, \u2190\u2192 type, Shift+1-9 toggle, I = next image, S = settings; VuMeter, LlamaStyle, Oscilloscope, etc. as layers)",
-        _ => ""
-    };
-    foreach (VisualizationMode mode in Enum.GetValues<VisualizationMode>())
-    {
-        string desc = Desc(mode);
-        if (renderer.SupportsPaletteCycling(mode))
-        {
-            desc += " (P = cycle palette)";
-        }
-
-        Console.WriteLine($"  {renderer.GetDisplayName(mode),-22} {desc}");
-    }
+    Console.WriteLine("  Each preset is a named TextLayers configuration (9 layers + palette).");
+    Console.WriteLine("  Edit layers with S; presets saved automatically.");
     Console.WriteLine();
     Console.ForegroundColor = ConsoleColor.DarkGray;
     Console.WriteLine("  Press any key to return...");
@@ -610,6 +597,8 @@ static void ShowTextLayersSettingsModal(AnalysisEngine analysisEngine, Visualize
     }
 
     int selectedIndex = 0;
+    bool renaming = false;
+    string renameBuffer = "";
     const int LeftColWidth = 28;
     int width = GetConsoleWidth();
     int rightColWidth = Math.Max(10, width - LeftColWidth - 2);
@@ -632,16 +621,24 @@ static void ShowTextLayersSettingsModal(AnalysisEngine analysisEngine, Visualize
 
         try
         {
-            string title = " TextLayers Settings ";
-            int pad = Math.Max(0, (width - title.Length - 2) / 2);
+            var activePreset = visualizerSettings.Presets?.FirstOrDefault(p =>
+                string.Equals(p.Id, visualizerSettings.ActivePresetId, StringComparison.OrdinalIgnoreCase))
+                ?? visualizerSettings.Presets?.FirstOrDefault();
+            string presetName = activePreset?.Name?.Trim() ?? "Preset 1";
+            string title = renaming
+                ? $" New preset name (Enter confirm, Esc cancel): {renameBuffer}_ "
+                : $" Preset: {presetName} (R rename) ";
+            string titleTruncated = VisualizerViewport.TruncateWithEllipsis(title, width - 2);
+            int pad = Math.Max(0, (width - titleTruncated.Length - 2) / 2);
             Console.SetCursorPosition(0, 0);
             Console.Write(VisualizerViewport.TruncateToWidth("╔" + new string('═', width - 2) + "╗", width).PadRight(width));
             Console.SetCursorPosition(0, 1);
-            Console.Write(VisualizerViewport.TruncateToWidth("║" + new string(' ', pad) + title + new string(' ', width - pad - title.Length - 2) + "║", width).PadRight(width));
+            Console.Write(VisualizerViewport.TruncateToWidth("║" + new string(' ', pad) + titleTruncated + new string(' ', width - pad - titleTruncated.Length - 2) + "║", width).PadRight(width));
             Console.SetCursorPosition(0, 2);
             Console.Write(VisualizerViewport.TruncateToWidth("╚" + new string('═', width - 2) + "╝", width).PadRight(width));
             Console.SetCursorPosition(0, 3);
-            Console.Write(VisualizerViewport.TruncateToWidth("  1-9 select, \u2190\u2192 type, Shift+1-9 toggle, ESC close", width).PadRight(width));
+            string hint = renaming ? "  Type new name, Enter to save, Esc to cancel" : "  1-9 select, \u2190\u2192 type, Shift+1-9 toggle, R rename, N new preset, ESC close";
+            Console.Write(VisualizerViewport.TruncateWithEllipsis(hint, width).PadRight(width));
             Console.SetCursorPosition(0, 4);
             Console.Write(VisualizerViewport.TruncateToWidth("  ─" + new string('─', LeftColWidth - 2) + "┬" + new string('─', rightColWidth) + "─", width).PadRight(width));
 
@@ -667,7 +664,7 @@ static void ShowTextLayersSettingsModal(AnalysisEngine analysisEngine, Visualize
                 string prefix = i == selectedIndex ? " ► " : "   ";
                 string enabledMark = layer.Enabled ? "●" : "○";
                 string leftLine = $"{prefix}{enabledMark} {i + 1}. {layer.LayerType}";
-                leftLine = VisualizerViewport.TruncateToWidth(leftLine, LeftColWidth).PadRight(LeftColWidth);
+                leftLine = VisualizerViewport.TruncateWithEllipsis(leftLine, LeftColWidth).PadRight(LeftColWidth);
 
                 Console.SetCursorPosition(0, row);
                 if (i == selectedIndex)
@@ -705,7 +702,7 @@ static void ShowTextLayersSettingsModal(AnalysisEngine analysisEngine, Visualize
                 for (int i = 0; i < rightLines.Count && (5 + i) < TextLayersSettingsOverlayRows; i++)
                 {
                     Console.SetCursorPosition(LeftColWidth + 3, 5 + i);
-                    string line = VisualizerViewport.TruncateToWidth(rightLines[i], rightColWidth);
+                    string line = VisualizerViewport.TruncateWithEllipsis(rightLines[i], rightColWidth);
                     Console.Write(line.PadRight(rightColWidth));
                 }
             }
@@ -767,8 +764,73 @@ static void ShowTextLayersSettingsModal(AnalysisEngine analysisEngine, Visualize
                 }
                 return false;
             case ConsoleKey.Escape:
+                if (renaming)
+                {
+                    renaming = false;
+                    return false;
+                }
                 return true;
+            case ConsoleKey.Enter:
+                if (renaming)
+                {
+                    var preset = visualizerSettings.Presets?.FirstOrDefault(p =>
+                        string.Equals(p.Id, visualizerSettings.ActivePresetId, StringComparison.OrdinalIgnoreCase))
+                        ?? visualizerSettings.Presets?.FirstOrDefault();
+                    if (preset != null && !string.IsNullOrWhiteSpace(renameBuffer))
+                    {
+                        preset.Name = renameBuffer.Trim();
+                        saveSettings();
+                    }
+                    renaming = false;
+                    return false;
+                }
+                return false;
+            case ConsoleKey.R:
+                if (!renaming && visualizerSettings.Presets is { Count: > 0 })
+                {
+                    var p = visualizerSettings.Presets.FirstOrDefault(x =>
+                        string.Equals(x.Id, visualizerSettings.ActivePresetId, StringComparison.OrdinalIgnoreCase))
+                        ?? visualizerSettings.Presets[0];
+                    renameBuffer = p.Name?.Trim() ?? "";
+                    renaming = true;
+                }
+                return false;
+            case ConsoleKey.Backspace:
+                if (renaming && renameBuffer.Length > 0)
+                {
+                    renameBuffer = renameBuffer[..^1];
+                }
+                return false;
+            case ConsoleKey.N:
+                if (!renaming && visualizerSettings.Presets is { Count: >= 0 })
+                {
+                    var newPreset = new Preset
+                    {
+                        Id = Guid.NewGuid().ToString("N"),
+                        Name = $"Preset {visualizerSettings.Presets.Count + 1}",
+                        Config = textLayers.DeepCopy()
+                    };
+                    visualizerSettings.Presets.Add(newPreset);
+                    visualizerSettings.ActivePresetId = newPreset.Id;
+                    visualizerSettings.TextLayers ??= new TextLayersVisualizerSettings();
+                    visualizerSettings.TextLayers.CopyFrom(newPreset.Config);
+                    textLayers = visualizerSettings.TextLayers;
+                    sortedLayers = textLayers.Layers.OrderBy(l => l.ZOrder).ToList();
+                    saveSettings();
+                }
+                return false;
             default:
+                if (renaming)
+                {
+                    if (key.KeyChar is >= ' ' and <= '~' or (char)0)
+                    {
+                        if (key.KeyChar >= ' ')
+                        {
+                            renameBuffer += key.KeyChar;
+                        }
+                    }
+                    return false;
+                }
                 int digit = DigitFromKey(key.Key);
                 if (digit == 0)
                 {

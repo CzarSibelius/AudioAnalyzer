@@ -34,6 +34,8 @@ Decisions are numbered and kept under version control so the rationale stays wit
 | [0016](0016-csharp-documentation-and-file-organization.md) | C# documentation and file organization | Accepted |
 | [0017](0017-demo-mode-synthetic-audio.md) | Demo mode — synthetic audio input | Accepted |
 | [0018](0018-shutdown-lock-ordering.md) | Shutdown and device-switch lock ordering | Accepted |
+| [0019](0019-preset-textlayers-configuration.md) | Preset — named TextLayers configuration | Accepted |
+| [0020](0020-ui-text-components-scrolling-and-ellipsis.md) | UI text components — scrolling for dynamic, ellipsis for static | Accepted |
 
 ## Process
 
