@@ -70,9 +70,7 @@ public sealed class VisualizationPaneLayout : IVisualizationRenderer
 
             if (_visualizer is { SupportsPaletteCycling: true })
             {
-                var (palette, displayName) = _palette;
-                snapshot.Palette = palette ?? ColorPaletteParser.DefaultPalette;
-                snapshot.CurrentPaletteName = displayName;
+                snapshot.CurrentPaletteName = _palette.DisplayName;
             }
 
             if (_visualizer != null)

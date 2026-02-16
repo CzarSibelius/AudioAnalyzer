@@ -1,9 +1,7 @@
-using AudioAnalyzer.Domain;
-
 namespace AudioAnalyzer.Application.Abstractions;
 
 /// <summary>
-/// Mode-agnostic analysis data produced by the engine. Contains only analysis-derived data and layout (dimensions).
+/// Frame context for rendering. Contains analysis data (filled by the engine) and optional display data (filled by the renderer).
 /// Consumed by IVisualizationRenderer and IVisualizer implementations.
 /// </summary>
 public sealed class AnalysisSnapshot
@@ -34,9 +32,6 @@ public sealed class AnalysisSnapshot
     public float RightChannel { get; set; }
     public float LeftPeakHold { get; set; }
     public float RightPeakHold { get; set; }
-
-    /// <summary>Resolved palette for palette-cycling visualizers. Set by the renderer from selected palette.</summary>
-    public IReadOnlyList<PaletteColor>? Palette { get; set; }
 
     /// <summary>Display name of the current palette (for toolbar). Set by the renderer when palette is applied.</summary>
     public string? CurrentPaletteName { get; set; }
