@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 namespace AudioAnalyzer.Domain;
 
 /// <summary>Per-layer configuration for the layered text visualizer.</summary>
@@ -27,32 +29,136 @@ public class TextLayerSettings
     /// <summary>Id of the color palette for this layer (e.g. "default"). Falls back to TextLayers.PaletteId when null/empty.</summary>
     public string? PaletteId { get; set; }
 
-    /// <summary>Path to folder containing images. Used when LayerType is AsciiImage.</summary>
-    public string? ImageFolderPath { get; set; }
+    /// <summary>Layer-specific settings as JSON object. Only the owning layer deserializes this. Persisted as "Custom" in JSON.</summary>
+    [System.Text.Json.Serialization.JsonPropertyName("Custom")]
+    public JsonElement? Custom { get; set; }
 
-    /// <summary>Movement mode for AsciiImage layer. Default Scroll.</summary>
-    public AsciiImageMovement AsciiImageMovement { get; set; } = AsciiImageMovement.Scroll;
+    /// <summary>Captures unknown JSON properties during deserialization (e.g. legacy Gain, LlamaStyle*). Migration moves these into Custom.</summary>
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public Dictionary<string, JsonElement>? ExtensionData { get; set; }
 
-    /// <summary>Amplitude gain for Oscilloscope layer (1.0–10.0). Default 2.5.</summary>
-    public double Gain { get; set; } = 2.5;
+    /// <summary>Cache for GetCustom to avoid per-frame deserialization. Cleared when Custom changes.</summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    private Dictionary<RuntimeTypeHandle, (object? Value, JsonElement Snapshot)>? _customCache;
 
-    /// <summary>Show volume bar at top for LlamaStyle layer. Default false.</summary>
-    public bool LlamaStyleShowVolumeBar { get; set; }
+    /// <summary>Deserializes Custom to T. Returns null if Custom is empty or invalid. Results are cached until Custom changes.</summary>
+    public T? GetCustom<T>() where T : class
+    {
+        if (Custom is null) { return null; }
+        var value = Custom.Value;
+        if (value.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined) { return null; }
 
-    /// <summary>Show row labels (100%, 75%, etc.) for LlamaStyle layer. Default false.</summary>
-    public bool LlamaStyleShowRowLabels { get; set; }
+        var key = typeof(T).TypeHandle;
+        _customCache ??= new Dictionary<RuntimeTypeHandle, (object?, JsonElement)>();
+        if (_customCache.TryGetValue(key, out var cached))
+        {
+            if (JsonElement.DeepEquals(value, cached.Snapshot))
+            {
+                return (T?)cached.Value;
+            }
+        }
 
-    /// <summary>Show frequency labels (Hz) at bottom for LlamaStyle layer. Default false.</summary>
-    public bool LlamaStyleShowFrequencyLabels { get; set; }
+        try
+        {
+            var parsed = JsonSerializer.Deserialize<T>(value);
+            _customCache[key] = (parsed, value);
+            return parsed;
+        }
+        catch (JsonException)
+        {
+            /* Invalid custom JSON: return null to avoid crash; layer uses defaults */
+            return null;
+        }
+    }
 
-    /// <summary>Color scheme for LlamaStyle layer: "Winamp" (green→red) or "Spectrum" (red→blue). Default "Winamp".</summary>
-    public string LlamaStyleColorScheme { get; set; } = "Winamp";
+    /// <summary>Replaces Custom with the serialized form of the given object. Call after mutating custom settings.</summary>
+    public void SetCustom<T>(T? value) where T : class
+    {
+        _customCache?.Clear();
+        if (value is null)
+        {
+            Custom = null;
+            return;
+        }
+        Custom = JsonSerializer.SerializeToElement(value);
+    }
 
-    /// <summary>Peak marker style for LlamaStyle layer: "Blocks" (▀▀) or "DoubleLine" (══). Default "Blocks".</summary>
-    public string LlamaStylePeakMarkerStyle { get; set; } = "Blocks";
+    /// <summary>Migrates legacy top-level properties from ExtensionData into Custom. Call after deserializing old config files.</summary>
+    public void MigrateExtensionDataToCustom()
+    {
+        if (ExtensionData is not { Count: > 0 }) { return; }
 
-    /// <summary>Chars per band for LlamaStyle layer: 2 or 3. Default 3.</summary>
-    public int LlamaStyleBarWidth { get; set; } = 3;
+        try
+        {
+            switch (LayerType)
+            {
+                case TextLayerType.Oscilloscope:
+                    if (ExtensionData.TryGetValue("Gain", out var g) && g.ValueKind == JsonValueKind.Number)
+                    {
+                        var gain = Math.Clamp(g.GetDouble(), 1.0, 10.0);
+                        SetCustom(new { Gain = gain });
+                    }
+                    break;
+                case TextLayerType.AsciiImage:
+                    {
+                        string? path = null;
+                        if (ExtensionData.TryGetValue("ImageFolderPath", out var p) && p.ValueKind == JsonValueKind.String)
+                        {
+                            path = p.GetString();
+                        }
+                        var movement = AsciiImageMovement.Scroll;
+                        if (ExtensionData.TryGetValue("AsciiImageMovement", out var m))
+                        {
+                            movement = Enum.TryParse<AsciiImageMovement>(m.GetString(), true, out var mv) ? mv : AsciiImageMovement.Scroll;
+                        }
+                        SetCustom(new { ImageFolderPath = path, Movement = movement.ToString() });
+                    }
+                    break;
+                case TextLayerType.LlamaStyle:
+                    {
+                        var dict = new Dictionary<string, object?>
+                        {
+                            ["ShowVolumeBar"] = GetExtensionBool("LlamaStyleShowVolumeBar"),
+                            ["ShowRowLabels"] = GetExtensionBool("LlamaStyleShowRowLabels"),
+                            ["ShowFrequencyLabels"] = GetExtensionBool("LlamaStyleShowFrequencyLabels"),
+                            ["ColorScheme"] = GetExtensionString("LlamaStyleColorScheme") ?? "Winamp",
+                            ["PeakMarkerStyle"] = GetExtensionString("LlamaStylePeakMarkerStyle") ?? "Blocks",
+                            ["BarWidth"] = GetExtensionInt("LlamaStyleBarWidth", 3)
+                        };
+                        Custom = JsonSerializer.SerializeToElement(dict);
+                    }
+                    break;
+            }
+        }
+        finally
+        {
+            _customCache?.Clear();
+            ExtensionData?.Clear();
+            ExtensionData = null;
+        }
+
+        bool GetExtensionBool(string key)
+        {
+            if (!ExtensionData!.TryGetValue(key, out var e)) { return false; }
+            return e.ValueKind == JsonValueKind.True;
+        }
+        string? GetExtensionString(string key)
+        {
+            if (ExtensionData!.TryGetValue(key, out var e) && e.ValueKind == JsonValueKind.String)
+            {
+                return e.GetString();
+            }
+            return null;
+        }
+        int GetExtensionInt(string key, int fallback)
+        {
+            if (ExtensionData!.TryGetValue(key, out var e) && e.ValueKind == JsonValueKind.Number && e.TryGetInt32(out var n))
+            {
+                return Math.Clamp(n, 2, 3);
+            }
+            return fallback;
+        }
+    }
 
     /// <summary>Cycles the layer's type to the next value (wraps). Includes None.</summary>
     public static TextLayerType CycleTypeForward(TextLayerSettings layer)
@@ -83,15 +189,7 @@ public class TextLayerSettings
             SpeedMultiplier = SpeedMultiplier,
             ColorIndex = ColorIndex,
             PaletteId = PaletteId,
-            ImageFolderPath = ImageFolderPath,
-            AsciiImageMovement = AsciiImageMovement,
-            Gain = Gain,
-            LlamaStyleShowVolumeBar = LlamaStyleShowVolumeBar,
-            LlamaStyleShowRowLabels = LlamaStyleShowRowLabels,
-            LlamaStyleShowFrequencyLabels = LlamaStyleShowFrequencyLabels,
-            LlamaStyleColorScheme = LlamaStyleColorScheme,
-            LlamaStylePeakMarkerStyle = LlamaStylePeakMarkerStyle,
-            LlamaStyleBarWidth = LlamaStyleBarWidth
+            Custom = Custom
         };
     }
 }

@@ -17,8 +17,10 @@ alwaysApply: true
 
 6. **New visualizers**: Create new visualizer content as `ITextLayerRenderer` layers in TextLayersVisualizer, not as standalone `IVisualizer` implementations. See [ADR-0014](docs/adr/0014-visualizers-as-layers.md).
 
-7. **Presets**: TextLayers configurations are stored as Presets (named snapshots). V cycles presets; S modal: R rename, N new preset. See [ADR-0019](docs/adr/0019-preset-textlayers-configuration.md).
+7. **Layer settings**: TextLayerSettings has common props plus Custom (JSON); layer-specific settings go in *Settings.cs next to the layer; use `GetCustom<TSettings>()` in Draw. See [ADR-0021](docs/adr/0021-textlayer-settings-common-custom.md).
 
-8. **C# documentation and file organization**: Non-empty XML summaries for classes and interfaces; prefer one file per class. See [ADR-0016](docs/adr/0016-csharp-documentation-and-file-organization.md).
+8. **Presets**: TextLayers configurations are stored as Presets in `presets/*.json` (one file per preset). V cycles presets; S modal: R rename, N new preset. See [ADR-0019](docs/adr/0019-preset-textlayers-configuration.md), [ADR-0022](docs/adr/0022-presets-in-own-files.md).
 
-9. **UI text overflow**: Use ScrollingTextViewport for dynamic text (toolbar, status lines) that may exceed width; use ellipsis truncation (TruncateWithEllipsis or equivalent) for static text (titles, labels). See [ADR-0020](docs/adr/0020-ui-text-components-scrolling-and-ellipsis.md).
+9. **C# documentation and file organization**: Non-empty XML summaries for classes and interfaces; prefer one file per class. See [ADR-0016](docs/adr/0016-csharp-documentation-and-file-organization.md).
+
+10. **UI text overflow**: Use ScrollingTextViewport for dynamic text (toolbar, status lines) that may exceed width; use ellipsis truncation (TruncateWithEllipsis or equivalent) for static text (titles, labels). See [ADR-0020](docs/adr/0020-ui-text-components-scrolling-and-ellipsis.md).

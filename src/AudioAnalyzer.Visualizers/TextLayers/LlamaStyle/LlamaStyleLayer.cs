@@ -22,12 +22,13 @@ public sealed class LlamaStyleLayer : ITextLayerRenderer
             return state;
         }
 
-        int barWidth = Math.Clamp(layer.LlamaStyleBarWidth, 2, 3);
-        bool showVolumeBar = layer.LlamaStyleShowVolumeBar;
-        bool showRowLabels = layer.LlamaStyleShowRowLabels;
-        bool showFrequencyLabels = layer.LlamaStyleShowFrequencyLabels;
-        bool spectrumColors = string.Equals(layer.LlamaStyleColorScheme, "Spectrum", StringComparison.OrdinalIgnoreCase);
-        bool doubleLinePeak = string.Equals(layer.LlamaStylePeakMarkerStyle, "DoubleLine", StringComparison.OrdinalIgnoreCase);
+        var s = layer.GetCustom<LlamaStyleSettings>() ?? new LlamaStyleSettings();
+        int barWidth = Math.Clamp(s.BarWidth, 2, 3);
+        bool showVolumeBar = s.ShowVolumeBar;
+        bool showRowLabels = s.ShowRowLabels;
+        bool showFrequencyLabels = s.ShowFrequencyLabels;
+        bool spectrumColors = string.Equals(s.ColorScheme, "Spectrum", StringComparison.OrdinalIgnoreCase);
+        bool doubleLinePeak = string.Equals(s.PeakMarkerStyle, "DoubleLine", StringComparison.OrdinalIgnoreCase);
 
         int fixedLines = 1 + (showVolumeBar ? 2 : 0) + (showFrequencyLabels ? 2 : 0); // separator + optional volume + optional labels
         int maxBarLines = Math.Max(1, h - fixedLines);

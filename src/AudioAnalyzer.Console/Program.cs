@@ -4,6 +4,7 @@ using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Console;
 using AudioAnalyzer.Domain;
 using AudioAnalyzer.Infrastructure;
+using AudioAnalyzer.Visualizers;
 using Microsoft.Extensions.DependencyInjection;
 
 static int GetConsoleWidth()
@@ -13,12 +14,14 @@ static int GetConsoleWidth()
 }
 
 // Load settings before building the renderer so visualizer settings are available for DI
-var settingsRepo = new FileSettingsRepository();
+var presetRepo = new FilePresetRepository();
+var settingsRepo = new FileSettingsRepository(presetRepo);
 var settings = settingsRepo.LoadAppSettings();
 var visualizerSettings = settingsRepo.LoadVisualizerSettings();
 
-var provider = ServiceConfiguration.Build(settingsRepo, settings, visualizerSettings);
+var provider = ServiceConfiguration.Build(settingsRepo, presetRepo, settings, visualizerSettings);
 var paletteRepo = provider.GetRequiredService<IPaletteRepository>();
+var presetRepository = provider.GetRequiredService<IPresetRepository>();
 var deviceInfo = provider.GetRequiredService<IAudioDeviceInfo>();
 var engine = provider.GetRequiredService<AnalysisEngine>();
 var renderer = provider.GetRequiredService<IVisualizationRenderer>();
@@ -87,7 +90,8 @@ void SaveSettingsToRepository()
 {
     settings.BeatSensitivity = engine.BeatSensitivity;
     settings.BeatCircles = visualizerSettings.TextLayers?.Layers?.FirstOrDefault(l => l.LayerType == TextLayerType.BeatCircles)?.Enabled ?? true;
-    settings.OscilloscopeGain = visualizerSettings.TextLayers?.Layers?.FirstOrDefault(l => l.LayerType == TextLayerType.Oscilloscope)?.Gain ?? 2.5;
+    var oscLayer = visualizerSettings.TextLayers?.Layers?.FirstOrDefault(l => l.LayerType == TextLayerType.Oscilloscope);
+    settings.OscilloscopeGain = oscLayer?.GetCustom<OscilloscopeSettings>()?.Gain ?? 2.5;
     settingsRepo.SaveAppSettings(settings);
     visualizerSettings.TextLayers ??= new TextLayersVisualizerSettings();
     settingsRepo.SaveVisualizerSettings(visualizerSettings);
@@ -189,7 +193,7 @@ while (running)
                     }
                     break;
                 case ConsoleKey.S:
-                    ShowTextLayersSettingsModal(engine, visualizerSettings, consoleLock, SaveSettingsToRepository);
+                    ShowTextLayersSettingsModal(engine, visualizerSettings, presetRepository, consoleLock, SaveSettingsToRepository);
                     lock (consoleLock)
                     {
                         if (!engine.FullScreen)
@@ -223,7 +227,12 @@ void CycleToNextPreset()
     }
 
     int nextIndex = (currentIndex + 1) % visualizerSettings.Presets.Count;
-    var nextPreset = visualizerSettings.Presets[nextIndex];
+    var nextPresetInfo = visualizerSettings.Presets[nextIndex];
+    var nextPreset = presetRepository.GetById(nextPresetInfo.Id);
+    if (nextPreset == null)
+    {
+        return;
+    }
     visualizerSettings.ActivePresetId = nextPreset.Id;
     visualizerSettings.TextLayers ??= new TextLayersVisualizerSettings();
     visualizerSettings.TextLayers.CopyFrom(nextPreset.Config);
@@ -586,7 +595,7 @@ static (string? deviceId, string name) ShowDeviceSelectionMenu(IAudioDeviceInfo 
 
 const int TextLayersSettingsOverlayRows = 14;
 
-static void ShowTextLayersSettingsModal(AnalysisEngine analysisEngine, VisualizerSettings visualizerSettings, object consoleLock, Action saveSettings)
+static void ShowTextLayersSettingsModal(AnalysisEngine analysisEngine, VisualizerSettings visualizerSettings, IPresetRepository presetRepository, object consoleLock, Action saveSettings)
 {
     var textLayers = visualizerSettings.TextLayers ?? new TextLayersVisualizerSettings();
     var layers = textLayers.Layers ?? new List<TextLayerSettings>();
@@ -695,8 +704,9 @@ static void ShowTextLayersSettingsModal(AnalysisEngine analysisEngine, Visualize
                 };
                 if (selectedLayer.LayerType == TextLayerType.AsciiImage)
                 {
-                    rightLines.Add($"Image path: {selectedLayer.ImageFolderPath ?? "(none)"}");
-                    rightLines.Add($"Image movement: {selectedLayer.AsciiImageMovement}");
+                    var ascii = selectedLayer.GetCustom<AsciiImageSettings>() ?? new AsciiImageSettings();
+                    rightLines.Add($"Image path: {ascii.ImageFolderPath ?? "(none)"}");
+                    rightLines.Add($"Image movement: {ascii.Movement}");
                 }
 
                 for (int i = 0; i < rightLines.Count && (5 + i) < TextLayersSettingsOverlayRows; i++)
@@ -773,12 +783,21 @@ static void ShowTextLayersSettingsModal(AnalysisEngine analysisEngine, Visualize
             case ConsoleKey.Enter:
                 if (renaming)
                 {
-                    var preset = visualizerSettings.Presets?.FirstOrDefault(p =>
-                        string.Equals(p.Id, visualizerSettings.ActivePresetId, StringComparison.OrdinalIgnoreCase))
-                        ?? visualizerSettings.Presets?.FirstOrDefault();
-                    if (preset != null && !string.IsNullOrWhiteSpace(renameBuffer))
+                    var activeId = visualizerSettings.ActivePresetId;
+                    if (!string.IsNullOrWhiteSpace(activeId) && !string.IsNullOrWhiteSpace(renameBuffer))
                     {
-                        preset.Name = renameBuffer.Trim();
+                        var preset = presetRepository.GetById(activeId);
+                        if (preset != null)
+                        {
+                            preset.Name = renameBuffer.Trim();
+                            preset.Config = (visualizerSettings.TextLayers ?? new TextLayersVisualizerSettings()).DeepCopy();
+                            presetRepository.Save(activeId, preset);
+                            var p = visualizerSettings.Presets?.FirstOrDefault(x => string.Equals(x.Id, activeId, StringComparison.OrdinalIgnoreCase));
+                            if (p != null)
+                            {
+                                p.Name = renameBuffer.Trim();
+                            }
+                        }
                         saveSettings();
                     }
                     renaming = false;
@@ -802,20 +821,20 @@ static void ShowTextLayersSettingsModal(AnalysisEngine analysisEngine, Visualize
                 }
                 return false;
             case ConsoleKey.N:
-                if (!renaming && visualizerSettings.Presets is { Count: >= 0 })
+                if (!renaming)
                 {
                     var newPreset = new Preset
                     {
-                        Id = Guid.NewGuid().ToString("N"),
                         Name = $"Preset {visualizerSettings.Presets.Count + 1}",
                         Config = textLayers.DeepCopy()
                     };
-                    visualizerSettings.Presets.Add(newPreset);
-                    visualizerSettings.ActivePresetId = newPreset.Id;
-                    visualizerSettings.TextLayers ??= new TextLayersVisualizerSettings();
-                    visualizerSettings.TextLayers.CopyFrom(newPreset.Config);
-                    textLayers = visualizerSettings.TextLayers;
-                    sortedLayers = textLayers.Layers.OrderBy(l => l.ZOrder).ToList();
+                    var createdId = presetRepository.Create(newPreset);
+                    visualizerSettings.ActivePresetId = createdId;
+                    visualizerSettings.Presets = presetRepository.GetAll()
+                        .Select(p => new Preset { Id = p.Id, Name = p.Name, Config = new TextLayersVisualizerSettings() })
+                        .ToList();
+                    textLayers = visualizerSettings.TextLayers ?? new TextLayersVisualizerSettings();
+                    sortedLayers = textLayers.Layers?.OrderBy(l => l.ZOrder).ToList() ?? [];
                     saveSettings();
                 }
                 return false;

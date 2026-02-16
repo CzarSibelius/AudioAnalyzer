@@ -17,7 +17,8 @@ public sealed class AsciiImageLayer : ITextLayerRenderer
         int w = ctx.Width;
         int h = ctx.Height;
 
-        var imagePaths = GetImagePaths(layer.ImageFolderPath);
+        var s = layer.GetCustom<AsciiImageSettings>() ?? new AsciiImageSettings();
+        var imagePaths = GetImagePaths(s.ImageFolderPath);
         if (imagePaths.Count == 0)
         {
             RenderPlaceholder(ctx, "No images");
@@ -52,7 +53,7 @@ public sealed class AsciiImageLayer : ITextLayerRenderer
             speed *= 2.0;
         }
 
-        var movement = layer.AsciiImageMovement;
+        var movement = s.Movement;
         bool doScroll = movement is AsciiImageMovement.Scroll or AsciiImageMovement.Both;
         bool doZoom = movement is AsciiImageMovement.Zoom or AsciiImageMovement.Both;
 
