@@ -21,6 +21,8 @@ alwaysApply: true
 
 8. **Presets**: TextLayers configurations are stored as Presets in `presets/*.json` (one file per preset). V cycles presets; S modal: R rename, N new preset. See [ADR-0019](docs/adr/0019-preset-textlayers-configuration.md), [ADR-0022](docs/adr/0022-presets-in-own-files.md).
 
-9. **C# documentation and file organization**: Non-empty XML summaries for classes and interfaces; prefer one file per class. See [ADR-0016](docs/adr/0016-csharp-documentation-and-file-organization.md).
+9. **Layer settings editing**: The S settings modal is the canonical UI for editing layer settings (common properties and Custom). When adding layer-editing capabilities, implement them in the S modal, not in HandleKey or other ad-hoc places. See [ADR-0023](docs/adr/0023-settings-modal-layer-editing.md).
 
-10. **UI text overflow**: Use ScrollingTextViewport for dynamic text (toolbar, status lines) that may exceed width; use ellipsis truncation (TruncateWithEllipsis or equivalent) for static text (titles, labels). See [ADR-0020](docs/adr/0020-ui-text-components-scrolling-and-ellipsis.md).
+10. **C# documentation and file organization**: Non-empty XML summaries for classes and interfaces; prefer one file per class. See [ADR-0016](docs/adr/0016-csharp-documentation-and-file-organization.md).
+
+11. **UI text overflow**: Use ScrollingTextViewport for dynamic text (toolbar, status lines) that may exceed width; use ellipsis truncation (TruncateWithEllipsis or equivalent) for static text (titles, labels). See [ADR-0020](docs/adr/0020-ui-text-components-scrolling-and-ellipsis.md).

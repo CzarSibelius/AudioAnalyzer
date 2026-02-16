@@ -36,9 +36,9 @@ A **Preset** is a named TextLayers configuration (9 layers + PaletteId). Users c
 
 - **V** — Cycle to next preset (toolbar shows active preset name).
 - **P** — Cycle the color palette of the **active layer** (the layer last selected with 1–9). Saved to that layer's settings.
-- **S** — Open preset settings modal (title shows preset name; two-column: layer list on left, selected layer settings on right; 1–9 select, ↑/↓ select, ←/→ change type, Shift+1–9 toggle enabled, R rename preset, N new preset, ESC close). The modal replaces the header/toolbar region while keeping the visualizer visible below.
+- **S** — Open preset settings modal (title shows preset name; two-column: layer list on left, selected layer settings on right). Left panel: 1–9 select layer, ↑/↓ select, ←/→ change layer type, Enter move to settings panel, Space toggle enabled for selected layer, Shift+1–9 toggle enabled by slot, R rename preset, N new preset. Right panel: ↑/↓ select setting, Enter or +/- cycle cycleable settings, Enter to edit strings (Snippets, Image path), Enter or ↑/↓ confirm string edits, ←/Esc back to layer list, ESC close. The S modal is the canonical UI for editing layer settings per [ADR-0023](../adr/0023-settings-modal-layer-editing.md).
 - **1–9** — Select the corresponding layer as active (no type change). Key 1 = layer 1 (back), key 9 = layer 9 (front). Number keys and numpad keys work.
-- **←/→** (Left/Right arrow) — Cycle the active layer's type forward or backward (includes None). Changes persist to the active preset file.
+- **←/→** (Left/Right arrow) — Cycle layer type (includes None) when in layer list. Changes persist to the active preset file.
 - **Shift+1–9** — Toggle the corresponding layer enabled/disabled. Disabled layers are not rendered. Changes persist to the active preset file.
 - **I** — Cycle to the next picture in AsciiImage layers (only when at least one layer is AsciiImage).
 - **[ / ]** — Adjust gain (1.0–10.0) when the selected layer is Oscilloscope.
@@ -65,4 +65,4 @@ A **Preset** is a named TextLayers configuration (9 layers + PaletteId). Users c
 - **VuMeter layer**: Classic stereo VU meters; Left/Right channel levels, peak hold, dB scale, balance indicator; uses LeftChannel, RightChannel, LeftPeakHold, RightPeakHold.
 - **LlamaStyle layer**: Spectrum bars (ex-Winamp/Spectrum Analyzer); configurable volume bar, row labels, frequency labels, color scheme (Winamp vs Spectrum), peak marker style, bar width; uses SmoothedMagnitudes, PeakHold, TargetMaxMagnitude, NumBands, Volume.
 - **Beat reactions**: SpeedBurst (faster), Flash (advance/change), SpawnMore (spawn particles), Pulse (amplitude/color change), ColorPop (color offset).
-- **References**: [ADR-0004](../adr/0004-visualizer-encapsulation.md), [ADR-0005](../adr/0005-layered-visualizer-cell-buffer.md), [ADR-0021](../adr/0021-textlayer-settings-common-custom.md).
+- **References**: [ADR-0004](../adr/0004-visualizer-encapsulation.md), [ADR-0005](../adr/0005-layered-visualizer-cell-buffer.md), [ADR-0021](../adr/0021-textlayer-settings-common-custom.md), [ADR-0023](../adr/0023-settings-modal-layer-editing.md).
