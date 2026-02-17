@@ -11,7 +11,7 @@ var settingsRepo = new FileSettingsRepository(presetRepo);
 var settings = settingsRepo.LoadAppSettings();
 var visualizerSettings = settingsRepo.LoadVisualizerSettings();
 
-var provider = ServiceConfiguration.Build(settingsRepo, presetRepo, settings, visualizerSettings);
+using var provider = ServiceConfiguration.Build(settingsRepo, presetRepo, settings, visualizerSettings);
 var deviceInfo = provider.GetRequiredService<IAudioDeviceInfo>();
 
 var devices = deviceInfo.GetDevices();
@@ -39,6 +39,7 @@ var shell = new ApplicationShell(
     provider.GetRequiredService<IPresetRepository>(),
     provider.GetRequiredService<IPaletteRepository>(),
     engine,
-    provider.GetRequiredService<IVisualizationRenderer>());
+    provider.GetRequiredService<IVisualizationRenderer>(),
+    provider.GetRequiredService<INowPlayingProvider>());
 
 shell.Run(initialDeviceId, initialName);

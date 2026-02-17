@@ -42,6 +42,7 @@ Decisions are numbered and kept under version control so the rationale stays wit
 | [0024](0024-analysissnapshot-frame-context.md) | AnalysisSnapshot as frame context | Accepted |
 | [0025](0025-reflection-based-layer-settings.md) | Reflection-based layer settings discovery | Accepted |
 | [0026](0026-console-ui-architecture.md) | Console UI architecture — modular presentation layer | Accepted |
+| [0027](0027-now-playing-header.md) | Now-playing song in header | Accepted |
 
 ## Process
 

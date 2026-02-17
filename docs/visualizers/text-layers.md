@@ -12,6 +12,7 @@ Composites multiple independent layers (e.g. ScrollingColors, Marquee, FallingLe
 - `BeatFlashActive` — triggers SpeedBurst, Flash, SpawnMore, Pulse, ColorPop when true
 - `SmoothedMagnitudes`, `TargetMaxMagnitude` — used by GeissBackground, BeatCircles, and UnknownPleasures for bass/treble intensity, plasma modulation, and pulse lines
 - `Waveform`, `WaveformPosition`, `WaveformSize` — used by Oscilloscope layer for time-domain waveform
+- `CurrentNowPlayingText` — used by NowPlaying layer; set by renderer from INowPlayingProvider (e.g. "Artist - Title")
 
 ## Presets
 
@@ -31,6 +32,7 @@ A **Preset** is a named TextLayers configuration (9 layers + PaletteId). Users c
     - AsciiImage: `ImageFolderPath`, `Movement` (None/Scroll/Zoom/Both)
     - Oscilloscope: `Gain` (1.0–10.0)
     - LlamaStyle: `ShowVolumeBar`, `ShowRowLabels`, `ShowFrequencyLabels` (bool); `ColorScheme` ("Winamp"|"Spectrum"); `PeakMarkerStyle` ("Blocks"|"DoubleLine"); `BarWidth` (2|3)
+    - NowPlaying: `VerticalPosition` ("Top"|"Center"|"Bottom")
 
 ## Key bindings
 
@@ -65,5 +67,6 @@ A **Preset** is a named TextLayers configuration (9 layers + PaletteId). Users c
 - **UnknownPleasures layer**: Stacked waveform snapshots; bottom line realtime, others beat-triggered; uses SmoothedMagnitudes, NumBands, TargetMaxMagnitude, BeatCount; per-layer palette.
 - **VuMeter layer**: Classic stereo VU meters; Left/Right channel levels, peak hold, dB scale, balance indicator; uses LeftChannel, RightChannel, LeftPeakHold, RightPeakHold.
 - **LlamaStyle layer**: Spectrum bars (ex-Winamp/Spectrum Analyzer); configurable volume bar, row labels, frequency labels, color scheme (Winamp vs Spectrum), peak marker style, bar width; uses SmoothedMagnitudes, PeakHold, TargetMaxMagnitude, NumBands, Volume.
+- **NowPlaying layer**: Displays currently playing media from system (e.g. Windows GSMTC). Uses CurrentNowPlayingText; falls back to TextSnippets[0] when null, else "—". Centered when text fits width, marquee scroll when longer. VerticalPosition (Top/Center/Bottom) controls row. Supports BeatReaction, SpeedMultiplier, ColorIndex, PaletteId. See [ADR-0027](../adr/0027-now-playing-header.md).
 - **Beat reactions**: SpeedBurst (faster), Flash (advance/change), SpawnMore (spawn particles), Pulse (amplitude/color change), ColorPop (color offset).
 - **References**: [ADR-0004](../adr/0004-visualizer-encapsulation.md), [ADR-0005](../adr/0005-layered-visualizer-cell-buffer.md), [ADR-0021](../adr/0021-textlayer-settings-common-custom.md), [ADR-0023](../adr/0023-settings-modal-layer-editing.md), [ADR-0025](../adr/0025-reflection-based-layer-settings.md).

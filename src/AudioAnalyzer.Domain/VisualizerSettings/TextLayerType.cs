@@ -16,5 +16,6 @@ public enum TextLayerType
     Oscilloscope,
     UnknownPleasures,
     VuMeter,
-    LlamaStyle
+    LlamaStyle,
+    NowPlaying
 }

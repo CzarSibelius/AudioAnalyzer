@@ -35,4 +35,7 @@ public sealed class AnalysisSnapshot
 
     /// <summary>Display name of the current palette (for toolbar). Set by the renderer when palette is applied.</summary>
     public string? CurrentPaletteName { get; set; }
+
+    /// <summary>Currently playing media (e.g. "Artist - Title"). Set by the renderer from INowPlayingProvider. Used by NowPlaying layer.</summary>
+    public string? CurrentNowPlayingText { get; set; }
 }
