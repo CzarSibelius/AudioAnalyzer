@@ -28,3 +28,5 @@ alwaysApply: true
 11. **C# documentation and file organization**: Non-empty XML summaries for classes and interfaces; prefer one file per class. See [ADR-0016](docs/adr/0016-csharp-documentation-and-file-organization.md).
 
 12. **UI text overflow**: Use ScrollingTextViewport for dynamic text (toolbar, status lines) that may exceed width; use ellipsis truncation (TruncateWithEllipsis or equivalent) for static text (titles, labels). See [ADR-0020](docs/adr/0020-ui-text-components-scrolling-and-ellipsis.md).
+
+13. **Layer dependency injection**: Layers that need external services (e.g. INowPlayingProvider) receive them via constructor injection. Snapshot does not carry service-derived data. Layers are registered in the DI container (AddTextLayerRenderers); TextLayersVisualizer receives IEnumerable&lt;ITextLayerRenderer&gt;. See [ADR-0028](docs/adr/0028-layer-dependency-injection.md).

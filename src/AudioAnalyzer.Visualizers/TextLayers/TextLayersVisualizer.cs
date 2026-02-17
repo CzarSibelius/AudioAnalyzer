@@ -16,14 +16,15 @@ public sealed class TextLayersVisualizer : IVisualizer
 
     private readonly TextLayersVisualizerSettings? _settings;
     private readonly IPaletteRepository _paletteRepo;
-    private static readonly Dictionary<TextLayerType, ITextLayerRenderer> s_renderers = CreateRenderers();
+    private readonly Dictionary<TextLayerType, ITextLayerRenderer> _renderers;
     /// <summary>Index of the layer whose palette P cycles. Updated when user presses 1–9.</summary>
     private int _paletteCycleLayerIndex;
 
-    public TextLayersVisualizer(TextLayersVisualizerSettings? settings, IPaletteRepository paletteRepo)
+    public TextLayersVisualizer(TextLayersVisualizerSettings? settings, IPaletteRepository paletteRepo, IEnumerable<ITextLayerRenderer> renderers)
     {
         _settings = settings;
         _paletteRepo = paletteRepo;
+        _renderers = renderers.ToDictionary(r => r.LayerType);
     }
 
     private readonly ViewportCellBuffer _buffer = new();
@@ -41,28 +42,6 @@ public sealed class TextLayersVisualizer : IVisualizer
     private readonly List<UnknownPleasuresState> _unknownPleasuresStateByLayer = new();
     private int _lastBeatCount = -1;
     private int _beatFlashFrames;
-
-    private static Dictionary<TextLayerType, ITextLayerRenderer> CreateRenderers()
-    {
-        var list = new ITextLayerRenderer[]
-        {
-            new ScrollingColorsLayer(),
-            new MarqueeLayer(),
-            new FallingLettersLayer(),
-            new WaveTextLayer(),
-            new StaticTextLayer(),
-            new MatrixRainLayer(),
-            new AsciiImageLayer(),
-            new GeissBackgroundLayer(),
-            new BeatCirclesLayer(),
-            new OscilloscopeLayer(),
-            new UnknownPleasuresLayer(),
-            new VuMeterLayer(),
-            new LlamaStyleLayer(),
-            new NowPlayingLayer()
-        };
-        return list.ToDictionary(r => r.LayerType);
-    }
 
     public void Render(AnalysisSnapshot snapshot, VisualizerViewport viewport)
     {
@@ -126,7 +105,7 @@ public sealed class TextLayersVisualizer : IVisualizer
         for (int i = 0; i < sortedLayers.Count; i++)
         {
             var layer = sortedLayers[i];
-            if (!layer.Enabled || !s_renderers.TryGetValue(layer.LayerType, out var renderer))
+            if (!layer.Enabled || !_renderers.TryGetValue(layer.LayerType, out var renderer))
             {
                 continue;
             }

@@ -9,13 +9,11 @@ public sealed class VisualizationPaneLayout : IVisualizationRenderer
 {
     private readonly IVisualizer? _visualizer;
     private readonly VisualizerSettings? _visualizerSettings;
-    private readonly INowPlayingProvider _nowPlayingProvider;
     private (IReadOnlyList<PaletteColor>? Palette, string? DisplayName) _palette;
 
-    public VisualizationPaneLayout(IDisplayDimensions displayDimensions, IEnumerable<IVisualizer> visualizers, VisualizerSettings? visualizerSettings, INowPlayingProvider nowPlayingProvider)
+    public VisualizationPaneLayout(IDisplayDimensions displayDimensions, IEnumerable<IVisualizer> visualizers, VisualizerSettings? visualizerSettings)
     {
         _visualizerSettings = visualizerSettings;
-        _nowPlayingProvider = nowPlayingProvider;
         _visualizer = visualizers.FirstOrDefault(v => string.Equals(v.TechnicalName, "textlayers", StringComparison.OrdinalIgnoreCase));
     }
 
@@ -39,8 +37,6 @@ public sealed class VisualizationPaneLayout : IVisualizationRenderer
             {
                 return;
             }
-
-            snapshot.CurrentNowPlayingText = _nowPlayingProvider.GetNowPlayingText();
 
             int termWidth = snapshot.TerminalWidth;
             int visualizerStartRow;

@@ -16,9 +16,11 @@ A design review of `AnalysisSnapshot` found: (1) the docstring claimed it was "p
 
 4. **Keep `BeatSensitivity`** in the snapshot for toolbar display. It is an engine setting, not analysis output, but putting it in the snapshot avoids coupling the toolbar to the engine directly.
 
+5. **Snapshot does not carry service-derived data**. Data from external services (e.g. INowPlayingProvider) should be injected into layers directly, not passed through the snapshot. See [ADR-0028](0028-layer-dependency-injection.md).
+
 ## Consequences
 
 - Snapshot docstring updated to describe "frame context" with two producers.
 - `Palette` property removed from [AnalysisSnapshot.cs](../../src/AudioAnalyzer.Application/Abstractions/AnalysisSnapshot.cs).
-- [VisualizationPaneLayout](../../src/AudioAnalyzer.Infrastructure/VisualizationPaneLayout.cs) sets only `CurrentPaletteName`, not `Palette`.
+- [VisualizationPaneLayout](../../src/AudioAnalyzer.Console/Console/VisualizationPaneLayout.cs) sets only `CurrentPaletteName`, not `Palette`.
 - ADR-0002 and ADR-0003 described snapshot carrying palette colors; that design is superseded by per-visualizer resolution (TextLayers uses `IPaletteRepository`; no consumer ever used `snapshot.Palette`).
