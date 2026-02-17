@@ -37,17 +37,19 @@ internal static class ServiceConfiguration
             return new NullNowPlayingProvider();
         });
 
+        services.AddTextLayerRenderers();
+
         services.AddSingleton<IVisualizer>(sp => new TextLayersVisualizer(
             sp.GetRequiredService<VisualizerSettings>().TextLayers ?? new TextLayersVisualizerSettings(),
-            sp.GetRequiredService<IPaletteRepository>()));
+            sp.GetRequiredService<IPaletteRepository>(),
+            sp.GetRequiredService<IEnumerable<ITextLayerRenderer>>()));
 
         services.AddSingleton<IVisualizationRenderer>(sp =>
         {
             var dimensions = sp.GetRequiredService<IDisplayDimensions>();
             var visualizers = sp.GetServices<IVisualizer>();
             var visualizerSettings = sp.GetRequiredService<VisualizerSettings>();
-            var nowPlayingProvider = sp.GetRequiredService<INowPlayingProvider>();
-            return new VisualizationPaneLayout(dimensions, visualizers, visualizerSettings, nowPlayingProvider);
+            return new VisualizationPaneLayout(dimensions, visualizers, visualizerSettings);
         });
         services.AddSingleton<AnalysisEngine>(sp =>
         {
