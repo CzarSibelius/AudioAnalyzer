@@ -40,6 +40,7 @@ Decisions are numbered and kept under version control so the rationale stays wit
 | [0022](0022-presets-in-own-files.md) | Presets in own files (palette-style storage) | Accepted |
 | [0023](0023-settings-modal-layer-editing.md) | Settings modal for layer settings editing | Accepted |
 | [0024](0024-analysissnapshot-frame-context.md) | AnalysisSnapshot as frame context | Accepted |
+| [0025](0025-reflection-based-layer-settings.md) | Reflection-based layer settings discovery | Accepted |
 
 ## Process
 

@@ -13,6 +13,4 @@ public class VisualizerSettings
 
     /// <summary>Live editing buffer — always the active preset's config. Synced from active preset on load/switch; persisted back to active preset file on save. Not persisted in appsettings.</summary>
     public TextLayersVisualizerSettings? TextLayers { get; set; }
-
-    public UnknownPleasuresVisualizerSettings? UnknownPleasures { get; set; }
 }

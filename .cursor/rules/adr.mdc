@@ -23,6 +23,8 @@ alwaysApply: true
 
 9. **Layer settings editing**: The S settings modal is the canonical UI for editing layer settings (common properties and Custom). When adding layer-editing capabilities, implement them in the S modal, not in HandleKey or other ad-hoc places. See [ADR-0023](docs/adr/0023-settings-modal-layer-editing.md).
 
-10. **C# documentation and file organization**: Non-empty XML summaries for classes and interfaces; prefer one file per class. See [ADR-0016](docs/adr/0016-csharp-documentation-and-file-organization.md).
+10. **Layer settings discovery**: Layer settings are discovered via reflection. New settings: add *Settings.cs with properties; use [SettingRange], [SettingChoices], [Setting] where needed; register in LayerSettingsReflection.s_customSettingsRegistry. See [ADR-0021](docs/adr/0021-textlayer-settings-common-custom.md), [ADR-0025](docs/adr/0025-reflection-based-layer-settings.md).
 
-11. **UI text overflow**: Use ScrollingTextViewport for dynamic text (toolbar, status lines) that may exceed width; use ellipsis truncation (TruncateWithEllipsis or equivalent) for static text (titles, labels). See [ADR-0020](docs/adr/0020-ui-text-components-scrolling-and-ellipsis.md).
+11. **C# documentation and file organization**: Non-empty XML summaries for classes and interfaces; prefer one file per class. See [ADR-0016](docs/adr/0016-csharp-documentation-and-file-organization.md).
+
+12. **UI text overflow**: Use ScrollingTextViewport for dynamic text (toolbar, status lines) that may exceed width; use ellipsis truncation (TruncateWithEllipsis or equivalent) for static text (titles, labels). See [ADR-0020](docs/adr/0020-ui-text-components-scrolling-and-ellipsis.md).

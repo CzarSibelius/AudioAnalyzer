@@ -100,7 +100,6 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
     {
         file.VisualizerSettings ??= new VisualizerSettings();
         file.VisualizerSettings!.ActivePresetId = settings.ActivePresetId;
-        file.VisualizerSettings.UnknownPleasures = settings.UnknownPleasures;
     }
 
     private SettingsFile LoadFile()
@@ -310,11 +309,7 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
             return;
         }
 
-        var legacyPaletteId = file.VisualizerSettings?.UnknownPleasures?.PaletteId;
-        if (string.IsNullOrWhiteSpace(legacyPaletteId))
-        {
-            return;
-        }
+        var paletteId = textLayers.PaletteId ?? "";
 
         textLayers.Layers ??= new List<TextLayerSettings>();
         int maxZ = textLayers.Layers.Count > 0 ? textLayers.Layers.Max(l => l.ZOrder) : -1;
@@ -323,7 +318,7 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
             LayerType = TextLayerType.UnknownPleasures,
             ZOrder = maxZ + 1,
             Enabled = true,
-            PaletteId = legacyPaletteId,
+            PaletteId = paletteId,
             BeatReaction = TextLayerBeatReaction.None,
             SpeedMultiplier = 1.0
         });
