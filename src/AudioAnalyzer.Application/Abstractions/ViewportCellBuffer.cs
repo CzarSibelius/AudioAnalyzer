@@ -13,6 +13,8 @@ public sealed class ViewportCellBuffer
     private int _height;
     private char[] _chars = [];
     private PaletteColor[] _colors = [];
+    private string?[] _lastWrittenByRow = [];
+    private readonly StringBuilder _sb = new();
 
     /// <summary>Width of the buffer (columns).</summary>
     public int Width => _width;
@@ -38,6 +40,7 @@ public sealed class ViewportCellBuffer
         int size = width * height;
         _chars = new char[size];
         _colors = new PaletteColor[size];
+        _lastWrittenByRow = new string?[height];
     }
 
     /// <summary>Fills the buffer with space and the given default color.</summary>
@@ -64,7 +67,7 @@ public sealed class ViewportCellBuffer
         _colors[i] = color;
     }
 
-    /// <summary>Writes the buffer to the console starting at the given row. Builds one ANSI line per row.</summary>
+    /// <summary>Writes the buffer to the console starting at the given row. Only writes rows that changed (diff-based).</summary>
     public void WriteToConsole(int startRow)
     {
         if (_width <= 0 || _height <= 0)
@@ -72,24 +75,42 @@ public sealed class ViewportCellBuffer
             return;
         }
 
-        var sb = new StringBuilder(_width * 32);
+        if (_lastWrittenByRow.Length != _height)
+        {
+            _lastWrittenByRow = new string?[_height];
+        }
+
+        int capacity = _width * 32;
+        if (_sb.Capacity < capacity)
+        {
+            _sb.Capacity = capacity;
+        }
+
         for (int y = 0; y < _height; y++)
         {
-            sb.Clear();
+            _sb.Clear();
             for (int x = 0; x < _width; x++)
             {
                 int i = y * _width + x;
-                AnsiConsole.AppendColored(sb, _chars[i], _colors[i]);
+                AnsiConsole.AppendColored(_sb, _chars[i], _colors[i]);
             }
 
+            string line = _sb.ToString();
+            if (line == _lastWrittenByRow[y])
+            {
+                continue;
+            }
+
+            _lastWrittenByRow[y] = line;
             try
             {
                 Console.SetCursorPosition(0, startRow + y);
-                Console.Write(sb.ToString());
+                Console.Write(line);
             }
-            catch
+            catch (Exception ex)
             {
-                // Ignore console errors (e.g. resize)
+                _ = ex;
+                /* Console write failed (e.g. resize): swallow to avoid crash */
             }
         }
     }

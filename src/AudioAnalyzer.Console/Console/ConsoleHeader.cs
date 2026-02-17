@@ -8,6 +8,12 @@ internal static class ConsoleHeader
 {
     private static ScrollingTextViewportState _nowPlayingScrollState;
     private static string? _nowPlayingLastText;
+    private static string? _lastWrittenLine1;
+    private static string? _lastWrittenLine2;
+    private static string? _lastWrittenLine3;
+    private static string? _lastWrittenLine4;
+    private static string? _lastWrittenLine5;
+    private static string? _lastWrittenLine6;
 
     /// <summary>Gets the current console width, or 80 if unavailable.</summary>
     public static int GetConsoleWidth()
@@ -36,7 +42,19 @@ internal static class ConsoleHeader
 
         System.Console.Clear();
         System.Console.CursorVisible = false;
+        InvalidateHeaderCache();
         DrawHeaderOnly(deviceName, nowPlayingText);
+    }
+
+    /// <summary>Invalidates the header cache so the next DrawHeaderOnly writes all lines. Call after Console.Clear.</summary>
+    private static void InvalidateHeaderCache()
+    {
+        _lastWrittenLine1 = null;
+        _lastWrittenLine2 = null;
+        _lastWrittenLine3 = null;
+        _lastWrittenLine4 = null;
+        _lastWrittenLine5 = null;
+        _lastWrittenLine6 = null;
     }
 
     /// <summary>Draws only the header lines (no clear). Used for refresh before each render.</summary>
@@ -81,19 +99,25 @@ internal static class ConsoleHeader
 
         try
         {
-            System.Console.SetCursorPosition(0, 0);
-            System.Console.Write(line1);
-            System.Console.SetCursorPosition(0, 1);
-            System.Console.Write(line2);
-            System.Console.SetCursorPosition(0, 2);
-            System.Console.Write(line3);
-            System.Console.SetCursorPosition(0, 3);
-            System.Console.Write(line4);
-            System.Console.SetCursorPosition(0, 4);
-            System.Console.Write(line5);
-            System.Console.SetCursorPosition(0, 5);
-            System.Console.Write(line6);
+            WriteLineIfChanged(0, line1, ref _lastWrittenLine1);
+            WriteLineIfChanged(1, line2, ref _lastWrittenLine2);
+            WriteLineIfChanged(2, line3, ref _lastWrittenLine3);
+            WriteLineIfChanged(3, line4, ref _lastWrittenLine4);
+            WriteLineIfChanged(4, line5, ref _lastWrittenLine5);
+            WriteLineIfChanged(5, line6, ref _lastWrittenLine6);
         }
         catch (Exception ex) { _ = ex; /* Console write unavailable: swallow to avoid crash */ }
+    }
+
+    private static void WriteLineIfChanged(int row, string line, ref string? lastWritten)
+    {
+        if (line == lastWritten)
+        {
+            return;
+        }
+
+        lastWritten = line;
+        System.Console.SetCursorPosition(0, row);
+        System.Console.Write(line);
     }
 }

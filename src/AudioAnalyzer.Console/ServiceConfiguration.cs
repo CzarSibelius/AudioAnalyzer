@@ -16,18 +16,23 @@ internal static class ServiceConfiguration
         FileSettingsRepository settingsRepo,
         IPresetRepository presetRepo,
         AppSettings settings,
-        VisualizerSettings visualizerSettings)
+        VisualizerSettings visualizerSettings,
+        ServiceConfigurationOptions? options = null)
     {
         var services = new ServiceCollection();
         services.AddSingleton(visualizerSettings);
-        services.AddSingleton<IDisplayDimensions, ConsoleDisplayDimensions>();
+        services.AddSingleton<IDisplayDimensions>(sp => options?.DisplayDimensions ?? new ConsoleDisplayDimensions());
         services.AddSingleton<ISettingsRepository>(_ => settingsRepo);
         services.AddSingleton<IVisualizerSettingsRepository>(_ => settingsRepo);
-        services.AddSingleton<IPaletteRepository>(_ => new FilePaletteRepository());
+        services.AddSingleton<IPaletteRepository>(_ => options?.PaletteRepository ?? new FilePaletteRepository());
         services.AddSingleton<IPresetRepository>(presetRepo);
         services.AddSingleton<IAudioDeviceInfo, NAudioDeviceInfo>();
         services.AddSingleton<INowPlayingProvider>(sp =>
         {
+            if (options?.NowPlayingProvider != null)
+            {
+                return options.NowPlayingProvider;
+            }
             if (OperatingSystem.IsWindows())
             {
                 var provider = new WindowsNowPlayingProvider();
