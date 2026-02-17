@@ -28,6 +28,7 @@ After making code changes, check linter diagnostics for the modified files and f
 - **Presets**: TextLayers configs are Presets in presets/*.json; V cycles presets; S modal: R rename, N new preset (see ADR-0019, ADR-0022 in docs/adr/).
 - **UI text overflow**: Use ScrollingTextViewport for dynamic text that may exceed width; use ellipsis truncation for static text (see ADR-0020 in docs/adr/).
 - **Settings migration**: Do not add migration logic for settings format changes; use backup (`{name}.{timestamp}.bak`) and reset per ADR-0029 in docs/adr/.
+- **Performance**: Console writes, polling, and timing must be performant; follow ADR-0030 in docs/adr/ when adding console I/O, key polling, or frame-rate logic.
 
 ### User Control Requirements
 - **Every feature must be toggleable by the user in realtime** via keyboard shortcuts

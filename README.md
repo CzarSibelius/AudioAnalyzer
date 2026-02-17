@@ -32,6 +32,16 @@ From the solution root (the folder containing `AudioAnalyzer.sln`):
 
 On Windows you can use backslashes: `src\AudioAnalyzer.Console\AudioAnalyzer.Console.csproj`.
 
+### Running tests
+
+The solution includes an integration-style performance test that measures single-frame render time:
+
+```bash
+dotnet test tests/AudioAnalyzer.Tests/AudioAnalyzer.Tests.csproj
+```
+
+The render performance test asserts that a single render completes within 100 ms (guards against regressions; target is 50 ms for 20 FPS per ADR-0030).
+
 ## Usage
 
 1. On first run (or if no device was saved), choose an audio input: **Demo Mode** (synthetic stream at 90/120/140 BPM for testing without audio), loopback (system output), or a specific capture device (↑/↓ to move, ENTER to select, ESC to cancel).

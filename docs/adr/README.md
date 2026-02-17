@@ -45,6 +45,7 @@ Decisions are numbered and kept under version control so the rationale stays wit
 | [0027](0027-now-playing-header.md) | Now-playing song in header | Accepted |
 | [0028](0028-layer-dependency-injection.md) | Layer dependency injection | Accepted |
 | [0029](0029-no-settings-migration.md) | No settings migration — backup and reset | Accepted |
+| [0030](0030-performance-priority.md) | Performance as top priority | Accepted |
 
 ## Process
 
