@@ -27,6 +27,7 @@ After making code changes, check linter diagnostics for the modified files and f
 - **Layer settings**: TextLayerSettings has common props plus Custom (JSON); layer-specific settings go in *Settings.cs next to the layer; use `GetCustom<TSettings>()` in Draw (see ADR-0021 in docs/adr/). New settings are discovered via reflection; add *Settings.cs, use [SettingRange]/[SettingChoices]/[Setting] attributes, register in LayerSettingsReflection (see ADR-0025 in docs/adr/).
 - **Presets**: TextLayers configs are Presets in presets/*.json; V cycles presets; S modal: R rename, N new preset (see ADR-0019, ADR-0022 in docs/adr/).
 - **UI text overflow**: Use ScrollingTextViewport for dynamic text that may exceed width; use ellipsis truncation for static text (see ADR-0020 in docs/adr/).
+- **Settings migration**: Do not add migration logic for settings format changes; use backup (`{name}.{timestamp}.bak`) and reset per ADR-0029 in docs/adr/.
 
 ### User Control Requirements
 - **Every feature must be toggleable by the user in realtime** via keyboard shortcuts

@@ -33,10 +33,6 @@ public class TextLayerSettings
     [System.Text.Json.Serialization.JsonPropertyName("Custom")]
     public JsonElement? Custom { get; set; }
 
-    /// <summary>Captures unknown JSON properties during deserialization (e.g. legacy Gain, LlamaStyle*). Migration moves these into Custom.</summary>
-    [System.Text.Json.Serialization.JsonExtensionData]
-    public Dictionary<string, JsonElement>? ExtensionData { get; set; }
-
     /// <summary>Cache for GetCustom to avoid per-frame deserialization. Cleared when Custom changes.</summary>
     [System.Text.Json.Serialization.JsonIgnore]
     private Dictionary<RuntimeTypeHandle, (object? Value, JsonElement Snapshot)>? _customCache;
@@ -81,83 +77,6 @@ public class TextLayerSettings
             return;
         }
         Custom = JsonSerializer.SerializeToElement(value);
-    }
-
-    /// <summary>Migrates legacy top-level properties from ExtensionData into Custom. Call after deserializing old config files.</summary>
-    public void MigrateExtensionDataToCustom()
-    {
-        if (ExtensionData is not { Count: > 0 }) { return; }
-
-        try
-        {
-            switch (LayerType)
-            {
-                case TextLayerType.Oscilloscope:
-                    if (ExtensionData.TryGetValue("Gain", out var g) && g.ValueKind == JsonValueKind.Number)
-                    {
-                        var gain = Math.Clamp(g.GetDouble(), 1.0, 10.0);
-                        SetCustom(new { Gain = gain });
-                    }
-                    break;
-                case TextLayerType.AsciiImage:
-                    {
-                        string? path = null;
-                        if (ExtensionData.TryGetValue("ImageFolderPath", out var p) && p.ValueKind == JsonValueKind.String)
-                        {
-                            path = p.GetString();
-                        }
-                        var movement = AsciiImageMovement.Scroll;
-                        if (ExtensionData.TryGetValue("AsciiImageMovement", out var m))
-                        {
-                            movement = Enum.TryParse<AsciiImageMovement>(m.GetString(), true, out var mv) ? mv : AsciiImageMovement.Scroll;
-                        }
-                        SetCustom(new { ImageFolderPath = path, Movement = movement.ToString() });
-                    }
-                    break;
-                case TextLayerType.LlamaStyle:
-                    {
-                        var dict = new Dictionary<string, object?>
-                        {
-                            ["ShowVolumeBar"] = GetExtensionBool("LlamaStyleShowVolumeBar"),
-                            ["ShowRowLabels"] = GetExtensionBool("LlamaStyleShowRowLabels"),
-                            ["ShowFrequencyLabels"] = GetExtensionBool("LlamaStyleShowFrequencyLabels"),
-                            ["ColorScheme"] = GetExtensionString("LlamaStyleColorScheme") ?? "Winamp",
-                            ["PeakMarkerStyle"] = GetExtensionString("LlamaStylePeakMarkerStyle") ?? "Blocks",
-                            ["BarWidth"] = GetExtensionInt("LlamaStyleBarWidth", 3)
-                        };
-                        Custom = JsonSerializer.SerializeToElement(dict);
-                    }
-                    break;
-            }
-        }
-        finally
-        {
-            _customCache?.Clear();
-            ExtensionData?.Clear();
-            ExtensionData = null;
-        }
-
-        bool GetExtensionBool(string key)
-        {
-            if (!ExtensionData!.TryGetValue(key, out var e)) { return false; }
-            return e.ValueKind == JsonValueKind.True;
-        }
-        string? GetExtensionString(string key)
-        {
-            if (ExtensionData!.TryGetValue(key, out var e) && e.ValueKind == JsonValueKind.String)
-            {
-                return e.GetString();
-            }
-            return null;
-        }
-        int GetExtensionInt(string key, int fallback)
-        {
-            if (ExtensionData!.TryGetValue(key, out var e) && e.ValueKind == JsonValueKind.Number && e.TryGetInt32(out var n))
-            {
-                return Math.Clamp(n, 2, 3);
-            }
-            return fallback;
-        }
     }
 
     /// <summary>Cycles the layer's type to the next value (wraps). Includes None.</summary>

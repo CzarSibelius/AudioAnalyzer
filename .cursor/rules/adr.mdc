@@ -30,3 +30,5 @@ alwaysApply: true
 12. **UI text overflow**: Use ScrollingTextViewport for dynamic text (toolbar, status lines) that may exceed width; use ellipsis truncation (TruncateWithEllipsis or equivalent) for static text (titles, labels). See [ADR-0020](docs/adr/0020-ui-text-components-scrolling-and-ellipsis.md).
 
 13. **Layer dependency injection**: Layers that need external services (e.g. INowPlayingProvider) receive them via constructor injection. Snapshot does not carry service-derived data. Layers are registered in the DI container (AddTextLayerRenderers); TextLayersVisualizer receives IEnumerable&lt;ITextLayerRenderer&gt;. See [ADR-0028](docs/adr/0028-layer-dependency-injection.md).
+
+14. **Settings format changes**: Do not add migration logic for old settings. When schema changes cause incompatibility, backup the file with `{name}.{timestamp}.bak` and create new from defaults. See [ADR-0029](docs/adr/0029-no-settings-migration.md).
