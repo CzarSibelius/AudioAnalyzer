@@ -2,6 +2,6 @@
 
 Technical implementations for audio capture, persistence, and rendering. Connects the application to external systems.
 
-**Contents**: `NAudioAudioInput`, `NAudioDeviceInfo`, `SyntheticAudioInput` (demo mode), `FileSettingsRepository`, `FilePaletteRepository`, `VisualizationPaneLayout`, `ConsoleDisplayDimensions`
+**Contents**: `NAudioAudioInput`, `NAudioDeviceInfo`, `SyntheticAudioInput` (demo mode), `FileSettingsRepository`, `FilePaletteRepository`
 
 **Dependencies**: Application, Domain

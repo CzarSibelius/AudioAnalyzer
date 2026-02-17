@@ -2,8 +2,9 @@ using AudioAnalyzer.Application;
 using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Domain;
 
-namespace AudioAnalyzer.Infrastructure;
+namespace AudioAnalyzer.Console;
 
+/// <summary>Renders the toolbar and visualizer to the console. Implements IVisualizationRenderer.</summary>
 public sealed class VisualizationPaneLayout : IVisualizationRenderer
 {
     private readonly IVisualizer? _visualizer;
@@ -84,8 +85,8 @@ public sealed class VisualizationPaneLayout : IVisualizationRenderer
                     string message = !string.IsNullOrWhiteSpace(ex.Message)
                         ? ex.Message
                         : "Visualization error";
-                    Console.SetCursorPosition(0, visualizerStartRow);
-                    Console.WriteLine(VisualizerViewport.TruncateWithEllipsis(message, viewport.Width));
+                    System.Console.SetCursorPosition(0, visualizerStartRow);
+                    System.Console.WriteLine(VisualizerViewport.TruncateWithEllipsis(message, viewport.Width));
                 }
             }
         }
@@ -128,8 +129,8 @@ public sealed class VisualizationPaneLayout : IVisualizationRenderer
         {
             for (int i = 0; i < lineCount; i++)
             {
-                Console.SetCursorPosition(0, startRow + i);
-                Console.Write(blank);
+                System.Console.SetCursorPosition(0, startRow + i);
+                System.Console.Write(blank);
             }
         }
         catch (Exception ex) { _ = ex; /* Console write failed in ClearRegion */ }
@@ -174,30 +175,30 @@ public sealed class VisualizationPaneLayout : IVisualizationRenderer
 
         try
         {
-            Console.SetCursorPosition(0, row0);
-            Console.Write(snapshot.BeatFlashActive ? AnsiConsole.ToAnsiString(line1, ConsoleColor.Red) : line1);
+            System.Console.SetCursorPosition(0, row0);
+            System.Console.Write(snapshot.BeatFlashActive ? AnsiConsole.ToAnsiString(line1, ConsoleColor.Red) : line1);
             if (toolbarViewport.MaxLines >= 2)
             {
-                Console.SetCursorPosition(0, row0 + 1);
+                System.Console.SetCursorPosition(0, row0 + 1);
                 string toWrite = line2.Contains('\x1b')
                     ? line2
                     : AnsiConsole.ToAnsiString(line2, ConsoleColor.DarkGray);
-                Console.Write(toWrite);
+                System.Console.Write(toWrite);
             }
         }
         catch
         {
             try
             {
-                Console.SetCursorPosition(0, row0);
-                Console.WriteLine(snapshot.BeatFlashActive ? AnsiConsole.ToAnsiString(line1, ConsoleColor.Red) : line1);
+                System.Console.SetCursorPosition(0, row0);
+                System.Console.WriteLine(snapshot.BeatFlashActive ? AnsiConsole.ToAnsiString(line1, ConsoleColor.Red) : line1);
                 if (toolbarViewport.MaxLines >= 2)
                 {
-                    Console.SetCursorPosition(0, row0 + 1);
+                    System.Console.SetCursorPosition(0, row0 + 1);
                     string fallbackWrite = line2.Contains('\x1b')
                         ? line2
                         : AnsiConsole.ToAnsiString(line2, ConsoleColor.DarkGray);
-                    Console.WriteLine(fallbackWrite);
+                    System.Console.WriteLine(fallbackWrite);
                 }
             }
             catch (Exception ex) { _ = ex; /* Toolbar fallback failed: swallow to avoid crash */ }
