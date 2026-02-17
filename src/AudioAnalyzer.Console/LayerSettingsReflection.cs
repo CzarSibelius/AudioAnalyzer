@@ -57,7 +57,7 @@ internal sealed class SettingDescriptor
     }
 
     private static readonly HashSet<string> s_excludedCommonProps =
-        ["Custom", "ExtensionData", "_customCache"];
+        ["Custom", "_customCache"];
 
     private static readonly string[] s_commonPropOrder =
         ["Enabled", "LayerType", "ZOrder", "BeatReaction", "SpeedMultiplier", "ColorIndex", "PaletteId", "TextSnippets"];

@@ -134,7 +134,7 @@ Example `appsettings.json` (presets live in `presets/*.json`):
 }
 ```
 
-Legacy top-level `BeatCircles` (migrated into TextLayers BeatCircles layer enabled state) and `OscilloscopeGain` are still read for backward compatibility and merged into `VisualizerSettings` when loading if the new structure is missing.
+If the settings file is corrupt or incompatible (e.g. invalid JSON), the app backs it up to `appsettings.{timestamp}.bak` (UTC, e.g. `appsettings.2025-02-17T14-30-00.123.bak`) and creates new defaults. You can recover values from the `.bak` file manually if needed — see [ADR-0029](docs/adr/0029-no-settings-migration.md).
 
 ## Notes
 

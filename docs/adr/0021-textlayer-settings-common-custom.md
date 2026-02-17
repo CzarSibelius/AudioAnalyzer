@@ -14,7 +14,7 @@
 
 3. **GetCustom / SetCustom pattern**: `TextLayerSettings` provides `GetCustom<T>()` and `SetCustom<T>()` so layers can deserialize Custom to their typed settings. Layers call `layer.GetCustom<LlamaStyleSettings>() ?? new LlamaStyleSettings()` in Draw; components that mutate settings (e.g. HandleKey for Oscilloscope gain) call `GetCustom`, mutate, then `SetCustom`.
 
-4. **Legacy migration**: `[JsonExtensionData]` captures unknown top-level properties during deserialization (e.g. legacy Gain, LlamaStyle*). `MigrateExtensionDataToCustom()` moves them into Custom based on LayerType. Migration runs in FileSettingsRepository when loading.
+4. **Legacy migration (removed)**: Previously, `[JsonExtensionData]` and `MigrateExtensionDataToCustom()` migrated legacy top-level properties into Custom. Per [ADR-0029](0029-no-settings-migration.md), migration has been removed; incompatible settings are backed up and reset.
 
 5. **ITextLayerRenderer remains untyped**: The interface does not take a generic; layers receive `TextLayerSettings` and resolve their own T via `GetCustom<T>()`.
 
@@ -22,5 +22,5 @@
 
 - **New layers**: Add a *Settings.cs in the layer folder; use `GetCustom<MySettings>()` in Draw. No changes to TextLayerSettings, TextLayersVisualizer, or Program.cs for the common path.
 - **Components that need layer-specific knowledge** (HandleKey for [ ] gain, GetToolbarSuffix, S modal display) still branch on LayerType but read/write via GetCustom/SetCustom.
-- **Persistence**: JSON has a "Custom" object per layer. Legacy configs with top-level Gain, LlamaStyle*, etc. are migrated on load.
+- **Persistence**: JSON has a "Custom" object per layer. Legacy configs with old top-level properties are no longer migrated; per ADR-0029, backup-and-reset applies.
 - **References**: [TextLayerSettings](../../src/AudioAnalyzer.Domain/VisualizerSettings/TextLayerSettings.cs), [ADR-0014](0014-visualizers-as-layers.md), [ADR-0015](0015-visualizer-settings-in-domain.md).

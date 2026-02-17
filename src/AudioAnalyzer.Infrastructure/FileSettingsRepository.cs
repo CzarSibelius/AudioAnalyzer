@@ -38,7 +38,7 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
     public VisualizerSettings LoadVisualizerSettings()
     {
         var file = LoadFile();
-        MergeLegacyVisualizerSettings(file);
+        EnsureVisualizerSettingsStructure(file);
         var vs = file.VisualizerSettings ?? CreateDefaultVisualizerSettings();
         ApplyPresetsFromFiles(vs);
         return vs;
@@ -115,10 +115,31 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
             var json = File.ReadAllText(_settingsPath);
             return JsonSerializer.Deserialize<SettingsFile>(json, s_readOptions) ?? new SettingsFile();
         }
-        catch
+        catch (Exception)
         {
-            return new SettingsFile();
+            return BackupCorruptSettingsAndReset();
         }
+    }
+
+    /// <summary>Backs up corrupt or incompatible settings to {name}.{timestamp}.bak and replaces the file with defaults. Per ADR-0029.</summary>
+    private SettingsFile BackupCorruptSettingsAndReset()
+    {
+        try
+        {
+            var dir = Path.GetDirectoryName(_settingsPath) ?? ".";
+            var baseName = Path.GetFileNameWithoutExtension(_settingsPath);
+            var timestamp = DateTime.UtcNow.ToString("yyyy-MM-ddTHH-mm-ss.fff");
+            var backupPath = Path.Combine(dir, $"{baseName}.{timestamp}.bak");
+            File.Copy(_settingsPath, backupPath, overwrite: false);
+        }
+        catch (Exception ex)
+        {
+            /* Backup failed (e.g. disk full); continue with reset so the app can run */
+            System.Diagnostics.Debug.WriteLine($"Settings backup failed: {ex.Message}");
+        }
+        var file = new SettingsFile();
+        SaveFile(file);
+        return file;
     }
 
     private void SaveFile(SettingsFile file)
@@ -156,230 +177,13 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
         file.SelectedPaletteId = settings.SelectedPaletteId;
     }
 
-    /// <summary>Merges legacy top-level BeatCircles/OscilloscopeGain into VisualizerSettings for backward compatibility. Migrates SelectedPaletteId to per-visualizer PaletteId. Migrates TextLayers to Presets when Presets is empty. Migrates legacy Presets to preset files.</summary>
-    private void MergeLegacyVisualizerSettings(SettingsFile file)
+    /// <summary>Ensures VisualizerSettings exists and TextLayers has at least 9 layers when present. Per ADR-0029, no migration of legacy formats.</summary>
+    private void EnsureVisualizerSettingsStructure(SettingsFile file)
     {
         file.VisualizerSettings ??= new VisualizerSettings();
-
-        if (file.VisualizerSettings.TextLayers is null)
-        {
-            file.VisualizerSettings.TextLayers = CreateDefaultTextLayersSettings();
-            ApplyLegacyBeatCircles(file.VisualizerSettings.TextLayers, file.BeatCircles);
-            ApplyLegacyOscilloscopeGain(file.VisualizerSettings.TextLayers, file.OscilloscopeGain);
-        }
-        else
+        if (file.VisualizerSettings.TextLayers is not null)
         {
             EnsureTextLayersHasNineLayers(file.VisualizerSettings.TextLayers);
-            ApplyLegacyBeatCircles(file.VisualizerSettings.TextLayers, file.BeatCircles);
-            ApplyLegacyOscilloscopeGain(file.VisualizerSettings.TextLayers, file.OscilloscopeGain);
-        }
-
-        MigrateUnknownPleasuresToLayer(file);
-        MigrateSpectrumVuMeterWinampToLayers(file);
-        MigrateTextLayerLegacyPropsToCustom(file);
-        MigrateLegacyPresetsToFiles(file);
-        MigrateToPresets(file);
-
-        var globalPaletteId = file.SelectedPaletteId;
-        if (!string.IsNullOrWhiteSpace(globalPaletteId) && file.VisualizerSettings.TextLayers is not null)
-        {
-            if (string.IsNullOrWhiteSpace(file.VisualizerSettings.TextLayers.PaletteId))
-            {
-                file.VisualizerSettings.TextLayers.PaletteId = globalPaletteId;
-            }
-        }
-
-        SyncTextLayersFromActivePreset(file.VisualizerSettings);
-    }
-
-    /// <summary>Migrates legacy inline Presets to preset files. Clears Presets from in-memory after migration.</summary>
-    private void MigrateLegacyPresetsToFiles(SettingsFile file)
-    {
-        var vs = file.VisualizerSettings;
-        if (vs?.Presets is not { Count: > 0 })
-        {
-            return;
-        }
-
-        var activeId = vs.ActivePresetId;
-        foreach (var preset in vs.Presets)
-        {
-            var id = SanitizePresetId(preset.Id);
-            if (string.IsNullOrEmpty(id))
-            {
-                id = _presetRepo.Create(preset);
-            }
-            else
-            {
-                _presetRepo.Save(id, preset);
-            }
-            if (string.Equals(preset.Id, activeId, StringComparison.OrdinalIgnoreCase))
-            {
-                vs.ActivePresetId = id;
-            }
-        }
-        vs.Presets.Clear();
-    }
-
-    private static string SanitizePresetId(string id)
-    {
-        if (string.IsNullOrWhiteSpace(id))
-        {
-            return "";
-        }
-        var invalid = Path.GetInvalidFileNameChars();
-        if (id.IndexOfAny(invalid) < 0)
-        {
-            return id;
-        }
-        return string.Concat(id.Select(c => Array.IndexOf(invalid, c) >= 0 ? '-' : c));
-    }
-
-    /// <summary>If Presets is empty and no preset files exist, creates one preset file from current TextLayers ("Preset 1").</summary>
-    private void MigrateToPresets(SettingsFile file)
-    {
-        var vs = file.VisualizerSettings;
-        if (vs is null)
-        {
-            return;
-        }
-
-        var all = _presetRepo.GetAll();
-        if (all.Count > 0)
-        {
-            return;
-        }
-
-        var preset = new Preset
-        {
-            Name = "Preset 1",
-            Config = (vs.TextLayers ?? CreateDefaultTextLayersSettings()).DeepCopy()
-        };
-        var createdId = _presetRepo.Create(preset);
-        vs.ActivePresetId = createdId;
-    }
-
-    /// <summary>Migrates legacy top-level layer properties (Gain, LlamaStyle*, etc.) from ExtensionData into Custom on all layers.</summary>
-    private static void MigrateTextLayerLegacyPropsToCustom(SettingsFile file)
-    {
-        var vs = file.VisualizerSettings;
-        if (vs is null) { return; }
-
-        foreach (var layer in vs.TextLayers?.Layers ?? [])
-        {
-            layer.MigrateExtensionDataToCustom();
-        }
-        foreach (var preset in vs.Presets ?? [])
-        {
-            foreach (var layer in preset.Config?.Layers ?? [])
-            {
-                layer.MigrateExtensionDataToCustom();
-            }
-        }
-    }
-
-    /// <summary>Ensures TextLayers is populated from the active preset. When loading, the live buffer gets the preset's saved config.</summary>
-    private static void SyncTextLayersFromActivePreset(VisualizerSettings vs)
-    {
-        if (vs.Presets is not { Count: > 0 })
-        {
-            return;
-        }
-
-        var active = vs.Presets.FirstOrDefault(p => string.Equals(p.Id, vs.ActivePresetId, StringComparison.OrdinalIgnoreCase))
-            ?? vs.Presets[0];
-        vs.ActivePresetId = active.Id;
-        vs.TextLayers ??= new TextLayersVisualizerSettings();
-        vs.TextLayers.CopyFrom(active.Config);
-    }
-
-    /// <summary>Migrates users from standalone Unknown Pleasures mode to TextLayers with an UnknownPleasures layer.</summary>
-    private static void MigrateUnknownPleasuresToLayer(SettingsFile file)
-    {
-        if (!string.Equals(file.VisualizationMode, "unknownpleasures", StringComparison.OrdinalIgnoreCase))
-        {
-            return;
-        }
-
-        file.VisualizationMode = "textlayers";
-
-        var textLayers = file.VisualizerSettings?.TextLayers;
-        if (textLayers is null)
-        {
-            return;
-        }
-
-        var paletteId = textLayers.PaletteId ?? "";
-
-        textLayers.Layers ??= new List<TextLayerSettings>();
-        int maxZ = textLayers.Layers.Count > 0 ? textLayers.Layers.Max(l => l.ZOrder) : -1;
-        textLayers.Layers.Insert(0, new TextLayerSettings
-        {
-            LayerType = TextLayerType.UnknownPleasures,
-            ZOrder = maxZ + 1,
-            Enabled = true,
-            PaletteId = paletteId,
-            BeatReaction = TextLayerBeatReaction.None,
-            SpeedMultiplier = 1.0
-        });
-    }
-
-    /// <summary>Migrates users from standalone spectrum/vumeter/winamp mode to TextLayers with the corresponding layer.</summary>
-    private static void MigrateSpectrumVuMeterWinampToLayers(SettingsFile file)
-    {
-        var legacyMode = file.VisualizationMode ?? "";
-        if (!string.Equals(legacyMode, "spectrum", StringComparison.OrdinalIgnoreCase) &&
-            !string.Equals(legacyMode, "vumeter", StringComparison.OrdinalIgnoreCase) &&
-            !string.Equals(legacyMode, "winamp", StringComparison.OrdinalIgnoreCase))
-        {
-            return;
-        }
-
-        file.VisualizationMode = "textlayers";
-
-        var textLayers = file.VisualizerSettings?.TextLayers;
-        if (textLayers is null)
-        {
-            return;
-        }
-
-        textLayers.Layers ??= new List<TextLayerSettings>();
-        int maxZ = textLayers.Layers.Count > 0 ? textLayers.Layers.Max(l => l.ZOrder) : -1;
-
-        if (string.Equals(legacyMode, "vumeter", StringComparison.OrdinalIgnoreCase))
-        {
-            textLayers.Layers.Add(new TextLayerSettings
-            {
-                LayerType = TextLayerType.VuMeter,
-                ZOrder = maxZ + 1,
-                Enabled = true,
-                BeatReaction = TextLayerBeatReaction.None,
-                SpeedMultiplier = 1.0
-            });
-        }
-        else if (string.Equals(legacyMode, "spectrum", StringComparison.OrdinalIgnoreCase))
-        {
-            var layer = new TextLayerSettings
-            {
-                LayerType = TextLayerType.LlamaStyle,
-                ZOrder = maxZ + 1,
-                Enabled = true,
-                BeatReaction = TextLayerBeatReaction.None,
-                SpeedMultiplier = 1.0
-            };
-            layer.SetCustom(new { ShowVolumeBar = true, ShowRowLabels = true, ShowFrequencyLabels = true, ColorScheme = "Spectrum", PeakMarkerStyle = "DoubleLine", BarWidth = 2 });
-            textLayers.Layers.Add(layer);
-        }
-        else if (string.Equals(legacyMode, "winamp", StringComparison.OrdinalIgnoreCase))
-        {
-            textLayers.Layers.Add(new TextLayerSettings
-            {
-                LayerType = TextLayerType.LlamaStyle,
-                ZOrder = maxZ + 1,
-                Enabled = true,
-                BeatReaction = TextLayerBeatReaction.None,
-                SpeedMultiplier = 1.0
-            });
         }
     }
 
@@ -417,50 +221,6 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
             new() { LayerType = TextLayerType.StaticText, ZOrder = 8, TextSnippets = ["Top"], BeatReaction = TextLayerBeatReaction.Pulse }
         };
         return new TextLayersVisualizerSettings { Layers = layers };
-    }
-
-    /// <summary>Applies legacy OscilloscopeGain to the first Oscilloscope layer in TextLayers. If none exists and legacy gain differs from default, adds an Oscilloscope layer.</summary>
-    private static void ApplyLegacyOscilloscopeGain(TextLayersVisualizerSettings textLayers, double legacyGain)
-    {
-        textLayers.Layers ??= new List<TextLayerSettings>();
-        var firstOsc = textLayers.Layers.FirstOrDefault(l => l.LayerType == TextLayerType.Oscilloscope);
-        if (firstOsc != null)
-        {
-            firstOsc.SetCustom(new { Gain = Math.Clamp(legacyGain, 1.0, 10.0) });
-        }
-        else if (Math.Abs(legacyGain - 2.5) > 0.01)
-        {
-            int maxZ = textLayers.Layers.Count > 0 ? textLayers.Layers.Max(l => l.ZOrder) : -1;
-            var layer = new TextLayerSettings
-            {
-                LayerType = TextLayerType.Oscilloscope,
-                ZOrder = maxZ + 1,
-                BeatReaction = TextLayerBeatReaction.None,
-                SpeedMultiplier = 1.0
-            };
-            layer.SetCustom(new { Gain = Math.Clamp(legacyGain, 1.0, 10.0) });
-            textLayers.Layers.Add(layer);
-        }
-    }
-
-    /// <summary>Applies legacy BeatCircles setting to TextLayers. When file.BeatCircles is false, disables BeatCircles layers.</summary>
-    private static void ApplyLegacyBeatCircles(TextLayersVisualizerSettings textLayers, bool legacyBeatCircles)
-    {
-        if (legacyBeatCircles)
-        {
-            return;
-        }
-        if (textLayers.Layers is null)
-        {
-            return;
-        }
-        foreach (var layer in textLayers.Layers)
-        {
-            if (layer.LayerType == TextLayerType.BeatCircles)
-            {
-                layer.Enabled = false;
-            }
-        }
     }
 
     /// <summary>Ensures TextLayers has at least 9 layers so keys 1–9 always map to a layer. Pads with default layers if fewer.</summary>
