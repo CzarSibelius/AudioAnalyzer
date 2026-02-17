@@ -5,7 +5,7 @@ using Windows.Media.Control;
 namespace AudioAnalyzer.Platform.Windows.NowPlaying;
 
 /// <summary>Now-playing provider using Windows GSMTC (Global System Media Transport Controls).</summary>
-[SupportedOSPlatform("windows")]
+[SupportedOSPlatform("windows10.0.17763.0")]
 public sealed class WindowsNowPlayingProvider : INowPlayingProvider, IDisposable
 {
     private readonly object _lock = new();

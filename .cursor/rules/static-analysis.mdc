@@ -11,6 +11,8 @@ After making code changes, check linter diagnostics for the modified files (use 
 - **Fix all reported errors.**
 - **Fix warnings** unless the rule is explicitly disabled for that line (e.g. pragma or editorconfig).
 
-Code style rules enforced at build time include: empty catch blocks (RCS1075), one file per class (RCS1060), and braces for control flow (IDE0011). See `.editorconfig` and `.cursor/rules/csharp-standards.mdc`.
+**Before completing C# changes:** Run `dotnet build .\AudioAnalyzer.sln`. The build must succeed with **0 warnings**. Fix any new analyzer warnings (CA*, IDE*, RCS*, MSB*) before marking work done.
+
+Code style rules enforced at build time include: empty catch blocks (RCS1075), one file per class (RCS1060), braces for control flow (IDE0011), locale-invariant APIs (CA1305), platform compatibility (CA1416), and static members where applicable (CA1822). See `.editorconfig` and `.cursor/rules/csharp-standards.mdc`.
 
 Do not complete code edits without addressing any linter errors in the files you changed.

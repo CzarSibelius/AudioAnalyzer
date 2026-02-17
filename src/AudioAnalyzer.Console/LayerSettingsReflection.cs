@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Reflection;
 using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Domain;
@@ -74,7 +75,7 @@ internal sealed class SettingDescriptor
 
         foreach (var propName in s_commonPropOrder)
         {
-            if (!props.TryGetValue(propName, out var prop)) continue;
+            if (!props.TryGetValue(propName, out var prop)) { continue; }
 
             if (propName == "LayerType") { AddLayerTypeDescriptor(list); continue; }
             if (propName == "TextSnippets") { AddSnippetsDescriptor(list); continue; }
@@ -111,7 +112,7 @@ internal sealed class SettingDescriptor
             (l, f) =>
             {
                 var palettes = paletteRepo.GetAll();
-                if (palettes.Count == 0) return;
+                if (palettes.Count == 0) { return; }
                 var currentId = l.PaletteId ?? "";
                 int pi = 0;
                 for (int i = 0; i < palettes.Count; i++)
@@ -168,24 +169,34 @@ internal sealed class SettingDescriptor
     private static SettingEditMode DeriveEditMode(Type propType, PropertyInfo prop)
     {
         if (prop.GetCustomAttribute<SettingChoicesAttribute>() != null)
+        {
             return SettingEditMode.Cycle;
+        }
         if (propType == typeof(bool) || propType.IsEnum)
+        {
             return SettingEditMode.Cycle;
+        }
         if (propType == typeof(int) || propType == typeof(double))
+        {
             return SettingEditMode.Cycle;
+        }
         if (propType == typeof(List<string>) || propType == typeof(IList<string>))
+        {
             return SettingEditMode.TextEdit;
+        }
         return SettingEditMode.TextEdit;
     }
 
     private static string PascalToLabel(string name)
     {
-        if (string.IsNullOrEmpty(name)) return name;
+        if (string.IsNullOrEmpty(name)) { return name; }
         var sb = new System.Text.StringBuilder();
         for (int i = 0; i < name.Length; i++)
         {
             if (i > 0 && char.IsUpper(name[i]))
+            {
                 sb.Append(' ');
+            }
             sb.Append(i == 0 ? char.ToUpperInvariant(name[i]) : char.ToLowerInvariant(name[i]));
         }
         return sb.ToString();
@@ -196,8 +207,8 @@ internal sealed class SettingDescriptor
         return l =>
         {
             var v = prop.GetValue(l);
-            if (v == null) return "(none)";
-            if (prop.PropertyType == typeof(double)) return ((double)v).ToString("F1");
+            if (v == null) { return "(none)"; }
+            if (prop.PropertyType == typeof(double)) { return ((double)v).ToString("F1", CultureInfo.InvariantCulture); }
             return v.ToString() ?? "";
         };
     }
@@ -209,10 +220,10 @@ internal sealed class SettingDescriptor
             switch (propName)
             {
                 case "Enabled": l.Enabled = bool.Parse(v); break;
-                case "ZOrder": l.ZOrder = Math.Clamp(int.Parse(v), 0, 8); break;
+                case "ZOrder": l.ZOrder = Math.Clamp(int.Parse(v, CultureInfo.InvariantCulture), 0, 8); break;
                 case "BeatReaction": l.BeatReaction = Enum.Parse<TextLayerBeatReaction>(v); break;
-                case "SpeedMultiplier": l.SpeedMultiplier = Math.Clamp(double.Parse(v), 0.1, 3.0); break;
-                case "ColorIndex": l.ColorIndex = Math.Clamp(int.Parse(v), 0, 99); break;
+                case "SpeedMultiplier": l.SpeedMultiplier = Math.Clamp(double.Parse(v, CultureInfo.InvariantCulture), 0.1, 3.0); break;
+                case "ColorIndex": l.ColorIndex = Math.Clamp(int.Parse(v, CultureInfo.InvariantCulture), 0, 99); break;
             }
         };
     }
@@ -245,10 +256,10 @@ internal sealed class SettingDescriptor
         return l =>
         {
             var obj = InvokeGetCustom(l, customType);
-            if (obj == null) return "(none)";
+            if (obj == null) { return "(none)"; }
             var v = prop.GetValue(obj);
-            if (v == null) return "(none)";
-            if (prop.PropertyType == typeof(double)) return ((double)v).ToString("F1");
+            if (v == null) { return "(none)"; }
+            if (prop.PropertyType == typeof(double)) { return ((double)v).ToString("F1", CultureInfo.InvariantCulture); }
             return v.ToString() ?? "";
         };
     }
@@ -259,7 +270,7 @@ internal sealed class SettingDescriptor
         return (l, v) =>
         {
             var obj = InvokeGetCustom(l, customType) ?? Activator.CreateInstance(customType);
-            if (obj == null) return;
+            if (obj == null) { return; }
             object? parsed;
             if (prop.PropertyType == typeof(string))
             {
@@ -283,7 +294,7 @@ internal sealed class SettingDescriptor
         return (l, f) =>
         {
             var obj = InvokeGetCustom(l, customType) ?? Activator.CreateInstance(customType);
-            if (obj == null) return;
+            if (obj == null) { return; }
             var current = prop.GetValue(obj);
             object? next = null;
             if (propType == typeof(bool))
@@ -301,7 +312,7 @@ internal sealed class SettingDescriptor
             {
                 var arr = choices.Choices;
                 var i = Array.IndexOf(arr, (string?)current);
-                if (i < 0) i = 0;
+                if (i < 0) { i = 0; }
                 i = f ? (i + 1) % arr.Length : (i - 1 + arr.Length) % arr.Length;
                 next = arr[i];
             }
@@ -321,22 +332,22 @@ internal sealed class SettingDescriptor
 
     private static object? ParseValue(Type targetType, string value, SettingRangeAttribute? range)
     {
-        if (targetType == typeof(string)) return value;
-        if (targetType == typeof(bool)) return bool.Parse(value);
+        if (targetType == typeof(string)) { return value; }
+        if (targetType == typeof(bool)) { return bool.Parse(value); }
         if (targetType == typeof(int))
         {
-            var n = int.Parse(value);
-            if (range != null) n = (int)Math.Clamp(n, range.Min, range.Max);
+            var n = int.Parse(value, CultureInfo.InvariantCulture);
+            if (range != null) { n = (int)Math.Clamp(n, range.Min, range.Max); }
             return n;
         }
         if (targetType == typeof(double))
         {
-            var d = double.Parse(value);
-            if (range != null) d = Math.Clamp(d, range.Min, range.Max);
+            var d = double.Parse(value, CultureInfo.InvariantCulture);
+            if (range != null) { d = Math.Clamp(d, range.Min, range.Max); }
             return d;
         }
-        if (targetType.IsEnum) return Enum.Parse(targetType, value, true);
-        return Convert.ChangeType(value, targetType);
+        if (targetType.IsEnum) { return Enum.Parse(targetType, value, true); }
+        return Convert.ChangeType(value, targetType, CultureInfo.InvariantCulture);
     }
 
     private static object? InvokeGetCustom(TextLayerSettings layer, Type customType)

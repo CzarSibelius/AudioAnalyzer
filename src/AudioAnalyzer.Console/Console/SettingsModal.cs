@@ -274,7 +274,7 @@ internal static class SettingsModal
                     focus = SettingsModalFocus.SettingsList;
                     return false;
                 }
-                if (row.EditMode == SettingEditMode.TextEdit && key.Key == ConsoleKey.Backspace) { if (editingBuffer.Length > 0) editingBuffer = editingBuffer[..^1]; return false; }
+                if (row.EditMode == SettingEditMode.TextEdit && key.Key == ConsoleKey.Backspace) { if (editingBuffer.Length > 0) { editingBuffer = editingBuffer[..^1]; } return false; }
                 if (row.EditMode == SettingEditMode.TextEdit && key.KeyChar is >= ' ' and <= '~') { editingBuffer += key.KeyChar; return false; }
 
                 if (row.EditMode == SettingEditMode.Cycle && (key.Key == ConsoleKey.LeftArrow || key.Key == ConsoleKey.RightArrow || key.Key == ConsoleKey.Enter))
@@ -318,7 +318,7 @@ internal static class SettingsModal
 
             if (focus == SettingsModalFocus.LayerList)
             {
-                if (key.Key == ConsoleKey.Escape) return true;
+                if (key.Key == ConsoleKey.Escape) { return true; }
                 if (key.Key == ConsoleKey.Enter && selectedLayer != null)
                 {
                     focus = SettingsModalFocus.SettingsList;
@@ -349,7 +349,7 @@ internal static class SettingsModal
                     }
                     return false;
                 }
-                if (key.Key == ConsoleKey.Backspace && renaming) { if (renameBuffer.Length > 0) renameBuffer = renameBuffer[..^1]; return false; }
+                if (key.Key == ConsoleKey.Backspace && renaming) { if (renameBuffer.Length > 0) { renameBuffer = renameBuffer[..^1]; } return false; }
                 if (key.Key == ConsoleKey.N)
                 {
                     var newPreset = new Preset { Name = $"Preset {visualizerSettings.Presets?.Count + 1 ?? 1}", Config = textLayers.DeepCopy() };
