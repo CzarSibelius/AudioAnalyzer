@@ -366,7 +366,9 @@ static void RunModal(Action drawContent, Func<ConsoleKeyInfo, bool> handleKey, A
 // Overlay modal: does NOT clear the whole screen; draws only into the top overlayRowCount rows.
 // Leaves the visualizer area visible below. Same lifecycle as RunModal (onEnter, onClose).
 // consoleLock: when set, acquired during clear+draw so overlay and engine render don't interleave on the console.
-static void RunOverlayModal(int overlayRowCount, Action drawContent, Func<ConsoleKeyInfo, bool> handleKey, object? consoleLock = null, Action? onClose = null, Action? onEnter = null)
+// onScrollTick: when set, called on each poll when no key is available instead of full redraw; use for auto-scrolling
+// content (e.g. help line) to avoid flickering the rest of the overlay.
+static void RunOverlayModal(int overlayRowCount, Action drawContent, Func<ConsoleKeyInfo, bool> handleKey, object? consoleLock = null, Action? onClose = null, Action? onEnter = null, Action? onScrollTick = null)
 {
     Console.CursorVisible = false;
     onEnter?.Invoke();
@@ -388,23 +390,40 @@ static void RunOverlayModal(int overlayRowCount, Action drawContent, Func<Consol
             drawContent();
         }
 
-        if (consoleLock != null)
+        if (Console.KeyAvailable)
         {
-            lock (consoleLock)
+            if (consoleLock != null)
+            {
+                lock (consoleLock)
+                {
+                    ClearAndDraw();
+                }
+            }
+            else
             {
                 ClearAndDraw();
             }
+            var key = Console.ReadKey(true);
+            if (handleKey(key))
+            {
+                break;
+            }
         }
-        else
+        else if (onScrollTick != null)
         {
-            ClearAndDraw();
+            if (consoleLock != null)
+            {
+                lock (consoleLock)
+                {
+                    onScrollTick();
+                }
+            }
+            else
+            {
+                onScrollTick();
+            }
         }
-
-        var key = Console.ReadKey(true);
-        if (handleKey(key))
-        {
-            break;
-        }
+        Thread.Sleep(50);
     }
     onClose?.Invoke();
 }
@@ -620,43 +639,37 @@ static void ShowTextLayersSettingsModal(AnalysisEngine analysisEngine, Visualize
     const int LeftColWidth = 28;
     int width = GetConsoleWidth();
     int rightColWidth = Math.Max(10, width - LeftColWidth - 3);
+    ScrollingTextViewportState settingsHintScrollState = default;
+    string? settingsHintLastText = null;
 
-    IReadOnlyList<(string Id, string Label, string DisplayValue)> GetSettingsRows(TextLayerSettings? layer)
+    IReadOnlyList<(string Id, string Label, string DisplayValue, SettingEditMode EditMode)> GetSettingsRows(TextLayerSettings? layer)
     {
         if (layer == null) { return []; }
-        var rows = new List<(string Id, string Label, string DisplayValue)>
+        var descriptors = SettingDescriptor.BuildAll(layer, paletteRepo);
+        return descriptors.Select(d => (d.Id, d.Label, d.GetDisplayValue(layer), d.EditMode)).ToList();
+    }
+
+    void DrawHintLineOnly()
+    {
+        if (width < 40) { return; }
+        string hint = renaming ? "  Type new name, Enter to save, Esc to cancel"
+            : focus == SettingsModalFocus.EditingSetting ? "  Type value, Enter or \u2191\u2193 confirm, Esc cancel"
+            : focus == SettingsModalFocus.SettingsList ? "  \u2191\u2193 select, Enter or +/- cycle, Enter edit strings, \u2190 or Esc back"
+            : "  1-9 select, \u2190\u2192 type, Enter settings, Shift+1-9 toggle, R rename, N preset, Esc close";
+        if (hint != settingsHintLastText)
         {
-            ("Enabled", "Enabled", layer.Enabled.ToString()),
-            ("LayerType", "Layer type", layer.LayerType.ToString()),
-            ("ZOrder", "Z order", layer.ZOrder.ToString()),
-            ("BeatReaction", "Beat reaction", layer.BeatReaction.ToString()),
-            ("Speed", "Speed", layer.SpeedMultiplier.ToString("F1")),
-            ("ColorIndex", "Color index", layer.ColorIndex.ToString()),
-            ("Palette", "Palette", layer.PaletteId ?? "(inherit)"),
-            ("Snippets", "Snippets", layer.TextSnippets is { Count: > 0 } ? string.Join(", ", layer.TextSnippets.Take(4)) + (layer.TextSnippets.Count > 4 ? "..." : "") : "(none)")
-        };
-        if (layer.LayerType == TextLayerType.AsciiImage)
-        {
-            var ascii = layer.GetCustom<AsciiImageSettings>() ?? new AsciiImageSettings();
-            rows.Add(("ImagePath", "Image path", ascii.ImageFolderPath ?? "(none)"));
-            rows.Add(("AsciiMovement", "Movement", ascii.Movement.ToString()));
+            settingsHintScrollState.Reset();
+            settingsHintLastText = hint;
         }
-        else if (layer.LayerType == TextLayerType.Oscilloscope)
+        string hintLine = hint.Length > width
+            ? ScrollingTextViewport.Render(hint, width, ref settingsHintScrollState, 0.25)
+            : hint.PadRight(width);
+        try
         {
-            var osc = layer.GetCustom<OscilloscopeSettings>() ?? new OscilloscopeSettings();
-            rows.Add(("Gain", "Gain", osc.Gain.ToString("F1")));
+            Console.SetCursorPosition(0, 3);
+            Console.Write(hintLine);
         }
-        else if (layer.LayerType == TextLayerType.LlamaStyle)
-        {
-            var llama = layer.GetCustom<LlamaStyleSettings>() ?? new LlamaStyleSettings();
-            rows.Add(("ShowVolumeBar", "Show volume bar", llama.ShowVolumeBar.ToString()));
-            rows.Add(("ShowRowLabels", "Show row labels", llama.ShowRowLabels.ToString()));
-            rows.Add(("ShowFreqLabels", "Show freq labels", llama.ShowFrequencyLabels.ToString()));
-            rows.Add(("ColorScheme", "Color scheme", llama.ColorScheme));
-            rows.Add(("PeakMarkerStyle", "Peak marker", llama.PeakMarkerStyle));
-            rows.Add(("BarWidth", "Bar width", llama.BarWidth.ToString()));
-        }
-        return rows;
+        catch (Exception ex) { _ = ex; /* Console write failed in hint line */ }
     }
 
     void DrawSettingsContent()
@@ -697,7 +710,15 @@ static void ShowTextLayersSettingsModal(AnalysisEngine analysisEngine, Visualize
                 : focus == SettingsModalFocus.EditingSetting ? "  Type value, Enter or \u2191\u2193 confirm, Esc cancel"
                 : focus == SettingsModalFocus.SettingsList ? "  \u2191\u2193 select, Enter or +/- cycle, Enter edit strings, \u2190 or Esc back"
                 : "  1-9 select, \u2190\u2192 type, Enter settings, Shift+1-9 toggle, R rename, N preset, Esc close";
-            Console.Write(VisualizerViewport.TruncateWithEllipsis(hint, width).PadRight(width));
+            if (hint != settingsHintLastText)
+            {
+                settingsHintScrollState.Reset();
+                settingsHintLastText = hint;
+            }
+            string hintLine = hint.Length > width
+                ? ScrollingTextViewport.Render(hint, width, ref settingsHintScrollState, 0.25)
+                : hint.PadRight(width);
+            Console.Write(hintLine);
             Console.SetCursorPosition(0, 4);
             Console.Write(VisualizerViewport.TruncateToWidth("  ─" + new string('─', LeftColWidth - 2) + "┬" + new string('─', rightColWidth) + "─", width).PadRight(width));
 
@@ -743,7 +764,7 @@ static void ShowTextLayersSettingsModal(AnalysisEngine analysisEngine, Visualize
                 for (int i = 0; i < settingsRows.Count && (5 + i) < TextLayersSettingsOverlayRows; i++)
                 {
                     var row = settingsRows[i];
-                    bool showBuffer = focus == SettingsModalFocus.EditingSetting && i == selectedSettingIndex && (row.Id == "Snippets" || row.Id == "ImagePath");
+                    bool showBuffer = focus == SettingsModalFocus.EditingSetting && i == selectedSettingIndex && row.EditMode == SettingEditMode.TextEdit;
                     string lineText = $"{row.Label}: {(showBuffer ? editingBuffer + "_" : row.DisplayValue)}";
                     string line = VisualizerViewport.TruncateWithEllipsis(lineText, rightColWidth);
                     Console.SetCursorPosition(LeftColWidth + 3, 5 + i);
@@ -768,131 +789,17 @@ static void ShowTextLayersSettingsModal(AnalysisEngine analysisEngine, Visualize
 
     void ApplySettingEdit(TextLayerSettings layer, string settingId, string value)
     {
-        switch (settingId)
-        {
-            case "Enabled": layer.Enabled = bool.Parse(value); break;
-            case "ZOrder": layer.ZOrder = Math.Clamp(int.Parse(value), 0, 8); break;
-            case "BeatReaction": layer.BeatReaction = Enum.Parse<TextLayerBeatReaction>(value); break;
-            case "Speed": layer.SpeedMultiplier = Math.Clamp(double.Parse(value), 0.1, 3.0); break;
-            case "ColorIndex": layer.ColorIndex = Math.Clamp(int.Parse(value), 0, 99); break;
-            case "Palette": layer.PaletteId = string.IsNullOrWhiteSpace(value) || value == "(inherit)" ? null : value; break;
-            case "Snippets":
-                layer.TextSnippets = value.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
-                break;
-            case "ImagePath":
-                var asciiPath = layer.GetCustom<AsciiImageSettings>() ?? new AsciiImageSettings();
-                asciiPath.ImageFolderPath = string.IsNullOrWhiteSpace(value) || value == "(none)" ? null : value;
-                layer.SetCustom(asciiPath);
-                break;
-            case "AsciiMovement":
-                var asciiMov = layer.GetCustom<AsciiImageSettings>() ?? new AsciiImageSettings();
-                asciiMov.Movement = Enum.Parse<AsciiImageMovement>(value);
-                layer.SetCustom(asciiMov);
-                break;
-            case "Gain":
-                var osc = layer.GetCustom<OscilloscopeSettings>() ?? new OscilloscopeSettings();
-                osc.Gain = Math.Clamp(double.Parse(value), 1.0, 10.0);
-                layer.SetCustom(osc);
-                break;
-            case "ShowVolumeBar":
-                var llamaV = layer.GetCustom<LlamaStyleSettings>() ?? new LlamaStyleSettings();
-                llamaV.ShowVolumeBar = bool.Parse(value);
-                layer.SetCustom(llamaV);
-                break;
-            case "ShowRowLabels":
-                var llamaR = layer.GetCustom<LlamaStyleSettings>() ?? new LlamaStyleSettings();
-                llamaR.ShowRowLabels = bool.Parse(value);
-                layer.SetCustom(llamaR);
-                break;
-            case "ShowFreqLabels":
-                var llamaF = layer.GetCustom<LlamaStyleSettings>() ?? new LlamaStyleSettings();
-                llamaF.ShowFrequencyLabels = bool.Parse(value);
-                layer.SetCustom(llamaF);
-                break;
-            case "ColorScheme":
-                var llamaC = layer.GetCustom<LlamaStyleSettings>() ?? new LlamaStyleSettings();
-                llamaC.ColorScheme = value;
-                layer.SetCustom(llamaC);
-                break;
-            case "PeakMarkerStyle":
-                var llamaP = layer.GetCustom<LlamaStyleSettings>() ?? new LlamaStyleSettings();
-                llamaP.PeakMarkerStyle = value;
-                layer.SetCustom(llamaP);
-                break;
-            case "BarWidth":
-                var llamaB = layer.GetCustom<LlamaStyleSettings>() ?? new LlamaStyleSettings();
-                llamaB.BarWidth = Math.Clamp(int.Parse(value), 2, 3);
-                layer.SetCustom(llamaB);
-                break;
-        }
+        var descriptors = SettingDescriptor.BuildAll(layer, paletteRepo);
+        var d = descriptors.FirstOrDefault(x => x.Id == settingId);
+        d?.ApplyEdit(layer, value);
     }
 
     void CycleSetting(TextLayerSettings layer, string id, bool forward)
     {
-        switch (id)
-        {
-            case "Enabled": layer.Enabled = !layer.Enabled; break;
-            case "LayerType": layer.LayerType = forward ? TextLayerSettings.CycleTypeForward(layer) : TextLayerSettings.CycleTypeBackward(layer); break;
-            case "ZOrder": layer.ZOrder = forward ? Math.Min(8, layer.ZOrder + 1) : Math.Max(0, layer.ZOrder - 1); break;
-            case "BeatReaction":
-                var beatValues = Enum.GetValues<TextLayerBeatReaction>();
-                var bi = Array.IndexOf(beatValues, layer.BeatReaction);
-                layer.BeatReaction = beatValues[forward ? (bi + 1) % beatValues.Length : (bi - 1 + beatValues.Length) % beatValues.Length];
-                break;
-            case "Speed": layer.SpeedMultiplier = forward ? Math.Min(3.0, layer.SpeedMultiplier + 0.1) : Math.Max(0.1, layer.SpeedMultiplier - 0.1); break;
-            case "ColorIndex": layer.ColorIndex = forward ? Math.Min(99, layer.ColorIndex + 1) : Math.Max(0, layer.ColorIndex - 1); break;
-            case "Palette":
-                var palettes = paletteRepo.GetAll();
-                if (palettes.Count > 0)
-                {
-                    var currentId = layer.PaletteId ?? "";
-                    int pi = 0;
-                    for (int i = 0; i < palettes.Count; i++) { if (string.Equals(palettes[i].Id, currentId, StringComparison.OrdinalIgnoreCase)) { pi = i; break; } }
-                    pi = forward ? (pi + 1) % palettes.Count : (pi - 1 + palettes.Count) % palettes.Count;
-                    layer.PaletteId = palettes[pi].Id;
-                }
-                break;
-            case "AsciiMovement":
-                var movValues = Enum.GetValues<AsciiImageMovement>();
-                var asciiM = layer.GetCustom<AsciiImageSettings>() ?? new AsciiImageSettings();
-                var mi = Array.IndexOf(movValues, asciiM.Movement);
-                mi = forward ? (mi + 1) % movValues.Length : (mi - 1 + movValues.Length) % movValues.Length;
-                asciiM.Movement = movValues[mi];
-                layer.SetCustom(asciiM);
-                break;
-            case "Gain":
-                var oscG = layer.GetCustom<OscilloscopeSettings>() ?? new OscilloscopeSettings();
-                oscG.Gain = forward ? Math.Min(10.0, oscG.Gain + 0.5) : Math.Max(1.0, oscG.Gain - 0.5);
-                layer.SetCustom(oscG);
-                break;
-            case "ShowVolumeBar":
-            case "ShowRowLabels":
-            case "ShowFreqLabels":
-                var llama = layer.GetCustom<LlamaStyleSettings>() ?? new LlamaStyleSettings();
-                if (id == "ShowVolumeBar") llama.ShowVolumeBar = !llama.ShowVolumeBar;
-                if (id == "ShowRowLabels") llama.ShowRowLabels = !llama.ShowRowLabels;
-                if (id == "ShowFreqLabels") llama.ShowFrequencyLabels = !llama.ShowFrequencyLabels;
-                layer.SetCustom(llama);
-                break;
-            case "ColorScheme":
-                var llamaCs = layer.GetCustom<LlamaStyleSettings>() ?? new LlamaStyleSettings();
-                llamaCs.ColorScheme = llamaCs.ColorScheme == "Winamp" ? "Spectrum" : "Winamp";
-                layer.SetCustom(llamaCs);
-                break;
-            case "PeakMarkerStyle":
-                var llamaPm = layer.GetCustom<LlamaStyleSettings>() ?? new LlamaStyleSettings();
-                llamaPm.PeakMarkerStyle = llamaPm.PeakMarkerStyle == "Blocks" ? "DoubleLine" : "Blocks";
-                layer.SetCustom(llamaPm);
-                break;
-            case "BarWidth":
-                var llamaBw = layer.GetCustom<LlamaStyleSettings>() ?? new LlamaStyleSettings();
-                llamaBw.BarWidth = llamaBw.BarWidth == 2 ? 3 : 2;
-                layer.SetCustom(llamaBw);
-                break;
-        }
+        var descriptors = SettingDescriptor.BuildAll(layer, paletteRepo);
+        var d = descriptors.FirstOrDefault(x => x.Id == id);
+        d?.Cycle(layer, forward);
     }
-
-    static bool IsCycleableSetting(string id) => id is not "Snippets" and not "ImagePath";
 
     int DigitFromKey(ConsoleKey key)
     {
@@ -947,7 +854,7 @@ static void ShowTextLayersSettingsModal(AnalysisEngine analysisEngine, Visualize
         {
             var row = settingsRows[selectedSettingIndex];
             if (key.Key == ConsoleKey.Escape) { focus = SettingsModalFocus.SettingsList; return false; }
-            if ((row.Id == "Snippets" || row.Id == "ImagePath") &&
+            if (row.EditMode == SettingEditMode.TextEdit &&
                 (key.Key == ConsoleKey.Enter || key.Key == ConsoleKey.UpArrow || key.Key == ConsoleKey.DownArrow))
             {
                 ApplySettingEdit(selectedLayer, row.Id, editingBuffer);
@@ -955,109 +862,15 @@ static void ShowTextLayersSettingsModal(AnalysisEngine analysisEngine, Visualize
                 focus = SettingsModalFocus.SettingsList;
                 return false;
             }
-            if ((row.Id == "Snippets" || row.Id == "ImagePath") && key.Key == ConsoleKey.Backspace) { if (editingBuffer.Length > 0) editingBuffer = editingBuffer[..^1]; return false; }
-            if ((row.Id == "Snippets" || row.Id == "ImagePath") && key.KeyChar is >= ' ' and <= '~') { editingBuffer += key.KeyChar; return false; }
+            if (row.EditMode == SettingEditMode.TextEdit && key.Key == ConsoleKey.Backspace) { if (editingBuffer.Length > 0) editingBuffer = editingBuffer[..^1]; return false; }
+            if (row.EditMode == SettingEditMode.TextEdit && key.KeyChar is >= ' ' and <= '~') { editingBuffer += key.KeyChar; return false; }
 
-            switch (row.Id)
+            if (row.EditMode == SettingEditMode.Cycle && (key.Key == ConsoleKey.LeftArrow || key.Key == ConsoleKey.RightArrow || key.Key == ConsoleKey.Enter))
             {
-                case "Enabled":
-                    if (key.Key == ConsoleKey.LeftArrow || key.Key == ConsoleKey.RightArrow || key.Key == ConsoleKey.Enter)
-                    {
-                        selectedLayer.Enabled = !selectedLayer.Enabled;
-                        saveSettings();
-                        focus = SettingsModalFocus.SettingsList;
-                    }
-                    return false;
-                case "LayerType":
-                    if (key.Key == ConsoleKey.LeftArrow) { selectedLayer.LayerType = TextLayerSettings.CycleTypeBackward(selectedLayer); saveSettings(); }
-                    if (key.Key == ConsoleKey.RightArrow) { selectedLayer.LayerType = TextLayerSettings.CycleTypeForward(selectedLayer); saveSettings(); }
-                    return false;
-                case "ZOrder":
-                    if (key.Key == ConsoleKey.LeftArrow) { selectedLayer.ZOrder = Math.Max(0, selectedLayer.ZOrder - 1); saveSettings(); }
-                    if (key.Key == ConsoleKey.RightArrow) { selectedLayer.ZOrder = Math.Min(8, selectedLayer.ZOrder + 1); saveSettings(); }
-                    return false;
-                case "BeatReaction":
-                    var beatValues = Enum.GetValues<TextLayerBeatReaction>();
-                    if (key.Key == ConsoleKey.LeftArrow) { var idx = Array.IndexOf(beatValues, selectedLayer.BeatReaction); selectedLayer.BeatReaction = beatValues[(idx - 1 + beatValues.Length) % beatValues.Length]; saveSettings(); }
-                    if (key.Key == ConsoleKey.RightArrow) { var idx = Array.IndexOf(beatValues, selectedLayer.BeatReaction); selectedLayer.BeatReaction = beatValues[(idx + 1) % beatValues.Length]; saveSettings(); }
-                    return false;
-                case "Speed":
-                    if (key.Key == ConsoleKey.LeftArrow) { selectedLayer.SpeedMultiplier = Math.Max(0.1, selectedLayer.SpeedMultiplier - 0.1); saveSettings(); }
-                    if (key.Key == ConsoleKey.RightArrow) { selectedLayer.SpeedMultiplier = Math.Min(3.0, selectedLayer.SpeedMultiplier + 0.1); saveSettings(); }
-                    return false;
-                case "ColorIndex":
-                    if (key.Key == ConsoleKey.LeftArrow) { selectedLayer.ColorIndex = Math.Max(0, selectedLayer.ColorIndex - 1); saveSettings(); }
-                    if (key.Key == ConsoleKey.RightArrow) { selectedLayer.ColorIndex = Math.Min(99, selectedLayer.ColorIndex + 1); saveSettings(); }
-                    return false;
-                case "Palette":
-                    var palettes = paletteRepo.GetAll();
-                    if (palettes.Count > 0)
-                    {
-                        var currentId = selectedLayer.PaletteId ?? "";
-                        int pi = 0;
-                        for (int i = 0; i < palettes.Count; i++) { if (string.Equals(palettes[i].Id, currentId, StringComparison.OrdinalIgnoreCase)) { pi = i; break; } }
-                        if (key.Key == ConsoleKey.LeftArrow) { pi = (pi - 1 + palettes.Count) % palettes.Count; selectedLayer.PaletteId = palettes[pi].Id; saveSettings(); }
-                        if (key.Key == ConsoleKey.RightArrow) { pi = (pi + 1) % palettes.Count; selectedLayer.PaletteId = palettes[pi].Id; saveSettings(); }
-                    }
-                    return false;
-                case "AsciiMovement":
-                    var movValues = Enum.GetValues<AsciiImageMovement>();
-                    if (key.Key == ConsoleKey.LeftArrow || key.Key == ConsoleKey.RightArrow)
-                    {
-                        var asciiM = selectedLayer.GetCustom<AsciiImageSettings>() ?? new AsciiImageSettings();
-                        var mi = Array.IndexOf(movValues, asciiM.Movement);
-                        mi = key.Key == ConsoleKey.LeftArrow ? (mi - 1 + movValues.Length) % movValues.Length : (mi + 1) % movValues.Length;
-                        asciiM.Movement = movValues[mi];
-                        selectedLayer.SetCustom(asciiM);
-                        saveSettings();
-                    }
-                    return false;
-                case "Gain":
-                    var oscG = selectedLayer.GetCustom<OscilloscopeSettings>() ?? new OscilloscopeSettings();
-                    if (key.Key == ConsoleKey.LeftArrow) { oscG.Gain = Math.Max(1.0, oscG.Gain - 0.5); selectedLayer.SetCustom(oscG); saveSettings(); }
-                    if (key.Key == ConsoleKey.RightArrow) { oscG.Gain = Math.Min(10.0, oscG.Gain + 0.5); selectedLayer.SetCustom(oscG); saveSettings(); }
-                    return false;
-                case "ShowVolumeBar":
-                case "ShowRowLabels":
-                case "ShowFreqLabels":
-                    if (key.Key == ConsoleKey.LeftArrow || key.Key == ConsoleKey.RightArrow || key.Key == ConsoleKey.Enter)
-                    {
-                        var llama = selectedLayer.GetCustom<LlamaStyleSettings>() ?? new LlamaStyleSettings();
-                        if (row.Id == "ShowVolumeBar") llama.ShowVolumeBar = !llama.ShowVolumeBar;
-                        if (row.Id == "ShowRowLabels") llama.ShowRowLabels = !llama.ShowRowLabels;
-                        if (row.Id == "ShowFreqLabels") llama.ShowFrequencyLabels = !llama.ShowFrequencyLabels;
-                        selectedLayer.SetCustom(llama);
-                        saveSettings();
-                        focus = SettingsModalFocus.SettingsList;
-                    }
-                    return false;
-                case "ColorScheme":
-                    if (key.Key == ConsoleKey.LeftArrow || key.Key == ConsoleKey.RightArrow)
-                    {
-                        var llamaCs = selectedLayer.GetCustom<LlamaStyleSettings>() ?? new LlamaStyleSettings();
-                        llamaCs.ColorScheme = llamaCs.ColorScheme == "Winamp" ? "Spectrum" : "Winamp";
-                        selectedLayer.SetCustom(llamaCs);
-                        saveSettings();
-                    }
-                    return false;
-                case "PeakMarkerStyle":
-                    if (key.Key == ConsoleKey.LeftArrow || key.Key == ConsoleKey.RightArrow)
-                    {
-                        var llamaPm = selectedLayer.GetCustom<LlamaStyleSettings>() ?? new LlamaStyleSettings();
-                        llamaPm.PeakMarkerStyle = llamaPm.PeakMarkerStyle == "Blocks" ? "DoubleLine" : "Blocks";
-                        selectedLayer.SetCustom(llamaPm);
-                        saveSettings();
-                    }
-                    return false;
-                case "BarWidth":
-                    if (key.Key == ConsoleKey.LeftArrow || key.Key == ConsoleKey.RightArrow)
-                    {
-                        var llamaBw = selectedLayer.GetCustom<LlamaStyleSettings>() ?? new LlamaStyleSettings();
-                        llamaBw.BarWidth = llamaBw.BarWidth == 2 ? 3 : 2;
-                        selectedLayer.SetCustom(llamaBw);
-                        saveSettings();
-                    }
-                    return false;
+                CycleSetting(selectedLayer, row.Id, key.Key == ConsoleKey.RightArrow || key.Key == ConsoleKey.Enter);
+                saveSettings();
+                focus = SettingsModalFocus.SettingsList;
+                return false;
             }
             return false;
         }
@@ -1072,17 +885,19 @@ static void ShowTextLayersSettingsModal(AnalysisEngine analysisEngine, Visualize
                 var row = settingsRows[selectedSettingIndex];
                 bool cycleForward = key.Key == ConsoleKey.Enter || key.Key == ConsoleKey.Add || key.Key == ConsoleKey.OemPlus;
                 bool cycleBackward = key.Key == ConsoleKey.Subtract || key.Key == ConsoleKey.OemMinus;
-                if (IsCycleableSetting(row.Id) && (cycleForward || cycleBackward))
+                if (row.EditMode == SettingEditMode.Cycle && (cycleForward || cycleBackward))
                 {
                     CycleSetting(selectedLayer, row.Id, cycleForward);
                     saveSettings();
                     return false;
                 }
-                if (key.Key == ConsoleKey.Enter && (row.Id == "Snippets" || row.Id == "ImagePath"))
+                if (key.Key == ConsoleKey.Enter && row.EditMode == SettingEditMode.TextEdit)
                 {
-                    editingBuffer = row.DisplayValue;
-                    if (row.Id == "Snippets") editingBuffer = selectedLayer.TextSnippets is { Count: > 0 } ? string.Join(", ", selectedLayer.TextSnippets) : "";
-                    if (row.Id == "ImagePath") editingBuffer = (selectedLayer.GetCustom<AsciiImageSettings>() ?? new AsciiImageSettings()).ImageFolderPath ?? "";
+                    editingBuffer = row.Id == "Snippets"
+                        ? (selectedLayer.TextSnippets is { Count: > 0 } ? string.Join(", ", selectedLayer.TextSnippets) : "")
+                        : row.Id == "ImagePath"
+                            ? ((selectedLayer.GetCustom<AsciiImageSettings>() ?? new AsciiImageSettings()).ImageFolderPath ?? "")
+                            : row.DisplayValue;
                     focus = SettingsModalFocus.EditingSetting;
                     return false;
                 }
@@ -1156,7 +971,10 @@ static void ShowTextLayersSettingsModal(AnalysisEngine analysisEngine, Visualize
         HandleSettingsKey,
         consoleLock,
         onClose: () => analysisEngine.SetOverlayActive(false),
-        onEnter: () => analysisEngine.SetOverlayActive(true, TextLayersSettingsOverlayRows));
+        onEnter: () => analysisEngine.SetOverlayActive(true, TextLayersSettingsOverlayRows),
+        onScrollTick: DrawHintLineOnly);
 }
 
 enum SettingsModalFocus { LayerList, SettingsList, Renaming, EditingSetting }
+
+enum SettingEditMode { Cycle, TextEdit }

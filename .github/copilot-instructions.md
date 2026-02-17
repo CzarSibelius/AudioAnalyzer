@@ -14,6 +14,8 @@ dotnet build .\AudioAnalyzer.sln
 ```
 Never complete a task without confirming successful compilation.
 
+**Windows-only**: This project runs on Windows with PowerShell. Do **not** use Unix utilities like `head`, `tail`, or `grep` in shell commands (e.g. `dotnet build 2>&1 | head -50`). Use plain `dotnet build`; if output must be limited, use PowerShell: `dotnet build 2>&1 | Select-Object -First 50`.
+
 ### Static analysis
 After making code changes, check linter diagnostics for the modified files and fix any reported errors; fix warnings unless the rule is explicitly disabled for that line. Optionally run `dotnet format --verify-no-changes` to verify formatting (or `dotnet format` to fix); this uses .editorconfig.
 
@@ -22,7 +24,7 @@ After making code changes, check linter diagnostics for the modified files and f
 - If a change would conflict with an accepted ADR, either update/supersede the ADR or align the implementation with it; do not silently contradict documented decisions.
 - **NuGet packages**: When adding or changing NuGet dependencies, follow ADR-0013 — avoid insecure or obsolete packages. Check `dotnet list package --vulnerable` before merging.
 - **New visualizers**: Implement `ITextLayerRenderer` and add to TextLayersVisualizer; do not create new standalone `IVisualizer` modes (see ADR-0014 in docs/adr/).
-- **Layer settings**: TextLayerSettings has common props plus Custom (JSON); layer-specific settings go in *Settings.cs next to the layer; use `GetCustom<TSettings>()` in Draw (see ADR-0021 in docs/adr/).
+- **Layer settings**: TextLayerSettings has common props plus Custom (JSON); layer-specific settings go in *Settings.cs next to the layer; use `GetCustom<TSettings>()` in Draw (see ADR-0021 in docs/adr/). New settings are discovered via reflection; add *Settings.cs, use [SettingRange]/[SettingChoices]/[Setting] attributes, register in LayerSettingsReflection (see ADR-0025 in docs/adr/).
 - **Presets**: TextLayers configs are Presets in presets/*.json; V cycles presets; S modal: R rename, N new preset (see ADR-0019, ADR-0022 in docs/adr/).
 - **UI text overflow**: Use ScrollingTextViewport for dynamic text that may exceed width; use ellipsis truncation for static text (see ADR-0020 in docs/adr/).
 

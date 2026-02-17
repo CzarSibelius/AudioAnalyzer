@@ -6,8 +6,10 @@ namespace AudioAnalyzer.Visualizers;
 public sealed class AsciiImageSettings
 {
     /// <summary>Path to folder containing images. Can be null/empty.</summary>
+    [Setting("ImagePath", "Image path")]
     public string? ImageFolderPath { get; set; }
 
     /// <summary>Movement mode. Default Scroll.</summary>
+    [Setting("AsciiMovement", "Movement")]
     public AsciiImageMovement Movement { get; set; } = AsciiImageMovement.Scroll;
 }
