@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Domain;
@@ -128,7 +129,7 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
         {
             var dir = Path.GetDirectoryName(_settingsPath) ?? ".";
             var baseName = Path.GetFileNameWithoutExtension(_settingsPath);
-            var timestamp = DateTime.UtcNow.ToString("yyyy-MM-ddTHH-mm-ss.fff");
+            var timestamp = DateTime.UtcNow.ToString("yyyy-MM-ddTHH-mm-ss.fff", CultureInfo.InvariantCulture);
             var backupPath = Path.Combine(dir, $"{baseName}.{timestamp}.bak");
             File.Copy(_settingsPath, backupPath, overwrite: false);
         }
@@ -178,7 +179,7 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
     }
 
     /// <summary>Ensures VisualizerSettings exists and TextLayers has at least 9 layers when present. Per ADR-0029, no migration of legacy formats.</summary>
-    private void EnsureVisualizerSettingsStructure(SettingsFile file)
+    private static void EnsureVisualizerSettingsStructure(SettingsFile file)
     {
         file.VisualizerSettings ??= new VisualizerSettings();
         if (file.VisualizerSettings.TextLayers is not null)

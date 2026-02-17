@@ -12,12 +12,12 @@ Real-time audio frequency spectrum analyzer for Windows using NAudio library. Ca
 ```powershell
 dotnet build .\AudioAnalyzer.sln
 ```
-Never complete a task without confirming successful compilation.
+Never complete a task without confirming successful compilation. **The build must succeed with 0 warnings.** Fix any new analyzer warnings (CA*, IDE*, RCS*, MSB*) before marking work done.
 
 **Windows-only**: This project runs on Windows with PowerShell. Do **not** use Unix utilities like `head`, `tail`, or `grep` in shell commands (e.g. `dotnet build 2>&1 | head -50`). Use plain `dotnet build`; if output must be limited, use PowerShell: `dotnet build 2>&1 | Select-Object -First 50`.
 
 ### Static analysis
-After making code changes, check linter diagnostics for the modified files and fix any reported errors; fix warnings unless the rule is explicitly disabled for that line. Optionally run `dotnet format --verify-no-changes` to verify formatting (or `dotnet format` to fix); this uses .editorconfig.
+After making code changes, check linter diagnostics for the modified files and fix any reported errors; fix warnings unless the rule is explicitly disabled for that line. Do not introduce new build warnings. Optionally run `dotnet format --verify-no-changes` to verify formatting (or `dotnet format` to fix); this uses .editorconfig.
 
 ### Architecture decisions (ADRs)
 - **Follow docs/adr/**: When changing architecture, persistence, or user-facing behavior, read the relevant ADRs in `docs/adr/` and align implementation with them.
