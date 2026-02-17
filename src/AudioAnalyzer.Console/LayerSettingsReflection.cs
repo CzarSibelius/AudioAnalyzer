@@ -143,6 +143,7 @@ internal sealed class SettingDescriptor
         [TextLayerType.AsciiImage] = typeof(AsciiImageSettings),
         [TextLayerType.Oscilloscope] = typeof(OscilloscopeSettings),
         [TextLayerType.LlamaStyle] = typeof(LlamaStyleSettings),
+        [TextLayerType.NowPlaying] = typeof(NowPlayingSettings),
     };
 
     private static void AddCustomDescriptors(List<SettingDescriptor> list, TextLayerSettings layer, Type customType)

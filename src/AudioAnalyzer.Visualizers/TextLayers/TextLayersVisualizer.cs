@@ -58,7 +58,8 @@ public sealed class TextLayersVisualizer : IVisualizer
             new OscilloscopeLayer(),
             new UnknownPleasuresLayer(),
             new VuMeterLayer(),
-            new LlamaStyleLayer()
+            new LlamaStyleLayer(),
+            new NowPlayingLayer()
         };
         return list.ToDictionary(r => r.LayerType);
     }

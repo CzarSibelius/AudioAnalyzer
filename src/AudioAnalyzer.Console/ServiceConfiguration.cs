@@ -2,6 +2,8 @@ using AudioAnalyzer.Application;
 using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Domain;
 using AudioAnalyzer.Infrastructure;
+using AudioAnalyzer.Infrastructure.NowPlaying;
+using AudioAnalyzer.Platform.Windows.NowPlaying;
 using AudioAnalyzer.Visualizers;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -24,6 +26,16 @@ internal static class ServiceConfiguration
         services.AddSingleton<IPaletteRepository>(_ => new FilePaletteRepository());
         services.AddSingleton<IPresetRepository>(presetRepo);
         services.AddSingleton<IAudioDeviceInfo, NAudioDeviceInfo>();
+        services.AddSingleton<INowPlayingProvider>(sp =>
+        {
+            if (OperatingSystem.IsWindows())
+            {
+                var provider = new WindowsNowPlayingProvider();
+                provider.Start();
+                return provider;
+            }
+            return new NullNowPlayingProvider();
+        });
 
         services.AddSingleton<IVisualizer>(sp => new TextLayersVisualizer(
             sp.GetRequiredService<VisualizerSettings>().TextLayers ?? new TextLayersVisualizerSettings(),
@@ -34,7 +46,8 @@ internal static class ServiceConfiguration
             var dimensions = sp.GetRequiredService<IDisplayDimensions>();
             var visualizers = sp.GetServices<IVisualizer>();
             var visualizerSettings = sp.GetRequiredService<VisualizerSettings>();
-            return new VisualizationPaneLayout(dimensions, visualizers, visualizerSettings);
+            var nowPlayingProvider = sp.GetRequiredService<INowPlayingProvider>();
+            return new VisualizationPaneLayout(dimensions, visualizers, visualizerSettings, nowPlayingProvider);
         });
         services.AddSingleton<AnalysisEngine>(sp =>
         {

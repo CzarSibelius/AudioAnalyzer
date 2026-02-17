@@ -6,6 +6,9 @@ namespace AudioAnalyzer.Console;
 /// <summary>Renders the application header (title, device name, shortcuts) to the console.</summary>
 internal static class ConsoleHeader
 {
+    private static ScrollingTextViewportState _nowPlayingScrollState;
+    private static string? _nowPlayingLastText;
+
     /// <summary>Gets the current console width, or 80 if unavailable.</summary>
     public static int GetConsoleWidth()
     {
@@ -13,8 +16,8 @@ internal static class ConsoleHeader
         catch (IOException) { return 80; }
     }
 
-    /// <summary>Clears the console and draws the full header including device info.</summary>
-    public static void DrawMain(string deviceName)
+    /// <summary>Clears the console and draws the full header including device info and optional now-playing text.</summary>
+    public static void DrawMain(string deviceName, string? nowPlayingText = null)
     {
         try
         {
@@ -33,11 +36,13 @@ internal static class ConsoleHeader
 
         System.Console.Clear();
         System.Console.CursorVisible = false;
-        DrawHeaderOnly(deviceName);
+        DrawHeaderOnly(deviceName, nowPlayingText);
     }
 
     /// <summary>Draws only the header lines (no clear). Used for refresh before each render.</summary>
-    public static void DrawHeaderOnly(string deviceName)
+    /// <param name="deviceName">Display name of the current audio input device.</param>
+    /// <param name="nowPlayingText">Optional now-playing text from system media session (e.g. "Artist - Title").</param>
+    public static void DrawHeaderOnly(string deviceName, string? nowPlayingText = null)
     {
         int width = Math.Max(10, GetConsoleWidth());
         string title = " AUDIO ANALYZER - Real-time Frequency Spectrum ";
@@ -48,7 +53,32 @@ internal static class ConsoleHeader
         string line3 = VisualizerViewport.TruncateToWidth("╚" + new string('═', width - 2) + "╝", width).PadRight(width);
         string line4 = VisualizerViewport.TruncateWithEllipsis($"Input: {deviceName}", width).PadRight(width);
         string line5 = VisualizerViewport.TruncateWithEllipsis("Press H for help, D device, F full screen, ESC quit", width).PadRight(width);
-        string line6 = new string(' ', width);
+        string line6;
+        if (!string.IsNullOrEmpty(nowPlayingText))
+        {
+            if (nowPlayingText != _nowPlayingLastText)
+            {
+                _nowPlayingScrollState.Reset();
+                _nowPlayingLastText = nowPlayingText;
+            }
+            string prefix = "\x1b[36m"; // DarkCyan
+            string suffix = "\x1b[0m";
+            string styled = prefix + nowPlayingText + suffix;
+            int visibleLen = AnsiConsole.GetVisibleLength(styled);
+            line6 = visibleLen > width
+                ? ScrollingTextViewport.RenderWithAnsi(styled, width, ref _nowPlayingScrollState, 0.25)
+                : AnsiConsole.PadToVisibleWidth(styled, width);
+        }
+        else
+        {
+            if (_nowPlayingLastText != null)
+            {
+                _nowPlayingScrollState.Reset();
+                _nowPlayingLastText = null;
+            }
+            line6 = new string(' ', width);
+        }
+
         try
         {
             System.Console.SetCursorPosition(0, 0);

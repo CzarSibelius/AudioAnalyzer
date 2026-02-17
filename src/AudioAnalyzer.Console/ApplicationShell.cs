@@ -17,6 +17,7 @@ internal sealed class ApplicationShell
     private readonly IPaletteRepository _paletteRepo;
     private readonly AnalysisEngine _engine;
     private readonly IVisualizationRenderer _renderer;
+    private readonly INowPlayingProvider _nowPlayingProvider;
 
     private IAudioInput? _currentInput;
     private string _currentDeviceName = "";
@@ -31,7 +32,8 @@ internal sealed class ApplicationShell
         IPresetRepository presetRepository,
         IPaletteRepository paletteRepo,
         AnalysisEngine engine,
-        IVisualizationRenderer renderer)
+        IVisualizationRenderer renderer,
+        INowPlayingProvider nowPlayingProvider)
     {
         _deviceInfo = deviceInfo;
         _settingsRepo = settingsRepo;
@@ -42,6 +44,7 @@ internal sealed class ApplicationShell
         _paletteRepo = paletteRepo;
         _engine = engine;
         _renderer = renderer;
+        _nowPlayingProvider = nowPlayingProvider;
     }
 
     /// <summary>Runs the main loop. Does not return until the user quits.</summary>
@@ -54,12 +57,15 @@ internal sealed class ApplicationShell
         bool modalOpen = false;
         object consoleLock = new();
 
-        _engine.SetHeaderCallback(() => ConsoleHeader.DrawMain(_currentDeviceName), () => ConsoleHeader.DrawHeaderOnly(_currentDeviceName), 6);
+        _engine.SetHeaderCallback(
+            () => ConsoleHeader.DrawMain(_currentDeviceName, _nowPlayingProvider.GetNowPlayingText()),
+            () => ConsoleHeader.DrawHeaderOnly(_currentDeviceName, _nowPlayingProvider.GetNowPlayingText()),
+            6);
         _engine.SetRenderGuard(() => !modalOpen);
         _engine.SetConsoleLock(consoleLock);
 
         StartCapture(initialDeviceId, initialDeviceName);
-        ConsoleHeader.DrawMain(_currentDeviceName);
+        ConsoleHeader.DrawMain(_currentDeviceName, _nowPlayingProvider.GetNowPlayingText());
         _engine.Redraw();
 
         bool running = true;
@@ -116,7 +122,7 @@ internal sealed class ApplicationShell
                                 }
                                 else
                                 {
-                                    ConsoleHeader.DrawMain(_currentDeviceName);
+                                    ConsoleHeader.DrawMain(_currentDeviceName, _nowPlayingProvider.GetNowPlayingText());
                                     _engine.Redraw();
                                 }
                             });
@@ -126,7 +132,7 @@ internal sealed class ApplicationShell
                             SaveSettings();
                             if (!_engine.FullScreen)
                             {
-                                ConsoleHeader.DrawMain(_currentDeviceName);
+                                ConsoleHeader.DrawMain(_currentDeviceName, _nowPlayingProvider.GetNowPlayingText());
                             }
                             _engine.Redraw();
                             break;
@@ -153,7 +159,7 @@ internal sealed class ApplicationShell
                             }
                             else
                             {
-                                ConsoleHeader.DrawMain(_currentDeviceName);
+                                ConsoleHeader.DrawMain(_currentDeviceName, _nowPlayingProvider.GetNowPlayingText());
                                 _engine.Redraw();
                             }
                             break;
@@ -163,7 +169,7 @@ internal sealed class ApplicationShell
                             {
                                 if (!_engine.FullScreen)
                                 {
-                                    ConsoleHeader.DrawMain(_currentDeviceName);
+                                    ConsoleHeader.DrawMain(_currentDeviceName, _nowPlayingProvider.GetNowPlayingText());
                                 }
                                 _engine.Redraw();
                             }
@@ -285,7 +291,7 @@ internal sealed class ApplicationShell
         SaveSettings();
         if (!_engine.FullScreen)
         {
-            ConsoleHeader.DrawMain(_currentDeviceName);
+            ConsoleHeader.DrawMain(_currentDeviceName, _nowPlayingProvider.GetNowPlayingText());
         }
         _engine.Redraw();
     }
