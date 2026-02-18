@@ -75,14 +75,14 @@ Tests use **System.IO.Abstractions.TestingHelpers** (MockFileSystem) instead of 
 - **Audio input**: Demo Mode (synthetic BPM stream for testing), loopback (system output), or a specific WASAPI capture device; choice is saved in settings.
 - **Volume analysis**: Real-time level and peak display; stereo VU-style meters in VU Meter mode.
 - **FFT analysis**: Fast Fourier Transform with log-spaced frequency bands and peak hold.
-- **Presets**: **V** cycles between named TextLayers configurations (each preset = 9 layers + palette). Toolbar shows "Preset: {name} (V)" in Preset editor mode.
-- **Shows**: **Tab** switches to Show play — auto-cycles presets with per-entry duration (seconds or beats). Toolbar shows "Show: {name} | Preset: {name}". **S** in Show play opens Show edit modal (add/remove presets, set duration).
+- **Presets**: **V** cycles between named TextLayers configurations (each preset = 9 layers + palette). Toolbar shows "Preset (V): {name}" in Preset editor mode.
+- **Shows**: **Tab** switches to Show play — auto-cycles presets with per-entry duration (seconds or beats). Toolbar shows "Show (S): {name} Preset (V): {name}". **S** in Show play opens Show edit modal (add/remove presets, set duration).
 - **Layered text**: Multiple independent layers (Geiss plasma background, beat circles, oscilloscope, VU meter, Llama-style spectrum bars, Unknown Pleasures stacked waveforms, scrolling colors, marquee, falling letters, ASCII images from a folder, now-playing from system media) with configurable text snippets and beat reactions; each layer has its own palette; press **1–9** to select a layer, **←/→** to change its type, **Shift+1–9** to toggle enabled; **[ / ]** to adjust oscilloscope gain when that layer is selected; press **P** to cycle the active layer's palette. **S** opens the preset modal (R rename, N new preset).
 - **Colors and palettes**: Palette-aware visualizers (Layered text layers) support **24-bit true color** (RGB) and 16 console colors. Palettes are stored as JSON files in a **palettes** directory (see below). Each layer has its own palette setting; pressing **P** affects only the active layer and saves to that layer's settings.
 - **Beat detection**: Optional beat detection and BPM estimate; sensitivity and beat circles are configurable and persist.
 - **Real-time display**: Updates every 50 ms.
-- **Toolbar**: Shows volume, preset name, layer hints, palette, and H=Help. Both toolbar lines use scrolling text when they exceed the terminal width (per [ADR-0020](docs/adr/0020-ui-text-components-scrolling-and-ellipsis.md)); static text elsewhere truncates with ellipsis.
-- **Header**: Device and now-playing share one line ("Device: " and "Now: " with labeled scroll viewports). Mode (Preset editor / Show play) on the next line. See [ADR-0027](docs/adr/0027-now-playing-header.md).
+- **Toolbar**: Shows volume, preset name, layer hints, palette, and H=Help. Line 1 (volume, dB, BPM, beat) uses three fixed-width static viewports with ellipsis truncation; line 2 uses scrolling text when it exceeds the terminal width (per [ADR-0020](docs/adr/0020-ui-text-components-scrolling-and-ellipsis.md)); static text elsewhere truncates with ellipsis.
+- **Header**: Device and now-playing share one line; labels that reference features with hotkeys show them (e.g. "Device (D): ", "Now: "). Mode (Preset editor / Show play) on the next line with "Mode (Tab):". See [ADR-0027](docs/adr/0027-now-playing-header.md), [ADR-0034](docs/adr/0034-viewport-label-hotkey-hints.md).
 - **Settings**: Stored in a local file (e.g. next to the executable). Per-visualizer options live under `VisualizerSettings`; each palette-aware visualizer has its own `PaletteId`. Device, per-visualizer palette, beat sensitivity, and oscilloscope gain are saved automatically when changed.
 
 ## Dependencies
@@ -162,6 +162,8 @@ Example with 24-bit colors:
 
 ## Settings structure (per-visualizer)
 
+- **UI settings** (`UiSettings`, per [ADR-0033](docs/adr/0033-ui-principles-and-configurable-settings.md)): App title, UI palette (Normal, Highlighted, Dimmed, Label, optional Background), and default scrolling speed. Stored in `appsettings.json`. Colors support 24-bit RGB (`R`, `G`, `B`) or console color names (`Value`).
+
 - **Visualizer-specific options** live under `VisualizerSettings` in the settings file (e.g. `appsettings.json`):
   - **Presets**: Stored as individual JSON files in the `presets/` directory (see above). `ActivePresetId` references the active preset. Press **V** to cycle presets (Preset editor); **S** to edit (R rename, N new preset).
   - **Shows**: Stored in the `shows/` directory. `ActiveShowId` and `ApplicationMode` (PresetEditor or ShowPlay) determine current mode. **Tab** switches modes; **S** in Show play opens Show edit.
@@ -169,10 +171,22 @@ Example with 24-bit colors:
 Example `appsettings.json`:
 
 ```json
-"VisualizerSettings": {
-  "ActivePresetId": "preset-1",
-  "ApplicationMode": "PresetEditor",
-  "ActiveShowId": null
+{
+  "UiSettings": {
+    "Title": "AUDIO ANALYZER - Real-time Frequency Spectrum",
+    "DefaultScrollingSpeed": 0.25,
+    "Palette": {
+      "Normal": { "Value": "Gray" },
+      "Highlighted": { "Value": "Yellow" },
+      "Dimmed": { "Value": "DarkGray" },
+      "Label": { "Value": "DarkCyan" }
+    }
+  },
+  "VisualizerSettings": {
+    "ActivePresetId": "preset-1",
+    "ApplicationMode": "PresetEditor",
+    "ActiveShowId": null
+  }
 }
 ```
 
@@ -189,6 +203,6 @@ If the settings file is corrupt or incompatible (e.g. invalid JSON), the app bac
 
 The app uses **TextLayersVisualizer** exclusively; all visual content is provided by layers. `IVisualizer` exists for the renderer interface, but no other visualizer modes are registered. Visualizers implement **`IVisualizer`** and expose **technical name** (stable key for settings/CLI, e.g. `"textlayers"`), **display name** (for toolbar and help), and **`SupportsPaletteCycling`** (whether the visualizer uses a per-layer palette when the user presses P). Optional **`GetToolbarSuffix(snapshot)`** can return mode-specific toolbar text (e.g. gain for waveform modes). Visualizers that need configuration receive their settings via constructor injection (see [ADR-0008](docs/adr/0008-visualizer-settings-di.md)). The composite renderer uses only this interface and the shared snapshot; it does not reference concrete visualizer types (see [ADR-0004](docs/adr/0004-visualizer-encapsulation.md)). **New visualizer content** must be created as `ITextLayerRenderer` layers in TextLayersVisualizer — see [ADR-0014](docs/adr/0014-visualizers-as-layers.md).
 
-Visualizers receive a **viewport** (`VisualizerViewport`: start row, max lines, width). They must not write more than `viewport.MaxLines` lines and no line longer than `viewport.Width`. The composite renderer validates dimensions and display start row before calling visualizers; if a visualizer throws, the exception message is shown in the viewport (one line, truncated with ellipsis) and the next frame can recover — see [ADR-0012](docs/adr/0012-visualizer-exception-handling.md). Text overflow: use `ScrollingTextViewport` for dynamic text, `TruncateWithEllipsis` for static text — see [ADR-0020](docs/adr/0020-ui-text-components-scrolling-and-ellipsis.md). This keeps resizes and bad data from corrupting the console UI.
+Visualizers receive a **viewport** (`VisualizerViewport`: start row, max lines, width). They must not write more than `viewport.MaxLines` lines and no line longer than `viewport.Width`. The composite renderer validates dimensions and display start row before calling visualizers; if a visualizer throws, the exception message is shown in the viewport (one line, truncated with ellipsis) and the next frame can recover — see [ADR-0012](docs/adr/0012-visualizer-exception-handling.md). Text overflow: use `ScrollingTextViewport` for dynamic text, `StaticTextViewport.TruncateWithEllipsis` for static text — see [ADR-0020](docs/adr/0020-ui-text-components-scrolling-and-ellipsis.md). This keeps resizes and bad data from corrupting the console UI.
 
 Per-layer specs (behavior, settings, viewport constraints) are in [docs/visualizers/](docs/visualizers/README.md). C# coding standards (including no empty try-catch, non-empty XML summaries, one file per class) are in `.cursor/rules/csharp-standards.mdc`, `.cursor/rules/no-empty-catch.mdc`, and [ADR-0016](docs/adr/0016-csharp-documentation-and-file-organization.md).

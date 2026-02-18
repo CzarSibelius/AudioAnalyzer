@@ -1,4 +1,5 @@
 using System.Globalization;
+using AudioAnalyzer.Domain;
 
 namespace AudioAnalyzer.Application.Abstractions;
 
@@ -57,15 +58,36 @@ public static class ScrollingTextViewport
     }
 
     /// <summary>
-    /// Renders a static label followed by scrollable content. The label is always visible; the text scrolls in the remaining width when it overflows.
+    /// Formats a label with optional hotkey. When hotkey is provided, returns "Label (K): "; otherwise "Label: ".
+    /// Use for labeled viewports that reference features with keyboard shortcuts. Per ADR-0034.
     /// </summary>
-    /// <param name="label">Static prefix (e.g. "Device: ") always shown at the start.</param>
+    /// <param name="label">Base label (e.g. "Preset", "Device") without colon.</param>
+    /// <param name="hotkey">Optional hotkey to show in parentheses (e.g. "V", "D", "Tab").</param>
+    /// <returns>Formatted label string.</returns>
+    public static string FormatLabel(string label, string? hotkey)
+    {
+        var baseLabel = label ?? "";
+        if (string.IsNullOrWhiteSpace(hotkey))
+        {
+            return string.IsNullOrEmpty(baseLabel) ? "" : baseLabel + ": ";
+        }
+        return string.IsNullOrEmpty(baseLabel) ? "" : baseLabel + " (" + hotkey + "): ";
+    }
+
+    /// <summary>
+    /// Renders a static label followed by scrollable content. The label is always visible; the text scrolls in the remaining width when it overflows.
+    /// When palette colors are provided, wraps label and scroll output with ANSI codes. Per ADR-0033.
+    /// </summary>
+    /// <param name="label">Static prefix (e.g. "Device: ") always shown at the start. When <paramref name="hotkey"/> is provided, use base label (e.g. "Device").</param>
     /// <param name="text">Dynamic content; scrolls within the remaining width when it overflows (plain or ANSI-styled).</param>
     /// <param name="totalWidth">Total cell width. The scrolling region is totalWidth minus the visible length of the label.</param>
     /// <param name="state">Scroll state; updated in place.</param>
     /// <param name="speedPerFrame">Characters to advance per frame.</param>
+    /// <param name="labelColor">Optional color for the label. When null, label is plain.</param>
+    /// <param name="textColor">Optional color for the dynamic text. When null, preserves any ANSI in the text.</param>
+    /// <param name="hotkey">Optional hotkey to show in the label (e.g. "V", "D"). When provided, label is formatted via <see cref="FormatLabel"/>.</param>
     /// <returns>Label + scroll output, padded to totalWidth.</returns>
-    public static string RenderWithLabel<T>(string label, T text, int totalWidth, ref ScrollingTextViewportState state, double speedPerFrame)
+    public static string RenderWithLabel<T>(string label, T text, int totalWidth, ref ScrollingTextViewportState state, double speedPerFrame, PaletteColor? labelColor = null, PaletteColor? textColor = null, string? hotkey = null)
         where T : IDisplayText
     {
         if (totalWidth <= 0)
@@ -73,7 +95,7 @@ public static class ScrollingTextViewport
             return "";
         }
 
-        var effectiveLabel = label ?? "";
+        var effectiveLabel = !string.IsNullOrEmpty(hotkey) ? FormatLabel(label ?? "", hotkey) : (label ?? "");
         int labelVisible = string.IsNullOrEmpty(effectiveLabel)
             ? 0
             : new StringInfo(effectiveLabel).LengthInTextElements;
@@ -81,7 +103,15 @@ public static class ScrollingTextViewport
         string scrollPart = string.IsNullOrEmpty(text.Value)
             ? new string(' ', scrollWidth)
             : Render(text, scrollWidth, ref state, speedPerFrame);
-        string result = effectiveLabel + scrollPart;
+
+        string labelSegment = labelColor.HasValue
+            ? AnsiConsole.ColorCode(labelColor.Value) + effectiveLabel + AnsiConsole.ResetCode
+            : effectiveLabel;
+        string scrollSegment = textColor.HasValue
+            ? AnsiConsole.ColorCode(textColor.Value) + scrollPart + AnsiConsole.ResetCode
+            : scrollPart;
+
+        string result = labelSegment + scrollSegment;
         int visibleLen = AnsiConsole.GetVisibleLength(result);
         return visibleLen > totalWidth
             ? AnsiConsole.GetVisibleSubstring(result, 0, totalWidth)

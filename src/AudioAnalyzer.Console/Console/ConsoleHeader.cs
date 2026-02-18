@@ -1,5 +1,7 @@
+using System.Globalization;
 using System.IO;
 using AudioAnalyzer.Application.Abstractions;
+using AudioAnalyzer.Domain;
 
 namespace AudioAnalyzer.Console;
 
@@ -24,8 +26,13 @@ internal static class ConsoleHeader
         catch (IOException) { return 80; }
     }
 
-    /// <summary>Clears the console and draws the full header including device info, now-playing, and mode.</summary>
-    public static void DrawMain(string deviceName, string? nowPlayingText = null, string? modeName = null)
+    /// <summary>Clears the console and draws the full header including device info, now-playing, BPM, Volume/db, and mode.</summary>
+    /// <param name="uiSettings">Optional UI settings (title, palette, scrolling speed). When null, uses defaults.</param>
+    /// <param name="currentBpm">Current detected BPM (0 when none). When >= 0, draws BPM.</param>
+    /// <param name="beatSensitivity">Beat detection sensitivity.</param>
+    /// <param name="beatFlashActive">Whether a beat was recently detected.</param>
+    /// <param name="volume">Volume 0–1. When >= 0, draws Volume/db.</param>
+    public static void DrawMain(string deviceName, string? nowPlayingText = null, string? modeName = null, UiSettings? uiSettings = null, double currentBpm = -1, double beatSensitivity = 1.3, bool beatFlashActive = false, float volume = -1)
     {
         try
         {
@@ -45,7 +52,7 @@ internal static class ConsoleHeader
         System.Console.Clear();
         System.Console.CursorVisible = false;
         InvalidateHeaderCache();
-        DrawHeaderOnly(deviceName, nowPlayingText, modeName);
+        DrawHeaderOnly(deviceName, nowPlayingText, modeName, uiSettings, currentBpm, beatSensitivity, beatFlashActive, volume);
     }
 
     /// <summary>Invalidates the header cache so the next DrawHeaderOnly writes all lines. Call after Console.Clear.</summary>
@@ -63,26 +70,34 @@ internal static class ConsoleHeader
     /// <param name="deviceName">Display name of the current audio input device.</param>
     /// <param name="nowPlayingText">Optional now-playing text from system media session (e.g. "Artist - Title").</param>
     /// <param name="modeName">Optional mode name (e.g. "Preset editor" or "Show play").</param>
-    public static void DrawHeaderOnly(string deviceName, string? nowPlayingText = null, string? modeName = null)
+    /// <param name="uiSettings">Optional UI settings (title, palette, scrolling speed). When null, uses defaults.</param>
+    /// <param name="currentBpm">Current detected BPM (0 when none). When >= 0, draws BPM.</param>
+    /// <param name="beatSensitivity">Beat detection sensitivity.</param>
+    /// <param name="beatFlashActive">Whether a beat was recently detected.</param>
+    /// <param name="volume">Volume 0–1. When >= 0, draws Volume/db.</param>
+    public static void DrawHeaderOnly(string deviceName, string? nowPlayingText = null, string? modeName = null, UiSettings? uiSettings = null, double currentBpm = -1, double beatSensitivity = 1.3, bool beatFlashActive = false, float volume = -1)
     {
         int width = Math.Max(10, GetConsoleWidth());
-        string title = " AUDIO ANALYZER - Real-time Frequency Spectrum ";
-        title = VisualizerViewport.TruncateWithEllipsis(new PlainText(title), width - 2);
-        int padding = Math.Max(0, (width - title.Length - 2) / 2);
-        string line1 = VisualizerViewport.TruncateToWidth(new PlainText("╔" + new string('═', width - 2) + "╗"), width).PadRight(width);
-        string line2 = VisualizerViewport.TruncateToWidth(new PlainText("║" + new string(' ', padding) + title + new string(' ', width - padding - title.Length - 2) + "║"), width).PadRight(width);
-        string line3 = VisualizerViewport.TruncateToWidth(new PlainText("╚" + new string('═', width - 2) + "╝"), width).PadRight(width);
+        var ui = uiSettings ?? new UiSettings();
+        var palette = ui.Palette ?? new UiPalette();
+        double speed = ui.DefaultScrollingSpeed;
 
-        // Line 4: Device | Now (combined, two labeled scroll viewports)
-        const string separator = " | ";
+        string titleText = " " + (string.IsNullOrWhiteSpace(ui.Title) ? "AUDIO ANALYZER - Real-time Frequency Spectrum" : ui.Title.Trim()) + " ";
+        string title = StaticTextViewport.TruncateWithEllipsis(new PlainText(titleText), width - 2);
+        int padding = Math.Max(0, (width - title.Length - 2) / 2);
+        string line1 = StaticTextViewport.TruncateToWidth(new PlainText("╔" + new string('═', width - 2) + "╗"), width).PadRight(width);
+        string line2 = StaticTextViewport.TruncateToWidth(new PlainText("║" + new string(' ', padding) + title + new string(' ', width - padding - title.Length - 2) + "║"), width).PadRight(width);
+        string line3 = StaticTextViewport.TruncateToWidth(new PlainText("╚" + new string('═', width - 2) + "╝"), width).PadRight(width);
+
+        // Line 4: Device and Now (two labeled scroll viewports; label+value colors handle separation)
         int leftCellWidth = (int)(width * 0.38);
-        int rightCellWidth = width - leftCellWidth - separator.Length;
+        int rightCellWidth = width - leftCellWidth;
         if (deviceName != _deviceLastText)
         {
             _deviceScrollState.Reset();
             _deviceLastText = deviceName;
         }
-        string deviceCell = ScrollingTextViewport.RenderWithLabel("Device: ", new PlainText(deviceName ?? ""), leftCellWidth, ref _deviceScrollState, 0.25);
+        string deviceCell = ScrollingTextViewport.RenderWithLabel("Device", new PlainText(deviceName ?? ""), leftCellWidth, ref _deviceScrollState, speed, palette.Label, palette.Normal, hotkey: "D");
         string nowCell;
         if (!string.IsNullOrEmpty(nowPlayingText))
         {
@@ -91,8 +106,7 @@ internal static class ConsoleHeader
                 _nowPlayingScrollState.Reset();
                 _nowPlayingLastText = nowPlayingText;
             }
-            string styled = "\x1b[36m" + nowPlayingText + "\x1b[0m";
-            nowCell = ScrollingTextViewport.RenderWithLabel("Now: ", new AnsiText(styled), rightCellWidth, ref _nowPlayingScrollState, 0.25);
+            nowCell = ScrollingTextViewport.RenderWithLabel("Now: ", new PlainText(nowPlayingText), rightCellWidth, ref _nowPlayingScrollState, speed, palette.Label, palette.Highlighted);
         }
         else
         {
@@ -101,9 +115,9 @@ internal static class ConsoleHeader
                 _nowPlayingScrollState.Reset();
                 _nowPlayingLastText = null;
             }
-            nowCell = ScrollingTextViewport.RenderWithLabel("Now: ", new PlainText(""), rightCellWidth, ref _nowPlayingScrollState, 0.25);
+            nowCell = ScrollingTextViewport.RenderWithLabel("Now: ", new PlainText(""), rightCellWidth, ref _nowPlayingScrollState, speed, palette.Label, palette.Normal);
         }
-        string line4 = deviceCell + separator + nowCell;
+        string line4 = deviceCell + nowCell;
         int line4Visible = AnsiConsole.GetVisibleLength(line4);
         if (line4Visible < width)
         {
@@ -114,11 +128,62 @@ internal static class ConsoleHeader
             line4 = AnsiConsole.GetVisibleSubstring(line4, 0, width);
         }
 
-        // Line 5: Mode name
-        string line5 = VisualizerViewport.TruncateWithEllipsis(new PlainText($"Mode: {modeName ?? "Preset editor"}"), width).PadRight(width);
+        // Line 5: Mode (left), BPM/Beat (middle), Volume/db (right) on same line
+        int rightHalfWidth = width - leftCellWidth;
+        int middleCellWidth = rightHalfWidth / 2;
+        int volCellWidth = rightHalfWidth - middleCellWidth;
 
-        // Line 6: Help
-        string line6 = VisualizerViewport.TruncateWithEllipsis(new PlainText("Press H for help, D device, F full screen, ESC quit"), width).PadRight(width);
+        string modeNameStr = modeName ?? "Preset editor";
+        string modeLabel = ScrollingTextViewport.FormatLabel("Mode", "Tab");
+        int modeLabelLen = new StringInfo(modeLabel).LengthInTextElements;
+        string modeValueTruncated = StaticTextViewport.TruncateWithEllipsis(new PlainText(modeNameStr), leftCellWidth - modeLabelLen).TrimEnd();
+        string modeCell = AnsiConsole.ColorCode(palette.Label) + modeLabel + AnsiConsole.ResetCode +
+            AnsiConsole.ColorCode(palette.Normal) + modeValueTruncated + AnsiConsole.ResetCode;
+        modeCell = AnsiConsole.PadToVisibleWidth(modeCell, leftCellWidth);
+
+        string bpmCell;
+        if (currentBpm >= 0)
+        {
+            string bpmBeatValue = currentBpm > 0
+                ? $"{AnsiConsole.ColorCode(palette.Label)}BPM: {AnsiConsole.ResetCode}{AnsiConsole.ColorCode(palette.Normal)}{currentBpm,4:F0}{AnsiConsole.ResetCode}  {AnsiConsole.ColorCode(palette.Label)}Beat: {AnsiConsole.ResetCode}{AnsiConsole.ColorCode(palette.Normal)}{beatSensitivity,4:F1} (+/-){AnsiConsole.ResetCode}"
+                : $"{AnsiConsole.ColorCode(palette.Label)}Beat: {AnsiConsole.ResetCode}{AnsiConsole.ColorCode(palette.Normal)}{beatSensitivity,4:F1} (+/-){AnsiConsole.ResetCode}";
+            if (beatFlashActive)
+            {
+                bpmBeatValue += " *BEAT*";
+            }
+            bpmCell = AnsiConsole.PadToVisibleWidth(StaticTextViewport.TruncateWithEllipsis(new AnsiText(bpmBeatValue), middleCellWidth), middleCellWidth);
+        }
+        else
+        {
+            bpmCell = new string(' ', middleCellWidth);
+        }
+
+        string volCell;
+        if (volume >= 0)
+        {
+            double db = 20 * Math.Log10(Math.Max(volume, 0.00001));
+            string volDbValue = $"{AnsiConsole.ColorCode(palette.Label)}Volume/dB: {AnsiConsole.ResetCode}{AnsiConsole.ColorCode(palette.Normal)}{volume * 100,5:F1}% {db,6:F1}dB{AnsiConsole.ResetCode}";
+            volCell = AnsiConsole.PadToVisibleWidth(StaticTextViewport.TruncateWithEllipsis(new AnsiText(volDbValue), volCellWidth), volCellWidth);
+        }
+        else
+        {
+            volCell = new string(' ', volCellWidth);
+        }
+
+        string line5 = modeCell + bpmCell + volCell;
+        int line5Visible = AnsiConsole.GetVisibleLength(line5);
+        if (line5Visible < width)
+        {
+            line5 = AnsiConsole.PadToVisibleWidth(line5, width);
+        }
+        else if (line5Visible > width)
+        {
+            line5 = AnsiConsole.GetVisibleSubstring(line5, 0, width);
+        }
+
+        // Line 6: Help (Dimmed per ADR-0033)
+        string line6Raw = StaticTextViewport.TruncateWithEllipsis(new PlainText("Press H for help, D device, F full screen, ESC quit"), width).PadRight(width);
+        string line6 = AnsiConsole.ColorCode(palette.Dimmed) + line6Raw + AnsiConsole.ResetCode;
 
         try
         {

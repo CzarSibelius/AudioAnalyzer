@@ -4,7 +4,7 @@
 
 ## Context
 
-UI text often exceeds terminal width. The app has `ScrollingTextViewport` for scrolling (ping-pong) and `VisualizerViewport.TruncateToWidth` for hard truncation. There is no ellipsis truncation. When to use which approach is undocumented. Developers and agents need clear guidance to choose the right component for each situation.
+UI text often exceeds terminal width. The app has `ScrollingTextViewport` for scrolling (ping-pong) and `StaticTextViewport.TruncateToWidth` for hard truncation. Ellipsis truncation is provided by `StaticTextViewport.TruncateWithEllipsis`. When to use which approach needed clear guidance for developers and agents.
 
 ## Decision
 
@@ -15,5 +15,5 @@ UI text often exceeds terminal width. The app has `ScrollingTextViewport` for sc
 ## Consequences
 
 - Developers and agents use `ScrollingTextViewport` for dynamic overflow text instead of silent truncation.
-- `VisualizerViewport.TruncateWithEllipsis` and `TruncateToWidth` provide ellipsis and raw truncation. Both accept `IDisplayText`; use `PlainText` for unformatted and `AnsiText` when text may contain ANSI (see [ADR-0032](0032-typed-display-text.md)).
-- **References**: [ScrollingTextViewport](../../src/AudioAnalyzer.Application/Abstractions/ScrollingTextViewport.cs), [VisualizerViewport](../../src/AudioAnalyzer.Application/Abstractions/VisualizerViewport.cs), [VisualizationPaneLayout](../../src/AudioAnalyzer.Console/Console/VisualizationPaneLayout.cs), [ADR-0032](0032-typed-display-text.md).
+- `StaticTextViewport.TruncateWithEllipsis` and `TruncateToWidth` provide ellipsis and raw truncation. Both accept `IDisplayText`; use `PlainText` for unformatted and `AnsiText` when text may contain ANSI (see [ADR-0032](0032-typed-display-text.md)). Truncation lives in `StaticTextViewport` to keep `VisualizerViewport` focused on bounds for visualizer output.
+- **References**: [ScrollingTextViewport](../../src/AudioAnalyzer.Application/Abstractions/ScrollingTextViewport.cs), [StaticTextViewport](../../src/AudioAnalyzer.Application/Abstractions/StaticTextViewport.cs), [VisualizerViewport](../../src/AudioAnalyzer.Application/Abstractions/VisualizerViewport.cs), [VisualizationPaneLayout](../../src/AudioAnalyzer.Console/Console/VisualizationPaneLayout.cs), [ADR-0032](0032-typed-display-text.md).

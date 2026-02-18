@@ -17,15 +17,17 @@ public sealed class TextLayersVisualizer : IVisualizer
     private readonly TextLayersVisualizerSettings? _settings;
     private readonly IPaletteRepository _paletteRepo;
     private readonly IConsoleWriter _consoleWriter;
+    private readonly UiSettings _uiSettings;
     private readonly Dictionary<TextLayerType, ITextLayerRenderer> _renderers;
     /// <summary>Index of the layer whose palette P cycles. Updated when user presses 1–9.</summary>
     private int _paletteCycleLayerIndex;
 
-    public TextLayersVisualizer(TextLayersVisualizerSettings? settings, IPaletteRepository paletteRepo, IEnumerable<ITextLayerRenderer> renderers, IConsoleWriter consoleWriter)
+    public TextLayersVisualizer(TextLayersVisualizerSettings? settings, IPaletteRepository paletteRepo, IEnumerable<ITextLayerRenderer> renderers, IConsoleWriter consoleWriter, UiSettings? uiSettings = null)
     {
         _settings = settings;
         _paletteRepo = paletteRepo;
         _consoleWriter = consoleWriter;
+        _uiSettings = uiSettings ?? new UiSettings();
         _renderers = renderers.ToDictionary(r => r.LayerType);
     }
 
@@ -176,7 +178,8 @@ public sealed class TextLayersVisualizer : IVisualizer
         var config = _settings;
         if (config?.Layers is not { Count: > 0 })
         {
-            return "Layers: (config in settings, S: settings)";
+            var emptyPalette = _uiSettings.Palette ?? new UiPalette();
+            return AnsiConsole.ColorCode(emptyPalette.Label) + "Layers: " + AnsiConsole.ResetCode + AnsiConsole.ColorCode(emptyPalette.Dimmed) + "(config in settings, S: settings)" + AnsiConsole.ResetCode;
         }
         var sortedLayers = config.Layers.OrderBy(l => l.ZOrder).ToList();
         int idx = Math.Clamp(_paletteCycleLayerIndex, 0, sortedLayers.Count - 1);
@@ -189,33 +192,30 @@ public sealed class TextLayersVisualizer : IVisualizer
             paletteName = "Default";
         }
 
+        var palette = _uiSettings.Palette ?? new UiPalette();
         var sb = new StringBuilder();
-        sb.Append("Layers: ");
-        const string dimCode = "\x1b[2m";
-        const string resetCode = "\x1b[0m";
+        AnsiConsole.AppendColored(sb, "Layers: ", palette.Label);
         for (int i = 0; i < 9; i++)
         {
             char digit = (char)('1' + i);
             if (i >= sortedLayers.Count)
             {
-                AnsiConsole.AppendColored(sb, digit, ConsoleColor.DarkGray);
+                AnsiConsole.AppendColored(sb, digit, palette.Dimmed);
             }
             else
             {
                 var l = sortedLayers[i];
                 if (!l.Enabled)
                 {
-                    sb.Append(dimCode);
-                    sb.Append(digit);
-                    sb.Append(resetCode);
+                    AnsiConsole.AppendColored(sb, digit, palette.Dimmed);
                 }
                 else if (i == idx)
                 {
-                    AnsiConsole.AppendColored(sb, digit, ConsoleColor.Yellow);
+                    AnsiConsole.AppendColored(sb, digit, palette.Highlighted);
                 }
                 else
                 {
-                    AnsiConsole.AppendColored(sb, digit, ConsoleColor.DarkGray);
+                    AnsiConsole.AppendColored(sb, digit, palette.Normal);
                 }
             }
         }

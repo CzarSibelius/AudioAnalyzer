@@ -7,7 +7,7 @@ globs: **/Visualizers/**/*.cs,**/VisualizationPaneLayout.cs,**/IVisualizer.cs,**
 
 When adding or changing visualizers:
 
-1. **Respect the viewport**: `IVisualizer.Render` receives `VisualizerViewport` (StartRow, MaxLines, Width). Never write more than `viewport.MaxLines` lines and no line longer than `viewport.Width`. For output lines: use `TruncateToWidth` for raw truncation; use `TruncateWithEllipsis` for static text (titles, labels). Wrap strings in `PlainText` or `AnsiText` per [ADR-0020](docs/adr/0020-ui-text-components-scrolling-and-ellipsis.md), [ADR-0032](docs/adr/0032-typed-display-text.md).
+1. **Respect the viewport**: `IVisualizer.Render` receives `VisualizerViewport` (StartRow, MaxLines, Width). Never write more than `viewport.MaxLines` lines and no line longer than `viewport.Width`. For output lines: use `StaticTextViewport.TruncateToWidth` for raw truncation; use `StaticTextViewport.TruncateWithEllipsis` for static text (titles, labels). Wrap strings in `PlainText` or `AnsiText` per [ADR-0020](docs/adr/0020-ui-text-components-scrolling-and-ellipsis.md), [ADR-0032](docs/adr/0032-typed-display-text.md).
 
 2. **Clamp line count**: Derive bar height, grid height, or other row counts from `viewport.MaxLines` minus any fixed lines (headers, footers, separators). Ensure the total number of `Console.WriteLine` calls does not exceed `viewport.MaxLines`.
 

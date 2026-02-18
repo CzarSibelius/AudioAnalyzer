@@ -10,12 +10,14 @@ internal static class DeviceSelectionModal
     /// Shows the device selection menu. Returns (deviceId, name) on selection, or (null, "") on cancel.
     /// </summary>
     /// <param name="setModalOpen">Called with true when modal opens and false when it closes.</param>
+    /// <param name="uiSettings">Optional UI settings for palette colors per ADR-0033.</param>
     public static (string? deviceId, string name) Show(
         IAudioDeviceInfo deviceInfo,
         ISettingsRepository settingsRepo,
         AppSettings settings,
         string? currentDeviceName,
-        Action<bool> setModalOpen)
+        Action<bool> setModalOpen,
+        UiSettings? uiSettings = null)
     {
         var devices = deviceInfo.GetDevices();
         if (devices.Count == 0)
@@ -51,6 +53,11 @@ internal static class DeviceSelectionModal
         string? resultId = null;
         string resultName = "";
 
+        var palette = (uiSettings ?? new UiSettings()).Palette ?? new UiPalette();
+        var selBg = palette.Background ?? PaletteColor.FromConsoleColor(ConsoleColor.DarkBlue);
+        var selFg = palette.Highlighted;
+        var currentColor = palette.Highlighted;
+
         void DrawDeviceContent()
         {
             int width = ConsoleHeader.GetConsoleWidth();
@@ -66,16 +73,6 @@ internal static class DeviceSelectionModal
             for (int i = 0; i < devices.Count; i++)
             {
                 bool isCurrent = currentDeviceName != null && devices[i].Name == currentDeviceName;
-                if (i == selectedIndex)
-                {
-                    System.Console.BackgroundColor = ConsoleColor.White;
-                    System.Console.ForegroundColor = ConsoleColor.Black;
-                }
-                else if (isCurrent)
-                {
-                    System.Console.ForegroundColor = ConsoleColor.Cyan;
-                }
-
                 string prefix = i == selectedIndex ? " ► " : "   ";
                 string suffix = isCurrent ? " (current)" : "";
                 string line = $"{prefix}{devices[i].Name}{suffix}";
@@ -88,8 +85,20 @@ internal static class DeviceSelectionModal
                     line = line[..(width - 1)];
                 }
 
-                System.Console.WriteLine(line);
-                System.Console.ResetColor();
+                string lineToWrite;
+                if (i == selectedIndex)
+                {
+                    lineToWrite = AnsiConsole.BackgroundCode(selBg) + AnsiConsole.ColorCode(selFg) + line + AnsiConsole.ResetCode;
+                }
+                else if (isCurrent)
+                {
+                    lineToWrite = AnsiConsole.ColorCode(currentColor) + line + AnsiConsole.ResetCode;
+                }
+                else
+                {
+                    lineToWrite = line;
+                }
+                System.Console.WriteLine(lineToWrite);
             }
             System.Console.WriteLine(new string(' ', width - 1));
         }

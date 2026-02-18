@@ -9,12 +9,14 @@ public sealed class VisualizationPaneLayout : IVisualizationRenderer
 {
     private readonly IVisualizer? _visualizer;
     private readonly VisualizerSettings? _visualizerSettings;
+    private readonly UiSettings _uiSettings;
     private (IReadOnlyList<PaletteColor>? Palette, string? DisplayName) _palette;
 
-    public VisualizationPaneLayout(IDisplayDimensions displayDimensions, IEnumerable<IVisualizer> visualizers, VisualizerSettings? visualizerSettings)
+    public VisualizationPaneLayout(IDisplayDimensions displayDimensions, IEnumerable<IVisualizer> visualizers, VisualizerSettings? visualizerSettings, UiSettings? uiSettings = null)
     {
         _visualizerSettings = visualizerSettings;
         _visualizer = visualizers.FirstOrDefault(v => string.Equals(v.TechnicalName, "textlayers", StringComparison.OrdinalIgnoreCase));
+        _uiSettings = uiSettings ?? new UiSettings();
     }
 
     public void SetPalette(IReadOnlyList<PaletteColor>? palette, string? paletteDisplayName = null)
@@ -22,13 +24,8 @@ public sealed class VisualizationPaneLayout : IVisualizationRenderer
         _palette = (palette, paletteDisplayName);
     }
 
-    private const int ToolbarLineCount = 2;
+    private const int ToolbarLineCount = 1;
     private bool _hasRendered;
-    private ScrollingTextViewportState _toolbarLine1ScrollState;
-    private string? _toolbarLine1LastText;
-    private ScrollingTextViewportState _toolbarLine2ScrollState;
-    private string? _toolbarLine2LastText;
-    private ApplicationMode? _lastToolbarMode;
 
     public void Render(AnalysisSnapshot snapshot)
     {
@@ -87,7 +84,7 @@ public sealed class VisualizationPaneLayout : IVisualizationRenderer
                         ? ex.Message
                         : "Visualization error";
                     System.Console.SetCursorPosition(0, visualizerStartRow);
-                    System.Console.WriteLine(VisualizerViewport.TruncateWithEllipsis(new PlainText(message), viewport.Width));
+                    System.Console.WriteLine(StaticTextViewport.TruncateWithEllipsis(new PlainText(message), viewport.Width));
                 }
             }
         }
@@ -140,110 +137,104 @@ public sealed class VisualizationPaneLayout : IVisualizationRenderer
     private void RenderToolbar(AnalysisSnapshot snapshot, VisualizerViewport toolbarViewport, int w)
     {
         int row0 = toolbarViewport.StartRow;
+        if (toolbarViewport.MaxLines < 1)
+        {
+            return;
+        }
 
-        double db = 20 * Math.Log10(Math.Max(snapshot.Volume, 0.00001));
-        string bpmDisplay = snapshot.CurrentBpm > 0 ? $" | BPM: {snapshot.CurrentBpm:F0}" : "";
-        string sensitivityDisplay = $" | Beat: {snapshot.BeatSensitivity:F1} (+/-)";
-        string beatIndicator = snapshot.BeatFlashActive ? " *BEAT*" : "";
-        string line1Full = $"Volume: {snapshot.Volume * 100:F1}% ({db:F1} dB){bpmDisplay}{sensitivityDisplay}{beatIndicator}";
-        if (line1Full != _toolbarLine1LastText)
+        var palette = _uiSettings.Palette ?? new UiPalette();
+        var labelColor = palette.Label;
+        var dimmedColor = palette.Dimmed;
+
+        // Split into viewports: Show/Preset | Suffix (layers) | Palette | Help
+        int cell1Width = (int)(w * 0.22);
+        int cell2Width = (int)(w * 0.48);
+        int cell3Width = (int)(w * 0.18);
+        int cell4Width = w - cell1Width - cell2Width - cell3Width;
+        if (cell4Width < 8)
         {
-            _toolbarLine1ScrollState.Reset();
-            _toolbarLine1LastText = line1Full;
+            cell4Width = 8;
+            cell2Width = Math.Max(8, w - cell1Width - cell3Width - cell4Width);
         }
-        string line1 = line1Full.Length > w
-            ? ScrollingTextViewport.Render(new PlainText(line1Full), w, ref _toolbarLine1ScrollState, 0.25)
-            : line1Full.PadRight(w);
-        string line2;
-        if (toolbarViewport.MaxLines >= 2)
+
+        string presetCell = GetPresetCell(labelColor, palette.Normal, cell1Width);
+        string suffixCell = GetSuffixCell(snapshot, cell2Width);
+        string paletteCell = GetPaletteCell(snapshot, labelColor, palette.Normal, cell3Width);
+        string helpCell = AnsiConsole.ColorCode(dimmedColor) + "H=Help" + AnsiConsole.ResetCode;
+        helpCell = AnsiConsole.PadToVisibleWidth(helpCell, cell4Width);
+
+        string line = presetCell + suffixCell + paletteCell + helpCell;
+        int visible = AnsiConsole.GetVisibleLength(line);
+        if (visible < w)
         {
-            var currentMode = _visualizerSettings?.ApplicationMode ?? ApplicationMode.PresetEditor;
-            if (currentMode != _lastToolbarMode)
-            {
-                _lastToolbarMode = currentMode;
-                _toolbarLine2LastText = null;
-            }
-            string line2Full = GetToolbarLine2(snapshot, w);
-            int visibleLen = AnsiConsole.GetVisibleLength(line2Full);
-            if (line2Full != _toolbarLine2LastText)
-            {
-                _toolbarLine2ScrollState.Reset();
-                _toolbarLine2LastText = line2Full;
-            }
-            line2 = visibleLen > w
-                ? ScrollingTextViewport.Render(new AnsiText(line2Full), w, ref _toolbarLine2ScrollState, 0.25)
-                : AnsiConsole.PadToVisibleWidth(line2Full, w);
-            _toolbarLine2LastText = line2Full;
+            line = AnsiConsole.PadToVisibleWidth(line, w);
         }
-        else
+        else if (visible > w)
         {
-            line2 = new string(' ', w);
+            line = AnsiConsole.GetVisibleSubstring(line, 0, w);
         }
 
         try
         {
             System.Console.SetCursorPosition(0, row0);
-            System.Console.Write(snapshot.BeatFlashActive ? AnsiConsole.ToAnsiString(line1, ConsoleColor.Red) : line1);
-            if (toolbarViewport.MaxLines >= 2)
-            {
-                System.Console.SetCursorPosition(0, row0 + 1);
-                string toWrite = line2.Contains('\x1b')
-                    ? line2
-                    : AnsiConsole.ToAnsiString(line2, ConsoleColor.DarkGray);
-                System.Console.Write(toWrite);
-            }
+            System.Console.Write(line);
         }
-        catch
-        {
-            try
-            {
-                System.Console.SetCursorPosition(0, row0);
-                System.Console.WriteLine(snapshot.BeatFlashActive ? AnsiConsole.ToAnsiString(line1, ConsoleColor.Red) : line1);
-                if (toolbarViewport.MaxLines >= 2)
-                {
-                    System.Console.SetCursorPosition(0, row0 + 1);
-                    string fallbackWrite = line2.Contains('\x1b')
-                        ? line2
-                        : AnsiConsole.ToAnsiString(line2, ConsoleColor.DarkGray);
-                    System.Console.WriteLine(fallbackWrite);
-                }
-            }
-            catch (Exception ex) { _ = ex; /* Toolbar fallback failed: swallow to avoid crash */ }
-        }
+        catch (Exception ex) { _ = ex; /* Toolbar write failed: swallow to avoid crash */ }
     }
 
-    private string GetToolbarLine2(AnalysisSnapshot snapshot, int w)
+    private string GetPresetCell(PaletteColor labelColor, PaletteColor normalColor, int width)
     {
-        string baseLine;
+        string value;
         if (_visualizerSettings?.ApplicationMode == ApplicationMode.ShowPlay)
         {
             var showName = string.IsNullOrWhiteSpace(_visualizerSettings.ActiveShowName)
                 ? "Show"
                 : _visualizerSettings.ActiveShowName.Trim();
             var presetName = GetActivePresetName();
-            baseLine = $"Show: {showName} | Preset: {presetName}";
+            string showLabel = ScrollingTextViewport.FormatLabel("Show", "S");
+            string presetLabel = ScrollingTextViewport.FormatLabel("Preset", "V");
+            value = $"{AnsiConsole.ColorCode(labelColor)}{showLabel}{AnsiConsole.ResetCode}{AnsiConsole.ColorCode(normalColor)}{showName}{AnsiConsole.ResetCode} {AnsiConsole.ColorCode(labelColor)}{presetLabel}{AnsiConsole.ResetCode}{AnsiConsole.ColorCode(normalColor)}{presetName}{AnsiConsole.ResetCode}";
         }
         else
         {
-            baseLine = _visualizerSettings?.Presets is { Count: > 0 }
-                ? $"Preset: {GetActivePresetName()} (V)"
-                : $"Mode: {_visualizer?.DisplayName ?? "Layered text"} (V)";
-        }
-        if (_visualizer != null)
-        {
-            var suffix = _visualizer.GetToolbarSuffix(snapshot);
-            if (!string.IsNullOrEmpty(suffix))
+            if (_visualizerSettings?.Presets is { Count: > 0 })
             {
-                baseLine += $" | {suffix}";
+                string label = ScrollingTextViewport.FormatLabel("Preset", "V");
+                value = $"{AnsiConsole.ColorCode(labelColor)}{label}{AnsiConsole.ResetCode}{AnsiConsole.ColorCode(normalColor)}{GetActivePresetName()}{AnsiConsole.ResetCode}";
+            }
+            else
+            {
+                string label = ScrollingTextViewport.FormatLabel("Mode", "Tab");
+                value = $"{AnsiConsole.ColorCode(labelColor)}{label}{AnsiConsole.ResetCode}{AnsiConsole.ColorCode(normalColor)}{_visualizer?.DisplayName ?? "Layered text"}{AnsiConsole.ResetCode}";
             }
         }
+        string cell = AnsiConsole.PadToVisibleWidth(
+            StaticTextViewport.TruncateWithEllipsis(new AnsiText(value), width), width);
+        return cell;
+    }
 
-        if (SupportsPaletteCycling() && !string.IsNullOrEmpty(snapshot.CurrentPaletteName))
+    private string GetSuffixCell(AnalysisSnapshot snapshot, int width)
+    {
+        string suffix = _visualizer?.GetToolbarSuffix(snapshot) ?? "";
+        if (string.IsNullOrEmpty(suffix))
         {
-            baseLine += $" | Palette: {snapshot.CurrentPaletteName} (P)";
+            return new string(' ', width);
         }
+        string cell = AnsiConsole.PadToVisibleWidth(
+            StaticTextViewport.TruncateWithEllipsis(new AnsiText(suffix), width), width);
+        return cell;
+    }
 
-        baseLine += " | H=Help";
-        return baseLine;
+    private string GetPaletteCell(AnalysisSnapshot snapshot, PaletteColor labelColor, PaletteColor normalColor, int width)
+    {
+        if (!SupportsPaletteCycling() || string.IsNullOrEmpty(snapshot.CurrentPaletteName))
+        {
+            return new string(' ', width);
+        }
+        string label = ScrollingTextViewport.FormatLabel("Palette", "P");
+        string value = $"{AnsiConsole.ColorCode(labelColor)}{label}{AnsiConsole.ResetCode}{AnsiConsole.ColorCode(normalColor)}{snapshot.CurrentPaletteName}{AnsiConsole.ResetCode}";
+        string cell = AnsiConsole.PadToVisibleWidth(
+            StaticTextViewport.TruncateWithEllipsis(new AnsiText(value), width), width);
+        return cell;
     }
 }
