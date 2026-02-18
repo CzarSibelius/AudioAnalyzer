@@ -27,7 +27,7 @@ alwaysApply: true
 
 11. **C# documentation and file organization**: Non-empty XML summaries for classes and interfaces; prefer one file per class. See [ADR-0016](docs/adr/0016-csharp-documentation-and-file-organization.md).
 
-12. **UI text overflow**: Use ScrollingTextViewport for dynamic text (toolbar, status lines) that may exceed width; use ellipsis truncation (TruncateWithEllipsis or equivalent) for static text (titles, labels). See [ADR-0020](docs/adr/0020-ui-text-components-scrolling-and-ellipsis.md).
+12. **UI text overflow**: Use ScrollingTextViewport for dynamic text (toolbar, status lines) that may exceed width; use ellipsis truncation (TruncateWithEllipsis) for static text (titles, labels). Wrap strings in PlainText or AnsiText; use AnsiText when content may contain ANSI escape sequences. See [ADR-0020](docs/adr/0020-ui-text-components-scrolling-and-ellipsis.md), [ADR-0032](docs/adr/0032-typed-display-text.md).
 
 13. **Layer dependency injection**: Layers that need external services (e.g. INowPlayingProvider) receive them via constructor injection. Snapshot does not carry service-derived data. Layers are registered in the DI container (AddTextLayerRenderers); TextLayersVisualizer receives IEnumerable&lt;ITextLayerRenderer&gt;. See [ADR-0028](docs/adr/0028-layer-dependency-injection.md).
 
@@ -36,3 +36,5 @@ alwaysApply: true
 15. **Performance**: Console writes, polling, and timing must be performant. Follow [ADR-0030](docs/adr/0030-performance-priority.md) when adding console I/O, key polling, or frame-rate logic.
 
 16. **Shows**: Preset collections for performance auto-cycling. Stored in `shows/*.json`; Tab switches Preset editor ↔ Show play; S in Show play opens Show edit modal. Duration per entry: Seconds or Beats. See [ADR-0031](docs/adr/0031-show-preset-collection.md).
+
+17. **Display text types**: ScrollingTextViewport.Render, RenderWithLabel, and VisualizerViewport.TruncateToWidth, TruncateWithEllipsis accept IDisplayText. Use PlainText for unformatted strings, AnsiText when text may contain ANSI escape sequences. No implicit string conversion. See [ADR-0032](docs/adr/0032-typed-display-text.md).

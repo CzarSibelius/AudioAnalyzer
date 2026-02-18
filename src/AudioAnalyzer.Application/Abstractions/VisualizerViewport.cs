@@ -17,43 +17,26 @@ public readonly struct VisualizerViewport
         Width = width;
     }
 
-    /// <summary>Truncates a line to at most maxWidth characters so it does not wrap.</summary>
-    public static string TruncateToWidth(string line, int maxWidth)
+    /// <summary>Truncates a line to at most maxWidth visible characters so it does not wrap.</summary>
+    /// <param name="text">The text to truncate (plain or ANSI-styled).</param>
+    /// <param name="maxWidth">Maximum visible width.</param>
+    /// <returns>Truncated string, preserving ANSI codes when present.</returns>
+    public static string TruncateToWidth<T>(T text, int maxWidth)
+        where T : IDisplayText
     {
-        if (string.IsNullOrEmpty(line))
-        {
-            return "";
-        }
-
-        if (line.Length <= maxWidth)
-        {
-            return line;
-        }
-
-        return line[..maxWidth];
+        return text.TruncateToWidth(maxWidth);
     }
 
     /// <summary>
-    /// Truncates a line to at most maxWidth characters and appends "…" when the text exceeds the width.
+    /// Truncates a line to at most maxWidth visible characters and appends "…" when the text exceeds the width.
     /// Use for static text (titles, labels) where ellipsis indicates truncation. Per ADR-0020.
     /// </summary>
-    public static string TruncateWithEllipsis(string line, int maxWidth)
+    /// <param name="text">The text to truncate (plain or ANSI-styled).</param>
+    /// <param name="maxWidth">Maximum visible width.</param>
+    /// <returns>Truncated string with ellipsis if needed, preserving ANSI codes when present.</returns>
+    public static string TruncateWithEllipsis<T>(T text, int maxWidth)
+        where T : IDisplayText
     {
-        if (string.IsNullOrEmpty(line) || maxWidth <= 0)
-        {
-            return "";
-        }
-
-        if (line.Length <= maxWidth)
-        {
-            return line;
-        }
-
-        if (maxWidth <= 1)
-        {
-            return "…";
-        }
-
-        return line[..(maxWidth - 1)] + "…";
+        return text.TruncateWithEllipsis(maxWidth);
     }
 }
