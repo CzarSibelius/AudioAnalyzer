@@ -26,6 +26,7 @@ internal static class ServiceConfiguration
         services.AddSingleton<IVisualizerSettingsRepository>(_ => settingsRepo);
         services.AddSingleton<IPaletteRepository>(_ => options?.PaletteRepository ?? new FilePaletteRepository());
         services.AddSingleton<IPresetRepository>(presetRepo);
+        services.AddSingleton<IShowRepository>(new FileShowRepository());
         services.AddSingleton<IAudioDeviceInfo, NAudioDeviceInfo>();
         services.AddSingleton<INowPlayingProvider>(sp =>
         {

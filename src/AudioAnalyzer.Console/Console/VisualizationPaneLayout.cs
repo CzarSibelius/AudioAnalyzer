@@ -28,6 +28,7 @@ public sealed class VisualizationPaneLayout : IVisualizationRenderer
     private string? _toolbarLine1LastText;
     private ScrollingTextViewportState _toolbarLine2ScrollState;
     private string? _toolbarLine2LastText;
+    private ApplicationMode? _lastToolbarMode;
 
     public void Render(AnalysisSnapshot snapshot)
     {
@@ -156,6 +157,12 @@ public sealed class VisualizationPaneLayout : IVisualizationRenderer
         string line2;
         if (toolbarViewport.MaxLines >= 2)
         {
+            var currentMode = _visualizerSettings?.ApplicationMode ?? ApplicationMode.PresetEditor;
+            if (currentMode != _lastToolbarMode)
+            {
+                _lastToolbarMode = currentMode;
+                _toolbarLine2LastText = null;
+            }
             string line2Full = GetToolbarLine2(snapshot, w);
             int visibleLen = AnsiConsole.GetVisibleLength(line2Full);
             if (line2Full != _toolbarLine2LastText)
@@ -207,9 +214,21 @@ public sealed class VisualizationPaneLayout : IVisualizationRenderer
 
     private string GetToolbarLine2(AnalysisSnapshot snapshot, int w)
     {
-        string baseLine = _visualizerSettings?.Presets is { Count: > 0 }
-            ? $"Preset: {GetActivePresetName()} (V)"
-            : $"Mode: {_visualizer?.DisplayName ?? "Layered text"} (V)";
+        string baseLine;
+        if (_visualizerSettings?.ApplicationMode == ApplicationMode.ShowPlay)
+        {
+            var showName = string.IsNullOrWhiteSpace(_visualizerSettings.ActiveShowName)
+                ? "Show"
+                : _visualizerSettings.ActiveShowName.Trim();
+            var presetName = GetActivePresetName();
+            baseLine = $"Show: {showName} | Preset: {presetName}";
+        }
+        else
+        {
+            baseLine = _visualizerSettings?.Presets is { Count: > 0 }
+                ? $"Preset: {GetActivePresetName()} (V)"
+                : $"Mode: {_visualizer?.DisplayName ?? "Layered text"} (V)";
+        }
         if (_visualizer != null)
         {
             var suffix = _visualizer.GetToolbarSuffix(snapshot);

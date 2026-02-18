@@ -76,6 +76,12 @@ public sealed class AnalysisEngine
 
     public double BeatSensitivity { get => _beatThreshold; set => _beatThreshold = Math.Clamp(value, 0.5, 3.0); }
 
+    /// <summary>Current detected BPM from beat detection. 0 when no detection yet.</summary>
+    public double CurrentBpm => _currentBpm;
+
+    /// <summary>Incremented each time a beat is detected. Used for Show playback with beats duration.</summary>
+    public int BeatCount => _beatCount;
+
     /// <summary>When true, the visualizer uses the full console; header and toolbar are hidden.</summary>
     public bool FullScreen
     {
