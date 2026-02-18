@@ -44,4 +44,19 @@ public sealed class ScrollingTextViewportTests
         Assert.Equal(5, new PlainText("Hello").GetVisibleLength());
         Assert.Equal(3, new PlainText("A😀B").GetVisibleLength());
     }
+
+    [Fact]
+    public void FormatLabel_WithHotkey_ReturnsLabelWithHotkeyInParens()
+    {
+        Assert.Equal("Preset (V): ", ScrollingTextViewport.FormatLabel("Preset", "V"));
+        Assert.Equal("Device (D): ", ScrollingTextViewport.FormatLabel("Device", "D"));
+        Assert.Equal("Mode (Tab): ", ScrollingTextViewport.FormatLabel("Mode", "Tab"));
+    }
+
+    [Fact]
+    public void FormatLabel_WithoutHotkey_ReturnsLabelWithColonOnly()
+    {
+        Assert.Equal("Now: ", ScrollingTextViewport.FormatLabel("Now", null));
+        Assert.Equal("Device: ", ScrollingTextViewport.FormatLabel("Device", ""));
+    }
 }

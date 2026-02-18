@@ -181,7 +181,8 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
             BeatSensitivity = file.BeatSensitivity,
             BeatCircles = file.BeatCircles,
             OscilloscopeGain = file.OscilloscopeGain,
-            SelectedPaletteId = file.SelectedPaletteId
+            SelectedPaletteId = file.SelectedPaletteId,
+            UiSettings = MapToUiSettings(file.UiSettings)
         };
     }
 
@@ -194,6 +195,54 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
         file.BeatCircles = settings.BeatCircles;
         file.OscilloscopeGain = settings.OscilloscopeGain;
         file.SelectedPaletteId = settings.SelectedPaletteId;
+        file.UiSettings = MapToUiSettingsFile(settings.UiSettings);
+    }
+
+    private static UiSettings MapToUiSettings(UiSettingsFile? file)
+    {
+        if (file == null)
+        {
+            return new UiSettings();
+        }
+
+        var palette = new UiPalette
+        {
+            Normal = ColorPaletteParser.ParseEntry(file.Palette?.Normal),
+            Highlighted = ColorPaletteParser.ParseEntry(file.Palette?.Highlighted),
+            Dimmed = ColorPaletteParser.ParseEntry(file.Palette?.Dimmed),
+            Label = ColorPaletteParser.ParseEntry(file.Palette?.Label),
+            Background = file.Palette?.Background != null ? ColorPaletteParser.ParseEntry(file.Palette.Background) : null
+        };
+
+        return new UiSettings
+        {
+            Title = file.Title ?? "AUDIO ANALYZER - Real-time Frequency Spectrum",
+            DefaultScrollingSpeed = file.DefaultScrollingSpeed,
+            Palette = palette
+        };
+    }
+
+    private static UiSettingsFile MapToUiSettingsFile(UiSettings? settings)
+    {
+        if (settings == null)
+        {
+            return new UiSettingsFile();
+        }
+
+        var palette = settings.Palette ?? new UiPalette();
+        return new UiSettingsFile
+        {
+            Title = settings.Title,
+            DefaultScrollingSpeed = settings.DefaultScrollingSpeed,
+            Palette = new UiPaletteFile
+            {
+                Normal = ColorPaletteParser.ToEntry(palette.Normal),
+                Highlighted = ColorPaletteParser.ToEntry(palette.Highlighted),
+                Dimmed = ColorPaletteParser.ToEntry(palette.Dimmed),
+                Label = ColorPaletteParser.ToEntry(palette.Label),
+                Background = palette.Background.HasValue ? ColorPaletteParser.ToEntry(palette.Background.Value) : null
+            }
+        };
     }
 
     /// <summary>Ensures VisualizerSettings exists and TextLayers has at least 9 layers when present. Per ADR-0029, no migration of legacy formats.</summary>
@@ -272,5 +321,24 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
         public double OscilloscopeGain { get; set; } = 2.5;
         public string? SelectedPaletteId { get; set; }
         public VisualizerSettings? VisualizerSettings { get; set; }
+        public UiSettingsFile? UiSettings { get; set; }
+    }
+
+    /// <summary>JSON DTO for UiSettings persistence.</summary>
+    private sealed class UiSettingsFile
+    {
+        public string? Title { get; set; }
+        public double DefaultScrollingSpeed { get; set; } = 0.25;
+        public UiPaletteFile? Palette { get; set; }
+    }
+
+    /// <summary>JSON DTO for UiPalette persistence. Uses PaletteColorEntry for each slot.</summary>
+    private sealed class UiPaletteFile
+    {
+        public PaletteColorEntry? Normal { get; set; }
+        public PaletteColorEntry? Highlighted { get; set; }
+        public PaletteColorEntry? Dimmed { get; set; }
+        public PaletteColorEntry? Label { get; set; }
+        public PaletteColorEntry? Background { get; set; }
     }
 }

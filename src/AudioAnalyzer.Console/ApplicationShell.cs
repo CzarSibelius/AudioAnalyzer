@@ -64,16 +64,17 @@ internal sealed class ApplicationShell
 
         string GetModeName() =>
             _visualizerSettings.ApplicationMode == ApplicationMode.ShowPlay ? "Show play" : "Preset editor";
+        var ui = _settings.UiSettings ?? new UiSettings();
         _engine.SetHeaderCallback(
-            () => ConsoleHeader.DrawMain(_currentDeviceName, _nowPlayingProvider.GetNowPlayingText(), GetModeName()),
-            () => ConsoleHeader.DrawHeaderOnly(_currentDeviceName, _nowPlayingProvider.GetNowPlayingText(), GetModeName()),
+            () => ConsoleHeader.DrawMain(_currentDeviceName, _nowPlayingProvider.GetNowPlayingText(), GetModeName(), ui, _engine.CurrentBpm, _engine.BeatSensitivity, _engine.BeatFlashActive, _engine.Volume),
+            () => ConsoleHeader.DrawHeaderOnly(_currentDeviceName, _nowPlayingProvider.GetNowPlayingText(), GetModeName(), ui, _engine.CurrentBpm, _engine.BeatSensitivity, _engine.BeatFlashActive, _engine.Volume),
             6);
         _engine.SetRenderGuard(() => !modalOpen);
         _engine.SetConsoleLock(consoleLock);
 
         StartCapture(initialDeviceId, initialDeviceName);
         ConsoleHeader.DrawMain(_currentDeviceName, _nowPlayingProvider.GetNowPlayingText(),
-            _visualizerSettings.ApplicationMode == ApplicationMode.ShowPlay ? "Show play" : "Preset editor");
+            _visualizerSettings.ApplicationMode == ApplicationMode.ShowPlay ? "Show play" : "Preset editor", ui, _engine.CurrentBpm, _engine.BeatSensitivity, _engine.BeatFlashActive, _engine.Volume);
         _engine.Redraw();
 
         bool running = true;
@@ -101,7 +102,7 @@ internal sealed class ApplicationShell
                             if (!_engine.FullScreen)
                             {
                                 ConsoleHeader.DrawMain(_currentDeviceName, _nowPlayingProvider.GetNowPlayingText(),
-                                    _visualizerSettings.ApplicationMode == ApplicationMode.ShowPlay ? "Show play" : "Preset editor");
+                                    _visualizerSettings.ApplicationMode == ApplicationMode.ShowPlay ? "Show play" : "Preset editor", ui, _engine.CurrentBpm, _engine.BeatSensitivity, _engine.BeatFlashActive, _engine.Volume);
                             }
                             _engine.Redraw();
                             break;
@@ -112,8 +113,8 @@ internal sealed class ApplicationShell
                                 SaveSettings();
                                 if (!_engine.FullScreen)
                                 {
-                                    ConsoleHeader.DrawMain(_currentDeviceName, _nowPlayingProvider.GetNowPlayingText(),
-                                        _visualizerSettings.ApplicationMode == ApplicationMode.ShowPlay ? "Show play" : "Preset editor");
+                                ConsoleHeader.DrawMain(_currentDeviceName, _nowPlayingProvider.GetNowPlayingText(),
+                                    _visualizerSettings.ApplicationMode == ApplicationMode.ShowPlay ? "Show play" : "Preset editor", ui, _engine.CurrentBpm, _engine.BeatSensitivity, _engine.BeatFlashActive, _engine.Volume);
                                 }
                                 _engine.Redraw();
                             }
@@ -121,7 +122,7 @@ internal sealed class ApplicationShell
                         case ConsoleKey.S:
                             if (_visualizerSettings.ApplicationMode == ApplicationMode.PresetEditor)
                             {
-                                SettingsModal.Show(_engine, _visualizerSettings, _presetRepository, _paletteRepo, consoleLock, SaveSettings);
+                                SettingsModal.Show(_engine, _visualizerSettings, _presetRepository, _paletteRepo, consoleLock, SaveSettings, _settings.UiSettings);
                             }
                             else
                             {
@@ -129,14 +130,14 @@ internal sealed class ApplicationShell
                                 {
                                     SaveSettings();
                                     _visualizerSettingsRepo.SaveVisualizerSettings(_visualizerSettings);
-                                });
+                                }, _settings.UiSettings);
                             }
                             lock (consoleLock)
                             {
                                 if (!_engine.FullScreen)
                                 {
-                                    ConsoleHeader.DrawMain(_currentDeviceName, _nowPlayingProvider.GetNowPlayingText(),
-                                        _visualizerSettings.ApplicationMode == ApplicationMode.ShowPlay ? "Show play" : "Preset editor");
+                                ConsoleHeader.DrawMain(_currentDeviceName, _nowPlayingProvider.GetNowPlayingText(),
+                                    _visualizerSettings.ApplicationMode == ApplicationMode.ShowPlay ? "Show play" : "Preset editor", ui, _engine.CurrentBpm, _engine.BeatSensitivity, _engine.BeatFlashActive, _engine.Volume);
                                 }
                                 _engine.Redraw();
                             }
@@ -152,7 +153,7 @@ internal sealed class ApplicationShell
                             }
                             inputToStop?.StopCapture();
 
-                            var (newId, newName) = DeviceSelectionModal.Show(_deviceInfo, _settingsRepo, _settings, _currentDeviceName, open => modalOpen = open);
+                            var (newId, newName) = DeviceSelectionModal.Show(_deviceInfo, _settingsRepo, _settings, _currentDeviceName, open => modalOpen = open, _settings.UiSettings);
                             if (newName != "")
                             {
                                 StartCapture(newId, newName);
@@ -167,25 +168,28 @@ internal sealed class ApplicationShell
                             if (!_engine.FullScreen)
                             {
                                 ConsoleHeader.DrawMain(_currentDeviceName, _nowPlayingProvider.GetNowPlayingText(),
-                                    _visualizerSettings.ApplicationMode == ApplicationMode.ShowPlay ? "Show play" : "Preset editor");
+                                    _visualizerSettings.ApplicationMode == ApplicationMode.ShowPlay ? "Show play" : "Preset editor", ui, _engine.CurrentBpm, _engine.BeatSensitivity, _engine.BeatFlashActive, _engine.Volume);
                             }
                             _engine.Redraw();
                             break;
                         case ConsoleKey.H:
-                            HelpModal.Show(onEnter: () => modalOpen = true, onClose: () =>
-                            {
-                                modalOpen = false;
-                                if (_engine.FullScreen)
+                            HelpModal.Show(
+                                onEnter: () => modalOpen = true,
+                                onClose: () =>
                                 {
-                                    _engine.Redraw();
-                                }
-                                else
-                                {
-                                    ConsoleHeader.DrawMain(_currentDeviceName, _nowPlayingProvider.GetNowPlayingText(),
-                                        _visualizerSettings.ApplicationMode == ApplicationMode.ShowPlay ? "Show play" : "Preset editor");
-                                    _engine.Redraw();
-                                }
-                            });
+                                    modalOpen = false;
+                                    if (_engine.FullScreen)
+                                    {
+                                        _engine.Redraw();
+                                    }
+                                    else
+                                    {
+                                ConsoleHeader.DrawMain(_currentDeviceName, _nowPlayingProvider.GetNowPlayingText(),
+                                    _visualizerSettings.ApplicationMode == ApplicationMode.ShowPlay ? "Show play" : "Preset editor", ui, _engine.CurrentBpm, _engine.BeatSensitivity, _engine.BeatFlashActive, _engine.Volume);
+                                        _engine.Redraw();
+                                    }
+                                },
+                                _settings.UiSettings);
                             break;
                         case ConsoleKey.OemPlus:
                         case ConsoleKey.Add:
@@ -211,7 +215,7 @@ internal sealed class ApplicationShell
                             else
                             {
                                 ConsoleHeader.DrawMain(_currentDeviceName, _nowPlayingProvider.GetNowPlayingText(),
-                                    _visualizerSettings.ApplicationMode == ApplicationMode.ShowPlay ? "Show play" : "Preset editor");
+                                    _visualizerSettings.ApplicationMode == ApplicationMode.ShowPlay ? "Show play" : "Preset editor", ui, _engine.CurrentBpm, _engine.BeatSensitivity, _engine.BeatFlashActive, _engine.Volume);
                                 _engine.Redraw();
                             }
                             break;
@@ -275,7 +279,7 @@ internal sealed class ApplicationShell
             {
                 SaveSettings();
                 _visualizerSettingsRepo.SaveVisualizerSettings(_visualizerSettings);
-            });
+            }, _settings.UiSettings);
             allShows = _showRepository.GetAll();
             if (allShows.Count == 0)
             {
@@ -377,8 +381,8 @@ internal sealed class ApplicationShell
         SaveSettings();
         if (!_engine.FullScreen)
         {
-            ConsoleHeader.DrawMain(_currentDeviceName, _nowPlayingProvider.GetNowPlayingText(),
-                _visualizerSettings.ApplicationMode == ApplicationMode.ShowPlay ? "Show play" : "Preset editor");
+                                ConsoleHeader.DrawMain(_currentDeviceName, _nowPlayingProvider.GetNowPlayingText(),
+                                    _visualizerSettings.ApplicationMode == ApplicationMode.ShowPlay ? "Show play" : "Preset editor", _settings.UiSettings ?? new UiSettings(), _engine.CurrentBpm, _engine.BeatSensitivity, _engine.BeatFlashActive, _engine.Volume);
         }
         _engine.Redraw();
     }

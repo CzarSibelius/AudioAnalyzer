@@ -57,6 +57,7 @@ public sealed class AnalysisEngine
     private double _beatThreshold = 1.3;
     private DateTime _lastBeatTime = DateTime.MinValue;
     private double _currentBpm;
+    private float _lastVolume;
     private double _instantEnergy;
     private int _beatFlashFrames;
     private int _beatCount;
@@ -78,6 +79,12 @@ public sealed class AnalysisEngine
 
     /// <summary>Current detected BPM from beat detection. 0 when no detection yet.</summary>
     public double CurrentBpm => _currentBpm;
+
+    /// <summary>True when a beat was recently detected (used for visual flash effects).</summary>
+    public bool BeatFlashActive => _beatFlashFrames > 0;
+
+    /// <summary>Latest volume from audio processing (0–1). Used for header display.</summary>
+    public float Volume => _lastVolume;
 
     /// <summary>Incremented each time a beat is detected. Used for Show playback with beats duration.</summary>
     public int BeatCount => _beatCount;
@@ -336,6 +343,7 @@ public sealed class AnalysisEngine
         _snapshot.DisplayStartRow = _displayStartRow;
         _snapshot.TerminalWidth = termWidth;
         _snapshot.TerminalHeight = termHeight;
+        _lastVolume = volume;
         _snapshot.Volume = volume;
         _snapshot.CurrentBpm = _currentBpm;
         _snapshot.BeatSensitivity = _beatThreshold;

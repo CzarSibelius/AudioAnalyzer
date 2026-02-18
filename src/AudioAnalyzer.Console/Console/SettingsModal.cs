@@ -12,7 +12,7 @@ internal static class SettingsModal
     private const int SettingsVisibleRows = OverlayRowCount - 5;
 
     /// <summary>Shows the settings overlay modal. Blocks until user closes with ESC.</summary>
-    public static void Show(AnalysisEngine analysisEngine, VisualizerSettings visualizerSettings, IPresetRepository presetRepository, IPaletteRepository paletteRepo, object consoleLock, Action saveSettings)
+    public static void Show(AnalysisEngine analysisEngine, VisualizerSettings visualizerSettings, IPresetRepository presetRepository, IPaletteRepository paletteRepo, object consoleLock, Action saveSettings, UiSettings? uiSettings = null)
     {
         var textLayers = visualizerSettings.TextLayers ?? new TextLayersVisualizerSettings();
         var layers = textLayers.Layers ?? new List<TextLayerSettings>();
@@ -30,12 +30,13 @@ internal static class SettingsModal
         string editingBuffer = "";
         const int LeftColWidth = 28;
         int width = ConsoleHeader.GetConsoleWidth();
-        int rightColWidth = Math.Max(10, width - LeftColWidth - 3);
+        int rightColWidth = Math.Max(10, width - LeftColWidth - 1);
         ScrollingTextViewportState settingsHintScrollState = default;
         string? settingsHintLastText = null;
         ConsoleKey? lastNavKey = null;
         long lastNavTime = 0;
         const int NavKeyRepeatMs = 120;
+        double scrollSpeed = uiSettings?.DefaultScrollingSpeed ?? 0.25;
 
         IReadOnlyList<(string Id, string Label, string DisplayValue, SettingEditMode EditMode)> GetSettingsRows(TextLayerSettings? layer)
         {
@@ -57,7 +58,7 @@ internal static class SettingsModal
                 settingsHintLastText = hint;
             }
             string hintLine = hint.Length > width
-                ? ScrollingTextViewport.Render(new PlainText(hint), width, ref settingsHintScrollState, 0.25)
+                ? ScrollingTextViewport.Render(new PlainText(hint), width, ref settingsHintScrollState, scrollSpeed)
                 : hint.PadRight(width);
             try
             {
@@ -83,6 +84,10 @@ internal static class SettingsModal
                 return;
             }
 
+            var palette = (uiSettings ?? new UiSettings()).Palette ?? new UiPalette();
+            var selBg = palette.Background ?? PaletteColor.FromConsoleColor(ConsoleColor.DarkBlue);
+            var selFg = palette.Highlighted;
+
             try
             {
                 var activePreset = visualizerSettings.Presets?.FirstOrDefault(p =>
@@ -92,14 +97,14 @@ internal static class SettingsModal
                 string title = renaming
                     ? $" New preset name (Enter confirm, Esc cancel): {renameBuffer}_ "
                     : $" Preset: {presetName} (R rename) ";
-                string titleTruncated = VisualizerViewport.TruncateWithEllipsis(new PlainText(title), width - 2);
+                string titleTruncated = StaticTextViewport.TruncateWithEllipsis(new PlainText(title), width - 2);
                 int pad = Math.Max(0, (width - titleTruncated.Length - 2) / 2);
                 System.Console.SetCursorPosition(0, 0);
-                System.Console.Write(VisualizerViewport.TruncateToWidth(new PlainText("╔" + new string('═', width - 2) + "╗"), width).PadRight(width));
+                System.Console.Write(StaticTextViewport.TruncateToWidth(new PlainText("╔" + new string('═', width - 2) + "╗"), width).PadRight(width));
                 System.Console.SetCursorPosition(0, 1);
-                System.Console.Write(VisualizerViewport.TruncateToWidth(new PlainText("║" + new string(' ', pad) + titleTruncated + new string(' ', width - pad - titleTruncated.Length - 2) + "║"), width).PadRight(width));
+                System.Console.Write(StaticTextViewport.TruncateToWidth(new PlainText("║" + new string(' ', pad) + titleTruncated + new string(' ', width - pad - titleTruncated.Length - 2) + "║"), width).PadRight(width));
                 System.Console.SetCursorPosition(0, 2);
-                System.Console.Write(VisualizerViewport.TruncateToWidth(new PlainText("╚" + new string('═', width - 2) + "╝"), width).PadRight(width));
+                System.Console.Write(StaticTextViewport.TruncateToWidth(new PlainText("╚" + new string('═', width - 2) + "╝"), width).PadRight(width));
                 System.Console.SetCursorPosition(0, 3);
                 string hint = renaming ? "  Type new name, Enter to save, Esc to cancel"
                     : focus == SettingsModalFocus.EditingSetting ? "  Type value, Enter or \u2191\u2193 confirm, Esc cancel"
@@ -111,11 +116,11 @@ internal static class SettingsModal
                     settingsHintLastText = hint;
                 }
                 string hintLine = hint.Length > width
-                    ? ScrollingTextViewport.Render(new PlainText(hint), width, ref settingsHintScrollState, 0.25)
+                    ? ScrollingTextViewport.Render(new PlainText(hint), width, ref settingsHintScrollState, scrollSpeed)
                     : hint.PadRight(width);
                 System.Console.Write(hintLine);
                 System.Console.SetCursorPosition(0, 4);
-                System.Console.Write(VisualizerViewport.TruncateToWidth(new PlainText("  ─" + new string('─', LeftColWidth - 2) + "┬" + new string('─', rightColWidth) + "─"), width).PadRight(width));
+                System.Console.Write(StaticTextViewport.TruncateToWidth(new PlainText("  ─" + new string('─', LeftColWidth - 2) + "┬" + new string('─', rightColWidth) + "─"), width).PadRight(width));
 
                 var selectedLayer = sortedLayers.Count > 0 && selectedIndex < sortedLayers.Count
                     ? sortedLayers[selectedIndex]
@@ -123,7 +128,7 @@ internal static class SettingsModal
 
                 for (int r = 5; r < OverlayRowCount; r++)
                 {
-                    System.Console.SetCursorPosition(LeftColWidth + 3, r);
+                    System.Console.SetCursorPosition(LeftColWidth + 1, r);
                     System.Console.Write(new string(' ', rightColWidth));
                 }
 
@@ -139,17 +144,14 @@ internal static class SettingsModal
                     string prefix = i == selectedIndex ? " ► " : "   ";
                     string enabledMark = layer.Enabled ? "●" : "○";
                     string leftLine = $"{prefix}{enabledMark} {i + 1}. {layer.LayerType}";
-                    leftLine = VisualizerViewport.TruncateWithEllipsis(new PlainText(leftLine), LeftColWidth).PadRight(LeftColWidth);
+                    leftLine = StaticTextViewport.TruncateWithEllipsis(new PlainText(leftLine), LeftColWidth).PadRight(LeftColWidth);
 
                     System.Console.SetCursorPosition(0, row);
-                    if (i == selectedIndex && focus == SettingsModalFocus.LayerList && !renaming)
-                    {
-                        System.Console.BackgroundColor = ConsoleColor.DarkBlue;
-                        System.Console.ForegroundColor = ConsoleColor.White;
-                    }
-                    System.Console.Write(leftLine);
-                    System.Console.ResetColor();
-                    System.Console.Write(" │ ");
+                    string leftLineToWrite = (i == selectedIndex && focus == SettingsModalFocus.LayerList && !renaming)
+                        ? AnsiConsole.BackgroundCode(selBg) + AnsiConsole.ColorCode(selFg) + leftLine + AnsiConsole.ResetCode
+                        : leftLine;
+                    System.Console.Write(leftLineToWrite);
+                    System.Console.Write(" ");
                     System.Console.Write(new string(' ', rightColWidth));
                 }
 
@@ -166,22 +168,20 @@ internal static class SettingsModal
                         var row = settingsRows[i];
                         bool showBuffer = focus == SettingsModalFocus.EditingSetting && i == selectedSettingIndex && row.EditMode == SettingEditMode.TextEdit;
                         string lineText = $"{row.Label}: {(showBuffer ? editingBuffer + "_" : row.DisplayValue)}";
-                        string line = VisualizerViewport.TruncateWithEllipsis(new PlainText(lineText), rightColWidth);
-                        System.Console.SetCursorPosition(LeftColWidth + 3, 5 + vi);
-                        if (i == selectedSettingIndex && (focus == SettingsModalFocus.SettingsList || focus == SettingsModalFocus.EditingSetting))
-                        {
-                            System.Console.BackgroundColor = ConsoleColor.DarkBlue;
-                            System.Console.ForegroundColor = ConsoleColor.White;
-                        }
-                        System.Console.Write(line.PadRight(rightColWidth));
-                        System.Console.ResetColor();
+                        string line = StaticTextViewport.TruncateWithEllipsis(new PlainText(lineText), rightColWidth);
+                        string linePadded = line.PadRight(rightColWidth);
+                        string lineToWrite = (i == selectedSettingIndex && (focus == SettingsModalFocus.SettingsList || focus == SettingsModalFocus.EditingSetting))
+                            ? AnsiConsole.BackgroundCode(selBg) + AnsiConsole.ColorCode(selFg) + linePadded + AnsiConsole.ResetCode
+                            : linePadded;
+                        System.Console.SetCursorPosition(LeftColWidth + 1, 5 + vi);
+                        System.Console.Write(lineToWrite);
                     }
                 }
 
                 for (int row = 5 + sortedLayers.Count; row < OverlayRowCount; row++)
                 {
                     System.Console.SetCursorPosition(0, row);
-                    System.Console.Write(new string(' ', LeftColWidth + 3));
+                    System.Console.Write(new string(' ', LeftColWidth + 1));
                 }
             }
             catch (Exception ex) { _ = ex; /* Draw settings modal failed */ }

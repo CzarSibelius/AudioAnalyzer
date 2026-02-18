@@ -11,13 +11,15 @@ internal static class ShowEditModal
     private const int LeftColWidth = 32;
 
     /// <summary>Shows the Show edit overlay modal. Blocks until user closes with ESC.</summary>
+    /// <param name="uiSettings">Optional UI settings for palette colors per ADR-0033.</param>
     public static void Show(
         AnalysisEngine analysisEngine,
         VisualizerSettings visualizerSettings,
         IShowRepository showRepo,
         IPresetRepository presetRepo,
         object consoleLock,
-        Action saveVisualizerSettings)
+        Action saveVisualizerSettings,
+        UiSettings? uiSettings = null)
     {
         var allShows = showRepo.GetAll();
         var allPresets = presetRepo.GetAll();
@@ -37,7 +39,11 @@ internal static class ShowEditModal
         bool editingDuration = false;
         string durationBuffer = "";
         int width = ConsoleHeader.GetConsoleWidth();
-        int rightColWidth = Math.Max(10, width - LeftColWidth - 3);
+        int rightColWidth = Math.Max(10, width - LeftColWidth - 1);
+
+        var palette = (uiSettings ?? new UiSettings()).Palette ?? new UiPalette();
+        var selBg = palette.Background ?? PaletteColor.FromConsoleColor(ConsoleColor.DarkBlue);
+        var selFg = palette.Highlighted;
 
         void DrawContent()
         {
@@ -53,14 +59,14 @@ internal static class ShowEditModal
                 var title = renaming
                     ? $" New show name (Enter confirm, Esc cancel): {renameBuffer}_ "
                     : $" Show: {showName} (R rename, N new) ";
-                var titleTruncated = VisualizerViewport.TruncateWithEllipsis(new PlainText(title), width - 2);
+                var titleTruncated = StaticTextViewport.TruncateWithEllipsis(new PlainText(title), width - 2);
                 int pad = Math.Max(0, (width - titleTruncated.Length - 2) / 2);
                 System.Console.SetCursorPosition(0, 0);
-                System.Console.Write(VisualizerViewport.TruncateToWidth(new PlainText("╔" + new string('═', width - 2) + "╗"), width).PadRight(width));
+                System.Console.Write(StaticTextViewport.TruncateToWidth(new PlainText("╔" + new string('═', width - 2) + "╗"), width).PadRight(width));
                 System.Console.SetCursorPosition(0, 1);
-                System.Console.Write(VisualizerViewport.TruncateToWidth(new PlainText("║" + new string(' ', pad) + titleTruncated + new string(' ', width - pad - titleTruncated.Length - 2) + "║"), width).PadRight(width));
+                System.Console.Write(StaticTextViewport.TruncateToWidth(new PlainText("║" + new string(' ', pad) + titleTruncated + new string(' ', width - pad - titleTruncated.Length - 2) + "║"), width).PadRight(width));
                 System.Console.SetCursorPosition(0, 2);
-                System.Console.Write(VisualizerViewport.TruncateToWidth(new PlainText("╚" + new string('═', width - 2) + "╝"), width).PadRight(width));
+                System.Console.Write(StaticTextViewport.TruncateToWidth(new PlainText("╚" + new string('═', width - 2) + "╝"), width).PadRight(width));
 
                 string hint = renaming
                     ? "  Type new name, Enter save, Esc cancel"
@@ -68,9 +74,9 @@ internal static class ShowEditModal
                         ? "  Type duration value, Enter confirm, Esc cancel"
                         : "  \u2191\u2193 select, A add D delete, P preset, Enter duration, U unit, Esc close";
                 System.Console.SetCursorPosition(0, 3);
-                System.Console.Write(VisualizerViewport.TruncateWithEllipsis(new PlainText(hint), width).PadRight(width));
+                System.Console.Write(StaticTextViewport.TruncateWithEllipsis(new PlainText(hint), width).PadRight(width));
                 System.Console.SetCursorPosition(0, 4);
-                System.Console.Write(VisualizerViewport.TruncateToWidth(new PlainText("  ─" + new string('─', LeftColWidth - 2) + "┬" + new string('─', rightColWidth) + "─"), width).PadRight(width));
+                System.Console.Write(StaticTextViewport.TruncateToWidth(new PlainText("  ─" + new string('─', LeftColWidth - 2) + "┬" + new string('─', rightColWidth) + "─"), width).PadRight(width));
 
                 var entries = show?.Entries ?? new List<ShowEntry>();
                 for (int i = 0; i < Math.Min(10, entries.Count + 2); i++)
@@ -90,26 +96,23 @@ internal static class ShowEditModal
                         var dur = entry.Duration ?? new DurationConfig();
                         var durStr = dur.Unit == DurationUnit.Beats ? $"{dur.Value:F0} beats" : $"{dur.Value:F0}s";
                         string prefix = i == selectedIndex ? " ► " : "   ";
-                        string line = $"{prefix}{i + 1}. {VisualizerViewport.TruncateWithEllipsis(new PlainText(presetName), LeftColWidth - 10)} | {durStr}";
-                        line = VisualizerViewport.TruncateWithEllipsis(new PlainText(line), LeftColWidth).PadRight(LeftColWidth);
-                        if (i == selectedIndex)
-                        {
-                            System.Console.BackgroundColor = ConsoleColor.DarkBlue;
-                            System.Console.ForegroundColor = ConsoleColor.White;
-                        }
-                        System.Console.Write(line);
-                        System.Console.ResetColor();
-                        System.Console.Write(" │ ");
+                        string line = $"{prefix}{i + 1}. {StaticTextViewport.TruncateWithEllipsis(new PlainText(presetName), LeftColWidth - 10)}  {durStr}";
+                        line = StaticTextViewport.TruncateWithEllipsis(new PlainText(line), LeftColWidth).PadRight(LeftColWidth);
+                        string lineToWrite = i == selectedIndex
+                            ? AnsiConsole.BackgroundCode(selBg) + AnsiConsole.ColorCode(selFg) + line + AnsiConsole.ResetCode
+                            : line;
+                        System.Console.Write(lineToWrite);
+                        System.Console.Write(" ");
                         if (i == selectedIndex && !editingDuration)
                         {
                             var cfg = entry.Duration ?? new DurationConfig();
-                            string rightLine = $"Unit: {cfg.Unit} | Value: {cfg.Value} (Enter to edit)";
-                            System.Console.Write(VisualizerViewport.TruncateWithEllipsis(new PlainText(rightLine), rightColWidth).PadRight(rightColWidth));
+                            string rightLine = $"Unit: {cfg.Unit}  Value: {cfg.Value} (Enter to edit)";
+                            System.Console.Write(StaticTextViewport.TruncateWithEllipsis(new PlainText(rightLine), rightColWidth).PadRight(rightColWidth));
                         }
                         else if (i == selectedIndex && editingDuration)
                         {
                             string rightLine = $"Value: {durationBuffer}_";
-                            System.Console.Write(VisualizerViewport.TruncateWithEllipsis(new PlainText(rightLine), rightColWidth).PadRight(rightColWidth));
+                            System.Console.Write(StaticTextViewport.TruncateWithEllipsis(new PlainText(rightLine), rightColWidth).PadRight(rightColWidth));
                         }
                         else
                         {
@@ -118,7 +121,7 @@ internal static class ShowEditModal
                     }
                     else
                     {
-                        System.Console.Write(new string(' ', LeftColWidth + 3 + rightColWidth));
+                        System.Console.Write(new string(' ', LeftColWidth + 1 + rightColWidth));
                     }
                 }
             }

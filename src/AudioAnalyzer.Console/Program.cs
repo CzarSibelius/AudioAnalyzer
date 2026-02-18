@@ -18,7 +18,7 @@ var devices = deviceInfo.GetDevices();
 var (initialDeviceId, initialName) = DeviceResolver.TryResolveFromSettings(devices, settings);
 if (initialName == "")
 {
-    (initialDeviceId, initialName) = DeviceSelectionModal.Show(deviceInfo, settingsRepo, settings, null, _ => { });
+    (initialDeviceId, initialName) = DeviceSelectionModal.Show(deviceInfo, settingsRepo, settings, null, _ => { }, settings.UiSettings);
 }
 
 if (initialName == "")

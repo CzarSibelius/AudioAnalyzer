@@ -21,6 +21,7 @@ internal static class ServiceConfiguration
     {
         var services = new ServiceCollection();
         services.AddSingleton(visualizerSettings);
+        services.AddSingleton(settings.UiSettings ?? new UiSettings());
         services.AddSingleton<IDisplayDimensions>(sp => options?.DisplayDimensions ?? new ConsoleDisplayDimensions());
         services.AddSingleton<ISettingsRepository>(_ => settingsRepo);
         services.AddSingleton<IVisualizerSettingsRepository>(_ => settingsRepo);
@@ -51,14 +52,16 @@ internal static class ServiceConfiguration
             sp.GetRequiredService<VisualizerSettings>().TextLayers ?? new TextLayersVisualizerSettings(),
             sp.GetRequiredService<IPaletteRepository>(),
             sp.GetRequiredService<IEnumerable<ITextLayerRenderer>>(),
-            sp.GetRequiredService<IConsoleWriter>()));
+            sp.GetRequiredService<IConsoleWriter>(),
+            sp.GetRequiredService<UiSettings>()));
 
         services.AddSingleton<IVisualizationRenderer>(sp =>
         {
             var dimensions = sp.GetRequiredService<IDisplayDimensions>();
             var visualizers = sp.GetServices<IVisualizer>();
             var visualizerSettings = sp.GetRequiredService<VisualizerSettings>();
-            return new VisualizationPaneLayout(dimensions, visualizers, visualizerSettings);
+            var uiSettings = sp.GetRequiredService<UiSettings>();
+            return new VisualizationPaneLayout(dimensions, visualizers, visualizerSettings, uiSettings);
         });
         services.AddSingleton<AnalysisEngine>(sp =>
         {

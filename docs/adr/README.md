@@ -48,6 +48,8 @@ Decisions are numbered and kept under version control so the rationale stays wit
 | [0030](0030-performance-priority.md) | Performance as top priority | Accepted |
 | [0031](0031-show-preset-collection.md) | Show — preset collection for performance auto-cycling | Accepted |
 | [0032](0032-typed-display-text.md) | Typed display text (PlainText vs AnsiText) | Accepted |
+| [0033](0033-ui-principles-and-configurable-settings.md) | UI principles and configurable settings | Accepted |
+| [0034](0034-viewport-label-hotkey-hints.md) | Viewport label hotkey hints | Accepted |
 
 ## Process
 

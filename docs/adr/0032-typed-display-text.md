@@ -12,7 +12,7 @@ The codebase had method pairs that differed only by whether the string contained
 
 2. **Unify APIs**: Replace overload pairs with single generic methods:
    - `ScrollingTextViewport.Render<T>(T text, ...)` and `RenderWithLabel<T>(string label, T text, ...)` where `T : IDisplayText`
-   - `VisualizerViewport.TruncateToWidth<T>(T text, maxWidth)` and `TruncateWithEllipsis<T>(T text, maxWidth)` where `T : IDisplayText`
+   - `StaticTextViewport.TruncateToWidth<T>(T text, maxWidth)` and `TruncateWithEllipsis<T>(T text, maxWidth)` where `T : IDisplayText`
 
 3. **Call-site wrapping**: Callers wrap strings explicitly: `new PlainText(deviceName)`, `new AnsiText(styled)`. No implicit conversion from `string` to avoid accidentally treating ANSI as plain.
 
@@ -24,4 +24,4 @@ The codebase had method pairs that differed only by whether the string contained
 - Single API surface instead of `*WithAnsi` overloads.
 - ANSI-aware truncation (ellipsis and raw) is supported via `AnsiText` without additional methods.
 - Call sites must wrap: `Render(new PlainText(line))` instead of `Render(line)`.
-- **References**: [IDisplayText](../../src/AudioAnalyzer.Application/Abstractions/IDisplayText.cs), [PlainText](../../src/AudioAnalyzer.Application/Abstractions/PlainText.cs), [AnsiText](../../src/AudioAnalyzer.Application/Abstractions/AnsiText.cs), [ScrollingTextViewport](../../src/AudioAnalyzer.Application/Abstractions/ScrollingTextViewport.cs), [VisualizerViewport](../../src/AudioAnalyzer.Application/Abstractions/VisualizerViewport.cs).
+- **References**: [IDisplayText](../../src/AudioAnalyzer.Application/Abstractions/IDisplayText.cs), [PlainText](../../src/AudioAnalyzer.Application/Abstractions/PlainText.cs), [AnsiText](../../src/AudioAnalyzer.Application/Abstractions/AnsiText.cs), [ScrollingTextViewport](../../src/AudioAnalyzer.Application/Abstractions/ScrollingTextViewport.cs), [StaticTextViewport](../../src/AudioAnalyzer.Application/Abstractions/StaticTextViewport.cs).

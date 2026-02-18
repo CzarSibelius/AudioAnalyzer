@@ -66,6 +66,17 @@ public static class ColorPaletteParser
         return result;
     }
 
+    /// <summary>Converts a PaletteColor to a serialization-friendly PaletteColorEntry.</summary>
+    public static PaletteColorEntry ToEntry(PaletteColor color)
+    {
+        if (color.IsRgb)
+        {
+            return new PaletteColorEntry { R = color.R, G = color.G, B = color.B };
+        }
+
+        return new PaletteColorEntry { Value = color.ConsoleColor!.Value.ToString() };
+    }
+
     /// <summary>Parses a single palette file entry to one PaletteColor.</summary>
     public static PaletteColor ParseEntry(PaletteColorEntry? entry)
     {

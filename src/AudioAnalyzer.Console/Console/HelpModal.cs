@@ -1,11 +1,19 @@
+using AudioAnalyzer.Application.Abstractions;
+using AudioAnalyzer.Domain;
+
 namespace AudioAnalyzer.Console;
 
 /// <summary>Help modal content and presentation per ADR-0006.</summary>
 internal static class HelpModal
 {
-    /// <summary>Draws help content only; does not clear or read input. Used by RunModal.</summary>
-    public static void DrawContent()
+    /// <summary>Draws help content only; does not clear or read input. Used by RunModal. Uses palette colors per ADR-0033.</summary>
+    public static void DrawContent(UiSettings? uiSettings = null)
     {
+        var palette = (uiSettings ?? new UiSettings()).Palette ?? new UiPalette();
+        string labelCode = AnsiConsole.ColorCode(palette.Label);
+        string dimmedCode = AnsiConsole.ColorCode(palette.Dimmed);
+        string reset = AnsiConsole.ResetCode;
+
         int width = ConsoleHeader.GetConsoleWidth();
         string title = " HELP ";
         int pad = Math.Max(0, (width - title.Length - 2) / 2);
@@ -13,9 +21,7 @@ internal static class HelpModal
         System.Console.WriteLine("║" + new string(' ', pad) + title + new string(' ', width - pad - title.Length - 2) + "║");
         System.Console.WriteLine("╚" + new string('═', width - 2) + "╝");
         System.Console.WriteLine();
-        System.Console.ForegroundColor = ConsoleColor.Cyan;
-        System.Console.WriteLine("  KEYBOARD CONTROLS");
-        System.Console.ResetColor();
+        System.Console.WriteLine(labelCode + "  KEYBOARD CONTROLS" + reset);
         System.Console.WriteLine("  ─────────────────────────────────────");
         System.Console.WriteLine("  H         Show this help menu");
         System.Console.WriteLine("  Tab       Switch between Preset editor and Show play");
@@ -28,9 +34,7 @@ internal static class HelpModal
         System.Console.WriteLine("  ESC       Quit the application");
         System.Console.WriteLine("  F         Toggle full screen (visualizer only, no header/toolbar)");
         System.Console.WriteLine();
-        System.Console.ForegroundColor = ConsoleColor.Cyan;
-        System.Console.WriteLine("  PRESET SETTINGS MODAL (S)");
-        System.Console.ResetColor();
+        System.Console.WriteLine(labelCode + "  PRESET SETTINGS MODAL (S)" + reset);
         System.Console.WriteLine("  ─────────────────────────────────────");
         System.Console.WriteLine("  1-9       Select layer");
         System.Console.WriteLine("  ←→       Change layer type (left panel)");
@@ -46,17 +50,13 @@ internal static class HelpModal
         System.Console.WriteLine("  N         New preset (duplicate of current)");
         System.Console.WriteLine("  ESC       Close modal");
         System.Console.WriteLine();
-        System.Console.ForegroundColor = ConsoleColor.Cyan;
-        System.Console.WriteLine("  DEVICE SELECTION MENU");
-        System.Console.ResetColor();
+        System.Console.WriteLine(labelCode + "  DEVICE SELECTION MENU" + reset);
         System.Console.WriteLine("  ─────────────────────────────────────");
         System.Console.WriteLine("  ↑/↓       Navigate devices");
         System.Console.WriteLine("  ENTER     Select device");
         System.Console.WriteLine("  ESC       Cancel and return");
         System.Console.WriteLine();
-        System.Console.ForegroundColor = ConsoleColor.Cyan;
-        System.Console.WriteLine("  SHOW EDIT MODAL (S when in Show play)");
-        System.Console.ResetColor();
+        System.Console.WriteLine(labelCode + "  SHOW EDIT MODAL (S when in Show play)" + reset);
         System.Console.WriteLine("  ─────────────────────────────────────");
         System.Console.WriteLine("  Up/Down   Select entry");
         System.Console.WriteLine("  A         Add preset entry");
@@ -68,21 +68,18 @@ internal static class HelpModal
         System.Console.WriteLine("  N         New show");
         System.Console.WriteLine("  ESC       Close modal");
         System.Console.WriteLine();
-        System.Console.ForegroundColor = ConsoleColor.Cyan;
-        System.Console.WriteLine("  PRESETS & SHOWS");
-        System.Console.ResetColor();
+        System.Console.WriteLine(labelCode + "  PRESETS & SHOWS" + reset);
         System.Console.WriteLine("  ─────────────────────────────────────");
         System.Console.WriteLine("  Preset editor: Each preset is a TextLayers config (9 layers + palette). V cycles.");
         System.Console.WriteLine("  Show play: Auto-cycles presets with per-entry duration (seconds or beats). Tab to switch.");
         System.Console.WriteLine();
-        System.Console.ForegroundColor = ConsoleColor.DarkGray;
-        System.Console.WriteLine("  Press any key to return...");
-        System.Console.ResetColor();
+        System.Console.WriteLine(dimmedCode + "  Press any key to return..." + reset);
     }
 
     /// <summary>Shows the help modal; any key closes it.</summary>
-    public static void Show(Action? onEnter, Action? onClose)
+    public static void Show(Action? onEnter, Action? onClose, UiSettings? uiSettings = null)
     {
-        ModalSystem.RunModal(DrawContent, _ => true, onClose, onEnter);
+        var ui = uiSettings;
+        ModalSystem.RunModal(() => DrawContent(ui), _ => true, onClose, onEnter);
     }
 }

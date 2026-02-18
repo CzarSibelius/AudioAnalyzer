@@ -32,6 +32,26 @@ public static class AnsiConsole
         "\x1b[97m"   // White
     ];
 
+    private static readonly string[] BackgroundCodes =
+    [
+        "\x1b[40m",   // Black
+        "\x1b[44m",   // DarkBlue
+        "\x1b[42m",   // DarkGreen
+        "\x1b[46m",   // DarkCyan
+        "\x1b[41m",   // DarkRed
+        "\x1b[45m",   // DarkMagenta
+        "\x1b[43m",   // DarkYellow
+        "\x1b[47m",   // Gray
+        "\x1b[100m",  // DarkGray
+        "\x1b[104m",  // Blue
+        "\x1b[102m",  // Green
+        "\x1b[106m",  // Cyan
+        "\x1b[101m",  // Red
+        "\x1b[105m",  // Magenta
+        "\x1b[103m",  // Yellow
+        "\x1b[107m"   // White
+    ];
+
     /// <summary>Returns the ANSI escape sequence for the given foreground color.</summary>
     public static string ColorCode(ConsoleColor color) => ForegroundCodes[(int)color];
 
@@ -44,6 +64,17 @@ public static class AnsiConsole
         }
 
         return ForegroundCodes[(int)color.ConsoleColor!.Value];
+    }
+
+    /// <summary>Returns the ANSI background escape sequence for the given palette color.</summary>
+    public static string BackgroundCode(PaletteColor color)
+    {
+        if (color.IsRgb)
+        {
+            return $"\x1b[48;2;{color.R};{color.G};{color.B}m";
+        }
+
+        return BackgroundCodes[(int)color.ConsoleColor!.Value];
     }
 
     /// <summary>Returns the ANSI reset sequence.</summary>

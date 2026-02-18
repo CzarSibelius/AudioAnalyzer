@@ -36,4 +36,9 @@ public class AppSettings
     /// Id of the currently selected palette (e.g. filename without extension). Resolved via IPaletteRepository.
     /// </summary>
     public string? SelectedPaletteId { get; set; }
+
+    /// <summary>
+    /// UI configuration: title, palette, scrolling speed. Per ADR-0033.
+    /// </summary>
+    public UiSettings UiSettings { get; set; } = new();
 }
