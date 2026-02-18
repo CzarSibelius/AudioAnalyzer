@@ -1,4 +1,6 @@
+using System.IO.Abstractions;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Domain;
 
@@ -9,13 +11,30 @@ namespace AudioAnalyzer.Infrastructure;
 /// </summary>
 public sealed class FilePresetRepository : IPresetRepository
 {
-    private static readonly JsonSerializerOptions s_readOptions = new() { PropertyNameCaseInsensitive = true };
-    private static readonly JsonSerializerOptions s_writeOptions = new() { WriteIndented = true };
+    private static readonly JsonSerializerOptions s_readOptions = new()
+    {
+        PropertyNameCaseInsensitive = true,
+        Converters = { new JsonStringEnumConverter() }
+    };
+    private static readonly JsonSerializerOptions s_writeOptions = new()
+    {
+        WriteIndented = true,
+        Converters = { new JsonStringEnumConverter() }
+    };
 
+    private readonly IFileSystem _fileSystem;
     private readonly string _presetsDirectory;
 
+    /// <summary>Creates a repository using the real file system.</summary>
     public FilePresetRepository(string? presetsDirectory = null)
+        : this(new FileSystem(), presetsDirectory)
     {
+    }
+
+    /// <summary>Creates a repository using the provided file system (e.g. MockFileSystem for tests).</summary>
+    public FilePresetRepository(IFileSystem fileSystem, string? presetsDirectory = null)
+    {
+        _fileSystem = fileSystem ?? throw new ArgumentNullException(nameof(fileSystem));
         _presetsDirectory = presetsDirectory ?? Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "presets");
     }
 
@@ -23,7 +42,7 @@ public sealed class FilePresetRepository : IPresetRepository
     {
         EnsurePresetsDirectoryExists();
         var list = new List<PresetInfo>();
-        foreach (var path in Directory.EnumerateFiles(_presetsDirectory, "*.json", SearchOption.TopDirectoryOnly))
+        foreach (var path in _fileSystem.Directory.EnumerateFiles(_presetsDirectory, "*.json", SearchOption.TopDirectoryOnly))
         {
             var id = Path.GetFileNameWithoutExtension(path);
             if (string.IsNullOrEmpty(id))
@@ -54,7 +73,7 @@ public sealed class FilePresetRepository : IPresetRepository
 
         EnsurePresetsDirectoryExists();
         var path = Path.Combine(_presetsDirectory, id + ".json");
-        return File.Exists(path) ? LoadFromPath(id, path) : null;
+        return _fileSystem.File.Exists(path) ? LoadFromPath(id, path) : null;
     }
 
     public void Save(string id, Preset preset)
@@ -73,7 +92,7 @@ public sealed class FilePresetRepository : IPresetRepository
         var path = Path.Combine(_presetsDirectory, id + ".json");
         var dto = new PresetFileDto { Name = preset.Name, Config = preset.Config };
         var json = JsonSerializer.Serialize(dto, s_writeOptions);
-        File.WriteAllText(path, json);
+        _fileSystem.File.WriteAllText(path, json);
     }
 
     public string Create(Preset preset)
@@ -100,25 +119,25 @@ public sealed class FilePresetRepository : IPresetRepository
             return;
         }
         var path = Path.Combine(_presetsDirectory, id + ".json");
-        if (File.Exists(path))
+        if (_fileSystem.File.Exists(path))
         {
-            File.Delete(path);
+            _fileSystem.File.Delete(path);
         }
     }
 
     private void EnsurePresetsDirectoryExists()
     {
-        if (!Directory.Exists(_presetsDirectory))
+        if (!_fileSystem.Directory.Exists(_presetsDirectory))
         {
-            Directory.CreateDirectory(_presetsDirectory);
+            _fileSystem.Directory.CreateDirectory(_presetsDirectory);
         }
     }
 
-    private static Preset? LoadFromPath(string id, string path)
+    private Preset? LoadFromPath(string id, string path)
     {
         try
         {
-            var json = File.ReadAllText(path);
+            var json = _fileSystem.File.ReadAllText(path);
             var dto = JsonSerializer.Deserialize<PresetFileDto>(json, s_readOptions);
             if (dto == null)
             {
