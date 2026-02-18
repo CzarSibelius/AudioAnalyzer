@@ -17,8 +17,9 @@ public static class AsciiImageConverter
     /// <param name="imagePath">Full path to the image file.</param>
     /// <param name="targetWidth">Target width in characters.</param>
     /// <param name="targetHeight">Target height in characters.</param>
-    /// <returns>Character grid and brightness grid, or null on failure.</returns>
-    public static AsciiFrame? Convert(string imagePath, int targetWidth, int targetHeight)
+    /// <param name="includeRgb">When true, populates per-pixel RGB for ImageColors palette source.</param>
+    /// <returns>Character grid and brightness grid (and optionally RGB), or null on failure.</returns>
+    public static AsciiFrame? Convert(string imagePath, int targetWidth, int targetHeight, bool includeRgb = false)
     {
         if (targetWidth <= 0 || targetHeight <= 0)
         {
@@ -39,6 +40,9 @@ public static class AsciiImageConverter
             int h = image.Height;
             var chars = new char[w, h];
             var brightness = new byte[w, h];
+            byte[,]? r = includeRgb ? new byte[w, h] : null;
+            byte[,]? g = includeRgb ? new byte[w, h] : null;
+            byte[,]? b = includeRgb ? new byte[w, h] : null;
 
             image.ProcessPixelRows(accessor =>
             {
@@ -48,15 +52,21 @@ public static class AsciiImageConverter
                     for (int x = 0; x < pixelRow.Length; x++)
                     {
                         var p = pixelRow[x];
-                        byte b = (byte)(0.299 * p.R + 0.587 * p.G + 0.114 * p.B);
-                        brightness[x, y] = b;
-                        int idx = (b * (AsciiGradient.Length - 1)) / 255;
+                        byte bright = (byte)(0.299 * p.R + 0.587 * p.G + 0.114 * p.B);
+                        brightness[x, y] = bright;
+                        int idx = (bright * (AsciiGradient.Length - 1)) / 255;
                         chars[x, y] = AsciiGradient[idx];
+                        if (r != null && g != null && b != null)
+                        {
+                            r[x, y] = p.R;
+                            g[x, y] = p.G;
+                            b[x, y] = p.B;
+                        }
                     }
                 }
             });
 
-            return new AsciiFrame(chars, brightness, w, h);
+            return new AsciiFrame(chars, brightness, w, h, r, g, b);
         }
         catch (Exception ex)
         {

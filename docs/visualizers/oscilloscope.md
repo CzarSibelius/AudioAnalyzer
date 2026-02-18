@@ -2,7 +2,7 @@
 
 ## Description
 
-Time-domain waveform display showing audio amplitude over time. Available as an **Oscilloscope** layer type in **Layered text** (`TextLayersVisualizer`). Renders a waveform trace; amplitude is scaled by per-layer gain. Color gradient from center (cyan) to edges (red).
+Time-domain waveform display showing audio amplitude over time. This layer type is part of TextLayersVisualizer; there is no standalone oscilloscope visualizer. Renders a waveform trace; amplitude is scaled by per-layer gain. Color gradient from center (cyan) to edges (red).
 
 ## Snapshot usage
 

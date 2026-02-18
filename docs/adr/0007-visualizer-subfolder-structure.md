@@ -20,3 +20,5 @@ Each visualizer has its own subfolder under `src/AudioAnalyzer.Visualizers/`. Th
 - **Discoverability**: The folder structure makes it clear which files belong to which visualizer.
 - **No API impact**: Consumers continue to use `AudioAnalyzer.Visualizers` and types such as `GeissVisualizer`; no changes to using directives or references.
 - **SDK-style projects**: Implicit globbing includes all `.cs` files in subfolders; no `.csproj` changes needed.
+
+**Note (post-ADR-0014)**: The structure has evolved. All visual content now lives as layers under `TextLayers/<LayerName>/`. The only `IVisualizer` is TextLayersVisualizer. There are no standalone visualizer subfolders (Geiss, Oscilloscope, etc.).

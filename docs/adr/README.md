@@ -63,4 +63,4 @@ When changing architecture, persistence, or user-facing behavior:
 
 ## Related documentation
 
-- **Visualizer specs** ([docs/visualizers/](../visualizers/README.md)): Per-visualizer reference (behavior, settings, viewport constraints). Use when adding or changing visualizers; ADRs describe decisions, specs describe what each visualizer does.
+- **Visualizer specs** ([docs/visualizers/](../visualizers/README.md)): Per-layer and TextLayers reference (behavior, settings, viewport constraints). Use when adding or changing layers; ADRs describe decisions, specs describe what each layer does.

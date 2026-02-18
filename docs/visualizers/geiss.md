@@ -7,7 +7,7 @@
 - **GeissBackground** — Psychedelic plasma-style background; sine-based plasma with bass/treble modulation.
 - **BeatCircles** — Expanding circles spawned on beat.
 
-Use Layered text mode (press **V** to cycle to "Layered text"), add or select a layer, and cycle its type with **←/→** to `GeissBackground` or `BeatCircles`. See [text-layers.md](text-layers.md) for layer configuration and key bindings.
+In the app (Layered text mode only), add or select a layer and cycle its type with **←/→** to `GeissBackground` or `BeatCircles`. See [text-layers.md](text-layers.md) for layer configuration and key bindings.
 
 ## References
 

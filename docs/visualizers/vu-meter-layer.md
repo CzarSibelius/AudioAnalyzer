@@ -2,7 +2,7 @@
 
 ## Description
 
-Classic stereo VU-style meters. Shows left and right channel levels with peak hold markers, dB scale, and a balance indicator (L–C–R). Available as a layer type in Layered text mode.
+Classic stereo VU-style meters. Shows left and right channel levels with peak hold markers, dB scale, and a balance indicator (L–C–R). This layer type is part of TextLayersVisualizer; there is no standalone VU meter visualizer.
 
 ## Snapshot usage
 
