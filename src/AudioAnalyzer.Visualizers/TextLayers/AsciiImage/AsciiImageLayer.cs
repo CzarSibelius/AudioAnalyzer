@@ -33,12 +33,14 @@ public sealed class AsciiImageLayer : ITextLayerRenderer
         // Convert at 2x size to allow scroll and zoom room
         int convertW = w * 2;
         int convertH = h * 2;
-        if (asciiState.CachedFrame == null || asciiState.CachedPath != imagePath || asciiState.CachedWidth != convertW || asciiState.CachedHeight != convertH)
+        bool includeRgb = s.PaletteSource == AsciiImagePaletteSource.ImageColors;
+        if (asciiState.CachedFrame == null || asciiState.CachedPath != imagePath || asciiState.CachedWidth != convertW || asciiState.CachedHeight != convertH || asciiState.CachedPaletteSource != s.PaletteSource)
         {
-            asciiState.CachedFrame = AsciiImageConverter.Convert(imagePath, convertW, convertH);
+            asciiState.CachedFrame = AsciiImageConverter.Convert(imagePath, convertW, convertH, includeRgb);
             asciiState.CachedPath = imagePath;
             asciiState.CachedWidth = convertW;
             asciiState.CachedHeight = convertH;
+            asciiState.CachedPaletteSource = s.PaletteSource;
         }
 
         if (asciiState.CachedFrame == null)
@@ -60,11 +62,11 @@ public sealed class AsciiImageLayer : ITextLayerRenderer
         if (doScroll)
         {
             asciiState.ScrollX += speed;
-            asciiState.ScrollY += speed * 0.5;
+            asciiState.ScrollY += speed * s.ScrollRatioY;
         }
         if (doZoom)
         {
-            asciiState.ZoomPhase += speed * 0.02;
+            asciiState.ZoomPhase += speed * s.ZoomSpeed;
             if (asciiState.ZoomPhase > 1.0)
             {
                 asciiState.ZoomPhase -= 1.0;
@@ -77,7 +79,7 @@ public sealed class AsciiImageLayer : ITextLayerRenderer
         }
 
         double zoomPhase = asciiState.ZoomPhase;
-        double scale = 0.85 + 0.45 * Math.Sin(zoomPhase * Math.PI * 2); // 0.85 to 1.3
+        double scale = ComputeZoomScale(zoomPhase, s.ZoomMin, s.ZoomMax, s.ZoomStyle);
         double scrollX = asciiState.ScrollX;
         double scrollY = asciiState.ScrollY;
 
@@ -85,6 +87,7 @@ public sealed class AsciiImageLayer : ITextLayerRenderer
         int fw = frame.Width;
         int fh = frame.Height;
 
+        bool useImageColors = s.PaletteSource == AsciiImagePaletteSource.ImageColors && frame.HasRgb;
         int paletteCount = ctx.Palette.Count;
         int colorBase = Math.Max(0, layer.ColorIndex % paletteCount);
         bool pulse = layer.BeatReaction == TextLayerBeatReaction.Pulse && ctx.Snapshot.BeatFlashActive;
@@ -114,15 +117,30 @@ public sealed class AsciiImageLayer : ITextLayerRenderer
                 if (ix >= 0 && ix < fw && iy >= 0 && iy < fh)
                 {
                     char c = frame.Chars[ix, iy];
-                    byte b = frame.Brightness[ix, iy];
-                    int colorIdx = (colorBase + (b * paletteCount) / 256) % paletteCount;
-                    var color = ctx.Palette[colorIdx];
+                    var color = useImageColors && frame.R != null && frame.G != null && frame.B != null
+                        ? PaletteColor.FromRgb(frame.R[ix, iy], frame.G[ix, iy], frame.B[ix, iy])
+                        : ctx.Palette[(colorBase + (frame.Brightness[ix, iy] * paletteCount) / 256) % paletteCount];
                     ctx.Buffer.Set(vx, vy, c, color);
                 }
             }
         }
 
         return state;
+    }
+
+    private static double ComputeZoomScale(double phase, double zoomMin, double zoomMax, AsciiImageZoomStyle style)
+    {
+        double min = Math.Min(zoomMin, zoomMax);
+        double max = Math.Max(zoomMin, zoomMax);
+        double range = max - min;
+        double t = style switch
+        {
+            AsciiImageZoomStyle.Sine => (1 + Math.Sin(phase * Math.PI * 2)) / 2,
+            AsciiImageZoomStyle.Breathe => (1 - Math.Cos(phase * Math.PI)) / 2,
+            AsciiImageZoomStyle.PingPong => phase <= 0.5 ? 2 * phase : 2 * (1 - phase),
+            _ => (1 + Math.Sin(phase * Math.PI * 2)) / 2
+        };
+        return min + range * t;
     }
 
     private static List<string> GetImagePaths(string? folderPath)

@@ -2,7 +2,7 @@
 
 ## Description
 
-Classic spectrum bars (formerly Winamp Style). Horizontal bars per frequency band with peak hold markers. Supports configurable options from the former Spectrum Analyzer: volume bar, row labels, frequency labels, color scheme, peak marker style, and bar density.
+Classic spectrum bars (formerly Winamp Style). Horizontal bars per frequency band with peak hold markers. This layer type is part of TextLayersVisualizer; there is no standalone spectrum visualizer. Supports configurable options: volume bar, row labels, frequency labels, color scheme, peak marker style, and bar density.
 
 ## Snapshot usage
 
@@ -14,12 +14,13 @@ Classic spectrum bars (formerly Winamp Style). Horizontal bars per frequency ban
 
 ## Settings
 
-- **LlamaStyleShowVolumeBar** (bool, default false): Show volume bar at top.
-- **LlamaStyleShowRowLabels** (bool, default false): Show percentage labels (100%, 75%, 50%, 25%, 0%) on left.
-- **LlamaStyleShowFrequencyLabels** (bool, default false): Show Hz labels at bottom.
-- **LlamaStyleColorScheme** (string, default "Winamp"): "Winamp" (green→red) or "Spectrum" (red→blue).
-- **LlamaStylePeakMarkerStyle** (string, default "Blocks"): "Blocks" (▀▀) or "DoubleLine" (══).
-- **LlamaStyleBarWidth** (int, default 3): 2 or 3 chars per band (2 = denser).
+- **Schema**: `TextLayerSettings` when `LayerType == LlamaStyle`; custom settings in `LlamaStyleSettings`. Property names in Custom JSON match C# (e.g. `ShowVolumeBar`).
+- **ShowVolumeBar** (bool, default false): Show volume bar at top.
+- **ShowRowLabels** (bool, default false): Show percentage labels (100%, 75%, 50%, 25%, 0%) on left.
+- **ShowFrequencyLabels** (bool, default false): Show Hz labels at bottom.
+- **ColorScheme** (string, default "Winamp"): "Winamp" (green→red) or "Spectrum" (red→blue).
+- **PeakMarkerStyle** (string, default "Blocks"): "Blocks" (▀▀) or "DoubleLine" (══).
+- **BarWidth** (int, default 3): 2 or 3 chars per band (2 = denser).
 
 ## Key bindings
 

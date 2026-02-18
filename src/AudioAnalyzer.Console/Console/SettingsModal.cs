@@ -9,6 +9,7 @@ namespace AudioAnalyzer.Console;
 internal static class SettingsModal
 {
     private const int OverlayRowCount = 18;
+    private const int SettingsVisibleRows = OverlayRowCount - 5;
 
     /// <summary>Shows the settings overlay modal. Blocks until user closes with ESC.</summary>
     public static void Show(AnalysisEngine analysisEngine, VisualizerSettings visualizerSettings, IPresetRepository presetRepository, IPaletteRepository paletteRepo, object consoleLock, Action saveSettings)
@@ -155,13 +156,18 @@ internal static class SettingsModal
                 if (selectedLayer != null)
                 {
                     var settingsRows = GetSettingsRows(selectedLayer);
-                    for (int i = 0; i < settingsRows.Count && (5 + i) < OverlayRowCount; i++)
+                    int settingsScrollOffset = settingsRows.Count <= SettingsVisibleRows
+                        ? 0
+                        : Math.Clamp(selectedSettingIndex - (SettingsVisibleRows - 1), 0, settingsRows.Count - SettingsVisibleRows);
+                    for (int vi = 0; vi < SettingsVisibleRows; vi++)
                     {
+                        int i = settingsScrollOffset + vi;
+                        if (i >= settingsRows.Count) { break; }
                         var row = settingsRows[i];
                         bool showBuffer = focus == SettingsModalFocus.EditingSetting && i == selectedSettingIndex && row.EditMode == SettingEditMode.TextEdit;
                         string lineText = $"{row.Label}: {(showBuffer ? editingBuffer + "_" : row.DisplayValue)}";
                         string line = VisualizerViewport.TruncateWithEllipsis(lineText, rightColWidth);
-                        System.Console.SetCursorPosition(LeftColWidth + 3, 5 + i);
+                        System.Console.SetCursorPosition(LeftColWidth + 3, 5 + vi);
                         if (i == selectedSettingIndex && (focus == SettingsModalFocus.SettingsList || focus == SettingsModalFocus.EditingSetting))
                         {
                             System.Console.BackgroundColor = ConsoleColor.DarkBlue;
@@ -175,7 +181,7 @@ internal static class SettingsModal
                 for (int row = 5 + sortedLayers.Count; row < OverlayRowCount; row++)
                 {
                     System.Console.SetCursorPosition(0, row);
-                    System.Console.Write(new string(' ', width));
+                    System.Console.Write(new string(' ', LeftColWidth + 3));
                 }
             }
             catch (Exception ex) { _ = ex; /* Draw settings modal failed */ }

@@ -2,7 +2,7 @@
 
 ## Description
 
-Stacked waveform snapshots inspired by the pulsar plot. Available as a **layer** in Layered text mode. The bottom line is always realtime; the others are beat-triggered frozen snapshots. Gaps between each pulse. Uses the layer's palette (per-layer `PaletteId`).
+Stacked waveform snapshots inspired by the pulsar plot. This layer type is part of TextLayersVisualizer; there is no standalone Unknown Pleasures visualizer. The bottom line is always realtime; the others are beat-triggered frozen snapshots. Gaps between each pulse. Uses the layer's palette (per-layer `PaletteId`).
 
 ## Snapshot usage
 
