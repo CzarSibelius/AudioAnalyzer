@@ -16,14 +16,16 @@ public sealed class TextLayersVisualizer : IVisualizer
 
     private readonly TextLayersVisualizerSettings? _settings;
     private readonly IPaletteRepository _paletteRepo;
+    private readonly IConsoleWriter _consoleWriter;
     private readonly Dictionary<TextLayerType, ITextLayerRenderer> _renderers;
     /// <summary>Index of the layer whose palette P cycles. Updated when user presses 1–9.</summary>
     private int _paletteCycleLayerIndex;
 
-    public TextLayersVisualizer(TextLayersVisualizerSettings? settings, IPaletteRepository paletteRepo, IEnumerable<ITextLayerRenderer> renderers)
+    public TextLayersVisualizer(TextLayersVisualizerSettings? settings, IPaletteRepository paletteRepo, IEnumerable<ITextLayerRenderer> renderers, IConsoleWriter consoleWriter)
     {
         _settings = settings;
         _paletteRepo = paletteRepo;
+        _consoleWriter = consoleWriter;
         _renderers = renderers.ToDictionary(r => r.LayerType);
     }
 
@@ -131,14 +133,14 @@ public sealed class TextLayersVisualizer : IVisualizer
             _layerStates[i] = state;
         }
 
-        _buffer.WriteToConsole(viewport.StartRow);
+        _buffer.FlushTo(_consoleWriter, viewport.StartRow);
     }
 
     private void RenderEmpty(VisualizerViewport viewport)
     {
         _buffer.EnsureSize(viewport.Width, viewport.MaxLines);
         _buffer.Clear(PaletteColor.FromConsoleColor(ConsoleColor.DarkGray));
-        _buffer.WriteToConsole(viewport.StartRow);
+        _buffer.FlushTo(_consoleWriter, viewport.StartRow);
     }
 
     private IReadOnlyList<PaletteColor> ResolvePaletteForLayer(TextLayerSettings? layer, TextLayersVisualizerSettings? config)

@@ -67,11 +67,11 @@ internal static class ConsoleHeader
     {
         int width = Math.Max(10, GetConsoleWidth());
         string title = " AUDIO ANALYZER - Real-time Frequency Spectrum ";
-        title = VisualizerViewport.TruncateWithEllipsis(title, width - 2);
+        title = VisualizerViewport.TruncateWithEllipsis(new PlainText(title), width - 2);
         int padding = Math.Max(0, (width - title.Length - 2) / 2);
-        string line1 = VisualizerViewport.TruncateToWidth("╔" + new string('═', width - 2) + "╗", width).PadRight(width);
-        string line2 = VisualizerViewport.TruncateToWidth("║" + new string(' ', padding) + title + new string(' ', width - padding - title.Length - 2) + "║", width).PadRight(width);
-        string line3 = VisualizerViewport.TruncateToWidth("╚" + new string('═', width - 2) + "╝", width).PadRight(width);
+        string line1 = VisualizerViewport.TruncateToWidth(new PlainText("╔" + new string('═', width - 2) + "╗"), width).PadRight(width);
+        string line2 = VisualizerViewport.TruncateToWidth(new PlainText("║" + new string(' ', padding) + title + new string(' ', width - padding - title.Length - 2) + "║"), width).PadRight(width);
+        string line3 = VisualizerViewport.TruncateToWidth(new PlainText("╚" + new string('═', width - 2) + "╝"), width).PadRight(width);
 
         // Line 4: Device | Now (combined, two labeled scroll viewports)
         const string separator = " | ";
@@ -82,7 +82,7 @@ internal static class ConsoleHeader
             _deviceScrollState.Reset();
             _deviceLastText = deviceName;
         }
-        string deviceCell = ScrollingTextViewport.RenderWithLabel("Device: ", deviceName ?? "", leftCellWidth, ref _deviceScrollState, 0.25);
+        string deviceCell = ScrollingTextViewport.RenderWithLabel("Device: ", new PlainText(deviceName ?? ""), leftCellWidth, ref _deviceScrollState, 0.25);
         string nowCell;
         if (!string.IsNullOrEmpty(nowPlayingText))
         {
@@ -92,7 +92,7 @@ internal static class ConsoleHeader
                 _nowPlayingLastText = nowPlayingText;
             }
             string styled = "\x1b[36m" + nowPlayingText + "\x1b[0m";
-            nowCell = ScrollingTextViewport.RenderWithLabelWithAnsi("Now: ", styled, rightCellWidth, ref _nowPlayingScrollState, 0.25);
+            nowCell = ScrollingTextViewport.RenderWithLabel("Now: ", new AnsiText(styled), rightCellWidth, ref _nowPlayingScrollState, 0.25);
         }
         else
         {
@@ -101,7 +101,7 @@ internal static class ConsoleHeader
                 _nowPlayingScrollState.Reset();
                 _nowPlayingLastText = null;
             }
-            nowCell = ScrollingTextViewport.RenderWithLabel("Now: ", "", rightCellWidth, ref _nowPlayingScrollState, 0.25);
+            nowCell = ScrollingTextViewport.RenderWithLabel("Now: ", new PlainText(""), rightCellWidth, ref _nowPlayingScrollState, 0.25);
         }
         string line4 = deviceCell + separator + nowCell;
         int line4Visible = AnsiConsole.GetVisibleLength(line4);
@@ -115,10 +115,10 @@ internal static class ConsoleHeader
         }
 
         // Line 5: Mode name
-        string line5 = VisualizerViewport.TruncateWithEllipsis($"Mode: {modeName ?? "Preset editor"}", width).PadRight(width);
+        string line5 = VisualizerViewport.TruncateWithEllipsis(new PlainText($"Mode: {modeName ?? "Preset editor"}"), width).PadRight(width);
 
         // Line 6: Help
-        string line6 = VisualizerViewport.TruncateWithEllipsis("Press H for help, D device, F full screen, ESC quit", width).PadRight(width);
+        string line6 = VisualizerViewport.TruncateWithEllipsis(new PlainText("Press H for help, D device, F full screen, ESC quit"), width).PadRight(width);
 
         try
         {

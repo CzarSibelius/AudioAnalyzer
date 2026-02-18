@@ -25,4 +25,5 @@ UI code was concentrated in `Program.cs` (~745 lines), mixing bootstrap, main lo
 - Presentation logic is split by responsibility; adding modals or key bindings is localized.
 - ADR-0006 modal system and ADR-0023 settings modal behavior stay intact.
 - Infrastructure no longer depends on `System.Console`; Console project owns all console I/O.
-- References: [ApplicationShell](../../src/AudioAnalyzer.Console/ApplicationShell.cs), [Console/](../../src/AudioAnalyzer.Console/Console/), [Program.cs](../../src/AudioAnalyzer.Console/Program.cs).
+- Application does not perform console I/O: `ViewportCellBuffer` flushes via `IConsoleWriter`, which is implemented by `ConsoleWriter` in the Console project. `TextLayersVisualizer` receives `IConsoleWriter` via DI and passes it to `ViewportCellBuffer.FlushTo`.
+- References: [ApplicationShell](../../src/AudioAnalyzer.Console/ApplicationShell.cs), [Console/](../../src/AudioAnalyzer.Console/Console/), [ConsoleWriter](../../src/AudioAnalyzer.Console/ConsoleWriter.cs), [Program.cs](../../src/AudioAnalyzer.Console/Program.cs).

@@ -15,6 +15,5 @@ UI text often exceeds terminal width. The app has `ScrollingTextViewport` for sc
 ## Consequences
 
 - Developers and agents use `ScrollingTextViewport` for dynamic overflow text instead of silent truncation.
-- A new helper (e.g. in `VisualizerViewport` or `AnsiConsole`) provides ellipsis truncation for static text. Implementation details (method name, overload vs separate method) can be decided when adding the helper; the decision is that such a component should exist.
-- May need an ANSI-aware variant if truncated text contains escape sequences.
-- **References**: [ScrollingTextViewport](../../src/AudioAnalyzer.Application/Abstractions/ScrollingTextViewport.cs), [VisualizerViewport.TruncateToWidth](../../src/AudioAnalyzer.Application/Abstractions/VisualizerViewport.cs), [VisualizationPaneLayout](../../src/AudioAnalyzer.Infrastructure/VisualizationPaneLayout.cs), [Program.ShowTextLayersSettingsModal](../../src/AudioAnalyzer.Console/Program.cs) (settings modal help line).
+- `VisualizerViewport.TruncateWithEllipsis` and `TruncateToWidth` provide ellipsis and raw truncation. Both accept `IDisplayText`; use `PlainText` for unformatted and `AnsiText` when text may contain ANSI (see [ADR-0032](0032-typed-display-text.md)).
+- **References**: [ScrollingTextViewport](../../src/AudioAnalyzer.Application/Abstractions/ScrollingTextViewport.cs), [VisualizerViewport](../../src/AudioAnalyzer.Application/Abstractions/VisualizerViewport.cs), [VisualizationPaneLayout](../../src/AudioAnalyzer.Console/Console/VisualizationPaneLayout.cs), [ADR-0032](0032-typed-display-text.md).

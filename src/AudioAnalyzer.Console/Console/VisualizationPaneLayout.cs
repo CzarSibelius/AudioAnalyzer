@@ -87,7 +87,7 @@ public sealed class VisualizationPaneLayout : IVisualizationRenderer
                         ? ex.Message
                         : "Visualization error";
                     System.Console.SetCursorPosition(0, visualizerStartRow);
-                    System.Console.WriteLine(VisualizerViewport.TruncateWithEllipsis(message, viewport.Width));
+                    System.Console.WriteLine(VisualizerViewport.TruncateWithEllipsis(new PlainText(message), viewport.Width));
                 }
             }
         }
@@ -152,7 +152,7 @@ public sealed class VisualizationPaneLayout : IVisualizationRenderer
             _toolbarLine1LastText = line1Full;
         }
         string line1 = line1Full.Length > w
-            ? ScrollingTextViewport.Render(line1Full, w, ref _toolbarLine1ScrollState, 0.25)
+            ? ScrollingTextViewport.Render(new PlainText(line1Full), w, ref _toolbarLine1ScrollState, 0.25)
             : line1Full.PadRight(w);
         string line2;
         if (toolbarViewport.MaxLines >= 2)
@@ -171,7 +171,7 @@ public sealed class VisualizationPaneLayout : IVisualizationRenderer
                 _toolbarLine2LastText = line2Full;
             }
             line2 = visibleLen > w
-                ? ScrollingTextViewport.RenderWithAnsi(line2Full, w, ref _toolbarLine2ScrollState, 0.25)
+                ? ScrollingTextViewport.Render(new AnsiText(line2Full), w, ref _toolbarLine2ScrollState, 0.25)
                 : AnsiConsole.PadToVisibleWidth(line2Full, w);
             _toolbarLine2LastText = line2Full;
         }

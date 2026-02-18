@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using AudioAnalyzer.Domain;
 
@@ -86,6 +87,7 @@ public static class AnsiConsole
 
     /// <summary>
     /// Returns the number of visible (printed) characters, excluding ANSI escape sequences.
+    /// Counts grapheme clusters so emoji and other multi-codepoint characters are not split.
     /// </summary>
     public static int GetVisibleLength(string text)
     {
@@ -113,7 +115,7 @@ public static class AnsiConsole
             }
 
             count++;
-            i++;
+            i += StringInfo.GetNextTextElementLength(text.AsSpan(i));
         }
         return count;
     }
@@ -134,7 +136,7 @@ public static class AnsiConsole
 
     /// <summary>
     /// Returns the substring that displays exactly the visible characters in range [startVisible, startVisible + widthVisible).
-    /// Preserves ANSI escape sequences so colors are maintained; never cuts through an escape sequence.
+    /// Preserves ANSI escape sequences so colors are maintained; never cuts through an escape sequence or grapheme cluster.
     /// Pads with spaces to <paramref name="widthVisible"/> if the range extends past the end.
     /// </summary>
     public static string GetVisibleSubstring(string text, int startVisible, int widthVisible)
@@ -181,6 +183,7 @@ public static class AnsiConsole
                 continue;
             }
 
+            int elementLen = StringInfo.GetNextTextElementLength(text.AsSpan(i));
             if (visibleIndex >= startVisible)
             {
                 if (pendingEscape != null)
@@ -188,7 +191,7 @@ public static class AnsiConsole
                     sb.Append(pendingEscape);
                     pendingEscape = null;
                 }
-                sb.Append(text[i]);
+                sb.Append(text, i, elementLen);
                 visibleOutput++;
             }
             else
@@ -197,7 +200,7 @@ public static class AnsiConsole
             }
 
             visibleIndex++;
-            i++;
+            i += elementLen;
         }
 
         while (visibleOutput < widthVisible)

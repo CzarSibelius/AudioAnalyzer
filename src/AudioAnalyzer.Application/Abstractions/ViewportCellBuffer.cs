@@ -67,13 +67,17 @@ public sealed class ViewportCellBuffer
         _colors[i] = color;
     }
 
-    /// <summary>Writes the buffer to the console starting at the given row. Only writes rows that changed (diff-based).</summary>
-    public void WriteToConsole(int startRow)
+    /// <summary>Flushes the buffer to the writer starting at the given row. Only writes rows that changed (diff-based).</summary>
+    /// <param name="writer">The console writer abstraction (implemented by the Console project).</param>
+    /// <param name="startRow">The console row where the first buffer line is written.</param>
+    public void FlushTo(IConsoleWriter writer, int startRow)
     {
         if (_width <= 0 || _height <= 0)
         {
             return;
         }
+
+        ArgumentNullException.ThrowIfNull(writer);
 
         if (_lastWrittenByRow.Length != _height)
         {
@@ -102,16 +106,7 @@ public sealed class ViewportCellBuffer
             }
 
             _lastWrittenByRow[y] = line;
-            try
-            {
-                Console.SetCursorPosition(0, startRow + y);
-                Console.Write(line);
-            }
-            catch (Exception ex)
-            {
-                _ = ex;
-                /* Console write failed (e.g. resize): swallow to avoid crash */
-            }
+            writer.WriteLine(startRow + y, line);
         }
     }
 }

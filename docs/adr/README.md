@@ -47,6 +47,7 @@ Decisions are numbered and kept under version control so the rationale stays wit
 | [0029](0029-no-settings-migration.md) | No settings migration — backup and reset | Accepted |
 | [0030](0030-performance-priority.md) | Performance as top priority | Accepted |
 | [0031](0031-show-preset-collection.md) | Show — preset collection for performance auto-cycling | Accepted |
+| [0032](0032-typed-display-text.md) | Typed display text (PlainText vs AnsiText) | Accepted |
 
 ## Process
 
