@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.IO.Abstractions;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Domain;
 
@@ -8,11 +9,16 @@ namespace AudioAnalyzer.Infrastructure;
 
 public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSettingsRepository
 {
-    private static readonly JsonSerializerOptions s_readOptions = new() { PropertyNameCaseInsensitive = true };
+    private static readonly JsonSerializerOptions s_readOptions = new()
+    {
+        PropertyNameCaseInsensitive = true,
+        Converters = { new JsonStringEnumConverter() }
+    };
     private static readonly JsonSerializerOptions s_writeOptions = new()
     {
         WriteIndented = true,
-        DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+        DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
+        Converters = { new JsonStringEnumConverter() }
     };
 
     private readonly IFileSystem _fileSystem;
@@ -106,11 +112,13 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
         }
     }
 
-    /// <summary>Updates SettingsFile.VisualizerSettings for persistence. Only ActivePresetId and non-preset fields are persisted; Presets and TextLayers live in preset files.</summary>
+    /// <summary>Updates SettingsFile.VisualizerSettings for persistence. Only ActivePresetId, ApplicationMode, ActiveShowId and non-preset fields are persisted; Presets and TextLayers live in preset files.</summary>
     private static void UpdateVisualizerSettingsForSave(SettingsFile file, VisualizerSettings settings)
     {
         file.VisualizerSettings ??= new VisualizerSettings();
         file.VisualizerSettings!.ActivePresetId = settings.ActivePresetId;
+        file.VisualizerSettings.ApplicationMode = settings.ApplicationMode;
+        file.VisualizerSettings.ActiveShowId = settings.ActiveShowId;
     }
 
     private SettingsFile LoadFile()

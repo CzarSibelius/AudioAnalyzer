@@ -37,6 +37,7 @@ var shell = new ApplicationShell(
     settings,
     visualizerSettings,
     provider.GetRequiredService<IPresetRepository>(),
+    provider.GetRequiredService<IShowRepository>(),
     provider.GetRequiredService<IPaletteRepository>(),
     engine,
     provider.GetRequiredService<IVisualizationRenderer>(),

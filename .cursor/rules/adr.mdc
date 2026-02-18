@@ -34,3 +34,5 @@ alwaysApply: true
 14. **Settings format changes**: Do not add migration logic for old settings. When schema changes cause incompatibility, backup the file with `{name}.{timestamp}.bak` and create new from defaults. See [ADR-0029](docs/adr/0029-no-settings-migration.md).
 
 15. **Performance**: Console writes, polling, and timing must be performant. Follow [ADR-0030](docs/adr/0030-performance-priority.md) when adding console I/O, key polling, or frame-rate logic.
+
+16. **Shows**: Preset collections for performance auto-cycling. Stored in `shows/*.json`; Tab switches Preset editor ↔ Show play; S in Show play opens Show edit modal. Duration per entry: Seconds or Beats. See [ADR-0031](docs/adr/0031-show-preset-collection.md).

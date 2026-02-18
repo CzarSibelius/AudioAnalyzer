@@ -14,10 +14,12 @@ internal sealed class ApplicationShell
     private readonly AppSettings _settings;
     private readonly VisualizerSettings _visualizerSettings;
     private readonly IPresetRepository _presetRepository;
+    private readonly IShowRepository _showRepository;
     private readonly IPaletteRepository _paletteRepo;
     private readonly AnalysisEngine _engine;
     private readonly IVisualizationRenderer _renderer;
     private readonly INowPlayingProvider _nowPlayingProvider;
+    private readonly ShowPlaybackController _showPlaybackController;
 
     private IAudioInput? _currentInput;
     private string _currentDeviceName = "";
@@ -30,6 +32,7 @@ internal sealed class ApplicationShell
         AppSettings settings,
         VisualizerSettings visualizerSettings,
         IPresetRepository presetRepository,
+        IShowRepository showRepository,
         IPaletteRepository paletteRepo,
         AnalysisEngine engine,
         IVisualizationRenderer renderer,
@@ -41,10 +44,12 @@ internal sealed class ApplicationShell
         _settings = settings;
         _visualizerSettings = visualizerSettings;
         _presetRepository = presetRepository;
+        _showRepository = showRepository;
         _paletteRepo = paletteRepo;
         _engine = engine;
         _renderer = renderer;
         _nowPlayingProvider = nowPlayingProvider;
+        _showPlaybackController = new ShowPlaybackController(visualizerSettings, showRepository, presetRepository, engine);
     }
 
     /// <summary>Runs the main loop. Does not return until the user quits.</summary>
@@ -57,20 +62,28 @@ internal sealed class ApplicationShell
         bool modalOpen = false;
         object consoleLock = new();
 
+        string GetModeName() =>
+            _visualizerSettings.ApplicationMode == ApplicationMode.ShowPlay ? "Show play" : "Preset editor";
         _engine.SetHeaderCallback(
-            () => ConsoleHeader.DrawMain(_currentDeviceName, _nowPlayingProvider.GetNowPlayingText()),
-            () => ConsoleHeader.DrawHeaderOnly(_currentDeviceName, _nowPlayingProvider.GetNowPlayingText()),
+            () => ConsoleHeader.DrawMain(_currentDeviceName, _nowPlayingProvider.GetNowPlayingText(), GetModeName()),
+            () => ConsoleHeader.DrawHeaderOnly(_currentDeviceName, _nowPlayingProvider.GetNowPlayingText(), GetModeName()),
             6);
         _engine.SetRenderGuard(() => !modalOpen);
         _engine.SetConsoleLock(consoleLock);
 
         StartCapture(initialDeviceId, initialDeviceName);
-        ConsoleHeader.DrawMain(_currentDeviceName, _nowPlayingProvider.GetNowPlayingText());
+        ConsoleHeader.DrawMain(_currentDeviceName, _nowPlayingProvider.GetNowPlayingText(),
+            _visualizerSettings.ApplicationMode == ApplicationMode.ShowPlay ? "Show play" : "Preset editor");
         _engine.Redraw();
 
         bool running = true;
         while (running)
         {
+            if (_visualizerSettings.ApplicationMode == ApplicationMode.ShowPlay)
+            {
+                _showPlaybackController.Tick();
+            }
+
             if (System.Console.KeyAvailable)
             {
                 var key = System.Console.ReadKey(true);
@@ -83,6 +96,51 @@ internal sealed class ApplicationShell
                 {
                     switch (key.Key)
                     {
+                        case ConsoleKey.Tab:
+                            HandleModeSwitch(consoleLock);
+                            if (!_engine.FullScreen)
+                            {
+                                ConsoleHeader.DrawMain(_currentDeviceName, _nowPlayingProvider.GetNowPlayingText(),
+                                    _visualizerSettings.ApplicationMode == ApplicationMode.ShowPlay ? "Show play" : "Preset editor");
+                            }
+                            _engine.Redraw();
+                            break;
+                        case ConsoleKey.V:
+                            if (_visualizerSettings.ApplicationMode == ApplicationMode.PresetEditor)
+                            {
+                                CycleToNextPreset();
+                                SaveSettings();
+                                if (!_engine.FullScreen)
+                                {
+                                    ConsoleHeader.DrawMain(_currentDeviceName, _nowPlayingProvider.GetNowPlayingText(),
+                                        _visualizerSettings.ApplicationMode == ApplicationMode.ShowPlay ? "Show play" : "Preset editor");
+                                }
+                                _engine.Redraw();
+                            }
+                            break;
+                        case ConsoleKey.S:
+                            if (_visualizerSettings.ApplicationMode == ApplicationMode.PresetEditor)
+                            {
+                                SettingsModal.Show(_engine, _visualizerSettings, _presetRepository, _paletteRepo, consoleLock, SaveSettings);
+                            }
+                            else
+                            {
+                                ShowEditModal.Show(_engine, _visualizerSettings, _showRepository, _presetRepository, consoleLock, () =>
+                                {
+                                    SaveSettings();
+                                    _visualizerSettingsRepo.SaveVisualizerSettings(_visualizerSettings);
+                                });
+                            }
+                            lock (consoleLock)
+                            {
+                                if (!_engine.FullScreen)
+                                {
+                                    ConsoleHeader.DrawMain(_currentDeviceName, _nowPlayingProvider.GetNowPlayingText(),
+                                        _visualizerSettings.ApplicationMode == ApplicationMode.ShowPlay ? "Show play" : "Preset editor");
+                                }
+                                _engine.Redraw();
+                            }
+                            break;
                         case ConsoleKey.Escape:
                             running = false;
                             break;
@@ -108,7 +166,8 @@ internal sealed class ApplicationShell
                             }
                             if (!_engine.FullScreen)
                             {
-                                ConsoleHeader.DrawMain(_currentDeviceName);
+                                ConsoleHeader.DrawMain(_currentDeviceName, _nowPlayingProvider.GetNowPlayingText(),
+                                    _visualizerSettings.ApplicationMode == ApplicationMode.ShowPlay ? "Show play" : "Preset editor");
                             }
                             _engine.Redraw();
                             break;
@@ -122,19 +181,11 @@ internal sealed class ApplicationShell
                                 }
                                 else
                                 {
-                                    ConsoleHeader.DrawMain(_currentDeviceName, _nowPlayingProvider.GetNowPlayingText());
+                                    ConsoleHeader.DrawMain(_currentDeviceName, _nowPlayingProvider.GetNowPlayingText(),
+                                        _visualizerSettings.ApplicationMode == ApplicationMode.ShowPlay ? "Show play" : "Preset editor");
                                     _engine.Redraw();
                                 }
                             });
-                            break;
-                        case ConsoleKey.V:
-                            CycleToNextPreset();
-                            SaveSettings();
-                            if (!_engine.FullScreen)
-                            {
-                                ConsoleHeader.DrawMain(_currentDeviceName, _nowPlayingProvider.GetNowPlayingText());
-                            }
-                            _engine.Redraw();
                             break;
                         case ConsoleKey.OemPlus:
                         case ConsoleKey.Add:
@@ -159,18 +210,8 @@ internal sealed class ApplicationShell
                             }
                             else
                             {
-                                ConsoleHeader.DrawMain(_currentDeviceName, _nowPlayingProvider.GetNowPlayingText());
-                                _engine.Redraw();
-                            }
-                            break;
-                        case ConsoleKey.S:
-                            SettingsModal.Show(_engine, _visualizerSettings, _presetRepository, _paletteRepo, consoleLock, SaveSettings);
-                            lock (consoleLock)
-                            {
-                                if (!_engine.FullScreen)
-                                {
-                                    ConsoleHeader.DrawMain(_currentDeviceName, _nowPlayingProvider.GetNowPlayingText());
-                                }
+                                ConsoleHeader.DrawMain(_currentDeviceName, _nowPlayingProvider.GetNowPlayingText(),
+                                    _visualizerSettings.ApplicationMode == ApplicationMode.ShowPlay ? "Show play" : "Preset editor");
                                 _engine.Redraw();
                             }
                             break;
@@ -223,6 +264,51 @@ internal sealed class ApplicationShell
         _settingsRepo.SaveAppSettings(_settings);
         _visualizerSettings.TextLayers ??= new TextLayersVisualizerSettings();
         _visualizerSettingsRepo.SaveVisualizerSettings(_visualizerSettings);
+    }
+
+    private void HandleModeSwitch(object consoleLock)
+    {
+        var allShows = _showRepository.GetAll();
+        if (allShows.Count == 0)
+        {
+            ShowEditModal.Show(_engine, _visualizerSettings, _showRepository, _presetRepository, consoleLock, () =>
+            {
+                SaveSettings();
+                _visualizerSettingsRepo.SaveVisualizerSettings(_visualizerSettings);
+            });
+            allShows = _showRepository.GetAll();
+            if (allShows.Count == 0)
+            {
+                return;
+            }
+        }
+
+        if (_visualizerSettings.ApplicationMode == ApplicationMode.PresetEditor)
+        {
+            var showId = _visualizerSettings.ActiveShowId ?? allShows[0].Id;
+            var show = _showRepository.GetById(showId);
+            if (show == null)
+            {
+                showId = allShows[0].Id;
+                show = _showRepository.GetById(showId);
+            }
+            if (show != null && show.Entries is { Count: > 0 })
+            {
+                _visualizerSettings.ApplicationMode = ApplicationMode.ShowPlay;
+                _visualizerSettings.ActiveShowId = showId;
+                _visualizerSettings.ActiveShowName = show.Name?.Trim();
+                _showPlaybackController.Reset();
+                _showPlaybackController.LoadCurrentEntry();
+                _visualizerSettingsRepo.SaveVisualizerSettings(_visualizerSettings);
+            }
+        }
+        else
+        {
+            _visualizerSettings.ApplicationMode = ApplicationMode.PresetEditor;
+            _visualizerSettings.ActiveShowId = null;
+            _visualizerSettings.ActiveShowName = null;
+            _visualizerSettingsRepo.SaveVisualizerSettings(_visualizerSettings);
+        }
     }
 
     private void CycleToNextPreset()
@@ -291,7 +377,8 @@ internal sealed class ApplicationShell
         SaveSettings();
         if (!_engine.FullScreen)
         {
-            ConsoleHeader.DrawMain(_currentDeviceName, _nowPlayingProvider.GetNowPlayingText());
+            ConsoleHeader.DrawMain(_currentDeviceName, _nowPlayingProvider.GetNowPlayingText(),
+                _visualizerSettings.ApplicationMode == ApplicationMode.ShowPlay ? "Show play" : "Preset editor");
         }
         _engine.Redraw();
     }

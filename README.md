@@ -54,7 +54,8 @@ Tests use **System.IO.Abstractions.TestingHelpers** (MockFileSystem) instead of 
 2. The analyzer shows real-time volume and frequency analysis. Play audio to see it in action.
 3. **Keyboard controls:**
    - **H** – Show help (all keys and presets)
-   - **V** – Cycle to next preset (Layered text; toolbar shows preset name)
+   - **Tab** – Switch between Preset editor and Show play (when Shows exist)
+   - **V** – Cycle to next preset (Preset editor only; toolbar shows preset name)
    - **P** – Cycle color palette (for palette-aware visualizers; affects only the current visualizer and persists to that visualizer's settings)
    - **+** / **-** – Increase / decrease beat sensitivity
    - **[** / **]** – Increase / decrease oscilloscope gain (Layered text when Oscilloscope layer is selected; 1.0–10.0)
@@ -62,7 +63,7 @@ Tests use **System.IO.Abstractions.TestingHelpers** (MockFileSystem) instead of 
    - **←/→** – Cycle active layer's type (Layered text mode)
    - **Shift+1–9** – Toggle layer enabled/disabled (Layered text mode)
    - **I** – Cycle to next picture (Layered text mode, when an AsciiImage layer is active)
-   - **S** – Open preset settings modal (1–9 select, ←→ type, Shift+1–9 toggle, R rename, N new preset, ESC close)
+   - **S** – Open Preset modal (Preset editor) or Show edit modal (Show play), ESC close
    - **D** – Change audio input device
    - **F** – Toggle full screen (visualizer only, no header/toolbar)
    - **ESC** – Quit
@@ -74,13 +75,14 @@ Tests use **System.IO.Abstractions.TestingHelpers** (MockFileSystem) instead of 
 - **Audio input**: Demo Mode (synthetic BPM stream for testing), loopback (system output), or a specific WASAPI capture device; choice is saved in settings.
 - **Volume analysis**: Real-time level and peak display; stereo VU-style meters in VU Meter mode.
 - **FFT analysis**: Fast Fourier Transform with log-spaced frequency bands and peak hold.
-- **Presets**: **V** cycles between named TextLayers configurations (each preset = 9 layers + palette). Toolbar shows "Preset: {name} (V)".
+- **Presets**: **V** cycles between named TextLayers configurations (each preset = 9 layers + palette). Toolbar shows "Preset: {name} (V)" in Preset editor mode.
+- **Shows**: **Tab** switches to Show play — auto-cycles presets with per-entry duration (seconds or beats). Toolbar shows "Show: {name} | Preset: {name}". **S** in Show play opens Show edit modal (add/remove presets, set duration).
 - **Layered text**: Multiple independent layers (Geiss plasma background, beat circles, oscilloscope, VU meter, Llama-style spectrum bars, Unknown Pleasures stacked waveforms, scrolling colors, marquee, falling letters, ASCII images from a folder, now-playing from system media) with configurable text snippets and beat reactions; each layer has its own palette; press **1–9** to select a layer, **←/→** to change its type, **Shift+1–9** to toggle enabled; **[ / ]** to adjust oscilloscope gain when that layer is selected; press **P** to cycle the active layer's palette. **S** opens the preset modal (R rename, N new preset).
 - **Colors and palettes**: Palette-aware visualizers (Layered text layers) support **24-bit true color** (RGB) and 16 console colors. Palettes are stored as JSON files in a **palettes** directory (see below). Each layer has its own palette setting; pressing **P** affects only the active layer and saves to that layer's settings.
 - **Beat detection**: Optional beat detection and BPM estimate; sensitivity and beat circles are configurable and persist.
 - **Real-time display**: Updates every 50 ms.
 - **Toolbar**: Shows volume, preset name, layer hints, palette, and H=Help. Both toolbar lines use scrolling text when they exceed the terminal width (per [ADR-0020](docs/adr/0020-ui-text-components-scrolling-and-ellipsis.md)); static text elsewhere truncates with ellipsis.
-- **Now playing**: When a media app (Spotify, VLC, browser, etc.) is playing audio and provides metadata via Windows System Media Transport Controls, the header shows "Artist - Title" on row 5 in cyan. Scrolling text when long. See [ADR-0027](docs/adr/0027-now-playing-header.md).
+- **Header**: Device and now-playing share one line ("Device: " and "Now: " with labeled scroll viewports). Mode (Preset editor / Show play) on the next line. See [ADR-0027](docs/adr/0027-now-playing-header.md).
 - **Settings**: Stored in a local file (e.g. next to the executable). Per-visualizer options live under `VisualizerSettings`; each palette-aware visualizer has its own `PaletteId`. Device, per-visualizer palette, beat sensitivity, and oscilloscope gain are saved automatically when changed.
 
 ## Dependencies
@@ -105,6 +107,27 @@ Example (`presets/preset-1.json`):
 {
   "Name": "Preset 1",
   "Config": { "PaletteId": "default", "Layers": [...] }
+}
+```
+
+## Shows (JSON files)
+
+Shows are stored as **JSON files** in a **`shows`** directory next to the executable. A Show is an ordered collection of presets with per-entry duration. Press **Tab** to switch to Show play; **S** in Show play to edit (add/remove entries, set duration). Duration can be in **Seconds** (wall-clock) or **Beats** (at current detected BPM).
+
+**Show JSON format:**
+
+- **`Name`** (optional): Display name (e.g. `"Live Set A"`).
+- **`Entries`**: Array of `{ PresetId, Duration: { Unit: "Seconds"|"Beats", Value } }`.
+
+Example (`shows/show-1.json`):
+
+```json
+{
+  "Name": "Live Set A",
+  "Entries": [
+    { "PresetId": "preset-1", "Duration": { "Unit": "Seconds", "Value": 30 } },
+    { "PresetId": "preset-2", "Duration": { "Unit": "Beats", "Value": 16 } }
+  ]
 }
 ```
 
@@ -140,13 +163,16 @@ Example with 24-bit colors:
 ## Settings structure (per-visualizer)
 
 - **Visualizer-specific options** live under `VisualizerSettings` in the settings file (e.g. `appsettings.json`):
-  - **Presets**: Stored as individual JSON files in the `presets/` directory (see above). `ActivePresetId` in `VisualizerSettings` references the active preset (id = filename without extension). Each preset file contains `Name` and `Config` (TextLayersVisualizerSettings: `PaletteId` fallback; list of 9 layers with common props plus `Custom`). Press **V** to cycle presets; **S** to edit (R rename, N new preset); changes persist automatically.
+  - **Presets**: Stored as individual JSON files in the `presets/` directory (see above). `ActivePresetId` references the active preset. Press **V** to cycle presets (Preset editor); **S** to edit (R rename, N new preset).
+  - **Shows**: Stored in the `shows/` directory. `ActiveShowId` and `ApplicationMode` (PresetEditor or ShowPlay) determine current mode. **Tab** switches modes; **S** in Show play opens Show edit.
 
-Example `appsettings.json` (presets live in `presets/*.json`):
+Example `appsettings.json`:
 
 ```json
 "VisualizerSettings": {
-  "ActivePresetId": "preset-1"
+  "ActivePresetId": "preset-1",
+  "ApplicationMode": "PresetEditor",
+  "ActiveShowId": null
 }
 ```
 

@@ -16,7 +16,7 @@ The app is Windows-only for audio capture (NAudio, WASAPI); a Windows-only now-p
    - **Windows**: `WindowsNowPlayingProvider` in `AudioAnalyzer.Platform.Windows` (targeting `net10.0-windows10.0.19041.0`) uses GSMTC: `GlobalSystemMediaTransportControlsSessionManager`, `TryGetMediaPropertiesAsync` for Title/Artist, background polling and event subscriptions for updates.
    - **Fallback**: `NullNowPlayingProvider` in Infrastructure returns null.
 
-3. **Display**: Row 5 of the header shows now-playing when non-null. Uses `ScrollingTextViewport` for long text (per ADR-0020). Styled with ANSI DarkCyan. Scroll state resets when the track changes.
+3. **Display**: Now-playing shares a line with device info (row 4). Uses labeled scroll viewports: "Device: " + scrollable device name | "Now: " + scrollable now-playing (per ADR-0020). Now-playing styled with ANSI DarkCyan. Scroll state resets when the track or device changes.
 
 4. **DI**: Register `INowPlayingProvider` in ServiceConfiguration: `WindowsNowPlayingProvider` on Windows (with `Start()` to begin polling), `NullNowPlayingProvider` otherwise.
 

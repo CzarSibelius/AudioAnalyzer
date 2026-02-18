@@ -29,10 +29,18 @@ Composites multiple independent layers (e.g. ScrollingColors, Marquee, FallingLe
 
 ## Presets
 
-A **Preset** is a named TextLayers configuration (9 layers + PaletteId). Users can maintain multiple presets and switch with **V**. The active preset's config is the live editing buffer (`TextLayers`). Presets are stored as individual JSON files in the **`presets`** directory (like palettes). See [ADR-0019](../adr/0019-preset-textlayers-configuration.md) and [ADR-0022](../adr/0022-presets-in-own-files.md).
+A **Preset** is a named TextLayers configuration (9 layers + PaletteId). Users can maintain multiple presets and switch with **V** (Preset editor mode). The active preset's config is the live editing buffer (`TextLayers`). Presets are stored as individual JSON files in the **`presets`** directory (like palettes). See [ADR-0019](../adr/0019-preset-textlayers-configuration.md) and [ADR-0022](../adr/0022-presets-in-own-files.md).
 
-- **V** — Cycle to next preset (toolbar shows "Preset: {name} (V)")
+- **V** — Cycle to next preset (Preset editor only; toolbar shows "Preset: {name} (V)")
+- **Tab** — Switch between Preset editor and Show play
 - Settings modal title shows current preset; **R** to rename, **N** to create new preset (duplicate of current)
+
+## Shows
+
+A **Show** is an ordered collection of presets with per-entry duration. In **Show play** mode, presets auto-advance based on duration (Seconds or Beats). See [ADR-0031](../adr/0031-show-preset-collection.md).
+
+- **Tab** — Switch to Show play (when Shows exist)
+- **S** in Show play — Show edit modal (add/remove presets, set duration per entry)
 
 ## Settings
 

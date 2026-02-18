@@ -93,4 +93,49 @@ public static class ScrollingTextViewport
         int start = (int)Math.Clamp(Math.Floor(state.Offset), 0, maxOffset);
         return AnsiConsole.GetVisibleSubstring(text, start, width);
     }
+
+    /// <summary>
+    /// Renders a static label followed by scrollable content. The label is always visible; the text scrolls in the remaining width when it overflows.
+    /// </summary>
+    /// <param name="label">Static prefix (e.g. "Device: ") always shown at the start.</param>
+    /// <param name="text">Dynamic content; scrolls within the remaining width when it overflows.</param>
+    /// <param name="totalWidth">Total cell width. The scrolling region is totalWidth - label.Length characters.</param>
+    /// <param name="state">Scroll state; updated in place.</param>
+    /// <param name="speedPerFrame">Characters to advance per frame.</param>
+    /// <returns>Label + scroll output, padded to totalWidth.</returns>
+    public static string RenderWithLabel(string label, string text, int totalWidth, ref ScrollingTextViewportState state, double speedPerFrame)
+    {
+        if (totalWidth <= 0)
+        {
+            return "";
+        }
+
+        var effectiveLabel = label ?? "";
+        int scrollWidth = Math.Max(0, totalWidth - effectiveLabel.Length);
+        string scrollPart = Render(text ?? "", scrollWidth, ref state, speedPerFrame);
+        string result = effectiveLabel + scrollPart;
+        return result.Length >= totalWidth ? result[..totalWidth] : result.PadRight(totalWidth);
+    }
+
+    /// <summary>
+    /// Like <see cref="RenderWithLabel"/> but the text may contain ANSI escape sequences (e.g. for styling).
+    /// </summary>
+    public static string RenderWithLabelWithAnsi(string label, string text, int totalWidth, ref ScrollingTextViewportState state, double speedPerFrame)
+    {
+        if (totalWidth <= 0)
+        {
+            return "";
+        }
+
+        var effectiveLabel = label ?? "";
+        int scrollWidth = Math.Max(0, totalWidth - effectiveLabel.Length);
+        string scrollPart = string.IsNullOrEmpty(text)
+            ? new string(' ', scrollWidth)
+            : RenderWithAnsi(text, scrollWidth, ref state, speedPerFrame);
+        string result = effectiveLabel + scrollPart;
+        int visibleLen = AnsiConsole.GetVisibleLength(result);
+        return visibleLen > totalWidth
+            ? AnsiConsole.GetVisibleSubstring(result, 0, totalWidth)
+            : AnsiConsole.PadToVisibleWidth(result, totalWidth);
+    }
 }
