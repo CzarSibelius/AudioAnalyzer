@@ -1,3 +1,4 @@
+using System.IO.Abstractions;
 using System.Text.Json;
 using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Domain;
@@ -9,10 +10,19 @@ namespace AudioAnalyzer.Infrastructure;
 /// </summary>
 public sealed class FilePaletteRepository : IPaletteRepository
 {
+    private readonly IFileSystem _fileSystem;
     private readonly string _palettesDirectory;
 
+    /// <summary>Creates a repository using the real file system.</summary>
     public FilePaletteRepository(string? palettesDirectory = null)
+        : this(new FileSystem(), palettesDirectory)
     {
+    }
+
+    /// <summary>Creates a repository using the provided file system (e.g. MockFileSystem for tests).</summary>
+    public FilePaletteRepository(IFileSystem fileSystem, string? palettesDirectory = null)
+    {
+        _fileSystem = fileSystem ?? throw new ArgumentNullException(nameof(fileSystem));
         _palettesDirectory = palettesDirectory ?? Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "palettes");
     }
 
@@ -22,7 +32,7 @@ public sealed class FilePaletteRepository : IPaletteRepository
         var list = new List<PaletteInfo>();
         try
         {
-            foreach (var path in Directory.EnumerateFiles(_palettesDirectory, "*.json", SearchOption.TopDirectoryOnly))
+            foreach (var path in _fileSystem.Directory.EnumerateFiles(_palettesDirectory, "*.json", SearchOption.TopDirectoryOnly))
             {
                 var id = Path.GetFileNameWithoutExtension(path);
                 if (string.IsNullOrEmpty(id))
@@ -35,9 +45,9 @@ public sealed class FilePaletteRepository : IPaletteRepository
                 list.Add(new PaletteInfo(id, string.IsNullOrEmpty(name) ? id : name));
             }
         }
-        catch
+        catch (IOException)
         {
-            // Return empty or whatever we have
+            /* Directory missing or inaccessible: return empty list */
         }
         return list.OrderBy(p => p.Id, StringComparer.OrdinalIgnoreCase).ToList();
     }
@@ -48,7 +58,6 @@ public sealed class FilePaletteRepository : IPaletteRepository
         {
             return null;
         }
-        // Prevent path traversal
         if (id.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
         {
             return null;
@@ -56,29 +65,29 @@ public sealed class FilePaletteRepository : IPaletteRepository
 
         EnsurePalettesDirectoryExists();
         var path = Path.Combine(_palettesDirectory, id + ".json");
-        return File.Exists(path) ? LoadFromPath(path) : null;
+        return _fileSystem.File.Exists(path) ? LoadFromPath(path) : null;
     }
 
     private void EnsurePalettesDirectoryExists()
     {
         try
         {
-            if (!Directory.Exists(_palettesDirectory))
+            if (!_fileSystem.Directory.Exists(_palettesDirectory))
             {
-                Directory.CreateDirectory(_palettesDirectory);
+                _fileSystem.Directory.CreateDirectory(_palettesDirectory);
             }
         }
-        catch
+        catch (IOException)
         {
-            // Ignore
+            /* Best-effort: directory may not be creatable in test with read-only mock */
         }
     }
 
-    private static PaletteDefinition? LoadFromPath(string path)
+    private PaletteDefinition? LoadFromPath(string path)
     {
         try
         {
-            var json = File.ReadAllText(path);
+            var json = _fileSystem.File.ReadAllText(path);
             using var doc = JsonDocument.Parse(json);
             var root = doc.RootElement;
             var name = root.TryGetProperty("Name", out var nameProp) ? nameProp.GetString() : null;
@@ -121,7 +130,11 @@ public sealed class FilePaletteRepository : IPaletteRepository
             }
             return new PaletteDefinition { Name = name, Colors = colors.ToArray() };
         }
-        catch
+        catch (JsonException)
+        {
+            return null;
+        }
+        catch (IOException)
         {
             return null;
         }

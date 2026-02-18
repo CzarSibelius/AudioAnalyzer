@@ -24,3 +24,6 @@ jobs:
         run: dotnet build ./AudioAnalyzer.sln --no-incremental -warnaserror
         env:
           DOTNET_CLI_TELEMETRY_OPTOUT: 1
+
+      - name: Test
+        run: dotnet test ./AudioAnalyzer.sln --no-build -warnaserror

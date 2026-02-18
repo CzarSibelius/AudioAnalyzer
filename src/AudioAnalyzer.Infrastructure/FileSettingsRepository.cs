@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.IO.Abstractions;
 using System.Text.Json;
 using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Domain;
@@ -14,11 +15,20 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
         DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
     };
 
+    private readonly IFileSystem _fileSystem;
     private readonly string _settingsPath;
     private readonly IPresetRepository _presetRepo;
 
+    /// <summary>Creates a repository using the real file system.</summary>
     public FileSettingsRepository(IPresetRepository presetRepo, string? settingsPath = null)
+        : this(new FileSystem(), presetRepo, settingsPath)
     {
+    }
+
+    /// <summary>Creates a repository using the provided file system (e.g. MockFileSystem for tests).</summary>
+    public FileSettingsRepository(IFileSystem fileSystem, IPresetRepository presetRepo, string? settingsPath = null)
+    {
+        _fileSystem = fileSystem ?? throw new ArgumentNullException(nameof(fileSystem));
         _presetRepo = presetRepo ?? throw new ArgumentNullException(nameof(presetRepo));
         _settingsPath = settingsPath ?? Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "appsettings.json");
     }
@@ -105,7 +115,7 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
 
     private SettingsFile LoadFile()
     {
-        if (!File.Exists(_settingsPath))
+        if (!_fileSystem.File.Exists(_settingsPath))
         {
             var file = new SettingsFile();
             SaveFile(file);
@@ -113,7 +123,7 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
         }
         try
         {
-            var json = File.ReadAllText(_settingsPath);
+            var json = _fileSystem.File.ReadAllText(_settingsPath);
             return JsonSerializer.Deserialize<SettingsFile>(json, s_readOptions) ?? new SettingsFile();
         }
         catch (Exception)
@@ -131,7 +141,7 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
             var baseName = Path.GetFileNameWithoutExtension(_settingsPath);
             var timestamp = DateTime.UtcNow.ToString("yyyy-MM-ddTHH-mm-ss.fff", CultureInfo.InvariantCulture);
             var backupPath = Path.Combine(dir, $"{baseName}.{timestamp}.bak");
-            File.Copy(_settingsPath, backupPath, overwrite: false);
+            _fileSystem.File.Copy(_settingsPath, backupPath, overwrite: false);
         }
         catch (Exception ex)
         {
@@ -151,7 +161,7 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
             file.VisualizerSettings.TextLayers = null!;
         }
         var json = JsonSerializer.Serialize(file, s_writeOptions);
-        File.WriteAllText(_settingsPath, json);
+        _fileSystem.File.WriteAllText(_settingsPath, json);
     }
 
     private static AppSettings MapToAppSettings(SettingsFile file)

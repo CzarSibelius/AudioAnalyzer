@@ -16,6 +16,12 @@ Never complete a task without confirming successful compilation. **The build mus
 
 **Windows-only**: This project runs on Windows with PowerShell. Do **not** use Unix utilities like `head`, `tail`, or `grep` in shell commands (e.g. `dotnet build 2>&1 | head -50`). Use plain `dotnet build`; if output must be limited, use PowerShell: `dotnet build 2>&1 | Select-Object -First 50`.
 
+### Verification checklist (after making changes)
+1. Run `dotnet build .\AudioAnalyzer.sln` — must succeed with 0 warnings.
+2. Run `dotnet test tests\AudioAnalyzer.Tests\AudioAnalyzer.Tests.csproj` — all tests must pass.
+3. Optionally run `dotnet format .\AudioAnalyzer.sln --verify-no-changes` to verify formatting.
+4. If modifying UI/display: manually test with Demo Mode (D → select Demo) at 80x24 and 200x50.
+
 ### Static analysis
 After making code changes, check linter diagnostics for the modified files and fix any reported errors; fix warnings unless the rule is explicitly disabled for that line. Do not introduce new build warnings. Optionally run `dotnet format --verify-no-changes` to verify formatting (or `dotnet format` to fix); this uses .editorconfig.
 
