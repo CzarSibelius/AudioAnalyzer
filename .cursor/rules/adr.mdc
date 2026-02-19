@@ -52,3 +52,7 @@ alwaysApply: true
 23. **Header refresh timer**: Header (device, now-playing, BPM, volume) is refreshed by a 50ms PeriodicTimer independent of audio. Scrolling text in the header animates even when no audio is playing (e.g. WASAPI loopback). Use AnalysisEngine.RefreshHeaderIfNeeded() for header-only updates. See [ADR-0038](docs/adr/0038-header-refresh-independent-of-audio.md).
 
 24. **Display width**: Use display width (terminal columns) for fitting text to viewport. Wide characters (emoji, CJK, fullwidth) occupy 2 columns. Use GetDisplayWidth, GetDisplaySubstring, PadToDisplayWidth, and DisplayWidth utility for column-based measurements. TruncateToWidth and TruncateWithEllipsis use display width. See [ADR-0039](docs/adr/0039-display-width-terminal-columns.md).
+
+25. **Dependency injection**: Prefer constructor injection and DI registration for new components (services, UI, layers, modals). Deviate only when profiling shows DI or indirection harms performance on hot paths; document the rationale. Use singleton/scoped registrations for hot-path services. See [ADR-0040](docs/adr/0040-dependency-injection-preference.md).
+
+26. **God object refactoring**: When refactoring ApplicationShell, AnalysisEngine, or SettingsModal, follow [ADR-0041](docs/adr/0041-god-object-refactoring-strategy.md) and the task list in [docs/refactoring/god-object-plan.md](docs/refactoring/god-object-plan.md). Mark tasks `[x]` when implemented.

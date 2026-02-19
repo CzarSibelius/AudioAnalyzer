@@ -1,5 +1,7 @@
 using AudioAnalyzer.Application.Abstractions;
+using AudioAnalyzer.Application.BeatDetection;
 using AudioAnalyzer.Application.Fft;
+using AudioAnalyzer.Application.VolumeAnalysis;
 
 namespace AudioAnalyzer.Application;
 
@@ -8,12 +10,6 @@ public sealed class AnalysisEngine
     private const int FftLength = 8192;
     private const int WaveformSize = 512;
     private const int UpdateIntervalMs = 50;
-    private const double SmoothingFactor = 0.7;
-    private const int PeakHoldFrames = 20;
-    private const double PeakFallRate = 0.08;
-    private const int EnergyHistorySize = 20;
-    private const int MinBeatInterval = 250;
-    private const int BPMHistorySize = 8;
     private static readonly int FftLog2N = (int)Math.Log2(FftLength);
 
     private readonly ComplexFloat[] _fftBuffer = new ComplexFloat[FftLength];
@@ -35,59 +31,41 @@ public sealed class AnalysisEngine
     private Func<bool>? _renderGuard;
 
     private int _numBands;
-    private double[] _bandMagnitudes = Array.Empty<double>();
-    private double[] _smoothedMagnitudes = Array.Empty<double>();
-    private double[] _peakHold = Array.Empty<double>();
-    private int[] _peakHoldTime = Array.Empty<int>();
-
-    private double _maxMagnitudeEver = 0.001;
-    private double _targetMaxMagnitude = 0.001;
-
-    private float _leftChannel;
-    private float _rightChannel;
-    private float _leftPeak;
-    private float _rightPeak;
-    private float _leftPeakHold;
-    private float _rightPeakHold;
-    private int _leftPeakHoldTime;
-    private int _rightPeakHoldTime;
-
-    private readonly Queue<double> _energyHistory = new();
-    private readonly Queue<DateTime> _beatTimes = new();
-    private double _beatThreshold = 1.3;
-    private DateTime _lastBeatTime = DateTime.MinValue;
-    private double _currentBpm;
-    private float _lastVolume;
     private double _instantEnergy;
-    private int _beatFlashFrames;
-    private int _beatCount;
 
     private readonly IVisualizationRenderer _renderer;
+    private readonly IBeatDetector _beatDetector;
+    private readonly IVolumeAnalyzer _volumeAnalyzer;
+    private readonly IFftBandProcessor _fftBandProcessor;
     private readonly IDisplayDimensions _displayDimensions;
     private readonly AnalysisSnapshot _snapshot = new();
     private readonly object _renderLock = new();
     private object? _consoleLock;
 
-    public AnalysisEngine(IVisualizationRenderer renderer, IDisplayDimensions displayDimensions)
+    public AnalysisEngine(IVisualizationRenderer renderer, IDisplayDimensions displayDimensions, IBeatDetector beatDetector, IVolumeAnalyzer volumeAnalyzer, IFftBandProcessor fftBandProcessor)
     {
         _renderer = renderer;
         _displayDimensions = displayDimensions;
+        _beatDetector = beatDetector ?? throw new ArgumentNullException(nameof(beatDetector));
+        _volumeAnalyzer = volumeAnalyzer ?? throw new ArgumentNullException(nameof(volumeAnalyzer));
+        _fftBandProcessor = fftBandProcessor ?? throw new ArgumentNullException(nameof(fftBandProcessor));
         UpdateDisplayDimensions();
     }
 
-    public double BeatSensitivity { get => _beatThreshold; set => _beatThreshold = Math.Clamp(value, 0.5, 3.0); }
+    /// <summary>Beat detection sensitivity (0.5–3.0). Delegates to IBeatDetector.</summary>
+    public double BeatSensitivity { get => _beatDetector.BeatSensitivity; set => _beatDetector.BeatSensitivity = value; }
 
     /// <summary>Current detected BPM from beat detection. 0 when no detection yet.</summary>
-    public double CurrentBpm => _currentBpm;
+    public double CurrentBpm => _beatDetector.CurrentBpm;
 
     /// <summary>True when a beat was recently detected (used for visual flash effects).</summary>
-    public bool BeatFlashActive => _beatFlashFrames > 0;
+    public bool BeatFlashActive => _beatDetector.BeatFlashActive;
 
     /// <summary>Latest volume from audio processing (0–1). Used for header display.</summary>
-    public float Volume => _lastVolume;
+    public float Volume => _volumeAnalyzer.Volume;
 
     /// <summary>Incremented each time a beat is detected. Used for Show playback with beats duration.</summary>
-    public int BeatCount => _beatCount;
+    public int BeatCount => _beatDetector.BeatCount;
 
     /// <summary>When true, the visualizer uses the full console; header and toolbar are hidden.</summary>
     public bool FullScreen
@@ -208,6 +186,21 @@ public sealed class AnalysisEngine
     /// </summary>
     public void Redraw()
     {
+        RedrawInternal(useFullHeaderRedraw: false);
+    }
+
+    /// <summary>
+    /// Performs a full redraw: clears console, draws header, then toolbar and visualizer. All under the console lock
+    /// to prevent race with the header refresh timer. Use after preset/device change or other actions that require
+    /// the title bar (e.g. preset name) to be updated.
+    /// </summary>
+    public void RedrawWithFullHeader()
+    {
+        RedrawInternal(useFullHeaderRedraw: true);
+    }
+
+    private void RedrawInternal(bool useFullHeaderRedraw)
+    {
         if (_renderGuard != null && !_renderGuard())
         {
             return;
@@ -228,7 +221,14 @@ public sealed class AnalysisEngine
             _snapshot.TerminalHeight = h;
             if (!_fullScreen && _overlayRowCount == 0)
             {
-                _onRefreshHeader?.Invoke();
+                if (useFullHeaderRedraw)
+                {
+                    _onRedrawHeader?.Invoke();
+                }
+                else
+                {
+                    _onRefreshHeader?.Invoke();
+                }
             }
             try { _renderer.Render(_snapshot); } catch (Exception ex) { _ = ex; /* Render failed: swallow to avoid crash */ }
         }
@@ -297,37 +297,18 @@ public sealed class AnalysisEngine
             }
         }
 
-        _leftChannel = _leftChannel * 0.7f + maxLeft * 0.3f;
-        _rightChannel = _rightChannel * 0.7f + maxRight * 0.3f;
-        if (maxLeft > _leftPeak)
-        {
-            _leftPeak = maxLeft;
-        }
-        else
-        {
-            _leftPeak *= 0.95f;
-        }
-
-        if (maxRight > _rightPeak)
-        {
-            _rightPeak = maxRight;
-        }
-        else
-        {
-            _rightPeak *= 0.95f;
-        }
-
-        UpdateVuPeakHold(ref _leftPeakHold, ref _leftPeakHoldTime, maxLeft);
-        UpdateVuPeakHold(ref _rightPeakHold, ref _rightPeakHoldTime, maxRight);
+        _volumeAnalyzer.ProcessFrame(maxLeft, maxRight, maxVolume);
 
         if (_bufferPosition >= FftLength)
         {
-            AnalyzeFrequencies(format.SampleRate);
+            ApplyWindow();
+            FftHelper.Fft(true, FftLog2N, _fftBuffer);
+            _fftBandProcessor.Process(_fftBuffer, format.SampleRate, _numBands);
             _bufferPosition = 0;
         }
 
         double avgEnergy = framesRecorded > 0 ? Math.Sqrt(_instantEnergy / framesRecorded) : 0;
-        DetectBeat(avgEnergy);
+        _beatDetector.ProcessFrame(avgEnergy);
         _instantEnergy = 0;
 
         if ((DateTime.Now - _lastUpdate).TotalMilliseconds >= UpdateIntervalMs)
@@ -353,7 +334,7 @@ public sealed class AnalysisEngine
                     {
                         _onRefreshHeader?.Invoke();
                     }
-                    FillSnapshot(maxVolume, w, h);
+                    FillSnapshot(w, h);
                     try { _renderer.Render(_snapshot); } catch (Exception ex) { _ = ex; /* Render failed: swallow to avoid crash */ }
                 }
 
@@ -376,36 +357,32 @@ public sealed class AnalysisEngine
                 }
             }
             _lastUpdate = DateTime.Now;
-            if (_beatFlashFrames > 0)
-            {
-                _beatFlashFrames--;
-            }
+            _beatDetector.DecayFlashFrame();
         }
     }
 
-    private void FillSnapshot(float volume, int termWidth, int termHeight)
+    private void FillSnapshot(int termWidth, int termHeight)
     {
         _snapshot.FullScreenMode = _fullScreen;
         _snapshot.DisplayStartRow = _displayStartRow;
         _snapshot.TerminalWidth = termWidth;
         _snapshot.TerminalHeight = termHeight;
-        _lastVolume = volume;
-        _snapshot.Volume = volume;
-        _snapshot.CurrentBpm = _currentBpm;
-        _snapshot.BeatSensitivity = _beatThreshold;
-        _snapshot.BeatFlashActive = _beatFlashFrames > 0;
-        _snapshot.BeatCount = _beatCount;
-        _snapshot.NumBands = _numBands;
-        _snapshot.SmoothedMagnitudes = _smoothedMagnitudes;
-        _snapshot.PeakHold = _peakHold;
-        _snapshot.TargetMaxMagnitude = _targetMaxMagnitude;
+        _snapshot.Volume = _volumeAnalyzer.Volume;
+        _snapshot.CurrentBpm = _beatDetector.CurrentBpm;
+        _snapshot.BeatSensitivity = _beatDetector.BeatSensitivity;
+        _snapshot.BeatFlashActive = _beatDetector.BeatFlashActive;
+        _snapshot.BeatCount = _beatDetector.BeatCount;
+        _snapshot.NumBands = _fftBandProcessor.NumBands;
+        _snapshot.SmoothedMagnitudes = _fftBandProcessor.SmoothedMagnitudes;
+        _snapshot.PeakHold = _fftBandProcessor.PeakHold;
+        _snapshot.TargetMaxMagnitude = _fftBandProcessor.TargetMaxMagnitude;
         _snapshot.Waveform = _displayWaveform;
         _snapshot.WaveformPosition = _displayWaveformPosition;
         _snapshot.WaveformSize = WaveformSize;
-        _snapshot.LeftChannel = _leftChannel;
-        _snapshot.RightChannel = _rightChannel;
-        _snapshot.LeftPeakHold = _leftPeakHold;
-        _snapshot.RightPeakHold = _rightPeakHold;
+        _snapshot.LeftChannel = _volumeAnalyzer.LeftChannel;
+        _snapshot.RightChannel = _volumeAnalyzer.RightChannel;
+        _snapshot.LeftPeakHold = _volumeAnalyzer.LeftPeakHold;
+        _snapshot.RightPeakHold = _volumeAnalyzer.RightPeakHold;
     }
 
     private void UpdateDisplayDimensions()
@@ -422,155 +399,16 @@ public sealed class AnalysisEngine
             return;
         }
         _numBands = Math.Max(8, Math.Min(60, (w - 8) / 2));
-        if (_bandMagnitudes.Length != _numBands)
-        {
-            _bandMagnitudes = new double[_numBands];
-            _smoothedMagnitudes = new double[_numBands];
-            _peakHold = new double[_numBands];
-            _peakHoldTime = new int[_numBands];
-        }
         _lastTerminalWidth = w;
         _lastTerminalHeight = h;
     }
 
-    private static void UpdateVuPeakHold(ref float peakHold, ref int holdTime, float current)
-    {
-        if (current > peakHold) { peakHold = current; holdTime = 0; }
-        else
-        {
-            holdTime++;
-            if (holdTime > 30)
-            {
-                peakHold = Math.Max(0, peakHold - 0.02f);
-            }
-        }
-    }
-
-    private void AnalyzeFrequencies(int sampleRate)
+    private void ApplyWindow()
     {
         for (int i = 0; i < FftLength; i++)
         {
             float window = 0.54f - 0.46f * MathF.Cos(2 * MathF.PI * i / (FftLength - 1));
             _fftBuffer[i].X *= window;
         }
-        FftHelper.Fft(true, FftLog2N, _fftBuffer);
-
-        var bandRanges = CreateFrequencyBands(sampleRate);
-        for (int b = 0; b < _numBands; b++)
-        {
-            double totalMagnitude = 0;
-            int count = 0;
-            for (int i = bandRanges[b].start; i < bandRanges[b].end && i < FftLength / 2; i++)
-            {
-                double magnitude = Math.Sqrt(_fftBuffer[i].X * _fftBuffer[i].X + _fftBuffer[i].Y * _fftBuffer[i].Y);
-                totalMagnitude += magnitude;
-                count++;
-            }
-            _bandMagnitudes[b] = count > 0 ? totalMagnitude / count : 0;
-            _smoothedMagnitudes[b] = _smoothedMagnitudes[b] * SmoothingFactor + _bandMagnitudes[b] * (1 - SmoothingFactor);
-            UpdatePeakHold(b);
-            if (_smoothedMagnitudes[b] > _maxMagnitudeEver)
-            {
-                _maxMagnitudeEver = _smoothedMagnitudes[b];
-            }
-        }
-        _targetMaxMagnitude = _targetMaxMagnitude * 0.95 + _maxMagnitudeEver * 0.05;
     }
-
-    private List<(int start, int end, string label)> CreateFrequencyBands(int sampleRate)
-    {
-        var bandRanges = new List<(int start, int end, string label)>();
-        const double minFreq = 20, maxFreq = 20000;
-        double logMin = Math.Log10(minFreq), logMax = Math.Log10(maxFreq);
-        double step = (logMax - logMin) / _numBands;
-        for (int band = 0; band < _numBands; band++)
-        {
-            double logStart = logMin + band * step, logEnd = logMin + (band + 1) * step;
-            int startFreq = (int)Math.Pow(10, logStart), endFreq = (int)Math.Pow(10, logEnd);
-            int startBin = (int)(startFreq * FftLength / (double)sampleRate);
-            int endBin = (int)(endFreq * FftLength / (double)sampleRate);
-            string label = startFreq < 1000 ? $"{startFreq}" : $"{startFreq / 1000}k";
-            bandRanges.Add((startBin, endBin, label));
-        }
-        return bandRanges;
-    }
-
-    private void UpdatePeakHold(int bandIndex)
-    {
-        if (_smoothedMagnitudes[bandIndex] > _peakHold[bandIndex])
-        {
-            _peakHold[bandIndex] = _smoothedMagnitudes[bandIndex];
-            _peakHoldTime[bandIndex] = 0;
-        }
-        else
-        {
-            _peakHoldTime[bandIndex]++;
-            if (_peakHoldTime[bandIndex] > PeakHoldFrames)
-            {
-                _peakHold[bandIndex] = Math.Max(0, _peakHold[bandIndex] - _peakHold[bandIndex] * PeakFallRate);
-            }
-        }
-    }
-
-    private void DetectBeat(double energy)
-    {
-        _energyHistory.Enqueue(energy);
-        if (_energyHistory.Count > EnergyHistorySize)
-        {
-            _energyHistory.Dequeue();
-        }
-
-        if (_energyHistory.Count < EnergyHistorySize / 2)
-        {
-            return;
-        }
-
-        double avgEnergy = _energyHistory.Take(_energyHistory.Count - 1).Average();
-        DateTime now = DateTime.Now;
-        if (energy > avgEnergy * _beatThreshold && energy > 0.01 &&
-            (now - _lastBeatTime).TotalMilliseconds > MinBeatInterval)
-        {
-            _beatTimes.Enqueue(now);
-            _lastBeatTime = now;
-            _beatFlashFrames = 3;
-            _beatCount++;
-            while (_beatTimes.Count > 0 && (now - _beatTimes.Peek()).TotalSeconds > 8)
-            {
-                _beatTimes.Dequeue();
-            }
-
-            CalculateBPM();
-        }
-    }
-
-    private void CalculateBPM()
-    {
-        if (_beatTimes.Count < 2)
-        {
-            return;
-        }
-
-        var recentBeats = _beatTimes.TakeLast(Math.Min(BPMHistorySize + 1, _beatTimes.Count)).ToList();
-        if (recentBeats.Count < 2)
-        {
-            return;
-        }
-
-        var intervals = new List<double>();
-        for (int i = 1; i < recentBeats.Count; i++)
-        {
-            double intervalMs = (recentBeats[i] - recentBeats[i - 1]).TotalMilliseconds;
-            if (intervalMs >= 250 && intervalMs <= 2000)
-            {
-                intervals.Add(intervalMs);
-            }
-        }
-        if (intervals.Count > 0)
-        {
-            double avgInterval = intervals.Average();
-            double newBPM = 60000.0 / avgInterval;
-            _currentBpm = _currentBpm == 0 ? newBPM : _currentBpm * 0.8 + newBPM * 0.2;
-        }
-    }
-
 }

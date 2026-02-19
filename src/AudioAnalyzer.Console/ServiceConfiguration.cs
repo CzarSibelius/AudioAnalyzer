@@ -1,6 +1,9 @@
 using System.IO.Abstractions;
 using AudioAnalyzer.Application;
 using AudioAnalyzer.Application.Abstractions;
+using AudioAnalyzer.Application.BeatDetection;
+using AudioAnalyzer.Application.Fft;
+using AudioAnalyzer.Application.VolumeAnalysis;
 using AudioAnalyzer.Domain;
 using AudioAnalyzer.Infrastructure;
 using AudioAnalyzer.Infrastructure.NowPlaying;
@@ -68,11 +71,17 @@ internal static class ServiceConfiguration
             var viewportFactory = sp.GetRequiredService<IScrollingTextViewportFactory>();
             return new VisualizationPaneLayout(dimensions, visualizers, visualizerSettings, uiSettings, viewportFactory);
         });
+        services.AddSingleton<IBeatDetector, BeatDetector>();
+        services.AddSingleton<IVolumeAnalyzer, VolumeAnalyzer>();
+        services.AddSingleton<IFftBandProcessor, FftBandProcessor>();
         services.AddSingleton<AnalysisEngine>(sp =>
         {
             var renderer = sp.GetRequiredService<IVisualizationRenderer>();
             var dimensions = sp.GetRequiredService<IDisplayDimensions>();
-            return new AnalysisEngine(renderer, dimensions);
+            var beatDetector = sp.GetRequiredService<IBeatDetector>();
+            var volumeAnalyzer = sp.GetRequiredService<IVolumeAnalyzer>();
+            var fftBandProcessor = sp.GetRequiredService<IFftBandProcessor>();
+            return new AnalysisEngine(renderer, dimensions, beatDetector, volumeAnalyzer, fftBandProcessor);
         });
         services.AddSingleton<ShowPlaybackController>();
         services.AddSingleton<IScrollingTextEngine, ScrollingTextEngine>();
@@ -83,27 +92,54 @@ internal static class ServiceConfiguration
             sp.GetServices<IVisualizer>()));
         services.AddSingleton<IDeviceSelectionModal, DeviceSelectionModal>();
         services.AddSingleton<IHelpModal, HelpModal>();
-        services.AddSingleton<ISettingsModal, SettingsModal>();
-        services.AddSingleton<IShowEditModal, ShowEditModal>();
-        services.AddSingleton<ApplicationShell>(sp =>
+        services.AddSingleton<ISettingsModalRenderer>(sp =>
         {
             var factory = sp.GetRequiredService<IScrollingTextViewportFactory>();
+            return new SettingsModalRenderer(
+                sp.GetRequiredService<VisualizerSettings>(),
+                sp.GetRequiredService<UiSettings>(),
+                sp.GetRequiredService<IPaletteRepository>(),
+                factory);
+        });
+        services.AddSingleton<ISettingsModalKeyHandler, SettingsModalKeyHandler>();
+        services.AddSingleton<ISettingsModal, SettingsModal>();
+        services.AddSingleton<IShowEditModal, ShowEditModal>();
+        services.AddSingleton<IMainLoopKeyHandler, MainLoopKeyHandler>();
+        services.AddSingleton<IDeviceCaptureController>(sp => new DeviceCaptureController(
+            sp.GetRequiredService<IAudioDeviceInfo>(),
+            sp.GetRequiredService<AnalysisEngine>()));
+        services.AddSingleton<IAppSettingsPersistence>(sp => new AppSettingsPersistence(
+            sp.GetRequiredService<AnalysisEngine>(),
+            sp.GetRequiredService<VisualizerSettings>(),
+            sp.GetRequiredService<AppSettings>(),
+            sp.GetRequiredService<ISettingsRepository>(),
+            sp.GetRequiredService<IVisualizerSettingsRepository>()));
+        services.AddSingleton<IHeaderDrawer>(sp =>
+        {
+            var factory = sp.GetRequiredService<IScrollingTextViewportFactory>();
+            return new HeaderDrawer(
+                sp.GetRequiredService<ITitleBarRenderer>(),
+                factory.CreateViewport(),
+                factory.CreateViewport(),
+                sp.GetRequiredService<INowPlayingProvider>(),
+                sp.GetRequiredService<AnalysisEngine>(),
+                sp.GetRequiredService<UiSettings>());
+        });
+        services.AddSingleton<ApplicationShell>(sp =>
+        {
             return new ApplicationShell(
-                sp.GetRequiredService<IAudioDeviceInfo>(),
-                sp.GetRequiredService<ISettingsRepository>(),
+                sp.GetRequiredService<IDeviceCaptureController>(),
                 sp.GetRequiredService<IVisualizerSettingsRepository>(),
-                sp.GetRequiredService<AppSettings>(),
                 sp.GetRequiredService<VisualizerSettings>(),
                 sp.GetRequiredService<IPresetRepository>(),
                 sp.GetRequiredService<IShowRepository>(),
                 sp.GetRequiredService<IPaletteRepository>(),
                 sp.GetRequiredService<AnalysisEngine>(),
                 sp.GetRequiredService<IVisualizationRenderer>(),
-                sp.GetRequiredService<INowPlayingProvider>(),
                 sp.GetRequiredService<ShowPlaybackController>(),
-                sp.GetRequiredService<ITitleBarRenderer>(),
-                factory.CreateViewport(),
-                factory.CreateViewport(),
+                sp.GetRequiredService<IHeaderDrawer>(),
+                sp.GetRequiredService<IMainLoopKeyHandler>(),
+                sp.GetRequiredService<IAppSettingsPersistence>(),
                 sp.GetRequiredService<IDeviceSelectionModal>(),
                 sp.GetRequiredService<IHelpModal>(),
                 sp.GetRequiredService<ISettingsModal>(),
