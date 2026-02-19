@@ -18,6 +18,12 @@ public interface IVisualizer
     /// <summary>Optional toolbar suffix for this mode (e.g. "Gain: 2.5 ([ ])"). Return null to use default toolbar only.</summary>
     string? GetToolbarSuffix(AnalysisSnapshot snapshot) => null;
 
+    /// <summary>Optional: display name of the active/selected layer for title bar (e.g. "ascii_image"). Return null if not applicable.</summary>
+    string? GetActiveLayerDisplayName() => null;
+
+    /// <summary>Optional: 0-based z-order index of the active layer for title bar (e.g. 0 for back, 8 for front). Return -1 if not applicable.</summary>
+    int GetActiveLayerZIndex() => -1;
+
     /// <summary>Handles mode-specific key bindings (e.g. 1–9 for TextLayers). Returns true if the key was consumed.</summary>
     bool HandleKey(ConsoleKeyInfo key) => false;
 }

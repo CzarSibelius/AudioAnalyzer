@@ -10,13 +10,15 @@ public sealed class VisualizationPaneLayout : IVisualizationRenderer
     private readonly IVisualizer? _visualizer;
     private readonly VisualizerSettings? _visualizerSettings;
     private readonly UiSettings _uiSettings;
+    private readonly IScrollingTextViewport _labelViewport;
     private (IReadOnlyList<PaletteColor>? Palette, string? DisplayName) _palette;
 
-    public VisualizationPaneLayout(IDisplayDimensions displayDimensions, IEnumerable<IVisualizer> visualizers, VisualizerSettings? visualizerSettings, UiSettings? uiSettings = null)
+    public VisualizationPaneLayout(IDisplayDimensions displayDimensions, IEnumerable<IVisualizer> visualizers, VisualizerSettings? visualizerSettings, UiSettings? uiSettings, IScrollingTextViewportFactory viewportFactory)
     {
         _visualizerSettings = visualizerSettings;
         _visualizer = visualizers.FirstOrDefault(v => string.Equals(v.TechnicalName, "textlayers", StringComparison.OrdinalIgnoreCase));
         _uiSettings = uiSettings ?? new UiSettings();
+        _labelViewport = viewportFactory.CreateViewport();
     }
 
     public void SetPalette(IReadOnlyList<PaletteColor>? palette, string? paletteDisplayName = null)
@@ -91,18 +93,6 @@ public sealed class VisualizationPaneLayout : IVisualizationRenderer
         catch (Exception ex) { _ = ex; /* Last-resort render failure: swallow to avoid crash */ }
     }
 
-    private string GetActivePresetName()
-    {
-        if (_visualizerSettings?.Presets is not { Count: > 0 })
-        {
-            return "Preset 1";
-        }
-        var active = _visualizerSettings.Presets.FirstOrDefault(p =>
-            string.Equals(p.Id, _visualizerSettings.ActivePresetId, StringComparison.OrdinalIgnoreCase))
-            ?? _visualizerSettings.Presets[0];
-        return string.IsNullOrWhiteSpace(active.Name) ? "Preset 1" : active.Name.Trim();
-    }
-
     public bool SupportsPaletteCycling() =>
         _visualizer is { SupportsPaletteCycling: true };
 
@@ -146,24 +136,22 @@ public sealed class VisualizationPaneLayout : IVisualizationRenderer
         var labelColor = palette.Label;
         var dimmedColor = palette.Dimmed;
 
-        // Split into viewports: Show/Preset | Suffix (layers) | Palette | Help
-        int cell1Width = (int)(w * 0.22);
-        int cell2Width = (int)(w * 0.48);
-        int cell3Width = (int)(w * 0.18);
-        int cell4Width = w - cell1Width - cell2Width - cell3Width;
-        if (cell4Width < 8)
+        // Split into viewports: Suffix (layers) | Palette | Help
+        int cell1Width = (int)(w * 0.60);
+        int cell2Width = (int)(w * 0.22);
+        int cell3Width = w - cell1Width - cell2Width;
+        if (cell3Width < 8)
         {
-            cell4Width = 8;
-            cell2Width = Math.Max(8, w - cell1Width - cell3Width - cell4Width);
+            cell3Width = 8;
+            cell1Width = Math.Max(8, w - cell2Width - cell3Width);
         }
 
-        string presetCell = GetPresetCell(labelColor, palette.Normal, cell1Width);
-        string suffixCell = GetSuffixCell(snapshot, cell2Width);
-        string paletteCell = GetPaletteCell(snapshot, labelColor, palette.Normal, cell3Width);
+        string suffixCell = GetSuffixCell(snapshot, cell1Width);
+        string paletteCell = GetPaletteCell(snapshot, labelColor, palette.Normal, cell2Width);
         string helpCell = AnsiConsole.ColorCode(dimmedColor) + "H=Help" + AnsiConsole.ResetCode;
-        helpCell = AnsiConsole.PadToVisibleWidth(helpCell, cell4Width);
+        helpCell = AnsiConsole.PadToVisibleWidth(helpCell, cell3Width);
 
-        string line = presetCell + suffixCell + paletteCell + helpCell;
+        string line = suffixCell + paletteCell + helpCell;
         int visible = AnsiConsole.GetVisibleLength(line);
         if (visible < w)
         {
@@ -180,37 +168,6 @@ public sealed class VisualizationPaneLayout : IVisualizationRenderer
             System.Console.Write(line);
         }
         catch (Exception ex) { _ = ex; /* Toolbar write failed: swallow to avoid crash */ }
-    }
-
-    private string GetPresetCell(PaletteColor labelColor, PaletteColor normalColor, int width)
-    {
-        string value;
-        if (_visualizerSettings?.ApplicationMode == ApplicationMode.ShowPlay)
-        {
-            var showName = string.IsNullOrWhiteSpace(_visualizerSettings.ActiveShowName)
-                ? "Show"
-                : _visualizerSettings.ActiveShowName.Trim();
-            var presetName = GetActivePresetName();
-            string showLabel = ScrollingTextViewport.FormatLabel("Show", "S");
-            string presetLabel = ScrollingTextViewport.FormatLabel("Preset", "V");
-            value = $"{AnsiConsole.ColorCode(labelColor)}{showLabel}{AnsiConsole.ResetCode}{AnsiConsole.ColorCode(normalColor)}{showName}{AnsiConsole.ResetCode} {AnsiConsole.ColorCode(labelColor)}{presetLabel}{AnsiConsole.ResetCode}{AnsiConsole.ColorCode(normalColor)}{presetName}{AnsiConsole.ResetCode}";
-        }
-        else
-        {
-            if (_visualizerSettings?.Presets is { Count: > 0 })
-            {
-                string label = ScrollingTextViewport.FormatLabel("Preset", "V");
-                value = $"{AnsiConsole.ColorCode(labelColor)}{label}{AnsiConsole.ResetCode}{AnsiConsole.ColorCode(normalColor)}{GetActivePresetName()}{AnsiConsole.ResetCode}";
-            }
-            else
-            {
-                string label = ScrollingTextViewport.FormatLabel("Mode", "Tab");
-                value = $"{AnsiConsole.ColorCode(labelColor)}{label}{AnsiConsole.ResetCode}{AnsiConsole.ColorCode(normalColor)}{_visualizer?.DisplayName ?? "Layered text"}{AnsiConsole.ResetCode}";
-            }
-        }
-        string cell = AnsiConsole.PadToVisibleWidth(
-            StaticTextViewport.TruncateWithEllipsis(new AnsiText(value), width), width);
-        return cell;
     }
 
     private string GetSuffixCell(AnalysisSnapshot snapshot, int width)
@@ -231,7 +188,7 @@ public sealed class VisualizationPaneLayout : IVisualizationRenderer
         {
             return new string(' ', width);
         }
-        string label = ScrollingTextViewport.FormatLabel("Palette", "P");
+        string label = _labelViewport.FormatLabel("Palette", "P");
         string value = $"{AnsiConsole.ColorCode(labelColor)}{label}{AnsiConsole.ResetCode}{AnsiConsole.ColorCode(normalColor)}{snapshot.CurrentPaletteName}{AnsiConsole.ResetCode}";
         string cell = AnsiConsole.PadToVisibleWidth(
             StaticTextViewport.TruncateWithEllipsis(new AnsiText(value), width), width);

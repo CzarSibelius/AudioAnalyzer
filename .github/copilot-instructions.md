@@ -32,8 +32,8 @@ After making code changes, check linter diagnostics for the modified files and f
 - **New visualizers**: Implement `ITextLayerRenderer` and add to TextLayersVisualizer; do not create new standalone `IVisualizer` modes (see ADR-0014 in docs/adr/).
 - **Layer settings**: TextLayerSettings has common props plus Custom (JSON); layer-specific settings go in *Settings.cs next to the layer; use `GetCustom<TSettings>()` in Draw (see ADR-0021 in docs/adr/). New settings are discovered via reflection; add *Settings.cs, use [SettingRange]/[SettingChoices]/[Setting] attributes, register in LayerSettingsReflection (see ADR-0025 in docs/adr/).
 - **Presets**: TextLayers configs are Presets in presets/*.json; V cycles presets; S modal: R rename, N new preset (see ADR-0019, ADR-0022 in docs/adr/).
-- **UI text overflow**: Use ScrollingTextViewport for dynamic text that may exceed width; use StaticTextViewport.TruncateWithEllipsis for static text (see ADR-0020 in docs/adr/).
-- **Viewport label hotkeys**: When a labeled viewport references a feature with a hotkey, show it in the label as "Label (K):" (e.g. "Preset (V):"). Use ScrollingTextViewport.FormatLabel or pass hotkey to RenderWithLabel (see ADR-0034 in docs/adr/).
+- **UI text overflow**: Use IScrollingTextViewport (from IScrollingTextViewportFactory.CreateViewport()) for dynamic text that may exceed width; use StaticTextViewport.TruncateWithEllipsis for static text (see ADR-0020, ADR-0037 in docs/adr/).
+- **Viewport label hotkeys**: When a labeled viewport references a feature with a hotkey, show it in the label as "Label (K):" (e.g. "Preset (V):"). Use IScrollingTextViewport.FormatLabel or pass hotkey to RenderWithLabel (see ADR-0034 in docs/adr/).
 - **Settings migration**: Do not add migration logic for settings format changes; use backup (`{name}.{timestamp}.bak`) and reset per ADR-0029 in docs/adr/.
 - **Performance**: Console writes, polling, and timing must be performant; follow ADR-0030 in docs/adr/ when adding console I/O, key polling, or frame-rate logic.
 
