@@ -17,5 +17,6 @@ public enum TextLayerType
     UnknownPleasures,
     VuMeter,
     LlamaStyle,
-    NowPlaying
+    NowPlaying,
+    Mirror
 }

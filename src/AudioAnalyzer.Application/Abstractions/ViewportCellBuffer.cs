@@ -67,6 +67,18 @@ public sealed class ViewportCellBuffer
         _colors[i] = color;
     }
 
+    /// <summary>Gets the character and color at (x, y). Returns (' ', default) if out of bounds.</summary>
+    public (char C, PaletteColor Color) Get(int x, int y)
+    {
+        if (x < 0 || x >= _width || y < 0 || y >= _height)
+        {
+            return (' ', default);
+        }
+
+        int i = y * _width + x;
+        return (_chars[i], _colors[i]);
+    }
+
     /// <summary>Flushes the buffer to the writer starting at the given row. Only writes rows that changed (diff-based).</summary>
     /// <param name="writer">The console writer abstraction (implemented by the Console project).</param>
     /// <param name="startRow">The console row where the first buffer line is written.</param>
