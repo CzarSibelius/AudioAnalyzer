@@ -49,8 +49,8 @@ public sealed class TextLayersVisualizer : IVisualizer
 
     public void Render(AnalysisSnapshot snapshot, VisualizerViewport viewport)
     {
-        var config = _settings;
-        if (config?.Layers is not { Count: > 0 })
+        var sortedLayers = TryGetSortedLayersSnapshot(_settings);
+        if (sortedLayers is not { Count: > 0 })
         {
             RenderEmpty(viewport);
             return;
@@ -63,7 +63,7 @@ public sealed class TextLayersVisualizer : IVisualizer
             return;
         }
 
-        var sortedLayers = config.Layers.OrderBy(l => l.ZOrder).ToList();
+        var config = _settings;
         var defaultColors = ResolvePaletteForLayer(sortedLayers.Count > 0 ? sortedLayers[0] : null, config);
         var defaultColor = defaultColors[0];
         _buffer.EnsureSize(w, h);
@@ -175,16 +175,16 @@ public sealed class TextLayersVisualizer : IVisualizer
 
     public string? GetToolbarSuffix(AnalysisSnapshot snapshot)
     {
-        var config = _settings;
-        if (config?.Layers is not { Count: > 0 })
+        var sortedLayers = TryGetSortedLayersSnapshot(_settings);
+        if (sortedLayers is not { Count: > 0 })
         {
             var emptyPalette = _uiSettings.Palette ?? new UiPalette();
             return AnsiConsole.ColorCode(emptyPalette.Label) + "Layers:" + AnsiConsole.ResetCode + AnsiConsole.ColorCode(emptyPalette.Dimmed) + "(config in settings, S: settings)" + AnsiConsole.ResetCode;
         }
-        var sortedLayers = config.Layers.OrderBy(l => l.ZOrder).ToList();
+        var config = _settings;
         int idx = Math.Clamp(_paletteCycleLayerIndex, 0, sortedLayers.Count - 1);
         var layer = sortedLayers[idx];
-        var paletteId = layer.PaletteId ?? config.PaletteId ?? "default";
+        var paletteId = layer.PaletteId ?? config?.PaletteId ?? "default";
         var paletteDef = _paletteRepo.GetById(paletteId);
         var paletteName = paletteDef?.Name?.Trim() ?? paletteId;
         if (string.IsNullOrWhiteSpace(paletteName))
@@ -220,7 +220,7 @@ public sealed class TextLayersVisualizer : IVisualizer
             }
         }
         sb.Append(" (1-9 select, \u2190\u2192 type, Shift+1-9 toggle");
-        var hasAscii = config.Layers.Any(l => l.LayerType == TextLayerType.AsciiImage);
+        var hasAscii = sortedLayers.Any(l => l.LayerType == TextLayerType.AsciiImage);
         if (hasAscii)
         {
             sb.Append(", I: next image");
@@ -244,12 +244,11 @@ public sealed class TextLayersVisualizer : IVisualizer
     /// <inheritdoc />
     public string? GetActiveLayerDisplayName()
     {
-        var config = _settings;
-        if (config?.Layers is not { Count: > 0 })
+        var sortedLayers = TryGetSortedLayersSnapshot(_settings);
+        if (sortedLayers is not { Count: > 0 })
         {
             return null;
         }
-        var sortedLayers = config.Layers.OrderBy(l => l.ZOrder).ToList();
         int idx = Math.Clamp(_paletteCycleLayerIndex, 0, sortedLayers.Count - 1);
         var layer = sortedLayers[idx];
         return ToSnakeCase(layer.LayerType.ToString());
@@ -258,12 +257,30 @@ public sealed class TextLayersVisualizer : IVisualizer
     /// <inheritdoc />
     public int GetActiveLayerZIndex()
     {
-        var config = _settings;
-        if (config?.Layers is not { Count: > 0 })
+        var sortedLayers = TryGetSortedLayersSnapshot(_settings);
+        if (sortedLayers is not { Count: > 0 })
         {
             return -1;
         }
-        return Math.Clamp(_paletteCycleLayerIndex, 0, int.MaxValue);
+        return Math.Clamp(_paletteCycleLayerIndex, 0, sortedLayers.Count - 1);
+    }
+
+    /// <summary>Gets a snapshot of layers sorted by ZOrder, or null if config is empty or the collection was modified during copy (e.g. during show-mode switch or shutdown).</summary>
+    private static List<TextLayerSettings>? TryGetSortedLayersSnapshot(TextLayersVisualizerSettings? config)
+    {
+        if (config?.Layers is not { Count: > 0 })
+        {
+            return null;
+        }
+        try
+        {
+            var snapshot = new List<TextLayerSettings>(config.Layers);
+            return snapshot.OrderBy(l => l.ZOrder).ToList();
+        }
+        catch (ArgumentException)
+        {
+            return null;
+        }
     }
 
     private static string ToSnakeCase(string value)
@@ -292,13 +309,13 @@ public sealed class TextLayersVisualizer : IVisualizer
     /// </summary>
     public bool HandleKey(ConsoleKeyInfo key)
     {
-        var config = _settings;
-        if (config?.Layers is not { Count: > 0 })
+        var sortedLayers = TryGetSortedLayersSnapshot(_settings);
+        if (sortedLayers is not { Count: > 0 })
         {
             return false;
         }
 
-        var sortedLayers = config.Layers.OrderBy(l => l.ZOrder).ToList();
+        var config = _settings;
 
         if (key.Key is ConsoleKey.P)
         {
@@ -308,7 +325,7 @@ public sealed class TextLayersVisualizer : IVisualizer
             }
             int idx = Math.Clamp(_paletteCycleLayerIndex, 0, sortedLayers.Count - 1);
             var paletteLayer = sortedLayers[idx];
-            var currentId = paletteLayer.PaletteId ?? config.PaletteId ?? "";
+            var currentId = paletteLayer.PaletteId ?? config?.PaletteId ?? "";
             var all = _paletteRepo.GetAll();
             if (all.Count == 0)
             {
