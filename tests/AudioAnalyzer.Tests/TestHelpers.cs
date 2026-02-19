@@ -16,6 +16,7 @@ internal static class TestHelpers
 
     public static string PresetsPath => Path.Combine(TestRoot, "presets");
     public static string PalettesPath => Path.Combine(TestRoot, "palettes");
+    public static string ShowsPath => Path.Combine(TestRoot, "shows");
     public static string SettingsPath => Path.Combine(TestRoot, "appsettings.json");
 
     public static AnalysisSnapshot CreateTestSnapshot(int width, int height)
@@ -97,7 +98,9 @@ internal static class TestHelpers
         {
             DisplayDimensions = new FixedDisplayDimensions(80, 24),
             NowPlayingProvider = new NullNowPlayingProvider(),
-            PaletteRepository = paletteRepo
+            PaletteRepository = paletteRepo,
+            FileSystem = fileSystem,
+            ShowsDirectory = ShowsPath
         };
 
         return ServiceConfiguration.Build(settingsRepo, presetRepo, settings, vs, options);
