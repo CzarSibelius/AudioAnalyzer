@@ -22,3 +22,7 @@ dotnet_diagnostic.RCS1060.severity = warning
 
 #### Formatting ####
 trim_trailing_whitespace = true
+
+#### Test projects: allow underscores in method names (e.g. Given_X_When_Y_Then_Z) ####
+[tests/**/*.cs]
+dotnet_diagnostic.CA1707.severity = none

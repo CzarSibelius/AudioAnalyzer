@@ -53,6 +53,8 @@ Decisions are numbered and kept under version control so the rationale stays wit
 | [0035](0035-modal-dependency-injection.md) | Modal dependency injection | Accepted |
 | [0036](0036-title-bar-injectable-component.md) | Title bar as injectable component | Accepted |
 | [0037](0037-scrolling-text-viewport-injectable-service.md) | Scrolling text viewport as injectable service with data/render split | Accepted |
+| [0038](0038-header-refresh-independent-of-audio.md) | Header refresh independent of audio pipeline | Accepted |
+| [0039](0039-display-width-terminal-columns.md) | Display width for terminal columns (emoji, wide characters) | Accepted |
 
 ## Process
 

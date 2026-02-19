@@ -51,10 +51,10 @@ public sealed class ScrollingTextViewport : IScrollingTextViewport
         }
 
         var effectiveLabel = !string.IsNullOrEmpty(hotkey) ? FormatLabel(label ?? "", hotkey) : (label ?? "");
-        int labelVisible = string.IsNullOrEmpty(effectiveLabel)
+        int labelDisplayWidth = string.IsNullOrEmpty(effectiveLabel)
             ? 0
-            : new StringInfo(effectiveLabel).LengthInTextElements;
-        int scrollWidth = Math.Max(0, totalWidth - labelVisible);
+            : DisplayWidth.GetDisplayWidth(effectiveLabel);
+        int scrollWidth = Math.Max(0, totalWidth - labelDisplayWidth);
 
         string scrollPart = string.IsNullOrEmpty(text.Value)
             ? new string(' ', scrollWidth)
@@ -68,9 +68,9 @@ public sealed class ScrollingTextViewport : IScrollingTextViewport
             : scrollPart;
 
         string result = labelSegment + scrollSegment;
-        int visibleLen = AnsiConsole.GetVisibleLength(result);
-        return visibleLen > totalWidth
-            ? AnsiConsole.GetVisibleSubstring(result, 0, totalWidth)
-            : AnsiConsole.PadToVisibleWidth(result, totalWidth);
+        int displayWidth = AnsiConsole.GetDisplayWidth(result);
+        return displayWidth > totalWidth
+            ? AnsiConsole.GetDisplaySubstring(result, 0, totalWidth)
+            : AnsiConsole.PadToDisplayWidth(result, totalWidth);
     }
 }

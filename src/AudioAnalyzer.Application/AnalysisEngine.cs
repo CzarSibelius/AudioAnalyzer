@@ -157,6 +157,52 @@ public sealed class AnalysisEngine
     }
 
     /// <summary>
+    /// Refreshes only the header (device, now-playing, BPM, volume) without re-rendering the visualizer.
+    /// Called by a periodic UI timer so scrolling text and header elements animate even when no audio
+    /// is playing (e.g. WASAPI loopback does not fire DataAvailable when silent).
+    /// </summary>
+    public void RefreshHeaderIfNeeded()
+    {
+        if (_renderGuard != null && !_renderGuard())
+        {
+            return;
+        }
+        if (_fullScreen || _overlayRowCount > 0)
+        {
+            return;
+        }
+        int w = _displayDimensions.Width;
+        int h = _displayDimensions.Height;
+        if (w < 30 || h < 15)
+        {
+            return;
+        }
+
+        void DoRefreshHeader()
+        {
+            _onRefreshHeader?.Invoke();
+        }
+
+        if (_consoleLock != null)
+        {
+            lock (_consoleLock)
+            {
+                lock (_renderLock)
+                {
+                    DoRefreshHeader();
+                }
+            }
+        }
+        else
+        {
+            lock (_renderLock)
+            {
+                DoRefreshHeader();
+            }
+        }
+    }
+
+    /// <summary>
     /// Redraw the toolbar and visualizer once using current dimensions and last snapshot data.
     /// Call after DrawMainUI so the toolbar appears immediately instead of waiting for the next audio-driven frame.
     /// </summary>

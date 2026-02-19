@@ -19,14 +19,14 @@ public sealed class ScrollingTextEngine : IScrollingTextEngine
             return new string(' ', width);
         }
 
-        int visibleLength = text.GetVisibleLength();
-        if (visibleLength <= width)
+        int displayWidth = text.GetDisplayWidth();
+        if (displayWidth <= width)
         {
             state.Reset();
-            return text.PadToWidth(width);
+            return text.PadToDisplayWidth(width);
         }
 
-        int maxOffset = visibleLength - width;
+        int maxOffset = displayWidth - width;
 
         state.Offset += speedPerFrame * state.Direction;
 
@@ -41,7 +41,8 @@ public sealed class ScrollingTextEngine : IScrollingTextEngine
             state.Direction = 1;
         }
 
-        int start = (int)Math.Clamp(Math.Floor(state.Offset), 0, maxOffset);
-        return text.GetVisibleSubstring(start, width);
+        int rawStartCol = (int)Math.Clamp(Math.Floor(state.Offset), 0, maxOffset);
+        int startCol = Math.Min(DisplayWidth.SnapToGraphemeStart(text.Value, rawStartCol), maxOffset);
+        return text.GetDisplaySubstring(startCol, width);
     }
 }

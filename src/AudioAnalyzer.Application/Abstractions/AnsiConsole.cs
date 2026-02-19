@@ -245,6 +245,137 @@ public static class AnsiConsole
     }
 
     /// <summary>
+    /// Returns the display width (terminal columns) of the text, excluding ANSI sequences.
+    /// Wide characters (emoji, CJK) count as 2 columns.
+    /// </summary>
+    public static int GetDisplayWidth(string text)
+    {
+        if (string.IsNullOrEmpty(text))
+        {
+            return 0;
+        }
+
+        int total = 0;
+        int i = 0;
+        while (i < text.Length)
+        {
+            if (text[i] == '\x1b' && i + 1 < text.Length && text[i + 1] == '[')
+            {
+                i += 2;
+                while (i < text.Length && (text[i] is >= '0' and <= '9' or ';' or '?' or ' '))
+                {
+                    i++;
+                }
+                if (i < text.Length)
+                {
+                    i++;
+                }
+                continue;
+            }
+
+            total += DisplayWidth.GetGraphemeWidth(text, i);
+            i += StringInfo.GetNextTextElementLength(text.AsSpan(i));
+        }
+        return total;
+    }
+
+    /// <summary>
+    /// Returns the substring that fits in exactly <paramref name="widthCols"/> display columns.
+    /// Preserves ANSI sequences; never cuts through escape sequences or grapheme clusters.
+    /// Pads with spaces if the range extends past the end.
+    /// </summary>
+    public static string GetDisplaySubstring(string text, int startCol, int widthCols)
+    {
+        if (widthCols <= 0)
+        {
+            return "";
+        }
+
+        var sb = new StringBuilder();
+        int col = 0;
+        int outCol = 0;
+        string? pendingEscape = null;
+        int i = 0;
+
+        while (i < text.Length && outCol < widthCols)
+        {
+            if (text[i] == '\x1b' && i + 1 < text.Length && text[i + 1] == '[')
+            {
+                int escStart = i;
+                i += 2;
+                while (i < text.Length && (text[i] is >= '0' and <= '9' or ';' or '?' or ' '))
+                {
+                    i++;
+                }
+                if (i < text.Length)
+                {
+                    i++;
+                }
+                string escape = text[escStart..i];
+                if (col >= startCol)
+                {
+                    if (pendingEscape != null)
+                    {
+                        sb.Append(pendingEscape);
+                        pendingEscape = null;
+                    }
+                    sb.Append(escape);
+                }
+                else
+                {
+                    pendingEscape = escape;
+                }
+                continue;
+            }
+
+            int w = DisplayWidth.GetGraphemeWidth(text, i);
+            int elementLen = StringInfo.GetNextTextElementLength(text.AsSpan(i));
+
+            if (col >= startCol)
+            {
+                if (outCol + w > widthCols)
+                {
+                    break;
+                }
+                if (pendingEscape != null)
+                {
+                    sb.Append(pendingEscape);
+                    pendingEscape = null;
+                }
+                sb.Append(text, i, elementLen);
+                outCol += w;
+            }
+            else
+            {
+                pendingEscape = null;
+            }
+
+            col += w;
+            i += elementLen;
+        }
+
+        while (outCol < widthCols)
+        {
+            sb.Append(Reset);
+            sb.Append(' ');
+            outCol++;
+        }
+
+        return sb.ToString();
+    }
+
+    /// <summary>Pads the text with spaces so its display width equals <paramref name="widthCols"/>. Preserves embedded ANSI codes.</summary>
+    public static string PadToDisplayWidth(string text, int widthCols)
+    {
+        int cols = GetDisplayWidth(text);
+        if (cols >= widthCols)
+        {
+            return text;
+        }
+        return text + new string(' ', widthCols - cols);
+    }
+
+    /// <summary>
     /// Strips ANSI escape sequences from a string so the result contains only printable characters.
     /// Use before scrolling text that may contain embedded escape codes, to avoid cutting sequences in half.
     /// </summary>
