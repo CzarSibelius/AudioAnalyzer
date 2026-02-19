@@ -10,67 +10,55 @@ namespace AudioAnalyzer.Console;
 [SuppressMessage("Reliability", "CA1001:Types that own disposable fields should be disposable", Justification = "Single Run/Shutdown lifecycle; _headerRefreshCts explicitly disposed in Shutdown().")]
 internal sealed class ApplicationShell
 {
-    private readonly IAudioDeviceInfo _deviceInfo;
-    private readonly ISettingsRepository _settingsRepo;
+    private readonly IDeviceCaptureController _deviceController;
     private readonly IVisualizerSettingsRepository _visualizerSettingsRepo;
-    private readonly AppSettings _settings;
     private readonly VisualizerSettings _visualizerSettings;
     private readonly IPresetRepository _presetRepository;
     private readonly IShowRepository _showRepository;
     private readonly IPaletteRepository _paletteRepo;
     private readonly AnalysisEngine _engine;
     private readonly IVisualizationRenderer _renderer;
-    private readonly INowPlayingProvider _nowPlayingProvider;
     private readonly ShowPlaybackController _showPlaybackController;
-    private readonly ITitleBarRenderer _titleBar;
-    private readonly IScrollingTextViewport _deviceViewport;
-    private readonly IScrollingTextViewport _nowPlayingViewport;
+    private readonly IHeaderDrawer _headerDrawer;
+    private readonly IMainLoopKeyHandler _keyHandler;
+    private readonly IAppSettingsPersistence _settingsPersistence;
     private readonly IDeviceSelectionModal _deviceSelectionModal;
     private readonly IHelpModal _helpModal;
     private readonly ISettingsModal _settingsModal;
     private readonly IShowEditModal _showEditModal;
 
-    private IAudioInput? _currentInput;
-    private string _currentDeviceName = "";
-    private readonly object _deviceLock = new();
     private CancellationTokenSource? _headerRefreshCts;
 
     public ApplicationShell(
-        IAudioDeviceInfo deviceInfo,
-        ISettingsRepository settingsRepo,
+        IDeviceCaptureController deviceController,
         IVisualizerSettingsRepository visualizerSettingsRepo,
-        AppSettings settings,
         VisualizerSettings visualizerSettings,
         IPresetRepository presetRepository,
         IShowRepository showRepository,
         IPaletteRepository paletteRepo,
         AnalysisEngine engine,
         IVisualizationRenderer renderer,
-        INowPlayingProvider nowPlayingProvider,
         ShowPlaybackController showPlaybackController,
-        ITitleBarRenderer titleBar,
-        IScrollingTextViewport deviceViewport,
-        IScrollingTextViewport nowPlayingViewport,
+        IHeaderDrawer headerDrawer,
+        IMainLoopKeyHandler keyHandler,
+        IAppSettingsPersistence settingsPersistence,
         IDeviceSelectionModal deviceSelectionModal,
         IHelpModal helpModal,
         ISettingsModal settingsModal,
         IShowEditModal showEditModal)
     {
-        _deviceInfo = deviceInfo;
-        _settingsRepo = settingsRepo;
+        _deviceController = deviceController ?? throw new ArgumentNullException(nameof(deviceController));
         _visualizerSettingsRepo = visualizerSettingsRepo;
-        _settings = settings;
         _visualizerSettings = visualizerSettings;
         _presetRepository = presetRepository;
         _showRepository = showRepository;
         _paletteRepo = paletteRepo;
         _engine = engine;
         _renderer = renderer;
-        _nowPlayingProvider = nowPlayingProvider;
         _showPlaybackController = showPlaybackController ?? throw new ArgumentNullException(nameof(showPlaybackController));
-        _titleBar = titleBar ?? throw new ArgumentNullException(nameof(titleBar));
-        _deviceViewport = deviceViewport ?? throw new ArgumentNullException(nameof(deviceViewport));
-        _nowPlayingViewport = nowPlayingViewport ?? throw new ArgumentNullException(nameof(nowPlayingViewport));
+        _headerDrawer = headerDrawer ?? throw new ArgumentNullException(nameof(headerDrawer));
+        _keyHandler = keyHandler ?? throw new ArgumentNullException(nameof(keyHandler));
+        _settingsPersistence = settingsPersistence ?? throw new ArgumentNullException(nameof(settingsPersistence));
         _deviceSelectionModal = deviceSelectionModal ?? throw new ArgumentNullException(nameof(deviceSelectionModal));
         _helpModal = helpModal ?? throw new ArgumentNullException(nameof(helpModal));
         _settingsModal = settingsModal ?? throw new ArgumentNullException(nameof(settingsModal));
@@ -82,15 +70,12 @@ internal sealed class ApplicationShell
     /// <param name="initialDeviceName">Display name of the initial device.</param>
     public void Run(string? initialDeviceId, string initialDeviceName)
     {
-        _currentDeviceName = initialDeviceName;
-
         bool modalOpen = false;
         object consoleLock = new();
 
-        var ui = _settings.UiSettings ?? new UiSettings();
         _engine.SetHeaderCallback(
-            () => ConsoleHeader.DrawMain(_currentDeviceName, _titleBar, _deviceViewport, _nowPlayingViewport, _nowPlayingProvider.GetNowPlayingText(), ui, _engine.CurrentBpm, _engine.BeatSensitivity, _engine.BeatFlashActive, _engine.Volume),
-            () => ConsoleHeader.DrawHeaderOnly(_currentDeviceName, _titleBar, _deviceViewport, _nowPlayingViewport, _nowPlayingProvider.GetNowPlayingText(), ui, _engine.CurrentBpm, _engine.BeatSensitivity, _engine.BeatFlashActive, _engine.Volume),
+            () => _headerDrawer.DrawMain(_deviceController.CurrentDeviceName),
+            () => _headerDrawer.DrawHeaderOnly(_deviceController.CurrentDeviceName),
             6);
         _engine.SetRenderGuard(() => !modalOpen);
         _engine.SetConsoleLock(consoleLock);
@@ -119,9 +104,8 @@ internal sealed class ApplicationShell
             }
         });
 
-        StartCapture(initialDeviceId, initialDeviceName);
-        ConsoleHeader.DrawMain(_currentDeviceName, _titleBar, _deviceViewport, _nowPlayingViewport, _nowPlayingProvider.GetNowPlayingText(), ui, _engine.CurrentBpm, _engine.BeatSensitivity, _engine.BeatFlashActive, _engine.Volume);
-        _engine.Redraw();
+        _deviceController.StartCapture(initialDeviceId, initialDeviceName);
+        _engine.RedrawWithFullHeader();
 
         bool running = true;
         while (running)
@@ -136,128 +120,18 @@ internal sealed class ApplicationShell
                 var key = System.Console.ReadKey(true);
                 if (_renderer.HandleKey(key))
                 {
-                    SaveSettings();
+                    _settingsPersistence.Save();
                     _engine.Redraw();
                 }
                 else
                 {
-                    switch (key.Key)
+                    var ctx = CreateKeyContext(consoleLock, open => modalOpen = open);
+                    if (_keyHandler.TryHandle(key, ctx))
                     {
-                        case ConsoleKey.Tab:
-                            HandleModeSwitch(consoleLock);
-                            if (!_engine.FullScreen)
-                            {
-                                ConsoleHeader.DrawMain(_currentDeviceName, _titleBar, _deviceViewport, _nowPlayingViewport, _nowPlayingProvider.GetNowPlayingText(), ui, _engine.CurrentBpm, _engine.BeatSensitivity, _engine.BeatFlashActive, _engine.Volume);
-                            }
-                            _engine.Redraw();
-                            break;
-                        case ConsoleKey.V:
-                            if (_visualizerSettings.ApplicationMode == ApplicationMode.PresetEditor)
-                            {
-                                CycleToNextPreset();
-                                SaveSettings();
-                                if (!_engine.FullScreen)
-                                {
-                                    ConsoleHeader.DrawMain(_currentDeviceName, _titleBar, _deviceViewport, _nowPlayingViewport, _nowPlayingProvider.GetNowPlayingText(), ui, _engine.CurrentBpm, _engine.BeatSensitivity, _engine.BeatFlashActive, _engine.Volume);
-                                }
-                                _engine.Redraw();
-                            }
-                            break;
-                        case ConsoleKey.S:
-                            if (_visualizerSettings.ApplicationMode == ApplicationMode.PresetEditor)
-                            {
-                                _settingsModal.Show(consoleLock, SaveSettings);
-                            }
-                            else
-                            {
-                                _showEditModal.Show(consoleLock, () =>
-                                {
-                                    SaveSettings();
-                                    _visualizerSettingsRepo.SaveVisualizerSettings(_visualizerSettings);
-                                });
-                            }
-                            lock (consoleLock)
-                            {
-                                if (!_engine.FullScreen)
-                                {
-                                    ConsoleHeader.DrawMain(_currentDeviceName, _titleBar, _deviceViewport, _nowPlayingViewport, _nowPlayingProvider.GetNowPlayingText(), ui, _engine.CurrentBpm, _engine.BeatSensitivity, _engine.BeatFlashActive, _engine.Volume);
-                                }
-                                _engine.Redraw();
-                            }
-                            break;
-                        case ConsoleKey.Escape:
+                        if (ctx.ShouldQuit)
+                        {
                             running = false;
-                            break;
-                        case ConsoleKey.D:
-                            IAudioInput? inputToStop;
-                            lock (_deviceLock)
-                            {
-                                inputToStop = _currentInput;
-                            }
-                            inputToStop?.StopCapture();
-
-                            var (newId, newName) = _deviceSelectionModal.Show(_currentDeviceName, open => modalOpen = open);
-                            if (newName != "")
-                            {
-                                StartCapture(newId, newName);
-                            }
-                            else
-                            {
-                                lock (_deviceLock)
-                                {
-                                    _currentInput?.Start();
-                                }
-                            }
-                            if (!_engine.FullScreen)
-                            {
-                                ConsoleHeader.DrawMain(_currentDeviceName, _titleBar, _deviceViewport, _nowPlayingViewport, _nowPlayingProvider.GetNowPlayingText(), ui, _engine.CurrentBpm, _engine.BeatSensitivity, _engine.BeatFlashActive, _engine.Volume);
-                            }
-                            _engine.Redraw();
-                            break;
-                        case ConsoleKey.H:
-                            _helpModal.Show(
-                                onEnter: () => modalOpen = true,
-                                onClose: () =>
-                                {
-                                    modalOpen = false;
-                                    if (_engine.FullScreen)
-                                    {
-                                        _engine.Redraw();
-                                    }
-                                    else
-                                    {
-                                        ConsoleHeader.DrawMain(_currentDeviceName, _titleBar, _deviceViewport, _nowPlayingViewport, _nowPlayingProvider.GetNowPlayingText(), ui, _engine.CurrentBpm, _engine.BeatSensitivity, _engine.BeatFlashActive, _engine.Volume);
-                                        _engine.Redraw();
-                                    }
-                                });
-                            break;
-                        case ConsoleKey.OemPlus:
-                        case ConsoleKey.Add:
-                            _engine.BeatSensitivity += 0.1;
-                            SaveSettings();
-                            break;
-                        case ConsoleKey.OemMinus:
-                        case ConsoleKey.Subtract:
-                            _engine.BeatSensitivity -= 0.1;
-                            SaveSettings();
-                            break;
-                        case ConsoleKey.P:
-                            CyclePalette();
-                            break;
-                        case ConsoleKey.F:
-                            _engine.FullScreen = !_engine.FullScreen;
-                            if (_engine.FullScreen)
-                            {
-                                System.Console.Clear();
-                                System.Console.CursorVisible = false;
-                                _engine.Redraw();
-                            }
-                            else
-                            {
-                                ConsoleHeader.DrawMain(_currentDeviceName, _titleBar, _deviceViewport, _nowPlayingViewport, _nowPlayingProvider.GetNowPlayingText(), ui, _engine.CurrentBpm, _engine.BeatSensitivity, _engine.BeatFlashActive, _engine.Volume);
-                                _engine.Redraw();
-                            }
-                            break;
+                        }
                     }
                 }
             }
@@ -267,46 +141,30 @@ internal sealed class ApplicationShell
         Shutdown();
     }
 
-    private void StartCapture(string? deviceId, string name)
+    private MainLoopKeyContext CreateKeyContext(object consoleLock, Action<bool> setModalOpen)
     {
-        IAudioInput? oldInput;
-        lock (_deviceLock)
+        return new MainLoopKeyContext
         {
-            oldInput = _currentInput;
-            _currentInput = null;
-        }
-        oldInput?.StopCapture();
-        oldInput?.Dispose();
-
-        lock (_deviceLock)
-        {
-            _currentInput = _deviceInfo.CreateCapture(deviceId);
-            _currentDeviceName = name;
-            _currentInput.DataAvailable += (_, e) =>
-            {
-                lock (_deviceLock)
-                {
-                    if (_currentInput == null)
-                    {
-                        return;
-                    }
-
-                    _engine.ProcessAudio(e.Buffer, e.BytesRecorded, e.Format);
-                }
-            };
-            _currentInput.Start();
-        }
-    }
-
-    private void SaveSettings()
-    {
-        _settings.BeatSensitivity = _engine.BeatSensitivity;
-        _settings.BeatCircles = _visualizerSettings.TextLayers?.Layers?.FirstOrDefault(l => l.LayerType == TextLayerType.BeatCircles)?.Enabled ?? true;
-        var oscLayer = _visualizerSettings.TextLayers?.Layers?.FirstOrDefault(l => l.LayerType == TextLayerType.Oscilloscope);
-        _settings.OscilloscopeGain = oscLayer?.GetCustom<OscilloscopeSettings>()?.Gain ?? 2.5;
-        _settingsRepo.SaveAppSettings(_settings);
-        _visualizerSettings.TextLayers ??= new TextLayersVisualizerSettings();
-        _visualizerSettingsRepo.SaveVisualizerSettings(_visualizerSettings);
+            SetModalOpen = setModalOpen,
+            ConsoleLock = consoleLock,
+            RefreshHeaderAndRedraw = () => _engine.RedrawWithFullHeader(),
+            SaveSettings = () => _settingsPersistence.Save(),
+            SaveVisualizerSettings = () => _visualizerSettingsRepo.SaveVisualizerSettings(_visualizerSettings),
+            GetDeviceName = () => _deviceController.CurrentDeviceName,
+            Engine = _engine,
+            HeaderDrawer = _headerDrawer,
+            OnModeSwitch = () => HandleModeSwitch(consoleLock),
+            OnPresetCycle = CycleToNextPreset,
+            SettingsModal = _settingsModal,
+            ShowEditModal = _showEditModal,
+            StopCapture = _deviceController.StopCapture,
+            StartCapture = _deviceController.StartCapture,
+            RestartCapture = _deviceController.RestartCapture,
+            DeviceSelectionModal = _deviceSelectionModal,
+            HelpModal = _helpModal,
+            GetApplicationMode = () => _visualizerSettings.ApplicationMode,
+            OnPaletteCycle = CyclePalette
+        };
     }
 
     private void HandleModeSwitch(object consoleLock)
@@ -316,7 +174,7 @@ internal sealed class ApplicationShell
         {
             _showEditModal.Show(consoleLock, () =>
             {
-                SaveSettings();
+                _settingsPersistence.Save();
                 _visualizerSettingsRepo.SaveVisualizerSettings(_visualizerSettings);
             });
             allShows = _showRepository.GetAll();
@@ -417,12 +275,15 @@ internal sealed class ApplicationShell
             var displayName = def.Name?.Trim();
             _renderer.SetPalette(palette, string.IsNullOrEmpty(displayName) ? next.Id : displayName);
         }
-        SaveSettings();
+        _settingsPersistence.Save();
         if (!_engine.FullScreen)
         {
-                                ConsoleHeader.DrawMain(_currentDeviceName, _titleBar, _deviceViewport, _nowPlayingViewport, _nowPlayingProvider.GetNowPlayingText(), _settings.UiSettings ?? new UiSettings(), _engine.CurrentBpm, _engine.BeatSensitivity, _engine.BeatFlashActive, _engine.Volume);
+            _engine.RedrawWithFullHeader();
         }
-        _engine.Redraw();
+        else
+        {
+            _engine.Redraw();
+        }
     }
 
     private void Shutdown()
@@ -431,14 +292,7 @@ internal sealed class ApplicationShell
         _headerRefreshCts?.Dispose();
         _headerRefreshCts = null;
 
-        IAudioInput? toDispose;
-        lock (_deviceLock)
-        {
-            toDispose = _currentInput;
-            _currentInput = null;
-        }
-        toDispose?.StopCapture();
-        toDispose?.Dispose();
+        _deviceController.Shutdown();
         System.Console.Clear();
         System.Console.CursorVisible = true;
         System.Console.WriteLine("Recording stopped.");

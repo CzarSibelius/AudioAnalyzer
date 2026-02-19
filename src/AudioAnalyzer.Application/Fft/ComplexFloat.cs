@@ -1,6 +1,7 @@
 namespace AudioAnalyzer.Application.Fft;
 
-internal struct ComplexFloat
+/// <summary>Complex number for FFT operations.</summary>
+public struct ComplexFloat
 {
     public float X;
     public float Y;

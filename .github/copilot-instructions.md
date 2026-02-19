@@ -36,6 +36,8 @@ After making code changes, check linter diagnostics for the modified files and f
 - **Viewport label hotkeys**: When a labeled viewport references a feature with a hotkey, show it in the label as "Label(K):" (e.g. "Preset(V):"). Use IScrollingTextViewport.FormatLabel or pass hotkey to RenderWithLabel (see ADR-0034 in docs/adr/).
 - **Settings migration**: Do not add migration logic for settings format changes; use backup (`{name}.{timestamp}.bak`) and reset per ADR-0029 in docs/adr/.
 - **Performance**: Console writes, polling, and timing must be performant; follow ADR-0030 in docs/adr/ when adding console I/O, key polling, or frame-rate logic.
+- **Dependency injection**: Prefer DI for new components (constructor injection, register in ServiceConfiguration). Deviate only when profiling shows it harms performance on hot paths; document rationale. See ADR-0040 in docs/adr/.
+- **God object refactoring**: When refactoring ApplicationShell, AnalysisEngine, or SettingsModal, follow ADR-0041 and the task list in docs/refactoring/god-object-plan.md; mark tasks `[x]` when implemented.
 
 ### User Control Requirements
 - **Every feature must be toggleable by the user in realtime** via keyboard shortcuts
