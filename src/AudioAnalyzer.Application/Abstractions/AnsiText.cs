@@ -19,13 +19,23 @@ public readonly struct AnsiText : IDisplayText
     public int GetVisibleLength() => AnsiConsole.GetVisibleLength(Value);
 
     /// <inheritdoc />
+    public int GetDisplayWidth() => AnsiConsole.GetDisplayWidth(Value);
+
+    /// <inheritdoc />
     public string PadToWidth(int width) => AnsiConsole.PadToVisibleWidth(Value, width);
+
+    /// <inheritdoc />
+    public string PadToDisplayWidth(int widthCols) => AnsiConsole.PadToDisplayWidth(Value, widthCols);
 
     /// <inheritdoc />
     public string GetVisibleSubstring(int startVisible, int widthVisible) =>
         AnsiConsole.GetVisibleSubstring(Value, startVisible, widthVisible);
 
-    /// <summary>Truncates to at most maxWidth visible characters and appends "…" when exceeding. Preserves ANSI codes.</summary>
+    /// <inheritdoc />
+    public string GetDisplaySubstring(int startCol, int widthCols) =>
+        AnsiConsole.GetDisplaySubstring(Value, startCol, widthCols);
+
+    /// <summary>Truncates to at most maxWidth display columns and appends "…" when exceeding. Preserves ANSI codes.</summary>
     public string TruncateWithEllipsis(int maxWidth)
     {
         if (string.IsNullOrEmpty(Value) || maxWidth <= 0)
@@ -33,8 +43,8 @@ public readonly struct AnsiText : IDisplayText
             return "";
         }
 
-        int visible = GetVisibleLength();
-        if (visible <= maxWidth)
+        int cols = GetDisplayWidth();
+        if (cols <= maxWidth)
         {
             return Value;
         }
@@ -44,10 +54,10 @@ public readonly struct AnsiText : IDisplayText
             return "…";
         }
 
-        return GetVisibleSubstring(0, maxWidth - 1) + "…";
+        return GetDisplaySubstring(0, maxWidth - 1) + "…";
     }
 
-    /// <summary>Truncates to at most maxWidth visible characters without ellipsis. Preserves ANSI codes.</summary>
+    /// <summary>Truncates to at most maxWidth display columns without ellipsis. Preserves ANSI codes.</summary>
     public string TruncateToWidth(int maxWidth)
     {
         if (string.IsNullOrEmpty(Value))
@@ -55,12 +65,12 @@ public readonly struct AnsiText : IDisplayText
             return "";
         }
 
-        int visible = GetVisibleLength();
-        if (visible <= maxWidth)
+        int cols = GetDisplayWidth();
+        if (cols <= maxWidth)
         {
             return Value;
         }
 
-        return GetVisibleSubstring(0, maxWidth);
+        return GetDisplaySubstring(0, maxWidth);
     }
 }

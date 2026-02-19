@@ -5,9 +5,28 @@ using Xunit;
 
 namespace AudioAnalyzer.Tests;
 
-/// <summary>Tests for ScrollingTextViewport grapheme-cluster handling (emoji, surrogate pairs).</summary>
+/// <summary>Tests for ScrollingTextViewport grapheme-cluster and display-width handling (emoji, surrogate pairs).</summary>
 public sealed class ScrollingTextViewportTests
 {
+    [Fact]
+    public void DisplayWidth_Emoji_CountsAsTwoColumns()
+    {
+        Assert.Equal(2, DisplayWidth.GetGraphemeWidth("🔊", 0));
+        Assert.Equal(2, DisplayWidth.GetGraphemeWidth("😀", 0));
+        Assert.Equal(6, DisplayWidth.GetDisplayWidth("😀1234"));
+        Assert.Equal(5, DisplayWidth.GetDisplayWidth("01234"));
+    }
+
+    [Fact]
+    public void DisplayWidth_SnapToGraphemeStart_NeverLandsMidEmoji()
+    {
+        // "😀12" = emoji cols 0-1, "1" col 2, "2" col 3
+        Assert.Equal(0, DisplayWidth.SnapToGraphemeStart("😀12", 0));
+        Assert.Equal(0, DisplayWidth.SnapToGraphemeStart("😀12", 1));
+        Assert.Equal(2, DisplayWidth.SnapToGraphemeStart("😀12", 2));
+        Assert.Equal(3, DisplayWidth.SnapToGraphemeStart("😀12", 3));
+    }
+
     private static IScrollingTextViewport CreateViewport()
     {
         var engine = new ScrollingTextEngine();
@@ -64,8 +83,8 @@ public sealed class ScrollingTextViewportTests
         _ = viewport.Render(text, width, 1.0);
         string result = viewport.Render(text, width, 1.0);
 
-        int visibleLen = new PlainText(result).GetVisibleLength();
-        Assert.Equal(width, visibleLen);
+        int displayWidth = AnsiConsole.GetDisplayWidth(result);
+        Assert.Equal(width, displayWidth);
     }
 
     [Fact]
@@ -85,8 +104,8 @@ public sealed class ScrollingTextViewportTests
         string resultNoEmoji = viewport2.Render(textWithoutEmojiFirst, width, 1.0);
         resultNoEmoji = viewport2.Render(textWithoutEmojiFirst, width, 1.0);
 
-        int lenEmoji = new PlainText(resultEmojiFirst).GetVisibleLength();
-        int lenNoEmoji = new PlainText(resultNoEmoji).GetVisibleLength();
+        int lenEmoji = AnsiConsole.GetDisplayWidth(resultEmojiFirst);
+        int lenNoEmoji = AnsiConsole.GetDisplayWidth(resultNoEmoji);
 
         Assert.Equal(width, lenEmoji);
         Assert.Equal(width, lenNoEmoji);
@@ -105,14 +124,14 @@ public sealed class ScrollingTextViewportTests
         _ = viewport.RenderWithLabel("Device", deviceName, totalWidth, 1.0, palette.Label, palette.Normal, "D");
         string result = viewport.RenderWithLabel("Device", deviceName, totalWidth, 1.0, palette.Label, palette.Normal, "D");
 
-        int visibleLen = AnsiConsole.GetVisibleLength(result);
-        Assert.Equal(totalWidth, visibleLen);
+        int displayWidth = AnsiConsole.GetDisplayWidth(result);
+        Assert.Equal(totalWidth, displayWidth);
     }
 
     [Fact]
     public void EmojiFirst_RenderWithLabel_AtScrollLeft_OutputHasConsistentWidth()
     {
-        int totalWidth = 30;
+        int totalWidth = 5;
         var palette = new UiPalette();
         var deviceWithEmojiFirst = new PlainText("😀Microphone Device Name");
         var deviceWithoutEmojiFirst = new PlainText("Microphone Device Name");
@@ -125,8 +144,8 @@ public sealed class ScrollingTextViewportTests
         _ = viewport2.RenderWithLabel("Device", deviceWithoutEmojiFirst, totalWidth, 1.0, palette.Label, palette.Normal, "D");
         string resultNoEmoji = viewport2.RenderWithLabel("Device", deviceWithoutEmojiFirst, totalWidth, 1.0, palette.Label, palette.Normal, "D");
 
-        int lenEmoji = AnsiConsole.GetVisibleLength(resultEmoji);
-        int lenNoEmoji = AnsiConsole.GetVisibleLength(resultNoEmoji);
+        int lenEmoji = AnsiConsole.GetDisplayWidth(resultEmoji);
+        int lenNoEmoji = AnsiConsole.GetDisplayWidth(resultNoEmoji);
 
         Assert.Equal(totalWidth, lenEmoji);
         Assert.Equal(totalWidth, lenNoEmoji);

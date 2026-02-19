@@ -29,6 +29,9 @@ public readonly struct PlainText : IDisplayText
     }
 
     /// <inheritdoc />
+    public int GetDisplayWidth() => DisplayWidth.GetDisplayWidth(Value);
+
+    /// <inheritdoc />
     public string PadToWidth(int width)
     {
         int visible = GetVisibleLength();
@@ -38,6 +41,17 @@ public readonly struct PlainText : IDisplayText
         }
 
         return Value + new string(' ', width - visible);
+    }
+
+    /// <inheritdoc />
+    public string PadToDisplayWidth(int widthCols)
+    {
+        int cols = GetDisplayWidth();
+        if (cols >= widthCols)
+        {
+            return Value;
+        }
+        return Value + new string(' ', widthCols - cols);
     }
 
     /// <inheritdoc />
@@ -68,7 +82,53 @@ public readonly struct PlainText : IDisplayText
         return pad <= 0 ? sub : sub + new string(' ', pad);
     }
 
-    /// <summary>Truncates to at most maxWidth visible characters and appends "…" when exceeding. For static text per ADR-0020.</summary>
+    /// <inheritdoc />
+    public string GetDisplaySubstring(int startCol, int widthCols)
+    {
+        if (widthCols <= 0)
+        {
+            return "";
+        }
+
+        if (string.IsNullOrEmpty(Value))
+        {
+            return new string(' ', widthCols);
+        }
+
+        var sb = new System.Text.StringBuilder();
+        int col = 0;
+        int outCol = 0;
+        int i = 0;
+
+        while (i < Value.Length && outCol < widthCols)
+        {
+            int w = DisplayWidth.GetGraphemeWidth(Value, i);
+            int elementLen = StringInfo.GetNextTextElementLength(Value.AsSpan(i));
+
+            if (col >= startCol)
+            {
+                if (outCol + w > widthCols)
+                {
+                    break;
+                }
+                sb.Append(Value, i, elementLen);
+                outCol += w;
+            }
+
+            col += w;
+            i += elementLen;
+        }
+
+        int pad = widthCols - outCol;
+        if (pad > 0)
+        {
+            sb.Append(' ', pad);
+        }
+
+        return sb.ToString();
+    }
+
+    /// <summary>Truncates to at most maxWidth display columns and appends "…" when exceeding. For static text per ADR-0020.</summary>
     public string TruncateWithEllipsis(int maxWidth)
     {
         if (string.IsNullOrEmpty(Value) || maxWidth <= 0)
@@ -76,8 +136,8 @@ public readonly struct PlainText : IDisplayText
             return "";
         }
 
-        int visible = GetVisibleLength();
-        if (visible <= maxWidth)
+        int cols = GetDisplayWidth();
+        if (cols <= maxWidth)
         {
             return Value;
         }
@@ -87,11 +147,10 @@ public readonly struct PlainText : IDisplayText
             return "…";
         }
 
-        var si = new StringInfo(Value);
-        return si.SubstringByTextElements(0, maxWidth - 1) + "…";
+        return GetDisplaySubstring(0, maxWidth - 1) + "…";
     }
 
-    /// <summary>Truncates to at most maxWidth visible characters without ellipsis.</summary>
+    /// <summary>Truncates to at most maxWidth display columns without ellipsis.</summary>
     public string TruncateToWidth(int maxWidth)
     {
         if (string.IsNullOrEmpty(Value))
@@ -99,12 +158,12 @@ public readonly struct PlainText : IDisplayText
             return "";
         }
 
-        int visible = GetVisibleLength();
-        if (visible <= maxWidth)
+        int cols = GetDisplayWidth();
+        if (cols <= maxWidth)
         {
             return Value;
         }
 
-        return new StringInfo(Value).SubstringByTextElements(0, maxWidth);
+        return GetDisplaySubstring(0, maxWidth);
     }
 }

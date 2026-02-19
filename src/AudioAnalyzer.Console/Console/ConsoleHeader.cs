@@ -83,9 +83,9 @@ internal static class ConsoleHeader
         double speed = ui.DefaultScrollingSpeed;
 
         var (line1, line2, line3) = titleBar.Render(width);
-        line1 = AnsiConsole.PadToVisibleWidth(StaticTextViewport.TruncateToWidth(new AnsiText(line1), width), width);
-        line2 = AnsiConsole.PadToVisibleWidth(StaticTextViewport.TruncateToWidth(new AnsiText(line2), width), width);
-        line3 = AnsiConsole.PadToVisibleWidth(StaticTextViewport.TruncateToWidth(new AnsiText(line3), width), width);
+        line1 = AnsiConsole.PadToDisplayWidth(StaticTextViewport.TruncateToWidth(new AnsiText(line1), width), width);
+        line2 = AnsiConsole.PadToDisplayWidth(StaticTextViewport.TruncateToWidth(new AnsiText(line2), width), width);
+        line3 = AnsiConsole.PadToDisplayWidth(StaticTextViewport.TruncateToWidth(new AnsiText(line3), width), width);
 
         // Line 4: Device and Now (two labeled scroll viewports; label+value colors handle separation)
         int leftCellWidth = (int)(width * 0.38);
@@ -95,14 +95,14 @@ internal static class ConsoleHeader
             ? nowPlayingViewport.RenderWithLabel("Now: ", new PlainText(nowPlayingText), rightCellWidth, speed, palette.Label, palette.Highlighted)
             : nowPlayingViewport.RenderWithLabel("Now: ", new PlainText(""), rightCellWidth, speed, palette.Label, palette.Normal);
         string line4 = deviceCell + nowCell;
-        int line4Visible = AnsiConsole.GetVisibleLength(line4);
-        if (line4Visible < width)
+        int line4DisplayWidth = AnsiConsole.GetDisplayWidth(line4);
+        if (line4DisplayWidth < width)
         {
-            line4 = AnsiConsole.PadToVisibleWidth(line4, width);
+            line4 = AnsiConsole.PadToDisplayWidth(line4, width);
         }
-        else if (line4Visible > width)
+        else if (line4DisplayWidth > width)
         {
-            line4 = AnsiConsole.GetVisibleSubstring(line4, 0, width);
+            line4 = AnsiConsole.GetDisplaySubstring(line4, 0, width);
         }
 
         // Line 5: BPM/Beat (left), Volume/db (right) on same line
@@ -119,7 +119,7 @@ internal static class ConsoleHeader
             {
                 bpmBeatValue += " *BEAT*";
             }
-            bpmCell = AnsiConsole.PadToVisibleWidth(StaticTextViewport.TruncateWithEllipsis(new AnsiText(bpmBeatValue), bpmCellWidth), bpmCellWidth);
+            bpmCell = AnsiConsole.PadToDisplayWidth(StaticTextViewport.TruncateWithEllipsis(new AnsiText(bpmBeatValue), bpmCellWidth), bpmCellWidth);
         }
         else
         {
@@ -131,7 +131,7 @@ internal static class ConsoleHeader
         {
             double db = 20 * Math.Log10(Math.Max(volume, 0.00001));
             string volDbValue = $"{AnsiConsole.ColorCode(palette.Label)}Volume/dB: {AnsiConsole.ResetCode}{AnsiConsole.ColorCode(palette.Normal)}{volume * 100,5:F1}% {db,6:F1}dB{AnsiConsole.ResetCode}";
-            volCell = AnsiConsole.PadToVisibleWidth(StaticTextViewport.TruncateWithEllipsis(new AnsiText(volDbValue), volCellWidth), volCellWidth);
+            volCell = AnsiConsole.PadToDisplayWidth(StaticTextViewport.TruncateWithEllipsis(new AnsiText(volDbValue), volCellWidth), volCellWidth);
         }
         else
         {
@@ -139,14 +139,14 @@ internal static class ConsoleHeader
         }
 
         string line5 = bpmCell + volCell;
-        int line5Visible = AnsiConsole.GetVisibleLength(line5);
-        if (line5Visible < width)
+        int line5DisplayWidth = AnsiConsole.GetDisplayWidth(line5);
+        if (line5DisplayWidth < width)
         {
-            line5 = AnsiConsole.PadToVisibleWidth(line5, width);
+            line5 = AnsiConsole.PadToDisplayWidth(line5, width);
         }
-        else if (line5Visible > width)
+        else if (line5DisplayWidth > width)
         {
-            line5 = AnsiConsole.GetVisibleSubstring(line5, 0, width);
+            line5 = AnsiConsole.GetDisplaySubstring(line5, 0, width);
         }
 
         // Line 6: Help (Dimmed per ADR-0033)

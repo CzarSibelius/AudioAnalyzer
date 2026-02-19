@@ -28,10 +28,10 @@ internal sealed class TitleBarRenderer : ITitleBarRenderer
 
         string breadcrumb = BuildBreadcrumb(palette);
         string truncated = StaticTextViewport.TruncateWithEllipsis(new AnsiText(breadcrumb), width - 2);
-        int visibleLen = AnsiConsole.GetVisibleLength(truncated);
+        int displayWidth = AnsiConsole.GetDisplayWidth(truncated);
         int contentWidth = width - 2;
-        int leftPadding = Math.Max(0, (contentWidth - visibleLen) / 2);
-        int rightPadding = contentWidth - visibleLen - leftPadding;
+        int leftPadding = Math.Max(0, (contentWidth - displayWidth) / 2);
+        int rightPadding = contentWidth - displayWidth - leftPadding;
 
         string line1 = AnsiConsole.ColorCode(palette.Frame) + "╔" + new string('═', width - 2) + "╗" + AnsiConsole.ResetCode;
         string line2 = AnsiConsole.ColorCode(palette.Frame) + "║" + AnsiConsole.ResetCode +

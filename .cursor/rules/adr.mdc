@@ -48,3 +48,7 @@ alwaysApply: true
 21. **Title bar**: The header title bar is an injectable component (ITitleBarRenderer) that renders `{appName}/{mode}/{preset}/{layer}` in a cyberpunk style. UiSettings has TitleBarAppName and TitleBarPalette for customization. See [ADR-0036](docs/adr/0036-title-bar-injectable-component.md).
 
 22. **Scrolling viewport**: Scrolling text (ping-pong) is an injectable service. IScrollingTextEngine (data) advances scroll state; IScrollingTextViewport (render) holds state, applies label/ANSI. Use IScrollingTextViewportFactory.CreateViewport() for each scroll region. Viewport auto-resets when content changes. See [ADR-0037](docs/adr/0037-scrolling-text-viewport-injectable-service.md).
+
+23. **Header refresh timer**: Header (device, now-playing, BPM, volume) is refreshed by a 50ms PeriodicTimer independent of audio. Scrolling text in the header animates even when no audio is playing (e.g. WASAPI loopback). Use AnalysisEngine.RefreshHeaderIfNeeded() for header-only updates. See [ADR-0038](docs/adr/0038-header-refresh-independent-of-audio.md).
+
+24. **Display width**: Use display width (terminal columns) for fitting text to viewport. Wide characters (emoji, CJK, fullwidth) occupy 2 columns. Use GetDisplayWidth, GetDisplaySubstring, PadToDisplayWidth, and DisplayWidth utility for column-based measurements. TruncateToWidth and TruncateWithEllipsis use display width. See [ADR-0039](docs/adr/0039-display-width-terminal-columns.md).

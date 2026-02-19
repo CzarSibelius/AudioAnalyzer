@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using AudioAnalyzer.Application;
 using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Domain;
@@ -6,6 +7,7 @@ using AudioAnalyzer.Visualizers;
 namespace AudioAnalyzer.Console;
 
 /// <summary>Main application shell: orchestrates engine, renderer, header, modals, key handling, and device capture lifecycle.</summary>
+[SuppressMessage("Reliability", "CA1001:Types that own disposable fields should be disposable", Justification = "Single Run/Shutdown lifecycle; _headerRefreshCts explicitly disposed in Shutdown().")]
 internal sealed class ApplicationShell
 {
     private readonly IAudioDeviceInfo _deviceInfo;
@@ -31,6 +33,7 @@ internal sealed class ApplicationShell
     private IAudioInput? _currentInput;
     private string _currentDeviceName = "";
     private readonly object _deviceLock = new();
+    private CancellationTokenSource? _headerRefreshCts;
 
     public ApplicationShell(
         IAudioDeviceInfo deviceInfo,
@@ -91,6 +94,30 @@ internal sealed class ApplicationShell
             6);
         _engine.SetRenderGuard(() => !modalOpen);
         _engine.SetConsoleLock(consoleLock);
+
+        _headerRefreshCts = new CancellationTokenSource();
+        _ = Task.Run(async () =>
+        {
+            using var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(50));
+            try
+            {
+                while (await timer.WaitForNextTickAsync(_headerRefreshCts.Token).ConfigureAwait(false))
+                {
+                    try
+                    {
+                        _engine.RefreshHeaderIfNeeded();
+                    }
+                    catch (Exception ex)
+                    {
+                        _ = ex; /* Header refresh failed: swallow to avoid background task crash */
+                    }
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                // Expected when shutting down
+            }
+        });
 
         StartCapture(initialDeviceId, initialDeviceName);
         ConsoleHeader.DrawMain(_currentDeviceName, _titleBar, _deviceViewport, _nowPlayingViewport, _nowPlayingProvider.GetNowPlayingText(), ui, _engine.CurrentBpm, _engine.BeatSensitivity, _engine.BeatFlashActive, _engine.Volume);
@@ -400,6 +427,10 @@ internal sealed class ApplicationShell
 
     private void Shutdown()
     {
+        _headerRefreshCts?.Cancel();
+        _headerRefreshCts?.Dispose();
+        _headerRefreshCts = null;
+
         IAudioInput? toDispose;
         lock (_deviceLock)
         {

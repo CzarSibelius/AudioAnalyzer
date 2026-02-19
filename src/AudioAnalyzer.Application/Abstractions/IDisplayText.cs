@@ -12,14 +12,26 @@ public interface IDisplayText
     /// <summary>Returns the number of visible (printed) characters, excluding any ANSI escape sequences.</summary>
     int GetVisibleLength();
 
+    /// <summary>Returns the display width in terminal columns. Wide characters (emoji, CJK) count as 2.</summary>
+    int GetDisplayWidth();
+
     /// <summary>Pads the text so its visible length equals <paramref name="width"/>. Preserves embedded ANSI codes when present.</summary>
     string PadToWidth(int width);
+
+    /// <summary>Pads the text so its display width equals <paramref name="widthCols"/>. Preserves embedded ANSI codes when present.</summary>
+    string PadToDisplayWidth(int widthCols);
 
     /// <summary>
     /// Returns the substring that displays exactly the visible characters in range [startVisible, startVisible + widthVisible).
     /// Preserves ANSI escape sequences when present; never cuts through an escape sequence.
     /// </summary>
     string GetVisibleSubstring(int startVisible, int widthVisible);
+
+    /// <summary>
+    /// Returns the substring that fits in <paramref name="widthCols"/> display columns starting at <paramref name="startCol"/>.
+    /// Preserves ANSI escape sequences when present; never cuts through an escape sequence or grapheme cluster.
+    /// </summary>
+    string GetDisplaySubstring(int startCol, int widthCols);
 
     /// <summary>Truncates to at most maxWidth visible characters without ellipsis.</summary>
     string TruncateToWidth(int maxWidth);

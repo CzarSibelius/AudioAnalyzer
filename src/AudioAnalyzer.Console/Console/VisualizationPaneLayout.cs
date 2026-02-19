@@ -149,17 +149,17 @@ public sealed class VisualizationPaneLayout : IVisualizationRenderer
         string suffixCell = GetSuffixCell(snapshot, cell1Width);
         string paletteCell = GetPaletteCell(snapshot, labelColor, palette.Normal, cell2Width);
         string helpCell = AnsiConsole.ColorCode(dimmedColor) + "H=Help" + AnsiConsole.ResetCode;
-        helpCell = AnsiConsole.PadToVisibleWidth(helpCell, cell3Width);
+        helpCell = AnsiConsole.PadToDisplayWidth(helpCell, cell3Width);
 
         string line = suffixCell + paletteCell + helpCell;
-        int visible = AnsiConsole.GetVisibleLength(line);
-        if (visible < w)
+        int displayWidth = AnsiConsole.GetDisplayWidth(line);
+        if (displayWidth < w)
         {
-            line = AnsiConsole.PadToVisibleWidth(line, w);
+            line = AnsiConsole.PadToDisplayWidth(line, w);
         }
-        else if (visible > w)
+        else if (displayWidth > w)
         {
-            line = AnsiConsole.GetVisibleSubstring(line, 0, w);
+            line = AnsiConsole.GetDisplaySubstring(line, 0, w);
         }
 
         try
@@ -177,7 +177,7 @@ public sealed class VisualizationPaneLayout : IVisualizationRenderer
         {
             return new string(' ', width);
         }
-        string cell = AnsiConsole.PadToVisibleWidth(
+        string cell = AnsiConsole.PadToDisplayWidth(
             StaticTextViewport.TruncateWithEllipsis(new AnsiText(suffix), width), width);
         return cell;
     }
@@ -190,7 +190,7 @@ public sealed class VisualizationPaneLayout : IVisualizationRenderer
         }
         string label = _labelViewport.FormatLabel("Palette", "P");
         string value = $"{AnsiConsole.ColorCode(labelColor)}{label}{AnsiConsole.ResetCode}{AnsiConsole.ColorCode(normalColor)}{snapshot.CurrentPaletteName}{AnsiConsole.ResetCode}";
-        string cell = AnsiConsole.PadToVisibleWidth(
+        string cell = AnsiConsole.PadToDisplayWidth(
             StaticTextViewport.TruncateWithEllipsis(new AnsiText(value), width), width);
         return cell;
     }
