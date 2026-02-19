@@ -8,7 +8,7 @@ Data flowed through the render pipeline via `AnalysisSnapshot` even when it orig
 
 ## Decision
 
-1. **Layers with service dependencies receive them via constructor injection**. Example: NowPlayingLayer receives `INowPlayingProvider` and calls `GetNowPlayingText()` in Draw; it no longer reads from the snapshot.
+1. **Layers with service dependencies receive them via constructor injection**. Example: NowPlayingLayer receives `INowPlayingProvider` and calls `GetNowPlaying()` in Draw; it no longer reads from the snapshot.
 
 2. **AnalysisSnapshot does not carry service-derived data**. The snapshot remains frame context: engine output (FFT, waveform, volume, beats, layout) and optional display glue set by the renderer (e.g. `CurrentPaletteName` for toolbar). Data from long-lived services (INowPlayingProvider, future lyrics API, etc.) is not passed through the snapshot.
 

@@ -9,7 +9,7 @@ namespace AudioAnalyzer.Platform.Windows.NowPlaying;
 public sealed class WindowsNowPlayingProvider : INowPlayingProvider, IDisposable
 {
     private readonly object _lock = new();
-    private string? _cachedText;
+    private NowPlayingInfo? _cachedInfo;
     private CancellationTokenSource? _cts;
     private Task? _pollTask;
     private GlobalSystemMediaTransportControlsSessionManager? _manager;
@@ -23,11 +23,11 @@ public sealed class WindowsNowPlayingProvider : INowPlayingProvider, IDisposable
     }
 
     /// <inheritdoc />
-    public string? GetNowPlayingText()
+    public NowPlayingInfo? GetNowPlaying()
     {
         lock (_lock)
         {
-            return _cachedText;
+            return _cachedInfo;
         }
     }
 
@@ -137,8 +137,8 @@ public sealed class WindowsNowPlayingProvider : INowPlayingProvider, IDisposable
         try
         {
             var props = await session.TryGetMediaPropertiesAsync().AsTask(ct);
-            string? text = FormatProperties(props);
-            UpdateCache(text);
+            NowPlayingInfo? info = FromMediaProperties(props);
+            UpdateCache(info);
         }
         catch (OperationCanceledException)
         {
@@ -151,34 +151,22 @@ public sealed class WindowsNowPlayingProvider : INowPlayingProvider, IDisposable
         }
     }
 
-    private static string? FormatProperties(GlobalSystemMediaTransportControlsSessionMediaProperties? props)
+    private static NowPlayingInfo? FromMediaProperties(GlobalSystemMediaTransportControlsSessionMediaProperties? props)
     {
         if (props == null)
         {
             return null;
         }
 
-        string? title = props.Title?.Trim();
-        string? artist = props.Artist?.Trim();
-
-        if (string.IsNullOrEmpty(title))
-        {
-            return string.IsNullOrEmpty(artist) ? null : artist;
-        }
-
-        if (string.IsNullOrEmpty(artist))
-        {
-            return title;
-        }
-
-        return $"{artist} - {title}";
+        // GSMTC MediaProperties has Title and Artist; Album is not available on this API.
+        return new NowPlayingInfo(props.Title?.Trim(), props.Artist?.Trim(), Album: null);
     }
 
-    private void UpdateCache(string? text)
+    private void UpdateCache(NowPlayingInfo? info)
     {
         lock (_lock)
         {
-            _cachedText = text;
+            _cachedInfo = info;
         }
     }
 

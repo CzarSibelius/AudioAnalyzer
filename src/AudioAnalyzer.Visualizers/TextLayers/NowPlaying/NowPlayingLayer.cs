@@ -22,7 +22,7 @@ public sealed class NowPlayingLayer : ITextLayerRenderer
     {
         int w = ctx.Width;
         int h = ctx.Height;
-        string? nowPlaying = _nowPlayingProvider.GetNowPlayingText()?.Trim();
+        string? nowPlaying = _nowPlayingProvider.GetNowPlaying()?.ToDisplayString()?.Trim();
         var snippets = layer.TextSnippets?.Where(s => !string.IsNullOrEmpty(s)).ToList() ?? new List<string>();
         string text = !string.IsNullOrEmpty(nowPlaying)
             ? nowPlaying

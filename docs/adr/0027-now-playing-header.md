@@ -10,7 +10,7 @@ The app is Windows-only for audio capture (NAudio, WASAPI); a Windows-only now-p
 
 ## Decision
 
-1. **Interface**: Add `INowPlayingProvider` in Application.Abstractions with `string? GetNowPlayingText()` returning formatted text (e.g. "Artist - Title") or null when no session exists.
+1. **Interface**: Add `INowPlayingProvider` in Application.Abstractions with `NowPlayingInfo? GetNowPlaying()` returning structured info (Title, Artist, Album) or null when no session exists. Callers choose what to display (e.g. `NowPlayingInfo.ToDisplayString()` for "Artist - Title").
 
 2. **Platform implementations**:
    - **Windows**: `WindowsNowPlayingProvider` in `AudioAnalyzer.Platform.Windows` (targeting `net10.0-windows10.0.19041.0`) uses GSMTC: `GlobalSystemMediaTransportControlsSessionManager`, `TryGetMediaPropertiesAsync` for Title/Artist, background polling and event subscriptions for updates.

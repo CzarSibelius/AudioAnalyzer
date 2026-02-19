@@ -6,5 +6,5 @@ namespace AudioAnalyzer.Infrastructure.NowPlaying;
 public sealed class NullNowPlayingProvider : INowPlayingProvider
 {
     /// <inheritdoc />
-    public string? GetNowPlayingText() => null;
+    public NowPlayingInfo? GetNowPlaying() => null;
 }
