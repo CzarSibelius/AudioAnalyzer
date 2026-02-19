@@ -92,8 +92,8 @@ internal static class ConsoleHeader
         int rightCellWidth = width - leftCellWidth;
         string deviceCell = deviceViewport.RenderWithLabel("Device", new PlainText(deviceName ?? ""), leftCellWidth, speed, palette.Label, palette.Normal, hotkey: "D");
         string nowCell = !string.IsNullOrEmpty(nowPlayingText)
-            ? nowPlayingViewport.RenderWithLabel("Now: ", new PlainText(nowPlayingText), rightCellWidth, speed, palette.Label, palette.Highlighted)
-            : nowPlayingViewport.RenderWithLabel("Now: ", new PlainText(""), rightCellWidth, speed, palette.Label, palette.Normal);
+            ? nowPlayingViewport.RenderWithLabel("Now:", new PlainText(nowPlayingText), rightCellWidth, speed, palette.Label, palette.Highlighted)
+            : nowPlayingViewport.RenderWithLabel("Now:", new PlainText(""), rightCellWidth, speed, palette.Label, palette.Normal);
         string line4 = deviceCell + nowCell;
         int line4DisplayWidth = AnsiConsole.GetDisplayWidth(line4);
         if (line4DisplayWidth < width)
@@ -113,8 +113,8 @@ internal static class ConsoleHeader
         if (currentBpm >= 0)
         {
             string bpmBeatValue = currentBpm > 0
-                ? $"{AnsiConsole.ColorCode(palette.Label)}BPM: {AnsiConsole.ResetCode}{AnsiConsole.ColorCode(palette.Normal)}{currentBpm,4:F0}{AnsiConsole.ResetCode}  {AnsiConsole.ColorCode(palette.Label)}Beat: {AnsiConsole.ResetCode}{AnsiConsole.ColorCode(palette.Normal)}{beatSensitivity,4:F1} (+/-){AnsiConsole.ResetCode}"
-                : $"{AnsiConsole.ColorCode(palette.Label)}Beat: {AnsiConsole.ResetCode}{AnsiConsole.ColorCode(palette.Normal)}{beatSensitivity,4:F1} (+/-){AnsiConsole.ResetCode}";
+                ? $"{AnsiConsole.ColorCode(palette.Label)}BPM:{AnsiConsole.ResetCode}{AnsiConsole.ColorCode(palette.Normal)}{currentBpm,4:F0}{AnsiConsole.ResetCode}  {AnsiConsole.ColorCode(palette.Label)}Beat:{AnsiConsole.ResetCode}{AnsiConsole.ColorCode(palette.Normal)}{beatSensitivity,4:F1} (+/-){AnsiConsole.ResetCode}"
+                : $"{AnsiConsole.ColorCode(palette.Label)}Beat:{AnsiConsole.ResetCode}{AnsiConsole.ColorCode(palette.Normal)}{beatSensitivity,4:F1} (+/-){AnsiConsole.ResetCode}";
             if (beatFlashActive)
             {
                 bpmBeatValue += " *BEAT*";
@@ -130,7 +130,7 @@ internal static class ConsoleHeader
         if (volume >= 0)
         {
             double db = 20 * Math.Log10(Math.Max(volume, 0.00001));
-            string volDbValue = $"{AnsiConsole.ColorCode(palette.Label)}Volume/dB: {AnsiConsole.ResetCode}{AnsiConsole.ColorCode(palette.Normal)}{volume * 100,5:F1}% {db,6:F1}dB{AnsiConsole.ResetCode}";
+            string volDbValue = $"{AnsiConsole.ColorCode(palette.Label)}Volume/dB:{AnsiConsole.ResetCode}{AnsiConsole.ColorCode(palette.Normal)}{volume * 100,5:F1}% {db,6:F1}dB{AnsiConsole.ResetCode}";
             volCell = AnsiConsole.PadToDisplayWidth(StaticTextViewport.TruncateWithEllipsis(new AnsiText(volDbValue), volCellWidth), volCellWidth);
         }
         else

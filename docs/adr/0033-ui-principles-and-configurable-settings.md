@@ -22,7 +22,7 @@ UI components (header, toolbar, modals, layer numbers) use hardcoded colors, tit
 4. **No separators between viewports**: Do not add separators (e.g. ` | ` or ` │ `) between UI viewports. The "label + value" styling with correct UI palette colors (Label, Normal, Highlighted, Dimmed) provides sufficient visual separation.
 
 5. **Component behavior**:
-   - `ScrollingTextViewport.RenderWithLabel`: label uses Label color, dynamic text uses Normal color when palette is provided. When a label references a feature with a hotkey, include it in the label as "Label (K):" (e.g. "Preset (V):") — see [ADR-0034](0034-viewport-label-hotkey-hints.md).
+   - `ScrollingTextViewport.RenderWithLabel`: label uses Label color, dynamic text uses Normal color when palette is provided. When a label references a feature with a hotkey, include it in the label as "Label(K):" (e.g. "Preset(V):") — see [ADR-0034](0034-viewport-label-hotkey-hints.md).
    - Layer numbers (1–9) in toolbar use Highlighted (active), Dimmed (disabled), Normal (inactive).
    - Default scrolling speed for all scrolling components comes from UI settings.
 

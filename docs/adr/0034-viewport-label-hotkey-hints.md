@@ -8,10 +8,10 @@ Labeled UI regions (header cells, toolbar cells) display "label: value" but do n
 
 ## Decision
 
-1. **Format**: When a viewport label references a feature with a hotkey, include the hotkey in the label as **"Label (K):"** (e.g. "Preset (V):", "Device (D):"). When there is no hotkey, use **"Label:"**.
+1. **Format**: When a viewport label references a feature with a hotkey, include the hotkey in the label as **"Label(K):"** (e.g. "Preset(V):", "Device(D):"). When there is no hotkey, use **"Label:"**.
 
 2. **Optional hotkey on APIs**: Labeled viewports and the components that render them accept an optional hotkey parameter:
-   - `ScrollingTextViewport.FormatLabel(string label, string? hotkey)` — formats as "Label (K): " when hotkey is provided, else "Label: ".
+   - `ScrollingTextViewport.FormatLabel(string label, string? hotkey)` — formats as "Label(K):" when hotkey is provided, else "Label:".
    - `ScrollingTextViewport.RenderWithLabel` gains optional `string? hotkey` parameter; when provided, formats label via `FormatLabel` before rendering.
 
 3. **Manual builders**: When building label strings manually (e.g. toolbar cells in VisualizationPaneLayout), use `FormatLabel` so hotkeys appear in the label rather than after the value.

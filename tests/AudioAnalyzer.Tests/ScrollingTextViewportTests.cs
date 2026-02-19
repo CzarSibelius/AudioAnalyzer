@@ -156,16 +156,16 @@ public sealed class ScrollingTextViewportTests
     public void FormatLabel_WithHotkey_ReturnsLabelWithHotkeyInParens()
     {
         var viewport = CreateViewport();
-        Assert.Equal("Preset (V): ", viewport.FormatLabel("Preset", "V"));
-        Assert.Equal("Device (D): ", viewport.FormatLabel("Device", "D"));
-        Assert.Equal("Mode (Tab): ", viewport.FormatLabel("Mode", "Tab"));
+        Assert.Equal("Preset(V):", viewport.FormatLabel("Preset", "V"));
+        Assert.Equal("Device(D):", viewport.FormatLabel("Device", "D"));
+        Assert.Equal("Mode(Tab):", viewport.FormatLabel("Mode", "Tab"));
     }
 
     [Fact]
     public void FormatLabel_WithoutHotkey_ReturnsLabelWithColonOnly()
     {
         var viewport = CreateViewport();
-        Assert.Equal("Now: ", viewport.FormatLabel("Now", null));
-        Assert.Equal("Device: ", viewport.FormatLabel("Device", ""));
+        Assert.Equal("Now:", viewport.FormatLabel("Now", null));
+        Assert.Equal("Device:", viewport.FormatLabel("Device", ""));
     }
 }

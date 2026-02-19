@@ -23,9 +23,9 @@ public sealed class ScrollingTextViewport : IScrollingTextViewport
         var baseLabel = label ?? "";
         if (string.IsNullOrWhiteSpace(hotkey))
         {
-            return string.IsNullOrEmpty(baseLabel) ? "" : baseLabel + ": ";
+            return string.IsNullOrEmpty(baseLabel) ? "" : baseLabel + ":";
         }
-        return string.IsNullOrEmpty(baseLabel) ? "" : baseLabel + " (" + hotkey + "): ";
+        return string.IsNullOrEmpty(baseLabel) ? "" : baseLabel + "(" + hotkey + "):";
     }
 
     /// <inheritdoc />

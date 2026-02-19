@@ -179,7 +179,7 @@ public sealed class TextLayersVisualizer : IVisualizer
         if (config?.Layers is not { Count: > 0 })
         {
             var emptyPalette = _uiSettings.Palette ?? new UiPalette();
-            return AnsiConsole.ColorCode(emptyPalette.Label) + "Layers: " + AnsiConsole.ResetCode + AnsiConsole.ColorCode(emptyPalette.Dimmed) + "(config in settings, S: settings)" + AnsiConsole.ResetCode;
+            return AnsiConsole.ColorCode(emptyPalette.Label) + "Layers:" + AnsiConsole.ResetCode + AnsiConsole.ColorCode(emptyPalette.Dimmed) + "(config in settings, S: settings)" + AnsiConsole.ResetCode;
         }
         var sortedLayers = config.Layers.OrderBy(l => l.ZOrder).ToList();
         int idx = Math.Clamp(_paletteCycleLayerIndex, 0, sortedLayers.Count - 1);
@@ -194,7 +194,7 @@ public sealed class TextLayersVisualizer : IVisualizer
 
         var palette = _uiSettings.Palette ?? new UiPalette();
         var sb = new StringBuilder();
-        AnsiConsole.AppendColored(sb, "Layers: ", palette.Label);
+        AnsiConsole.AppendColored(sb, "Layers:", palette.Label);
         for (int i = 0; i < 9; i++)
         {
             char digit = (char)('1' + i);
@@ -229,13 +229,13 @@ public sealed class TextLayersVisualizer : IVisualizer
         if (layer.LayerType == TextLayerType.Oscilloscope)
         {
             var osc = layer.GetCustom<OscilloscopeSettings>() ?? new OscilloscopeSettings();
-            sb.Append(" | Gain: ");
+            sb.Append(" | Gain:");
             sb.Append(osc.Gain.ToString("F1", System.Globalization.CultureInfo.InvariantCulture));
             sb.Append(" ([ ])");
         }
-        sb.Append(" | Palette (L");
+        sb.Append(" | Palette(L");
         sb.Append(idx + 1);
-        sb.Append("): ");
+        sb.Append("):");
         sb.Append(paletteName);
         sb.Append(" (P)");
         return sb.ToString();

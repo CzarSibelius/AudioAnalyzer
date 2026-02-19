@@ -41,7 +41,7 @@ alwaysApply: true
 
 18. **UI settings and palette**: Use existing components (e.g. IScrollingTextViewport) when possible. UI has configurable settings in appsettings: Title, TitleBarAppName, TitleBarPalette, UiSettings.Palette (Normal, Highlighted, Dimmed, Label, optional Background), DefaultScrollingSpeed. IScrollingTextViewport.RenderWithLabel uses label/text colors when provided. Layer numbers use UI palette. Do not add separators between UI viewports; label+value colors provide separation. See [ADR-0033](docs/adr/0033-ui-principles-and-configurable-settings.md), [ADR-0036](docs/adr/0036-title-bar-injectable-component.md).
 
-19. **Viewport label hotkeys**: When a labeled viewport references a feature with a hotkey, show it in the label as "Label (K):" (e.g. "Preset (V):"). Use IScrollingTextViewport.FormatLabel or pass hotkey to RenderWithLabel. See [ADR-0034](docs/adr/0034-viewport-label-hotkey-hints.md).
+19. **Viewport label hotkeys**: When a labeled viewport references a feature with a hotkey, show it in the label as "Label(K):" (e.g. "Preset(V):"). Use IScrollingTextViewport.FormatLabel or pass hotkey to RenderWithLabel. See [ADR-0034](docs/adr/0034-viewport-label-hotkey-hints.md).
 
 20. **Modal dependency injection**: Modals (device selection, help, settings, show edit) are injectable services. Define an interface, implement with constructor-injected dependencies, register in ServiceConfiguration, inject into consumers. Show methods accept only runtime parameters (e.g. consoleLock, saveSettings). See [ADR-0035](docs/adr/0035-modal-dependency-injection.md).
 
