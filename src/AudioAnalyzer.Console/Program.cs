@@ -18,7 +18,7 @@ var devices = deviceInfo.GetDevices();
 var (initialDeviceId, initialName) = DeviceResolver.TryResolveFromSettings(devices, settings);
 if (initialName == "")
 {
-    (initialDeviceId, initialName) = DeviceSelectionModal.Show(deviceInfo, settingsRepo, settings, null, _ => { }, settings.UiSettings);
+    (initialDeviceId, initialName) = provider.GetRequiredService<IDeviceSelectionModal>().Show(null, _ => { });
 }
 
 if (initialName == "")
@@ -27,20 +27,8 @@ if (initialName == "")
     return;
 }
 
+var shell = provider.GetRequiredService<ApplicationShell>();
 var engine = provider.GetRequiredService<AnalysisEngine>();
 engine.BeatSensitivity = settings.BeatSensitivity;
-
-var shell = new ApplicationShell(
-    deviceInfo,
-    settingsRepo,
-    provider.GetRequiredService<IVisualizerSettingsRepository>(),
-    settings,
-    visualizerSettings,
-    provider.GetRequiredService<IPresetRepository>(),
-    provider.GetRequiredService<IShowRepository>(),
-    provider.GetRequiredService<IPaletteRepository>(),
-    engine,
-    provider.GetRequiredService<IVisualizationRenderer>(),
-    provider.GetRequiredService<INowPlayingProvider>());
 
 shell.Run(initialDeviceId, initialName);

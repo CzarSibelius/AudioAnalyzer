@@ -5,32 +5,44 @@ using AudioAnalyzer.Domain;
 namespace AudioAnalyzer.Console;
 
 /// <summary>Show edit overlay modal. Edit Show entries: add/remove/reorder presets, set duration. Per ADR-0031.</summary>
-internal static class ShowEditModal
+internal sealed class ShowEditModal : IShowEditModal
 {
     private const int OverlayRowCount = 16;
     private const int LeftColWidth = 32;
 
-    /// <summary>Shows the Show edit overlay modal. Blocks until user closes with ESC.</summary>
-    /// <param name="uiSettings">Optional UI settings for palette colors per ADR-0033.</param>
-    public static void Show(
+    private readonly AnalysisEngine _analysisEngine;
+    private readonly VisualizerSettings _visualizerSettings;
+    private readonly IShowRepository _showRepo;
+    private readonly IPresetRepository _presetRepo;
+    private readonly UiSettings _uiSettings;
+
+    public ShowEditModal(
         AnalysisEngine analysisEngine,
         VisualizerSettings visualizerSettings,
         IShowRepository showRepo,
         IPresetRepository presetRepo,
-        object consoleLock,
-        Action saveVisualizerSettings,
-        UiSettings? uiSettings = null)
+        UiSettings uiSettings)
     {
-        var allShows = showRepo.GetAll();
-        var allPresets = presetRepo.GetAll();
+        _analysisEngine = analysisEngine ?? throw new ArgumentNullException(nameof(analysisEngine));
+        _visualizerSettings = visualizerSettings ?? throw new ArgumentNullException(nameof(visualizerSettings));
+        _showRepo = showRepo ?? throw new ArgumentNullException(nameof(showRepo));
+        _presetRepo = presetRepo ?? throw new ArgumentNullException(nameof(presetRepo));
+        _uiSettings = uiSettings ?? throw new ArgumentNullException(nameof(uiSettings));
+    }
 
-        var currentShowId = visualizerSettings.ActiveShowId;
+    /// <inheritdoc />
+    public void Show(object consoleLock, Action saveVisualizerSettings)
+    {
+        var allShows = _showRepo.GetAll();
+        var allPresets = _presetRepo.GetAll();
+
+        var currentShowId = _visualizerSettings.ActiveShowId;
         if (string.IsNullOrWhiteSpace(currentShowId) && allShows.Count > 0)
         {
             currentShowId = allShows[0].Id;
-            visualizerSettings.ActiveShowId = currentShowId;
-            var show = showRepo.GetById(currentShowId);
-            visualizerSettings.ActiveShowName = show?.Name?.Trim();
+            _visualizerSettings.ActiveShowId = currentShowId;
+            var show = _showRepo.GetById(currentShowId);
+            _visualizerSettings.ActiveShowName = show?.Name?.Trim();
         }
 
         bool renaming = false;
@@ -41,7 +53,7 @@ internal static class ShowEditModal
         int width = ConsoleHeader.GetConsoleWidth();
         int rightColWidth = Math.Max(10, width - LeftColWidth - 1);
 
-        var palette = (uiSettings ?? new UiSettings()).Palette ?? new UiPalette();
+        var palette = (_uiSettings ?? new UiSettings()).Palette ?? new UiPalette();
         var selBg = palette.Background ?? PaletteColor.FromConsoleColor(ConsoleColor.DarkBlue);
         var selFg = palette.Highlighted;
 
@@ -54,7 +66,7 @@ internal static class ShowEditModal
 
             try
             {
-                var show = string.IsNullOrWhiteSpace(currentShowId) ? null : showRepo.GetById(currentShowId);
+                var show = string.IsNullOrWhiteSpace(currentShowId) ? null : _showRepo.GetById(currentShowId);
                 var showName = show?.Name?.Trim() ?? "Show 1";
                 var title = renaming
                     ? $" New show name (Enter confirm, Esc cancel): {renameBuffer}_ "
@@ -91,7 +103,7 @@ internal static class ShowEditModal
                     if (i < entries.Count)
                     {
                         var entry = entries[i];
-                        var preset = presetRepo.GetById(entry.PresetId);
+                        var preset = _presetRepo.GetById(entry.PresetId);
                         var presetName = preset?.Name?.Trim() ?? entry.PresetId;
                         var dur = entry.Duration ?? new DurationConfig();
                         var durStr = dur.Unit == DurationUnit.Beats ? $"{dur.Value:F0} beats" : $"{dur.Value:F0}s";
@@ -135,12 +147,12 @@ internal static class ShowEditModal
                 if (key.Key == ConsoleKey.Escape) { renaming = false; return false; }
                 if (key.Key == ConsoleKey.Enter && !string.IsNullOrWhiteSpace(renameBuffer))
                 {
-                    var showToRename = showRepo.GetById(currentShowId ?? "");
+                    var showToRename = _showRepo.GetById(currentShowId ?? "");
                     if (showToRename != null)
                     {
                         showToRename.Name = renameBuffer.Trim();
-                        showRepo.Save(currentShowId!, showToRename);
-                        visualizerSettings.ActiveShowName = showToRename.Name;
+                        _showRepo.Save(currentShowId!, showToRename);
+                        _visualizerSettings.ActiveShowName = showToRename.Name;
                     }
                     renaming = false;
                     saveVisualizerSettings();
@@ -156,13 +168,13 @@ internal static class ShowEditModal
                 if (key.Key == ConsoleKey.Escape) { editingDuration = false; return false; }
                 if (key.Key == ConsoleKey.Enter && !string.IsNullOrWhiteSpace(durationBuffer) && double.TryParse(durationBuffer.Trim(), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var val) && val > 0)
                 {
-                    var show = showRepo.GetById(currentShowId!);
+                    var show = _showRepo.GetById(currentShowId!);
                     if (show?.Entries is { Count: > 0 } && selectedIndex < show.Entries.Count)
                     {
                         var entry = show.Entries[selectedIndex];
                         entry.Duration ??= new DurationConfig();
                         entry.Duration.Value = val;
-                        showRepo.Save(currentShowId!, show);
+                        _showRepo.Save(currentShowId!, show);
                     }
                     editingDuration = false;
                     saveVisualizerSettings();
@@ -177,7 +189,7 @@ internal static class ShowEditModal
                 return false;
             }
 
-            var showRef = showRepo.GetById(currentShowId ?? "");
+            var showRef = _showRepo.GetById(currentShowId ?? "");
             var entries = showRef?.Entries ?? new List<ShowEntry>();
 
             if (key.Key == ConsoleKey.Escape)
@@ -187,7 +199,7 @@ internal static class ShowEditModal
 
             if (key.Key == ConsoleKey.R && !renaming)
             {
-                var showToRename = showRepo.GetById(currentShowId ?? "");
+                var showToRename = _showRepo.GetById(currentShowId ?? "");
                 if (showToRename != null)
                 {
                     renameBuffer = showToRename.Name?.Trim() ?? "";
@@ -199,10 +211,10 @@ internal static class ShowEditModal
             if (key.Key == ConsoleKey.N && !renaming)
             {
                 var newShow = new Show { Name = $"Show {allShows.Count + 1}", Entries = [] };
-                var createdId = showRepo.Create(newShow);
+                var createdId = _showRepo.Create(newShow);
                 currentShowId = createdId;
-                visualizerSettings.ActiveShowId = createdId;
-                visualizerSettings.ActiveShowName = newShow.Name;
+                _visualizerSettings.ActiveShowId = createdId;
+                _visualizerSettings.ActiveShowName = newShow.Name;
                 saveVisualizerSettings();
                 return false;
             }
@@ -215,7 +227,7 @@ internal static class ShowEditModal
                     PresetId = firstPresetId,
                     Duration = new DurationConfig { Unit = DurationUnit.Seconds, Value = 30 }
                 });
-                showRepo.Save(currentShowId!, showRef);
+                _showRepo.Save(currentShowId!, showRef);
                 selectedIndex = showRef.Entries.Count - 1;
                 saveVisualizerSettings();
                 return false;
@@ -228,7 +240,7 @@ internal static class ShowEditModal
                 {
                     selectedIndex = showRef.Entries.Count - 1;
                 }
-                showRepo.Save(currentShowId!, showRef);
+                _showRepo.Save(currentShowId!, showRef);
                 saveVisualizerSettings();
                 return false;
             }
@@ -246,7 +258,7 @@ internal static class ShowEditModal
                     }
                 }
                 entry.PresetId = allPresets[idx].Id;
-                showRepo.Save(currentShowId!, showRef);
+                _showRepo.Save(currentShowId!, showRef);
                 saveVisualizerSettings();
                 return false;
             }
@@ -256,7 +268,7 @@ internal static class ShowEditModal
                 var entry = entries[selectedIndex];
                 entry.Duration ??= new DurationConfig();
                 entry.Duration.Unit = entry.Duration.Unit == DurationUnit.Seconds ? DurationUnit.Beats : DurationUnit.Seconds;
-                showRepo.Save(currentShowId!, showRef);
+                _showRepo.Save(currentShowId!, showRef);
                 saveVisualizerSettings();
                 return false;
             }
@@ -288,7 +300,7 @@ internal static class ShowEditModal
             DrawContent,
             HandleKey,
             consoleLock,
-            onClose: () => analysisEngine.SetOverlayActive(false),
-            onEnter: () => analysisEngine.SetOverlayActive(true, OverlayRowCount));
+            onClose: () => _analysisEngine.SetOverlayActive(false),
+            onEnter: () => _analysisEngine.SetOverlayActive(true, OverlayRowCount));
     }
 }

@@ -6,15 +6,35 @@ using AudioAnalyzer.Visualizers;
 namespace AudioAnalyzer.Console;
 
 /// <summary>TextLayers settings overlay modal (S key). Layer list, settings panel, preset rename and create per ADR-0023.</summary>
-internal static class SettingsModal
+internal sealed class SettingsModal : ISettingsModal
 {
     private const int OverlayRowCount = 18;
     private const int SettingsVisibleRows = OverlayRowCount - 5;
 
-    /// <summary>Shows the settings overlay modal. Blocks until user closes with ESC.</summary>
-    public static void Show(AnalysisEngine analysisEngine, VisualizerSettings visualizerSettings, IPresetRepository presetRepository, IPaletteRepository paletteRepo, object consoleLock, Action saveSettings, UiSettings? uiSettings = null)
+    private readonly AnalysisEngine _analysisEngine;
+    private readonly VisualizerSettings _visualizerSettings;
+    private readonly IPresetRepository _presetRepository;
+    private readonly IPaletteRepository _paletteRepo;
+    private readonly UiSettings _uiSettings;
+
+    public SettingsModal(
+        AnalysisEngine analysisEngine,
+        VisualizerSettings visualizerSettings,
+        IPresetRepository presetRepository,
+        IPaletteRepository paletteRepo,
+        UiSettings uiSettings)
     {
-        var textLayers = visualizerSettings.TextLayers ?? new TextLayersVisualizerSettings();
+        _analysisEngine = analysisEngine ?? throw new ArgumentNullException(nameof(analysisEngine));
+        _visualizerSettings = visualizerSettings ?? throw new ArgumentNullException(nameof(visualizerSettings));
+        _presetRepository = presetRepository ?? throw new ArgumentNullException(nameof(presetRepository));
+        _paletteRepo = paletteRepo ?? throw new ArgumentNullException(nameof(paletteRepo));
+        _uiSettings = uiSettings ?? throw new ArgumentNullException(nameof(uiSettings));
+    }
+
+    /// <inheritdoc />
+    public void Show(object consoleLock, Action saveSettings)
+    {
+        var textLayers = _visualizerSettings.TextLayers ?? new TextLayersVisualizerSettings();
         var layers = textLayers.Layers ?? new List<TextLayerSettings>();
         var sortedLayers = layers.OrderBy(l => l.ZOrder).ToList();
         if (sortedLayers.Count == 0)
@@ -36,12 +56,12 @@ internal static class SettingsModal
         ConsoleKey? lastNavKey = null;
         long lastNavTime = 0;
         const int NavKeyRepeatMs = 120;
-        double scrollSpeed = uiSettings?.DefaultScrollingSpeed ?? 0.25;
+        double scrollSpeed = _uiSettings?.DefaultScrollingSpeed ?? 0.25;
 
         IReadOnlyList<(string Id, string Label, string DisplayValue, SettingEditMode EditMode)> GetSettingsRows(TextLayerSettings? layer)
         {
             if (layer == null) { return []; }
-            var descriptors = SettingDescriptor.BuildAll(layer, paletteRepo);
+            var descriptors = SettingDescriptor.BuildAll(layer, _paletteRepo);
             return descriptors.Select(d => (d.Id, d.Label, d.GetDisplayValue(layer), d.EditMode)).ToList();
         }
 
@@ -84,15 +104,15 @@ internal static class SettingsModal
                 return;
             }
 
-            var palette = (uiSettings ?? new UiSettings()).Palette ?? new UiPalette();
+            var palette = (_uiSettings ?? new UiSettings()).Palette ?? new UiPalette();
             var selBg = palette.Background ?? PaletteColor.FromConsoleColor(ConsoleColor.DarkBlue);
             var selFg = palette.Highlighted;
 
             try
             {
-                var activePreset = visualizerSettings.Presets?.FirstOrDefault(p =>
-                    string.Equals(p.Id, visualizerSettings.ActivePresetId, StringComparison.OrdinalIgnoreCase))
-                    ?? visualizerSettings.Presets?.FirstOrDefault();
+                var activePreset = _visualizerSettings.Presets?.FirstOrDefault(p =>
+                    string.Equals(p.Id, _visualizerSettings.ActivePresetId, StringComparison.OrdinalIgnoreCase))
+                    ?? _visualizerSettings.Presets?.FirstOrDefault();
                 string presetName = activePreset?.Name?.Trim() ?? "Preset 1";
                 string title = renaming
                     ? $" New preset name (Enter confirm, Esc cancel): {renameBuffer}_ "
@@ -189,14 +209,14 @@ internal static class SettingsModal
 
         void ApplySettingEdit(TextLayerSettings layer, string settingId, string value)
         {
-            var descriptors = SettingDescriptor.BuildAll(layer, paletteRepo);
+            var descriptors = SettingDescriptor.BuildAll(layer, _paletteRepo);
             var d = descriptors.FirstOrDefault(x => x.Id == settingId);
             d?.ApplyEdit(layer, value);
         }
 
         void CycleSetting(TextLayerSettings layer, string id, bool forward)
         {
-            var descriptors = SettingDescriptor.BuildAll(layer, paletteRepo);
+            var descriptors = SettingDescriptor.BuildAll(layer, _paletteRepo);
             var d = descriptors.FirstOrDefault(x => x.Id == id);
             d?.Cycle(layer, forward);
         }
@@ -246,16 +266,16 @@ internal static class SettingsModal
                 if (key.Key == ConsoleKey.Escape) { renaming = false; focus = SettingsModalFocus.LayerList; return false; }
                 if (key.Key == ConsoleKey.Enter)
                 {
-                    var activeId = visualizerSettings.ActivePresetId;
+                    var activeId = _visualizerSettings.ActivePresetId;
                     if (!string.IsNullOrWhiteSpace(activeId) && !string.IsNullOrWhiteSpace(renameBuffer))
                     {
-                        var preset = presetRepository.GetById(activeId);
+                        var preset = _presetRepository.GetById(activeId);
                         if (preset != null)
                         {
                             preset.Name = renameBuffer.Trim();
-                            preset.Config = (visualizerSettings.TextLayers ?? new TextLayersVisualizerSettings()).DeepCopy();
-                            presetRepository.Save(activeId, preset);
-                            var p = visualizerSettings.Presets?.FirstOrDefault(x => string.Equals(x.Id, activeId, StringComparison.OrdinalIgnoreCase));
+                            preset.Config = (_visualizerSettings.TextLayers ?? new TextLayersVisualizerSettings()).DeepCopy();
+                            _presetRepository.Save(activeId, preset);
+                            var p = _visualizerSettings.Presets?.FirstOrDefault(x => string.Equals(x.Id, activeId, StringComparison.OrdinalIgnoreCase));
                             if (p != null) { p.Name = renameBuffer.Trim(); }
                         }
                         saveSettings();
@@ -346,9 +366,9 @@ internal static class SettingsModal
                 }
                 if (key.Key == ConsoleKey.R)
                 {
-                    if (visualizerSettings.Presets is { Count: > 0 })
+                    if (_visualizerSettings.Presets is { Count: > 0 })
                     {
-                        var p = visualizerSettings.Presets.FirstOrDefault(x => string.Equals(x.Id, visualizerSettings.ActivePresetId, StringComparison.OrdinalIgnoreCase)) ?? visualizerSettings.Presets[0];
+                        var p = _visualizerSettings.Presets.FirstOrDefault(x => string.Equals(x.Id, _visualizerSettings.ActivePresetId, StringComparison.OrdinalIgnoreCase)) ?? _visualizerSettings.Presets[0];
                         renameBuffer = p.Name?.Trim() ?? "";
                         renaming = true;
                         focus = SettingsModalFocus.Renaming;
@@ -358,11 +378,11 @@ internal static class SettingsModal
                 if (key.Key == ConsoleKey.Backspace && renaming) { if (renameBuffer.Length > 0) { renameBuffer = renameBuffer[..^1]; } return false; }
                 if (key.Key == ConsoleKey.N)
                 {
-                    var newPreset = new Preset { Name = $"Preset {visualizerSettings.Presets?.Count + 1 ?? 1}", Config = textLayers.DeepCopy() };
-                    var createdId = presetRepository.Create(newPreset);
-                    visualizerSettings.ActivePresetId = createdId;
-                    visualizerSettings.Presets = presetRepository.GetAll().Select(p => new Preset { Id = p.Id, Name = p.Name, Config = new TextLayersVisualizerSettings() }).ToList();
-                    textLayers = visualizerSettings.TextLayers ?? new TextLayersVisualizerSettings();
+                    var newPreset = new Preset { Name = $"Preset {_visualizerSettings.Presets?.Count + 1 ?? 1}", Config = textLayers.DeepCopy() };
+                    var createdId = _presetRepository.Create(newPreset);
+                    _visualizerSettings.ActivePresetId = createdId;
+                    _visualizerSettings.Presets = _presetRepository.GetAll().Select(p => new Preset { Id = p.Id, Name = p.Name, Config = new TextLayersVisualizerSettings() }).ToList();
+                    textLayers = _visualizerSettings.TextLayers ?? new TextLayersVisualizerSettings();
                     sortedLayers = textLayers.Layers?.OrderBy(l => l.ZOrder).ToList() ?? [];
                     saveSettings();
                     return false;
@@ -388,8 +408,8 @@ internal static class SettingsModal
             DrawSettingsContent,
             HandleSettingsKey,
             consoleLock,
-            onClose: () => analysisEngine.SetOverlayActive(false),
-            onEnter: () => analysisEngine.SetOverlayActive(true, OverlayRowCount),
+            onClose: () => _analysisEngine.SetOverlayActive(false),
+            onEnter: () => _analysisEngine.SetOverlayActive(true, OverlayRowCount),
             onScrollTick: DrawHintLineOnly);
     }
 }

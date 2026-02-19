@@ -4,12 +4,25 @@ using AudioAnalyzer.Domain;
 namespace AudioAnalyzer.Console;
 
 /// <summary>Help modal content and presentation per ADR-0006.</summary>
-internal static class HelpModal
+internal sealed class HelpModal : IHelpModal
 {
-    /// <summary>Draws help content only; does not clear or read input. Used by RunModal. Uses palette colors per ADR-0033.</summary>
-    public static void DrawContent(UiSettings? uiSettings = null)
+    private readonly UiSettings _uiSettings;
+
+    public HelpModal(UiSettings uiSettings)
     {
-        var palette = (uiSettings ?? new UiSettings()).Palette ?? new UiPalette();
+        _uiSettings = uiSettings ?? throw new ArgumentNullException(nameof(uiSettings));
+    }
+
+    /// <inheritdoc />
+    public void Show(Action? onEnter, Action? onClose)
+    {
+        ModalSystem.RunModal(() => DrawContent(), _ => true, onClose, onEnter);
+    }
+
+    /// <summary>Draws help content only; does not clear or read input. Used by RunModal. Uses palette colors per ADR-0033.</summary>
+    private void DrawContent()
+    {
+        var palette = (_uiSettings ?? new UiSettings()).Palette ?? new UiPalette();
         string labelCode = AnsiConsole.ColorCode(palette.Label);
         string dimmedCode = AnsiConsole.ColorCode(palette.Dimmed);
         string reset = AnsiConsole.ResetCode;
@@ -74,12 +87,5 @@ internal static class HelpModal
         System.Console.WriteLine("  Show play: Auto-cycles presets with per-entry duration (seconds or beats). Tab to switch.");
         System.Console.WriteLine();
         System.Console.WriteLine(dimmedCode + "  Press any key to return..." + reset);
-    }
-
-    /// <summary>Shows the help modal; any key closes it.</summary>
-    public static void Show(Action? onEnter, Action? onClose, UiSettings? uiSettings = null)
-    {
-        var ui = uiSettings;
-        ModalSystem.RunModal(() => DrawContent(ui), _ => true, onClose, onEnter);
     }
 }

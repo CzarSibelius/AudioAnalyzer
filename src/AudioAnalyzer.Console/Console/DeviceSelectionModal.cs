@@ -4,22 +4,25 @@ using AudioAnalyzer.Domain;
 namespace AudioAnalyzer.Console;
 
 /// <summary>Device selection modal per ADR-0006. Uses RunModal with draw + handleKey, returns selection.</summary>
-internal static class DeviceSelectionModal
+internal sealed class DeviceSelectionModal : IDeviceSelectionModal
 {
-    /// <summary>
-    /// Shows the device selection menu. Returns (deviceId, name) on selection, or (null, "") on cancel.
-    /// </summary>
-    /// <param name="setModalOpen">Called with true when modal opens and false when it closes.</param>
-    /// <param name="uiSettings">Optional UI settings for palette colors per ADR-0033.</param>
-    public static (string? deviceId, string name) Show(
-        IAudioDeviceInfo deviceInfo,
-        ISettingsRepository settingsRepo,
-        AppSettings settings,
-        string? currentDeviceName,
-        Action<bool> setModalOpen,
-        UiSettings? uiSettings = null)
+    private readonly IAudioDeviceInfo _deviceInfo;
+    private readonly ISettingsRepository _settingsRepo;
+    private readonly AppSettings _settings;
+    private readonly UiSettings _uiSettings;
+
+    public DeviceSelectionModal(IAudioDeviceInfo deviceInfo, ISettingsRepository settingsRepo, AppSettings settings, UiSettings uiSettings)
     {
-        var devices = deviceInfo.GetDevices();
+        _deviceInfo = deviceInfo ?? throw new ArgumentNullException(nameof(deviceInfo));
+        _settingsRepo = settingsRepo ?? throw new ArgumentNullException(nameof(settingsRepo));
+        _settings = settings ?? throw new ArgumentNullException(nameof(settings));
+        _uiSettings = uiSettings ?? throw new ArgumentNullException(nameof(uiSettings));
+    }
+
+    /// <inheritdoc />
+    public (string? deviceId, string name) Show(string? currentDeviceName, Action<bool> setModalOpen)
+    {
+        var devices = _deviceInfo.GetDevices();
         if (devices.Count == 0)
         {
             System.Console.WriteLine("No audio devices found!");
@@ -34,15 +37,15 @@ internal static class DeviceSelectionModal
                 if (devices[i].Name == currentDeviceName) { selectedIndex = i; break; }
             }
         }
-        else if (settings.InputMode == "loopback")
+        else if (_settings.InputMode == "loopback")
         {
             selectedIndex = 0;
         }
-        else if (!string.IsNullOrEmpty(settings.DeviceName))
+        else if (!string.IsNullOrEmpty(_settings.DeviceName))
         {
             for (int i = 0; i < devices.Count; i++)
             {
-                if (devices[i].Name.Contains(settings.DeviceName, StringComparison.OrdinalIgnoreCase))
+                if (devices[i].Name.Contains(_settings.DeviceName, StringComparison.OrdinalIgnoreCase))
                 {
                     selectedIndex = i;
                     break;
@@ -53,7 +56,7 @@ internal static class DeviceSelectionModal
         string? resultId = null;
         string resultName = "";
 
-        var palette = (uiSettings ?? new UiSettings()).Palette ?? new UiPalette();
+        var palette = (_uiSettings ?? new UiSettings()).Palette ?? new UiPalette();
         var selBg = palette.Background ?? PaletteColor.FromConsoleColor(ConsoleColor.DarkBlue);
         var selFg = palette.Highlighted;
         var currentColor = palette.Highlighted;
@@ -115,27 +118,27 @@ internal static class DeviceSelectionModal
                     return false;
                 case ConsoleKey.Enter:
                     var selected = devices[selectedIndex];
-                    settings.InputMode = selected.Id == null ? "loopback" : "device";
+                    _settings.InputMode = selected.Id == null ? "loopback" : "device";
                     if (selected.Id != null)
                     {
                         if (selected.Id.StartsWith("capture:", StringComparison.Ordinal))
                         {
-                            settings.DeviceName = selected.Id.Substring(8);
+                            _settings.DeviceName = selected.Id.Substring(8);
                         }
                         else if (selected.Id.StartsWith("loopback:", StringComparison.Ordinal))
                         {
-                            settings.DeviceName = selected.Id.Substring(9);
+                            _settings.DeviceName = selected.Id.Substring(9);
                         }
                         else
                         {
-                            settings.DeviceName = selected.Id;
+                            _settings.DeviceName = selected.Id;
                         }
                     }
                     else
                     {
-                        settings.DeviceName = null;
+                        _settings.DeviceName = null;
                     }
-                    settingsRepo.SaveAppSettings(settings);
+                    _settingsRepo.SaveAppSettings(_settings);
                     resultId = selected.Id;
                     resultName = selected.Name;
                     return true;

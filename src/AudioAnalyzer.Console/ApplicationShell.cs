@@ -20,6 +20,10 @@ internal sealed class ApplicationShell
     private readonly IVisualizationRenderer _renderer;
     private readonly INowPlayingProvider _nowPlayingProvider;
     private readonly ShowPlaybackController _showPlaybackController;
+    private readonly IDeviceSelectionModal _deviceSelectionModal;
+    private readonly IHelpModal _helpModal;
+    private readonly ISettingsModal _settingsModal;
+    private readonly IShowEditModal _showEditModal;
 
     private IAudioInput? _currentInput;
     private string _currentDeviceName = "";
@@ -36,7 +40,12 @@ internal sealed class ApplicationShell
         IPaletteRepository paletteRepo,
         AnalysisEngine engine,
         IVisualizationRenderer renderer,
-        INowPlayingProvider nowPlayingProvider)
+        INowPlayingProvider nowPlayingProvider,
+        ShowPlaybackController showPlaybackController,
+        IDeviceSelectionModal deviceSelectionModal,
+        IHelpModal helpModal,
+        ISettingsModal settingsModal,
+        IShowEditModal showEditModal)
     {
         _deviceInfo = deviceInfo;
         _settingsRepo = settingsRepo;
@@ -49,7 +58,11 @@ internal sealed class ApplicationShell
         _engine = engine;
         _renderer = renderer;
         _nowPlayingProvider = nowPlayingProvider;
-        _showPlaybackController = new ShowPlaybackController(visualizerSettings, showRepository, presetRepository, engine);
+        _showPlaybackController = showPlaybackController ?? throw new ArgumentNullException(nameof(showPlaybackController));
+        _deviceSelectionModal = deviceSelectionModal ?? throw new ArgumentNullException(nameof(deviceSelectionModal));
+        _helpModal = helpModal ?? throw new ArgumentNullException(nameof(helpModal));
+        _settingsModal = settingsModal ?? throw new ArgumentNullException(nameof(settingsModal));
+        _showEditModal = showEditModal ?? throw new ArgumentNullException(nameof(showEditModal));
     }
 
     /// <summary>Runs the main loop. Does not return until the user quits.</summary>
@@ -122,15 +135,15 @@ internal sealed class ApplicationShell
                         case ConsoleKey.S:
                             if (_visualizerSettings.ApplicationMode == ApplicationMode.PresetEditor)
                             {
-                                SettingsModal.Show(_engine, _visualizerSettings, _presetRepository, _paletteRepo, consoleLock, SaveSettings, _settings.UiSettings);
+                                _settingsModal.Show(consoleLock, SaveSettings);
                             }
                             else
                             {
-                                ShowEditModal.Show(_engine, _visualizerSettings, _showRepository, _presetRepository, consoleLock, () =>
+                                _showEditModal.Show(consoleLock, () =>
                                 {
                                     SaveSettings();
                                     _visualizerSettingsRepo.SaveVisualizerSettings(_visualizerSettings);
-                                }, _settings.UiSettings);
+                                });
                             }
                             lock (consoleLock)
                             {
@@ -153,7 +166,7 @@ internal sealed class ApplicationShell
                             }
                             inputToStop?.StopCapture();
 
-                            var (newId, newName) = DeviceSelectionModal.Show(_deviceInfo, _settingsRepo, _settings, _currentDeviceName, open => modalOpen = open, _settings.UiSettings);
+                            var (newId, newName) = _deviceSelectionModal.Show(_currentDeviceName, open => modalOpen = open);
                             if (newName != "")
                             {
                                 StartCapture(newId, newName);
@@ -173,7 +186,7 @@ internal sealed class ApplicationShell
                             _engine.Redraw();
                             break;
                         case ConsoleKey.H:
-                            HelpModal.Show(
+                            _helpModal.Show(
                                 onEnter: () => modalOpen = true,
                                 onClose: () =>
                                 {
@@ -184,12 +197,11 @@ internal sealed class ApplicationShell
                                     }
                                     else
                                     {
-                                ConsoleHeader.DrawMain(_currentDeviceName, _nowPlayingProvider.GetNowPlayingText(),
-                                    _visualizerSettings.ApplicationMode == ApplicationMode.ShowPlay ? "Show play" : "Preset editor", ui, _engine.CurrentBpm, _engine.BeatSensitivity, _engine.BeatFlashActive, _engine.Volume);
+                                        ConsoleHeader.DrawMain(_currentDeviceName, _nowPlayingProvider.GetNowPlayingText(),
+                                            _visualizerSettings.ApplicationMode == ApplicationMode.ShowPlay ? "Show play" : "Preset editor", ui, _engine.CurrentBpm, _engine.BeatSensitivity, _engine.BeatFlashActive, _engine.Volume);
                                         _engine.Redraw();
                                     }
-                                },
-                                _settings.UiSettings);
+                                });
                             break;
                         case ConsoleKey.OemPlus:
                         case ConsoleKey.Add:
@@ -275,11 +287,11 @@ internal sealed class ApplicationShell
         var allShows = _showRepository.GetAll();
         if (allShows.Count == 0)
         {
-            ShowEditModal.Show(_engine, _visualizerSettings, _showRepository, _presetRepository, consoleLock, () =>
+            _showEditModal.Show(consoleLock, () =>
             {
                 SaveSettings();
                 _visualizerSettingsRepo.SaveVisualizerSettings(_visualizerSettings);
-            }, _settings.UiSettings);
+            });
             allShows = _showRepository.GetAll();
             if (allShows.Count == 0)
             {

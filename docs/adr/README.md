@@ -50,6 +50,7 @@ Decisions are numbered and kept under version control so the rationale stays wit
 | [0032](0032-typed-display-text.md) | Typed display text (PlainText vs AnsiText) | Accepted |
 | [0033](0033-ui-principles-and-configurable-settings.md) | UI principles and configurable settings | Accepted |
 | [0034](0034-viewport-label-hotkey-hints.md) | Viewport label hotkey hints | Accepted |
+| [0035](0035-modal-dependency-injection.md) | Modal dependency injection | Accepted |
 
 ## Process
 

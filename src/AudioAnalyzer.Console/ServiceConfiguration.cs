@@ -1,3 +1,4 @@
+using System.IO.Abstractions;
 using AudioAnalyzer.Application;
 using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Domain;
@@ -20,6 +21,7 @@ internal static class ServiceConfiguration
         ServiceConfigurationOptions? options = null)
     {
         var services = new ServiceCollection();
+        services.AddSingleton(settings);
         services.AddSingleton(visualizerSettings);
         services.AddSingleton(settings.UiSettings ?? new UiSettings());
         services.AddSingleton<IDisplayDimensions>(sp => options?.DisplayDimensions ?? new ConsoleDisplayDimensions());
@@ -27,7 +29,9 @@ internal static class ServiceConfiguration
         services.AddSingleton<IVisualizerSettingsRepository>(_ => settingsRepo);
         services.AddSingleton<IPaletteRepository>(_ => options?.PaletteRepository ?? new FilePaletteRepository());
         services.AddSingleton<IPresetRepository>(presetRepo);
-        services.AddSingleton<IShowRepository>(new FileShowRepository());
+        services.AddSingleton<IFileSystem>(_ => options?.FileSystem ?? new FileSystem());
+        services.AddSingleton<IShowRepository>(sp =>
+            new FileShowRepository(sp.GetRequiredService<IFileSystem>(), options?.ShowsDirectory));
         services.AddSingleton<IAudioDeviceInfo, NAudioDeviceInfo>();
         services.AddSingleton<INowPlayingProvider>(sp =>
         {
@@ -69,6 +73,12 @@ internal static class ServiceConfiguration
             var dimensions = sp.GetRequiredService<IDisplayDimensions>();
             return new AnalysisEngine(renderer, dimensions);
         });
+        services.AddSingleton<ShowPlaybackController>();
+        services.AddSingleton<IDeviceSelectionModal, DeviceSelectionModal>();
+        services.AddSingleton<IHelpModal, HelpModal>();
+        services.AddSingleton<ISettingsModal, SettingsModal>();
+        services.AddSingleton<IShowEditModal, ShowEditModal>();
+        services.AddSingleton<ApplicationShell>();
 
         return services.BuildServiceProvider();
     }
