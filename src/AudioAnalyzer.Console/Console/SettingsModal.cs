@@ -16,19 +16,22 @@ internal sealed class SettingsModal : ISettingsModal
     private readonly IPresetRepository _presetRepository;
     private readonly IPaletteRepository _paletteRepo;
     private readonly UiSettings _uiSettings;
+    private readonly IScrollingTextViewportFactory _viewportFactory;
 
     public SettingsModal(
         AnalysisEngine analysisEngine,
         VisualizerSettings visualizerSettings,
         IPresetRepository presetRepository,
         IPaletteRepository paletteRepo,
-        UiSettings uiSettings)
+        UiSettings uiSettings,
+        IScrollingTextViewportFactory viewportFactory)
     {
         _analysisEngine = analysisEngine ?? throw new ArgumentNullException(nameof(analysisEngine));
         _visualizerSettings = visualizerSettings ?? throw new ArgumentNullException(nameof(visualizerSettings));
         _presetRepository = presetRepository ?? throw new ArgumentNullException(nameof(presetRepository));
         _paletteRepo = paletteRepo ?? throw new ArgumentNullException(nameof(paletteRepo));
         _uiSettings = uiSettings ?? throw new ArgumentNullException(nameof(uiSettings));
+        _viewportFactory = viewportFactory ?? throw new ArgumentNullException(nameof(viewportFactory));
     }
 
     /// <inheritdoc />
@@ -51,8 +54,7 @@ internal sealed class SettingsModal : ISettingsModal
         const int LeftColWidth = 28;
         int width = ConsoleHeader.GetConsoleWidth();
         int rightColWidth = Math.Max(10, width - LeftColWidth - 1);
-        ScrollingTextViewportState settingsHintScrollState = default;
-        string? settingsHintLastText = null;
+        var hintViewport = _viewportFactory.CreateViewport();
         ConsoleKey? lastNavKey = null;
         long lastNavTime = 0;
         const int NavKeyRepeatMs = 120;
@@ -72,13 +74,8 @@ internal sealed class SettingsModal : ISettingsModal
                 : focus == SettingsModalFocus.EditingSetting ? "  Type value, Enter or \u2191\u2193 confirm, Esc cancel"
                 : focus == SettingsModalFocus.SettingsList ? "  \u2191\u2193 select, Enter or +/- cycle, Enter edit strings, \u2190 or Esc back"
                 : "  1-9 select, \u2190\u2192 type, Enter settings, Shift+1-9 toggle, R rename, N preset, Esc close";
-            if (hint != settingsHintLastText)
-            {
-                settingsHintScrollState.Reset();
-                settingsHintLastText = hint;
-            }
             string hintLine = hint.Length > width
-                ? ScrollingTextViewport.Render(new PlainText(hint), width, ref settingsHintScrollState, scrollSpeed)
+                ? hintViewport.Render(new PlainText(hint), width, scrollSpeed)
                 : hint.PadRight(width);
             try
             {
@@ -130,13 +127,8 @@ internal sealed class SettingsModal : ISettingsModal
                     : focus == SettingsModalFocus.EditingSetting ? "  Type value, Enter or \u2191\u2193 confirm, Esc cancel"
                     : focus == SettingsModalFocus.SettingsList ? "  \u2191\u2193 select, Enter or +/- cycle, Enter edit strings, \u2190 or Esc back"
                     : "  1-9 select, \u2190\u2192 type, Enter settings, Shift+1-9 toggle, R rename, N preset, Esc close";
-                if (hint != settingsHintLastText)
-                {
-                    settingsHintScrollState.Reset();
-                    settingsHintLastText = hint;
-                }
                 string hintLine = hint.Length > width
-                    ? ScrollingTextViewport.Render(new PlainText(hint), width, ref settingsHintScrollState, scrollSpeed)
+                    ? hintViewport.Render(new PlainText(hint), width, scrollSpeed)
                     : hint.PadRight(width);
                 System.Console.Write(hintLine);
                 System.Console.SetCursorPosition(0, 4);

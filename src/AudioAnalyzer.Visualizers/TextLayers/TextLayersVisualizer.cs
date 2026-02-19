@@ -241,6 +241,50 @@ public sealed class TextLayersVisualizer : IVisualizer
         return sb.ToString();
     }
 
+    /// <inheritdoc />
+    public string? GetActiveLayerDisplayName()
+    {
+        var config = _settings;
+        if (config?.Layers is not { Count: > 0 })
+        {
+            return null;
+        }
+        var sortedLayers = config.Layers.OrderBy(l => l.ZOrder).ToList();
+        int idx = Math.Clamp(_paletteCycleLayerIndex, 0, sortedLayers.Count - 1);
+        var layer = sortedLayers[idx];
+        return ToSnakeCase(layer.LayerType.ToString());
+    }
+
+    /// <inheritdoc />
+    public int GetActiveLayerZIndex()
+    {
+        var config = _settings;
+        if (config?.Layers is not { Count: > 0 })
+        {
+            return -1;
+        }
+        return Math.Clamp(_paletteCycleLayerIndex, 0, int.MaxValue);
+    }
+
+    private static string ToSnakeCase(string value)
+    {
+        if (string.IsNullOrEmpty(value))
+        {
+            return value;
+        }
+        var sb = new StringBuilder();
+        for (int i = 0; i < value.Length; i++)
+        {
+            char c = value[i];
+            if (char.IsUpper(c) && i > 0)
+            {
+                sb.Append('_');
+            }
+            sb.Append(char.ToLowerInvariant(c));
+        }
+        return sb.ToString();
+    }
+
     /// <summary>
     /// Handles keys 1–9 to select the active layer; Left/Right to cycle the active layer's type;
     /// Shift+1–9 to toggle layer enabled/disabled; I to cycle to the next picture in AsciiImage layers.

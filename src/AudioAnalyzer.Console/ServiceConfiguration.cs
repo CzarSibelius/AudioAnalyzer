@@ -65,7 +65,8 @@ internal static class ServiceConfiguration
             var visualizers = sp.GetServices<IVisualizer>();
             var visualizerSettings = sp.GetRequiredService<VisualizerSettings>();
             var uiSettings = sp.GetRequiredService<UiSettings>();
-            return new VisualizationPaneLayout(dimensions, visualizers, visualizerSettings, uiSettings);
+            var viewportFactory = sp.GetRequiredService<IScrollingTextViewportFactory>();
+            return new VisualizationPaneLayout(dimensions, visualizers, visualizerSettings, uiSettings, viewportFactory);
         });
         services.AddSingleton<AnalysisEngine>(sp =>
         {
@@ -74,11 +75,40 @@ internal static class ServiceConfiguration
             return new AnalysisEngine(renderer, dimensions);
         });
         services.AddSingleton<ShowPlaybackController>();
+        services.AddSingleton<IScrollingTextEngine, ScrollingTextEngine>();
+        services.AddSingleton<IScrollingTextViewportFactory, ScrollingTextViewportFactory>();
+        services.AddSingleton<ITitleBarRenderer>(sp => new TitleBarRenderer(
+            sp.GetRequiredService<UiSettings>(),
+            sp.GetRequiredService<VisualizerSettings>(),
+            sp.GetServices<IVisualizer>()));
         services.AddSingleton<IDeviceSelectionModal, DeviceSelectionModal>();
         services.AddSingleton<IHelpModal, HelpModal>();
         services.AddSingleton<ISettingsModal, SettingsModal>();
         services.AddSingleton<IShowEditModal, ShowEditModal>();
-        services.AddSingleton<ApplicationShell>();
+        services.AddSingleton<ApplicationShell>(sp =>
+        {
+            var factory = sp.GetRequiredService<IScrollingTextViewportFactory>();
+            return new ApplicationShell(
+                sp.GetRequiredService<IAudioDeviceInfo>(),
+                sp.GetRequiredService<ISettingsRepository>(),
+                sp.GetRequiredService<IVisualizerSettingsRepository>(),
+                sp.GetRequiredService<AppSettings>(),
+                sp.GetRequiredService<VisualizerSettings>(),
+                sp.GetRequiredService<IPresetRepository>(),
+                sp.GetRequiredService<IShowRepository>(),
+                sp.GetRequiredService<IPaletteRepository>(),
+                sp.GetRequiredService<AnalysisEngine>(),
+                sp.GetRequiredService<IVisualizationRenderer>(),
+                sp.GetRequiredService<INowPlayingProvider>(),
+                sp.GetRequiredService<ShowPlaybackController>(),
+                sp.GetRequiredService<ITitleBarRenderer>(),
+                factory.CreateViewport(),
+                factory.CreateViewport(),
+                sp.GetRequiredService<IDeviceSelectionModal>(),
+                sp.GetRequiredService<IHelpModal>(),
+                sp.GetRequiredService<ISettingsModal>(),
+                sp.GetRequiredService<IShowEditModal>());
+        });
 
         return services.BuildServiceProvider();
     }
