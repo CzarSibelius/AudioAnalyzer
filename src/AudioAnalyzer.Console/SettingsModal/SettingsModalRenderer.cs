@@ -168,7 +168,7 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
             : "  1-9 select, \u2190\u2192 type, Enter settings, Shift+1-9 toggle, R rename, N preset, Esc close";
     }
 
-    private IReadOnlyList<(string Id, string Label, string DisplayValue, SettingEditMode EditMode)> GetSettingsRows(TextLayerSettings? layer)
+    private List<(string Id, string Label, string DisplayValue, SettingEditMode EditMode)> GetSettingsRows(TextLayerSettings? layer)
     {
         if (layer == null) { return []; }
         var descriptors = SettingDescriptor.BuildAll(layer, _paletteRepo);

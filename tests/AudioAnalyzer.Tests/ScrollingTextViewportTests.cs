@@ -27,7 +27,7 @@ public sealed class ScrollingTextViewportTests
         Assert.Equal(3, DisplayWidth.SnapToGraphemeStart("😀12", 3));
     }
 
-    private static IScrollingTextViewport CreateViewport()
+    private static ScrollingTextViewport CreateViewport()
     {
         var engine = new ScrollingTextEngine();
         return new ScrollingTextViewport(engine);
