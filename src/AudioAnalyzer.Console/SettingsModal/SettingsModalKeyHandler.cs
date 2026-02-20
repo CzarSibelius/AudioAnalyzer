@@ -185,7 +185,7 @@ internal sealed class SettingsModalKeyHandler : ISettingsModalKeyHandler
         return false;
     }
 
-    private IReadOnlyList<(string Id, string Label, string DisplayValue, SettingEditMode EditMode)> GetSettingsRows(TextLayerSettings layer)
+    private List<(string Id, string Label, string DisplayValue, SettingEditMode EditMode)> GetSettingsRows(TextLayerSettings layer)
     {
         var descriptors = SettingDescriptor.BuildAll(layer, _paletteRepo);
         return descriptors.Select(d => (d.Id, d.Label, d.GetDisplayValue(layer), d.EditMode)).ToList();

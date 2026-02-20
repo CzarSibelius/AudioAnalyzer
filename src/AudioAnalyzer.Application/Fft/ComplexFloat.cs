@@ -3,8 +3,8 @@ namespace AudioAnalyzer.Application.Fft;
 /// <summary>Complex number for FFT operations.</summary>
 public struct ComplexFloat
 {
-    public float X;
-    public float Y;
+    public float X { get; set; }
+    public float Y { get; set; }
 
     public ComplexFloat(float x, float y)
     {
