@@ -321,7 +321,14 @@ internal sealed class SettingDescriptor
             {
                 var val = propType == typeof(int) ? (double)(int)current! : (double)current!;
                 val = f ? Math.Min(range.Max, val + range.Step) : Math.Max(range.Min, val - range.Step);
-                next = propType == typeof(int) ? (int)Math.Round(val) : val;
+                if (propType == typeof(int))
+                {
+                    next = (int)Math.Round(val);
+                }
+                else
+                {
+                    next = val;
+                }
             }
             if (next != null)
             {

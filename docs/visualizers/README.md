@@ -19,7 +19,7 @@ The first row is the visualizer; the rest are **layer types** within it. Press *
 | Layer (deprecated) | geiss | Geiss | [geiss.md](geiss.md) | Removed; use GeissBackground and BeatCircles layers |
 | Layer | unknownpleasures | Unknown Pleasures | [unknown-pleasures.md](unknown-pleasures.md) | Stacked waveform snapshots, beat-triggered |
 | Layer | asciiimage | ASCII Image | [ascii-image.md](ascii-image.md) | Images as ASCII art from folder; scroll/zoom; layer palette or image colors |
-| Layer | mirror | Mirror | [mirror.md](mirror.md) | Mirrors buffer horizontally (left↔right); configurable direction; place above layers to mirror |
+| Layer | mirror | Mirror | [mirror.md](mirror.md) | Mirrors buffer horizontally or vertically (direction, split %, rotation); place above layers to mirror |
 
 ## Implementation layout
 
