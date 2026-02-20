@@ -74,7 +74,11 @@ internal sealed class SettingsModal : ISettingsModal
             DrawSettingsContent,
             HandleSettingsKey,
             consoleLock,
-            onClose: () => _analysisEngine.SetOverlayActive(false),
+            onClose: () =>
+            {
+                saveSettings();
+                _analysisEngine.SetOverlayActive(false);
+            },
             onEnter: () => _analysisEngine.SetOverlayActive(true, OverlayRowCount),
             onScrollTick: DrawHintLineOnly);
     }

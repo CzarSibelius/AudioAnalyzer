@@ -7,5 +7,11 @@ public enum MirrorDirection
     LeftToRight,
 
     /// <summary>Right half is source; left half shows mirror of right.</summary>
-    RightToLeft
+    RightToLeft,
+
+    /// <summary>Top half is source; bottom half shows mirror of top.</summary>
+    TopToBottom,
+
+    /// <summary>Bottom half is source; top half shows mirror of bottom.</summary>
+    BottomToTop
 }
