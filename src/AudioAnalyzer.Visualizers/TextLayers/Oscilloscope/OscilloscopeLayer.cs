@@ -25,6 +25,7 @@ public sealed class OscilloscopeLayer : ITextLayerRenderer
         int centerY = h / 2;
         var s = layer.GetCustom<OscilloscopeSettings>() ?? new OscilloscopeSettings();
         double gain = Math.Clamp(s.Gain > 0 ? s.Gain : 2.5, 1.0, 10.0);
+        bool filled = s.Filled;
         int step = Math.Max(1, snapshot.WaveformSize / width);
         int prevY = centerY;
 
@@ -35,8 +36,8 @@ public sealed class OscilloscopeLayer : ITextLayerRenderer
             float scaled = Math.Clamp(sample * (float)gain, -1f, 1f);
             int y = centerY - (int)(scaled * (h / 2 - 1));
             y = Math.Clamp(y, 0, h - 1);
-            int minY = Math.Min(prevY, y);
-            int maxY = Math.Max(prevY, y);
+            int minY = filled ? Math.Min(centerY, y) : Math.Min(prevY, y);
+            int maxY = filled ? Math.Max(centerY, y) : Math.Max(prevY, y);
             for (int lineY = minY; lineY <= maxY; lineY++)
             {
                 var color = GetColorFromPalette(lineY, centerY, h, ctx.Palette);
