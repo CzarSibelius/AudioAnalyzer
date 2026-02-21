@@ -133,6 +133,29 @@ internal sealed class SettingsModalKeyHandler : ISettingsModalKeyHandler
                 state.SelectedSettingIndex = 0;
                 return false;
             }
+            if (key.Modifiers.HasFlag(ConsoleModifiers.Control) && sortedLayers.Count > 0)
+            {
+                if (key.Key == ConsoleKey.UpArrow && state.SelectedLayerIndex > 0)
+                {
+                    var a = sortedLayers[state.SelectedLayerIndex];
+                    var b = sortedLayers[state.SelectedLayerIndex - 1];
+                    (a.ZOrder, b.ZOrder) = (b.ZOrder, a.ZOrder);
+                    context.SortedLayers = context.TextLayers.Layers?.OrderBy(l => l.ZOrder).ToList() ?? [];
+                    state.SelectedLayerIndex--;
+                    context.SaveSettings();
+                    return false;
+                }
+                if (key.Key == ConsoleKey.DownArrow && state.SelectedLayerIndex < sortedLayers.Count - 1)
+                {
+                    var a = sortedLayers[state.SelectedLayerIndex];
+                    var b = sortedLayers[state.SelectedLayerIndex + 1];
+                    (a.ZOrder, b.ZOrder) = (b.ZOrder, a.ZOrder);
+                    context.SortedLayers = context.TextLayers.Layers?.OrderBy(l => l.ZOrder).ToList() ?? [];
+                    state.SelectedLayerIndex++;
+                    context.SaveSettings();
+                    return false;
+                }
+            }
             if (key.Key == ConsoleKey.UpArrow) { state.SelectedLayerIndex = sortedLayers.Count > 0 ? (state.SelectedLayerIndex - 1 + sortedLayers.Count) % sortedLayers.Count : 0; return false; }
             if (key.Key == ConsoleKey.DownArrow) { state.SelectedLayerIndex = sortedLayers.Count > 0 ? (state.SelectedLayerIndex + 1) % sortedLayers.Count : 0; return false; }
             if (key.Key == ConsoleKey.Spacebar && selectedLayer != null) { selectedLayer.Enabled = !selectedLayer.Enabled; context.SaveSettings(); return false; }

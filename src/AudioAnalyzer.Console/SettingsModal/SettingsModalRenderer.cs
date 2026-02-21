@@ -165,7 +165,7 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
         return state.Renaming ? "  Type new name, Enter to save, Esc to cancel"
             : state.Focus == SettingsModalFocus.EditingSetting ? "  Type value, Enter or \u2191\u2193 confirm, Esc cancel"
             : state.Focus == SettingsModalFocus.SettingsList ? "  \u2191\u2193 select, Enter or +/- cycle, Enter edit strings, \u2190 or Esc back"
-            : "  1-9 select, \u2190\u2192 type, Enter settings, Shift+1-9 toggle, R rename, N preset, Esc close";
+            : "  1-9 select, \u2190\u2192 type, Ctrl+\u2191\u2193 move, Enter settings, Shift+1-9 toggle, R rename, N preset, Esc close";
     }
 
     private List<(string Id, string Label, string DisplayValue, SettingEditMode EditMode)> GetSettingsRows(TextLayerSettings? layer)
