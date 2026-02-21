@@ -1,4 +1,3 @@
-using AudioAnalyzer.Application;
 using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Domain;
 
@@ -7,16 +6,14 @@ namespace AudioAnalyzer.Console;
 /// <summary>Renders the toolbar and visualizer to the console. Implements IVisualizationRenderer.</summary>
 public sealed class VisualizationPaneLayout : IVisualizationRenderer
 {
-    private readonly IVisualizer? _visualizer;
-    private readonly VisualizerSettings? _visualizerSettings;
+    private readonly IVisualizer _visualizer;
     private readonly UiSettings _uiSettings;
     private readonly IScrollingTextViewport _labelViewport;
     private (IReadOnlyList<PaletteColor>? Palette, string? DisplayName) _palette;
 
-    public VisualizationPaneLayout(IDisplayDimensions displayDimensions, IEnumerable<IVisualizer> visualizers, VisualizerSettings? visualizerSettings, UiSettings? uiSettings, IScrollingTextViewportFactory viewportFactory)
+    public VisualizationPaneLayout(IVisualizer visualizer, UiSettings? uiSettings, IScrollingTextViewportFactory viewportFactory)
     {
-        _visualizerSettings = visualizerSettings;
-        _visualizer = visualizers.FirstOrDefault(v => string.Equals(v.TechnicalName, "textlayers", StringComparison.OrdinalIgnoreCase));
+        _visualizer = visualizer ?? throw new ArgumentNullException(nameof(visualizer));
         _uiSettings = uiSettings ?? new UiSettings();
         _labelViewport = viewportFactory.CreateViewport();
     }
@@ -172,7 +169,7 @@ public sealed class VisualizationPaneLayout : IVisualizationRenderer
 
     private string GetSuffixCell(AnalysisSnapshot snapshot, int width)
     {
-        string suffix = _visualizer?.GetToolbarSuffix(snapshot) ?? "";
+        string suffix = _visualizer.GetToolbarSuffix(snapshot) ?? "";
         if (string.IsNullOrEmpty(suffix))
         {
             return new string(' ', width);
