@@ -54,12 +54,16 @@ internal static class ServiceConfiguration
         services.AddTextLayerRenderers();
 
         services.AddSingleton<IConsoleWriter, ConsoleWriter>();
+        services.AddSingleton<ITextLayersKeyHandler, TextLayersKeyHandler>();
+        services.AddSingleton<ITextLayersToolbarBuilder, TextLayersToolbarBuilder>();
 
         services.AddSingleton<IVisualizer>(sp => new TextLayersVisualizer(
             sp.GetRequiredService<VisualizerSettings>().TextLayers ?? new TextLayersVisualizerSettings(),
             sp.GetRequiredService<IPaletteRepository>(),
             sp.GetRequiredService<IEnumerable<ITextLayerRenderer>>(),
             sp.GetRequiredService<IConsoleWriter>(),
+            sp.GetRequiredService<ITextLayersKeyHandler>(),
+            sp.GetRequiredService<ITextLayersToolbarBuilder>(),
             sp.GetRequiredService<UiSettings>()));
 
         services.AddSingleton<IVisualizationRenderer, VisualizationPaneLayout>();

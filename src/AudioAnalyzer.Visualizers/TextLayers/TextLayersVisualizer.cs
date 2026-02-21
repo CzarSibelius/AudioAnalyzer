@@ -19,16 +19,20 @@ public sealed class TextLayersVisualizer : IVisualizer
     private readonly IConsoleWriter _consoleWriter;
     private readonly UiSettings _uiSettings;
     private readonly Dictionary<TextLayerType, ITextLayerRenderer> _renderers;
+    private readonly ITextLayersKeyHandler _keyHandler;
+    private readonly ITextLayersToolbarBuilder _toolbarBuilder;
     /// <summary>Index of the layer whose palette P cycles. Updated when user presses 1–9.</summary>
     private int _paletteCycleLayerIndex;
 
-    public TextLayersVisualizer(TextLayersVisualizerSettings? settings, IPaletteRepository paletteRepo, IEnumerable<ITextLayerRenderer> renderers, IConsoleWriter consoleWriter, UiSettings? uiSettings = null)
+    public TextLayersVisualizer(TextLayersVisualizerSettings? settings, IPaletteRepository paletteRepo, IEnumerable<ITextLayerRenderer> renderers, IConsoleWriter consoleWriter, ITextLayersKeyHandler keyHandler, ITextLayersToolbarBuilder toolbarBuilder, UiSettings? uiSettings = null)
     {
         _settings = settings;
         _paletteRepo = paletteRepo;
         _consoleWriter = consoleWriter;
         _uiSettings = uiSettings ?? new UiSettings();
         _renderers = renderers.ToDictionary(r => r.LayerType);
+        _keyHandler = keyHandler ?? throw new ArgumentNullException(nameof(keyHandler));
+        _toolbarBuilder = toolbarBuilder ?? throw new ArgumentNullException(nameof(toolbarBuilder));
     }
 
     private readonly ViewportCellBuffer _buffer = new();
@@ -176,69 +180,16 @@ public sealed class TextLayersVisualizer : IVisualizer
     public string? GetToolbarSuffix(AnalysisSnapshot snapshot)
     {
         var sortedLayers = TryGetSortedLayersSnapshot(_settings);
-        if (sortedLayers is not { Count: > 0 })
+        var context = new TextLayersToolbarContext
         {
-            var emptyPalette = _uiSettings.Palette ?? new UiPalette();
-            return AnsiConsole.ColorCode(emptyPalette.Label) + "Layers:" + AnsiConsole.ResetCode + AnsiConsole.ColorCode(emptyPalette.Dimmed) + "(config in settings, S: settings)" + AnsiConsole.ResetCode;
-        }
-        var config = _settings;
-        int idx = Math.Clamp(_paletteCycleLayerIndex, 0, sortedLayers.Count - 1);
-        var layer = sortedLayers[idx];
-        var paletteId = layer.PaletteId ?? config?.PaletteId ?? "default";
-        var paletteDef = _paletteRepo.GetById(paletteId);
-        var paletteName = paletteDef?.Name?.Trim() ?? paletteId;
-        if (string.IsNullOrWhiteSpace(paletteName))
-        {
-            paletteName = "Default";
-        }
-
-        var palette = _uiSettings.Palette ?? new UiPalette();
-        var sb = new StringBuilder();
-        AnsiConsole.AppendColored(sb, "Layers:", palette.Label);
-        for (int i = 0; i < 9; i++)
-        {
-            char digit = (char)('1' + i);
-            if (i >= sortedLayers.Count)
-            {
-                AnsiConsole.AppendColored(sb, digit, palette.Dimmed);
-            }
-            else
-            {
-                var l = sortedLayers[i];
-                if (!l.Enabled)
-                {
-                    AnsiConsole.AppendColored(sb, digit, palette.Dimmed);
-                }
-                else if (i == idx)
-                {
-                    AnsiConsole.AppendColored(sb, digit, palette.Highlighted);
-                }
-                else
-                {
-                    AnsiConsole.AppendColored(sb, digit, palette.Normal);
-                }
-            }
-        }
-        sb.Append(" (1-9 select, \u2190\u2192 type, Shift+1-9 toggle");
-        var hasAscii = sortedLayers.Any(l => l.LayerType == TextLayerType.AsciiImage);
-        if (hasAscii)
-        {
-            sb.Append(", I: next image");
-        }
-        sb.Append(", S: settings)");
-        if (layer.LayerType == TextLayerType.Oscilloscope)
-        {
-            var osc = layer.GetCustom<OscilloscopeSettings>() ?? new OscilloscopeSettings();
-            sb.Append(" | Gain:");
-            sb.Append(osc.Gain.ToString("F1", System.Globalization.CultureInfo.InvariantCulture));
-            sb.Append(" ([ ])");
-        }
-        sb.Append(" | Palette(L");
-        sb.Append(idx + 1);
-        sb.Append("):");
-        sb.Append(paletteName);
-        sb.Append(" (P)");
-        return sb.ToString();
+            Snapshot = snapshot,
+            SortedLayers = sortedLayers ?? [],
+            Settings = _settings,
+            PaletteCycleLayerIndex = _paletteCycleLayerIndex,
+            PaletteRepo = _paletteRepo,
+            UiSettings = _uiSettings
+        };
+        return _toolbarBuilder.BuildSuffix(context);
     }
 
     /// <inheritdoc />
@@ -315,117 +266,31 @@ public sealed class TextLayersVisualizer : IVisualizer
             return false;
         }
 
-        var config = _settings;
-
-        if (key.Key is ConsoleKey.P)
+        var context = new TextLayersKeyContext
         {
-            if (sortedLayers.Count == 0)
-            {
-                return false;
-            }
-            int idx = Math.Clamp(_paletteCycleLayerIndex, 0, sortedLayers.Count - 1);
-            var paletteLayer = sortedLayers[idx];
-            var currentId = paletteLayer.PaletteId ?? config?.PaletteId ?? "";
-            var all = _paletteRepo.GetAll();
-            if (all.Count == 0)
-            {
-                return true;
-            }
-            int nextIndex = 0;
-            for (int i = 0; i < all.Count; i++)
-            {
-                if (string.Equals(all[i].Id, currentId, StringComparison.OrdinalIgnoreCase))
-                {
-                    nextIndex = (i + 1) % all.Count;
-                    break;
-                }
-            }
-            var next = all[nextIndex];
-            paletteLayer.PaletteId = next.Id;
-            return true;
-        }
-
-        if (key.Key is ConsoleKey.Oem4 or ConsoleKey.Oem6)
-        {
-            int layerIndex = Math.Clamp(_paletteCycleLayerIndex, 0, sortedLayers.Count - 1);
-            var layer = sortedLayers[layerIndex];
-            if (layer.LayerType == TextLayerType.Oscilloscope)
-            {
-                var osc = layer.GetCustom<OscilloscopeSettings>() ?? new OscilloscopeSettings();
-                double delta = key.Key is ConsoleKey.Oem6 ? 0.5 : -0.5;
-                osc.Gain = Math.Clamp(osc.Gain + delta, 1.0, 10.0);
-                layer.SetCustom(osc);
-                return true;
-            }
-        }
-
-        if (key.Key is ConsoleKey.I)
-        {
-            bool anyAdvanced = false;
-            for (int i = 0; i < sortedLayers.Count && i < _layerStates.Count; i++)
-            {
-                if (sortedLayers[i].LayerType != TextLayerType.AsciiImage)
-                {
-                    continue;
-                }
-                var state = _layerStates[i];
-                state.SnippetIndex++;
-                _layerStates[i] = state;
-                anyAdvanced = true;
-            }
-            return anyAdvanced;
-        }
-
-        if (key.Key is ConsoleKey.LeftArrow or ConsoleKey.RightArrow)
-        {
-            if (sortedLayers.Count == 0)
-            {
-                return false;
-            }
-            int layerIndex = Math.Clamp(_paletteCycleLayerIndex, 0, sortedLayers.Count - 1);
-            var layer = sortedLayers[layerIndex];
-            var previousType = layer.LayerType;
-            layer.LayerType = key.Key is ConsoleKey.LeftArrow
-                ? TextLayerSettings.CycleTypeBackward(layer)
-                : TextLayerSettings.CycleTypeForward(layer);
-            ClearLayerStateWhenSwitching(layerIndex, previousType);
-            return true;
-        }
-
-        int digit = key.Key switch
-        {
-            ConsoleKey.D1 or ConsoleKey.NumPad1 => 1,
-            ConsoleKey.D2 or ConsoleKey.NumPad2 => 2,
-            ConsoleKey.D3 or ConsoleKey.NumPad3 => 3,
-            ConsoleKey.D4 or ConsoleKey.NumPad4 => 4,
-            ConsoleKey.D5 or ConsoleKey.NumPad5 => 5,
-            ConsoleKey.D6 or ConsoleKey.NumPad6 => 6,
-            ConsoleKey.D7 or ConsoleKey.NumPad7 => 7,
-            ConsoleKey.D8 or ConsoleKey.NumPad8 => 8,
-            ConsoleKey.D9 or ConsoleKey.NumPad9 => 9,
-            _ => 0
+            SortedLayers = sortedLayers,
+            Settings = _settings,
+            PaletteCycleLayerIndex = _paletteCycleLayerIndex,
+            PaletteRepo = _paletteRepo,
+            AdvanceSnippetIndex = AdvanceSnippetIndexAt,
+            ClearLayerState = ClearLayerStateWhenSwitching
         };
-        if (digit == 0 || config?.Layers is not { Count: > 0 })
+        bool handled = _keyHandler.Handle(key, context);
+        if (handled)
         {
-            return false;
+            _paletteCycleLayerIndex = context.PaletteCycleLayerIndex;
         }
+        return handled;
+    }
 
-        int layerIdx = digit - 1;
-        if (layerIdx >= sortedLayers.Count)
+    private void AdvanceSnippetIndexAt(int layerIndex)
+    {
+        if (layerIndex >= 0 && layerIndex < _layerStates.Count)
         {
-            return false;
+            var state = _layerStates[layerIndex];
+            state.SnippetIndex++;
+            _layerStates[layerIndex] = state;
         }
-
-        _paletteCycleLayerIndex = layerIdx;
-
-        if (key.Modifiers.HasFlag(ConsoleModifiers.Shift))
-        {
-            var l = sortedLayers[layerIdx];
-            l.Enabled = !l.Enabled;
-            return true;
-        }
-
-        return true;
     }
 
     private void ClearLayerStateWhenSwitching(int layerIndex, TextLayerType previousType)

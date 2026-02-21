@@ -75,6 +75,23 @@ See original analysis for context. Agents: mark `[x]` when a task is implemented
 
 ---
 
+## Phase 4: TextLayersVisualizer
+
+### 4.1 Key handler
+- [x] Add TextLayersKeyContext and ITextLayersKeyHandler (Handle(key, context))
+- [x] Implement TextLayersKeyHandler (P, [ ], I, Left/Right, 1–9, Shift+1–9)
+- [x] Register and inject into TextLayersVisualizer; HandleKey delegates to handler
+
+### 4.2 Toolbar builder
+- [x] Add TextLayersToolbarContext and ITextLayersToolbarBuilder (BuildSuffix(context))
+- [x] Implement TextLayersToolbarBuilder; GetToolbarSuffix delegates to builder
+- [x] Register and inject into TextLayersVisualizer
+
+### 4.3 Optional: palette resolver / layer state
+- [ ] If desired: extract ITextLayersPaletteResolver; per-layer state holder
+
+---
+
 ## Documentation
 
 - [x] Add ADR (e.g. 0041-god-object-refactoring-strategy.md) documenting the extraction strategy
