@@ -10,8 +10,6 @@ namespace AudioAnalyzer.Console;
 /// </summary>
 internal sealed class ShowPlaybackController
 {
-    private const double DefaultBpmFallback = 120.0;
-
     private readonly VisualizerSettings _visualizerSettings;
     private readonly IShowRepository _showRepo;
     private readonly IPresetRepository _presetRepo;
