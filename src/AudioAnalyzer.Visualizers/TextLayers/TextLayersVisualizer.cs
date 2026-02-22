@@ -1,5 +1,7 @@
 using System.Text;
 using AudioAnalyzer.Application.Abstractions;
+using AudioAnalyzer.Application.Palette;
+using AudioAnalyzer.Application.Viewports;
 using AudioAnalyzer.Domain;
 
 namespace AudioAnalyzer.Visualizers;

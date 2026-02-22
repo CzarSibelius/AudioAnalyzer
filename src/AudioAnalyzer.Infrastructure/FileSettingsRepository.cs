@@ -3,6 +3,7 @@ using System.IO.Abstractions;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AudioAnalyzer.Application.Abstractions;
+using AudioAnalyzer.Application.Palette;
 using AudioAnalyzer.Domain;
 
 namespace AudioAnalyzer.Infrastructure;

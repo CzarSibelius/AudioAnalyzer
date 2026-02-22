@@ -1,6 +1,7 @@
 using System.Globalization;
+using AudioAnalyzer.Application.Abstractions;
 
-namespace AudioAnalyzer.Application.Abstractions;
+namespace AudioAnalyzer.Application.Display;
 
 /// <summary>
 /// Unformatted (plain) display text. No ANSI escape sequences. Uses grapheme clusters

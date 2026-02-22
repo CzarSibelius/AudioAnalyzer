@@ -2,7 +2,7 @@ using System.Globalization;
 using System.Text;
 using AudioAnalyzer.Domain;
 
-namespace AudioAnalyzer.Application.Abstractions;
+namespace AudioAnalyzer.Application.Display;
 
 /// <summary>
 /// Builds console output with ANSI color codes so that whole lines can be written in one call,

@@ -20,4 +20,4 @@ Device names and other UI text can contain emoji (e.g. speaker icon) or wide cha
 
 - Device viewport and header lines maintain consistent column width regardless of emoji position.
 - Scrolling and truncation correctly account for double-width characters.
-- References: [DisplayWidth](../../src/AudioAnalyzer.Application/Abstractions/DisplayWidth.cs), [AnsiConsole](../../src/AudioAnalyzer.Application/Abstractions/AnsiConsole.cs), [ScrollingTextEngine](../../src/AudioAnalyzer.Application/ScrollingTextEngine.cs).
+- References: [DisplayWidth](../../src/AudioAnalyzer.Application/Display/DisplayWidth.cs), [AnsiConsole](../../src/AudioAnalyzer.Application/Display/AnsiConsole.cs), [ScrollingTextEngine](../../src/AudioAnalyzer.Application/ScrollingTextEngine.cs).

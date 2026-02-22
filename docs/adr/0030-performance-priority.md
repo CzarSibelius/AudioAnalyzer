@@ -12,7 +12,7 @@ The application is a real-time console audio visualizer. It redraws the terminal
 
 2. **Console write guidelines**:
    - Prefer whole-line or batched writes over many small writes (`SetCursorPosition` + `Write` is costly per call).
-   - Use ANSI escape sequences for color (per existing [AnsiConsole](../../src/AudioAnalyzer.Application/Abstractions/AnsiConsole.cs)) rather than `Console.ForegroundColor` + `Write` per segment.
+   - Use ANSI escape sequences for color (per existing [AnsiConsole](../../src/AudioAnalyzer.Application/Display/AnsiConsole.cs)) rather than `Console.ForegroundColor` + `Write` per segment.
    - For cell buffers and repetitive UI, consider diff-based rendering: only write rows/lines that changed.
    - Reuse `StringBuilder` instances where feasible to reduce allocations.
    - Avoid redundant writes when content is unchanged (e.g. toolbar line, header when now-playing unchanged).

@@ -1,4 +1,6 @@
-namespace AudioAnalyzer.Application.Abstractions;
+using AudioAnalyzer.Application.Abstractions;
+
+namespace AudioAnalyzer.Application.Display;
 
 /// <summary>
 /// Display text that may contain ANSI escape sequences (e.g. colors, styling).

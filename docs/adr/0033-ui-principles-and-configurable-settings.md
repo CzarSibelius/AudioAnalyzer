@@ -33,4 +33,4 @@ UI components (header, toolbar, modals, layer numbers) use hardcoded colors, tit
 - UI components receive `UiSettings` (or equivalent) and apply palette colors consistently.
 - `ScrollingTextViewport` gains optional color parameters for label and text; callers pass null for backward compatibility.
 - Domain: `UiSettings`, `UiPalette` types; Application: `IUiPaletteProvider` if needed for DI.
-- References: [UiSettings](../../src/AudioAnalyzer.Domain/), [ConsoleHeader](../../src/AudioAnalyzer.Console/Console/ConsoleHeader.cs), [ScrollingTextViewport](../../src/AudioAnalyzer.Application/Abstractions/ScrollingTextViewport.cs).
+- References: [UiSettings](../../src/AudioAnalyzer.Domain/), [ConsoleHeader](../../src/AudioAnalyzer.Console/Console/ConsoleHeader.cs), [ScrollingTextViewport](../../src/AudioAnalyzer.Application/ScrollingTextViewport.cs).
