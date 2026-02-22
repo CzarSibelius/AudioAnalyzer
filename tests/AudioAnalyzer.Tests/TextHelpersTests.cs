@@ -1,4 +1,5 @@
 using AudioAnalyzer.Application.Abstractions;
+using AudioAnalyzer.Application.Display;
 using Xunit;
 
 namespace AudioAnalyzer.Tests;

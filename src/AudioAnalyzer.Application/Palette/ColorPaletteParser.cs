@@ -1,6 +1,6 @@
 using AudioAnalyzer.Domain;
 
-namespace AudioAnalyzer.Application.Abstractions;
+namespace AudioAnalyzer.Application.Palette;
 
 /// <summary>
 /// Parses palette definitions (ColorPalette or PaletteDefinition) to PaletteColor for rendering.

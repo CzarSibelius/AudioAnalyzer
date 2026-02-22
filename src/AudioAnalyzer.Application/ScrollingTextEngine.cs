@@ -1,4 +1,5 @@
 using AudioAnalyzer.Application.Abstractions;
+using AudioAnalyzer.Application.Display;
 
 namespace AudioAnalyzer.Application;
 

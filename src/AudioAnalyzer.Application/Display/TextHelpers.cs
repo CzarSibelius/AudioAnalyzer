@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace AudioAnalyzer.Application.Abstractions;
+namespace AudioAnalyzer.Application.Display;
 
 /// <summary>Static utilities for text transformation and display.</summary>
 public static class TextHelpers

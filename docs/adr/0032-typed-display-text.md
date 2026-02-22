@@ -24,4 +24,4 @@ The codebase had method pairs that differed only by whether the string contained
 - Single API surface instead of `*WithAnsi` overloads.
 - ANSI-aware truncation (ellipsis and raw) is supported via `AnsiText` without additional methods.
 - Call sites must wrap: `Render(new PlainText(line))` instead of `Render(line)`.
-- **References**: [IDisplayText](../../src/AudioAnalyzer.Application/Abstractions/IDisplayText.cs), [PlainText](../../src/AudioAnalyzer.Application/Abstractions/PlainText.cs), [AnsiText](../../src/AudioAnalyzer.Application/Abstractions/AnsiText.cs), [ScrollingTextViewport](../../src/AudioAnalyzer.Application/Abstractions/ScrollingTextViewport.cs), [StaticTextViewport](../../src/AudioAnalyzer.Application/Abstractions/StaticTextViewport.cs).
+- **References**: [IDisplayText](../../src/AudioAnalyzer.Application/Abstractions/IDisplayText.cs), [PlainText](../../src/AudioAnalyzer.Application/Display/PlainText.cs), [AnsiText](../../src/AudioAnalyzer.Application/Display/AnsiText.cs), [ScrollingTextViewport](../../src/AudioAnalyzer.Application/ScrollingTextViewport.cs), [StaticTextViewport](../../src/AudioAnalyzer.Application/Display/StaticTextViewport.cs).

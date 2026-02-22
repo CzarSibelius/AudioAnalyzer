@@ -1,7 +1,7 @@
 using System.Globalization;
 using System.Text;
 
-namespace AudioAnalyzer.Application.Abstractions;
+namespace AudioAnalyzer.Application.Display;
 
 /// <summary>
 /// Calculates terminal display width (columns) for text with wide characters (emoji, CJK).

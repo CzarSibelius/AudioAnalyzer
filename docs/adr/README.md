@@ -75,4 +75,5 @@ When changing architecture, persistence, or user-facing behavior:
 
 ## Related documentation
 
-- **Visualizer specs** ([docs/visualizers/](../visualizers/README.md)): Per-layer and TextLayers reference (behavior, settings, viewport constraints). Use when adding or changing layers; ADRs describe decisions, specs describe what each layer does.
+- **UI components** ([ui-components.md](../ui-components.md)): Inventory of console UI components (shell, header, modals, viewport primitives, key handlers). Use when navigating or extending the console UI.
+- **Visualizer specs** ([../visualizers/README.md](../visualizers/README.md)): Per-layer and TextLayers reference (behavior, settings, viewport constraints). Use when adding or changing layers; ADRs describe decisions, specs describe what each layer does.

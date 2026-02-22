@@ -1,7 +1,9 @@
 using System.Text;
+using AudioAnalyzer.Application.Abstractions;
+using AudioAnalyzer.Application.Display;
 using AudioAnalyzer.Domain;
 
-namespace AudioAnalyzer.Application.Abstractions;
+namespace AudioAnalyzer.Application.Viewports;
 
 /// <summary>
 /// A 2D cell buffer for compositing layered visualizer output. Each cell holds a character and color.

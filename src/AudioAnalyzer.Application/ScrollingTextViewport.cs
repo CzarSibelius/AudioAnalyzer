@@ -1,5 +1,6 @@
 using System.Globalization;
 using AudioAnalyzer.Application.Abstractions;
+using AudioAnalyzer.Application.Display;
 using AudioAnalyzer.Domain;
 
 namespace AudioAnalyzer.Application;

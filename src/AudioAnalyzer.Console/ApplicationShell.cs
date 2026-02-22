@@ -1,6 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using AudioAnalyzer.Application;
 using AudioAnalyzer.Application.Abstractions;
+using AudioAnalyzer.Application.Palette;
 using AudioAnalyzer.Domain;
 using AudioAnalyzer.Visualizers;
 

@@ -23,4 +23,4 @@ Labeled UI regions (header cells, toolbar cells) display "label: value" but do n
 - Users see discoverable shortcuts directly in labels.
 - `ScrollingTextViewport` gains `FormatLabel` and an extended `RenderWithLabel` overload.
 - Call sites (ConsoleHeader, VisualizationPaneLayout) pass hotkeys where applicable; existing "(V)" or "(P)" suffixes after values are removed.
-- References: [ScrollingTextViewport](../../src/AudioAnalyzer.Application/Abstractions/ScrollingTextViewport.cs), [ConsoleHeader](../../src/AudioAnalyzer.Console/Console/ConsoleHeader.cs), [VisualizationPaneLayout](../../src/AudioAnalyzer.Console/Console/VisualizationPaneLayout.cs).
+- References: [ScrollingTextViewport](../../src/AudioAnalyzer.Application/ScrollingTextViewport.cs), [ConsoleHeader](../../src/AudioAnalyzer.Console/Console/ConsoleHeader.cs), [VisualizationPaneLayout](../../src/AudioAnalyzer.Console/Console/VisualizationPaneLayout.cs).

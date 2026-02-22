@@ -1,4 +1,6 @@
-namespace AudioAnalyzer.Application.Abstractions;
+using AudioAnalyzer.Application.Abstractions;
+
+namespace AudioAnalyzer.Application.Display;
 
 /// <summary>
 /// Renders static text within a fixed width by truncating. Use for titles, labels, and other
