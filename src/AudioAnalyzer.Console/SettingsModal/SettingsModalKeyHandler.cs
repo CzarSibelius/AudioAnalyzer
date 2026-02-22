@@ -5,7 +5,7 @@ using AudioAnalyzer.Visualizers;
 namespace AudioAnalyzer.Console;
 
 /// <summary>Handles key input for the settings overlay: layer list, settings list, renaming, setting edit, preset create.</summary>
-internal sealed class SettingsModalKeyHandler : ISettingsModalKeyHandler
+internal sealed class SettingsModalKeyHandler : IKeyHandler<SettingsModalKeyContext>
 {
     private const int NavKeyRepeatMs = 120;
     private readonly IPaletteRepository _paletteRepo;

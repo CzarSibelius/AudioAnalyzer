@@ -57,6 +57,7 @@ Decisions are numbered and kept under version control so the rationale stays wit
 | [0039](0039-display-width-terminal-columns.md) | Display width for terminal columns (emoji, wide characters) | Accepted |
 | [0040](0040-dependency-injection-preference.md) | Prefer dependency injection unless performance requires otherwise | Accepted |
 | [0041](0041-god-object-refactoring-strategy.md) | God object refactoring strategy (ApplicationShell, AnalysisEngine, SettingsModal) | Accepted |
+| [0042](0042-ui-component-renderer-keyhandler-pattern.md) | UI component pattern — renderer plus IKeyHandler&lt;TContext&gt; | Accepted |
 
 ## Process
 

@@ -20,7 +20,7 @@ internal sealed class ApplicationShell
     private readonly IVisualizationRenderer _renderer;
     private readonly ShowPlaybackController _showPlaybackController;
     private readonly IHeaderDrawer _headerDrawer;
-    private readonly IMainLoopKeyHandler _keyHandler;
+    private readonly IKeyHandler<MainLoopKeyContext> _keyHandler;
     private readonly IAppSettingsPersistence _settingsPersistence;
     private readonly IDeviceSelectionModal _deviceSelectionModal;
     private readonly IHelpModal _helpModal;
@@ -40,7 +40,7 @@ internal sealed class ApplicationShell
         IVisualizationRenderer renderer,
         ShowPlaybackController showPlaybackController,
         IHeaderDrawer headerDrawer,
-        IMainLoopKeyHandler keyHandler,
+        IKeyHandler<MainLoopKeyContext> keyHandler,
         IAppSettingsPersistence settingsPersistence,
         IDeviceSelectionModal deviceSelectionModal,
         IHelpModal helpModal,
@@ -126,7 +126,7 @@ internal sealed class ApplicationShell
                 else
                 {
                     var ctx = CreateKeyContext(consoleLock, open => modalOpen = open);
-                    if (_keyHandler.TryHandle(key, ctx))
+                    if (_keyHandler.Handle(key, ctx))
                     {
                         if (ctx.ShouldQuit)
                         {

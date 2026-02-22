@@ -19,12 +19,12 @@ public sealed class TextLayersVisualizer : IVisualizer
     private readonly IConsoleWriter _consoleWriter;
     private readonly UiSettings _uiSettings;
     private readonly Dictionary<TextLayerType, ITextLayerRenderer> _renderers;
-    private readonly ITextLayersKeyHandler _keyHandler;
+    private readonly IKeyHandler<TextLayersKeyContext> _keyHandler;
     private readonly ITextLayersToolbarBuilder _toolbarBuilder;
     /// <summary>Index of the layer whose palette P cycles. Updated when user presses 1–9.</summary>
     private int _paletteCycleLayerIndex;
 
-    public TextLayersVisualizer(TextLayersVisualizerSettings? settings, IPaletteRepository paletteRepo, IEnumerable<ITextLayerRenderer> renderers, IConsoleWriter consoleWriter, ITextLayersKeyHandler keyHandler, ITextLayersToolbarBuilder toolbarBuilder, UiSettings? uiSettings = null)
+    public TextLayersVisualizer(TextLayersVisualizerSettings? settings, IPaletteRepository paletteRepo, IEnumerable<ITextLayerRenderer> renderers, IConsoleWriter consoleWriter, IKeyHandler<TextLayersKeyContext> keyHandler, ITextLayersToolbarBuilder toolbarBuilder, UiSettings? uiSettings = null)
     {
         _settings = settings;
         _paletteRepo = paletteRepo;

@@ -1,12 +1,13 @@
+using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Domain;
 
 namespace AudioAnalyzer.Console;
 
 /// <summary>Handles main loop keys: Tab, V, S, D, H, +/-, P, F, Escape.</summary>
-internal sealed class MainLoopKeyHandler : IMainLoopKeyHandler
+internal sealed class MainLoopKeyHandler : IKeyHandler<MainLoopKeyContext>
 {
     /// <inheritdoc />
-    public bool TryHandle(ConsoleKeyInfo key, MainLoopKeyContext ctx)
+    public bool Handle(ConsoleKeyInfo key, MainLoopKeyContext ctx)
     {
         switch (key.Key)
         {

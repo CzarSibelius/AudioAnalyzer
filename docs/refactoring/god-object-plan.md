@@ -15,10 +15,10 @@ See original analysis for context. Agents: mark `[x]` when a task is implemented
 - [x] Remove duplicated header argument lists from ApplicationShell
 
 ### 1.2 Key handlers / dispatcher
-- [x] Add `IMainLoopKeyHandler` (TryHandle(key, context)) and `MainLoopKeyContext`
+- [x] Add `IKeyHandler<MainLoopKeyContext>` (Handle(key, context)) and `MainLoopKeyContext`
 - [x] Implement `MainLoopKeyHandler` with switch for Tab, V, S, D, H, +/-, P, F, Escape
-- [x] Register IMainLoopKeyHandler; inject into ApplicationShell
-- [x] Replace switch(key.Key) in ApplicationShell with `_keyHandler.TryHandle(key, ctx)`
+- [x] Register IKeyHandler&lt;MainLoopKeyContext&gt;; inject into ApplicationShell
+- [x] Replace switch(key.Key) in ApplicationShell with `_keyHandler.Handle(key, ctx)`
 
 ### 1.3 Device lifecycle
 - [x] Add `IDeviceCaptureController` interface (StartCapture, StopCapture, RestartCapture, Shutdown)
@@ -66,7 +66,7 @@ See original analysis for context. Agents: mark `[x]` when a task is implemented
 - [x] Move DrawSettingsContent logic into renderer; SettingsModal calls _renderer.Draw(state)
 
 ### 3.3 Settings modal key handler
-- [x] Add ISettingsModalKeyHandler with HandleSettingsKey(key, state) returning Continue/Close/Refresh
+- [x] Add IKeyHandler&lt;SettingsModalKeyContext&gt; with Handle(key, context)
 - [x] Move layer selection, type cycling, preset rename/create, setting edit logic into handler
 - [x] SettingsModal: read key → handler updates state → modal reacts (redraw, close)
 
@@ -78,7 +78,7 @@ See original analysis for context. Agents: mark `[x]` when a task is implemented
 ## Phase 4: TextLayersVisualizer
 
 ### 4.1 Key handler
-- [x] Add TextLayersKeyContext and ITextLayersKeyHandler (Handle(key, context))
+- [x] Add TextLayersKeyContext and IKeyHandler&lt;TextLayersKeyContext&gt; (Handle(key, context))
 - [x] Implement TextLayersKeyHandler (P, [ ], I, Left/Right, 1–9, Shift+1–9)
 - [x] Register and inject into TextLayersVisualizer; HandleKey delegates to handler
 
