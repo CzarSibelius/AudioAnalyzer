@@ -146,6 +146,7 @@ internal sealed class SettingDescriptor
         [TextLayerType.LlamaStyle] = typeof(LlamaStyleSettings),
         [TextLayerType.NowPlaying] = typeof(NowPlayingSettings),
         [TextLayerType.Mirror] = typeof(MirrorSettings),
+        [TextLayerType.Maschine] = typeof(MaschineSettings),
         [TextLayerType.Fill] = typeof(FillSettings),
     };
 

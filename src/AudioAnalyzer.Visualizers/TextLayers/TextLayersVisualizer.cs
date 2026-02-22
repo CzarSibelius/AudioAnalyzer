@@ -48,6 +48,8 @@ public sealed class TextLayersVisualizer : IVisualizer
     private readonly List<BeatCirclesState> _beatCirclesStateByLayer = new();
     /// <summary>Unknown Pleasures state per layer index (only for UnknownPleasures layers).</summary>
     private readonly List<UnknownPleasuresState> _unknownPleasuresStateByLayer = new();
+    /// <summary>Maschine state per layer index (only for Maschine layers).</summary>
+    private readonly List<MaschineState> _maschineStateByLayer = new();
     private int _lastBeatCount = -1;
     private int _beatFlashFrames;
 
@@ -96,6 +98,10 @@ public sealed class TextLayersVisualizer : IVisualizer
         {
             _unknownPleasuresStateByLayer.Add(new UnknownPleasuresState());
         }
+        while (_maschineStateByLayer.Count < sortedLayers.Count)
+        {
+            _maschineStateByLayer.Add(new MaschineState());
+        }
 
         if (snapshot.BeatCount != _lastBeatCount)
         {
@@ -133,7 +139,8 @@ public sealed class TextLayersVisualizer : IVisualizer
                 AsciiImageStateForLayer = _asciiImageStateByLayer[i],
                 GeissBackgroundStateForLayer = _geissBackgroundStateByLayer[i],
                 BeatCirclesStateForLayer = _beatCirclesStateByLayer[i],
-                UnknownPleasuresStateForLayer = _unknownPleasuresStateByLayer[i]
+                UnknownPleasuresStateForLayer = _unknownPleasuresStateByLayer[i],
+                MaschineStateForLayer = _maschineStateByLayer[i]
             };
             state = renderer.Draw(layer, ref state, ctx);
             _layerStates[i] = state;
@@ -314,6 +321,10 @@ public sealed class TextLayersVisualizer : IVisualizer
         if (previousType == TextLayerType.UnknownPleasures && layerIndex < _unknownPleasuresStateByLayer.Count)
         {
             _unknownPleasuresStateByLayer[layerIndex] = new UnknownPleasuresState();
+        }
+        if (previousType == TextLayerType.Maschine && layerIndex < _maschineStateByLayer.Count)
+        {
+            _maschineStateByLayer[layerIndex] = new MaschineState();
         }
     }
 }

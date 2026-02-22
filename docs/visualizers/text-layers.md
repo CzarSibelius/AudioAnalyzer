@@ -54,6 +54,8 @@ A **Show** is an ordered collection of presets with per-entry duration. In **Sho
     - Oscilloscope: `Gain` (1.0–10.0), `Filled` (bool)
     - LlamaStyle: `ShowVolumeBar`, `ShowRowLabels`, `ShowFrequencyLabels` (bool); `ColorScheme` ("Winamp"|"Spectrum"); `PeakMarkerStyle` ("Blocks"|"DoubleLine"); `BarWidth` (2|3)
     - NowPlaying: `VerticalPosition` ("Top"|"Center"|"Bottom")
+    - Mirror: `Direction`, `SplitPercent`, `Rotation`
+    - Maschine: `AccentColorIndex` (int), `AccentColumnMode` (Fixed|Moving)
     - Fill: `FillType` (FullBlock, HalfBlockUpper, HalfBlockLower, LightShade, MediumShade, DarkShade, Space, Custom), `CustomChar` (string, used when FillType is Custom)
 
 ## Key bindings

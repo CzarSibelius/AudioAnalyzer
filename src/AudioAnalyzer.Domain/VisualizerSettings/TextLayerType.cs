@@ -19,5 +19,6 @@ public enum TextLayerType
     LlamaStyle,
     NowPlaying,
     Mirror,
+    Maschine,
     Fill
 }
