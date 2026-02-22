@@ -27,4 +27,7 @@ public sealed class TextLayerDrawContext
 
     /// <summary>State for the current layer when it is UnknownPleasures. Only used by UnknownPleasuresLayer.</summary>
     public required UnknownPleasuresState UnknownPleasuresStateForLayer { get; init; }
+
+    /// <summary>State for the current layer when it is Maschine. Only used by MaschineLayer.</summary>
+    public required MaschineState MaschineStateForLayer { get; init; }
 }
