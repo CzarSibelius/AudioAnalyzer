@@ -146,6 +146,7 @@ internal sealed class SettingDescriptor
         [TextLayerType.LlamaStyle] = typeof(LlamaStyleSettings),
         [TextLayerType.NowPlaying] = typeof(NowPlayingSettings),
         [TextLayerType.Mirror] = typeof(MirrorSettings),
+        [TextLayerType.Fill] = typeof(FillSettings),
     };
 
     private static void AddCustomDescriptors(List<SettingDescriptor> list, TextLayerSettings layer, Type customType)
