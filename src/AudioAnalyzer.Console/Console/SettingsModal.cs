@@ -14,14 +14,14 @@ internal sealed class SettingsModal : ISettingsModal
     private readonly VisualizerSettings _visualizerSettings;
     private readonly IPresetRepository _presetRepository;
     private readonly ISettingsModalRenderer _renderer;
-    private readonly ISettingsModalKeyHandler _keyHandler;
+    private readonly IKeyHandler<SettingsModalKeyContext> _keyHandler;
 
     public SettingsModal(
         AnalysisEngine analysisEngine,
         VisualizerSettings visualizerSettings,
         IPresetRepository presetRepository,
         ISettingsModalRenderer renderer,
-        ISettingsModalKeyHandler keyHandler)
+        IKeyHandler<SettingsModalKeyContext> keyHandler)
     {
         _analysisEngine = analysisEngine ?? throw new ArgumentNullException(nameof(analysisEngine));
         _visualizerSettings = visualizerSettings ?? throw new ArgumentNullException(nameof(visualizerSettings));

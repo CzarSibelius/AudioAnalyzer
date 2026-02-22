@@ -9,9 +9,9 @@ ApplicationShell, AnalysisEngine, and SettingsModal had grown into large, multi-
 ## Decision
 
 1. **Refactor in three phases**, one per “god object”:
-   - **ApplicationShell**: Extract header drawing (IHeaderDrawer), key handling (IMainLoopKeyHandler + MainLoopKeyContext), device lifecycle (IDeviceCaptureController), and settings persistence (IAppSettingsPersistence). Shell keeps the main loop and delegates to these services.
+   - **ApplicationShell**: Extract header drawing (IHeaderDrawer), key handling (IKeyHandler&lt;MainLoopKeyContext&gt; + MainLoopKeyContext), device lifecycle (IDeviceCaptureController), and settings persistence (IAppSettingsPersistence). Shell keeps the main loop and delegates to these services.
    - **AnalysisEngine**: Extract beat detection (IBeatDetector), volume analysis (IVolumeAnalyzer), and FFT band pipeline (IFftBandProcessor). Engine coordinates and fills the snapshot; hot path remains in-process with DI-injected services unless profiling justifies otherwise (ADR-0030, ADR-0040).
-   - **SettingsModal**: Extract modal state (SettingsModalState), rendering (ISettingsModalRenderer), and key handling (ISettingsModalKeyHandler + SettingsModalKeyContext). Modal runs the overlay loop and delegates draw/handle to the renderer and handler.
+   - **SettingsModal**: Extract modal state (SettingsModalState), rendering (ISettingsModalRenderer), and key handling (IKeyHandler&lt;SettingsModalKeyContext&gt; + SettingsModalKeyContext). Modal runs the overlay loop and delegates draw/handle to the renderer and handler.
 
 2. **Use a single task list** for tracking: [docs/refactoring/god-object-plan.md](../refactoring/god-object-plan.md). Mark tasks `[x]` when implemented. Optional items (e.g. panel components, profiling) stay in the plan as unchecked until needed.
 

@@ -4,7 +4,7 @@ using AudioAnalyzer.Domain;
 namespace AudioAnalyzer.Visualizers;
 
 /// <summary>Handles key input for the TextLayers visualizer: 1–9 select/toggle, P palette, [ ] gain, I next image, Left/Right cycle type.</summary>
-public sealed class TextLayersKeyHandler : ITextLayersKeyHandler
+public sealed class TextLayersKeyHandler : IKeyHandler<TextLayersKeyContext>
 {
     /// <inheritdoc />
     public bool Handle(ConsoleKeyInfo key, TextLayersKeyContext context)

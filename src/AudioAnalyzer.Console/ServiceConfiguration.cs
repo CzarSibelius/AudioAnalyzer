@@ -54,7 +54,7 @@ internal static class ServiceConfiguration
         services.AddTextLayerRenderers();
 
         services.AddSingleton<IConsoleWriter, ConsoleWriter>();
-        services.AddSingleton<ITextLayersKeyHandler, TextLayersKeyHandler>();
+        services.AddSingleton<IKeyHandler<TextLayersKeyContext>, TextLayersKeyHandler>();
         services.AddSingleton<ITextLayersToolbarBuilder, TextLayersToolbarBuilder>();
 
         services.AddSingleton<IVisualizer>(sp => new TextLayersVisualizer(
@@ -62,7 +62,7 @@ internal static class ServiceConfiguration
             sp.GetRequiredService<IPaletteRepository>(),
             sp.GetRequiredService<IEnumerable<ITextLayerRenderer>>(),
             sp.GetRequiredService<IConsoleWriter>(),
-            sp.GetRequiredService<ITextLayersKeyHandler>(),
+            sp.GetRequiredService<IKeyHandler<TextLayersKeyContext>>(),
             sp.GetRequiredService<ITextLayersToolbarBuilder>(),
             sp.GetRequiredService<UiSettings>()));
 
@@ -78,10 +78,10 @@ internal static class ServiceConfiguration
         services.AddSingleton<IDeviceSelectionModal, DeviceSelectionModal>();
         services.AddSingleton<IHelpModal, HelpModal>();
         services.AddSingleton<ISettingsModalRenderer, SettingsModalRenderer>();
-        services.AddSingleton<ISettingsModalKeyHandler, SettingsModalKeyHandler>();
+        services.AddSingleton<IKeyHandler<SettingsModalKeyContext>, SettingsModalKeyHandler>();
         services.AddSingleton<ISettingsModal, SettingsModal>();
         services.AddSingleton<IShowEditModal, ShowEditModal>();
-        services.AddSingleton<IMainLoopKeyHandler, MainLoopKeyHandler>();
+        services.AddSingleton<IKeyHandler<MainLoopKeyContext>, MainLoopKeyHandler>();
         services.AddSingleton<IDeviceCaptureController, DeviceCaptureController>();
         services.AddSingleton<IAppSettingsPersistence, AppSettingsPersistence>();
         services.AddSingleton<IHeaderDrawer>(sp =>
