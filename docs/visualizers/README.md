@@ -20,6 +20,7 @@ The first row is the visualizer; the rest are **layer types** within it. Press *
 | Layer | unknownpleasures | Unknown Pleasures | [unknown-pleasures.md](unknown-pleasures.md) | Stacked waveform snapshots, beat-triggered |
 | Layer | asciiimage | ASCII Image | [ascii-image.md](ascii-image.md) | Images as ASCII art from folder; scroll/zoom; layer palette or image colors |
 | Layer | mirror | Mirror | [mirror.md](mirror.md) | Mirrors buffer horizontally or vertically (direction, split %, rotation); place above layers to mirror |
+| Layer | fill | Fill | [fill.md](fill.md) | Full-viewport fill with configured color and fill character (block, shades, space, or custom ASCII) |
 
 ## Implementation layout
 
