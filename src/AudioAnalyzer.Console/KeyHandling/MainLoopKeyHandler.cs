@@ -13,7 +13,7 @@ internal sealed class MainLoopKeyHandler : IKeyHandler<MainLoopKeyContext>
         {
             case ConsoleKey.Tab:
                 ctx.OnModeSwitch();
-                if (!ctx.Orchestrator.FullScreen)
+                if (!ctx.DisplayState.FullScreen)
                 {
                     ctx.Orchestrator.RedrawWithFullHeader();
                 }
@@ -28,7 +28,7 @@ internal sealed class MainLoopKeyHandler : IKeyHandler<MainLoopKeyContext>
                 {
                     ctx.OnPresetCycle();
                     ctx.SaveSettings();
-                    if (!ctx.Orchestrator.FullScreen)
+                    if (!ctx.DisplayState.FullScreen)
                     {
                         ctx.Orchestrator.RedrawWithFullHeader();
                     }
@@ -52,7 +52,7 @@ internal sealed class MainLoopKeyHandler : IKeyHandler<MainLoopKeyContext>
                         ctx.SaveVisualizerSettings();
                     });
                 }
-                if (!ctx.Orchestrator.FullScreen)
+                if (!ctx.DisplayState.FullScreen)
                 {
                     ctx.Orchestrator.RedrawWithFullHeader();
                 }
@@ -77,7 +77,7 @@ internal sealed class MainLoopKeyHandler : IKeyHandler<MainLoopKeyContext>
                 {
                     ctx.RestartCapture();
                 }
-                if (!ctx.Orchestrator.FullScreen)
+                if (!ctx.DisplayState.FullScreen)
                 {
                     ctx.Orchestrator.RedrawWithFullHeader();
                 }
@@ -93,7 +93,7 @@ internal sealed class MainLoopKeyHandler : IKeyHandler<MainLoopKeyContext>
                     onClose: () =>
                     {
                         ctx.SetModalOpen(false);
-                        if (ctx.Orchestrator.FullScreen)
+                        if (ctx.DisplayState.FullScreen)
                         {
                             ctx.Orchestrator.Redraw();
                         }
@@ -121,8 +121,8 @@ internal sealed class MainLoopKeyHandler : IKeyHandler<MainLoopKeyContext>
                 return true;
 
             case ConsoleKey.F:
-                ctx.Orchestrator.FullScreen = !ctx.Orchestrator.FullScreen;
-                if (ctx.Orchestrator.FullScreen)
+                ctx.DisplayState.FullScreen = !ctx.DisplayState.FullScreen;
+                if (ctx.DisplayState.FullScreen)
                 {
                     System.Console.Clear();
                     System.Console.CursorVisible = false;

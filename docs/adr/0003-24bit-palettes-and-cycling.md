@@ -19,7 +19,7 @@ We want to support 24-bit true color in palette-aware visualizers, store palette
 ## Consequences
 
 - **Domain**: `PaletteColor`, `PaletteDefinition`, `PaletteColorEntry`; `AppSettings.SelectedPaletteId`. `ColorPalette` remains for legacy settings read.
-- **Application**: `AnsiConsole` gains 24-bit and `PaletteColor` overloads; `ColorPaletteParser` parses both `PaletteDefinition` and `ColorPalette` to `IReadOnlyList<PaletteColor>`; `IPaletteRepository` and `PaletteInfo`; snapshot carries `PaletteColor` list and optional `CurrentPaletteName`.
+- **Application**: `AnsiConsole` gains 24-bit and `PaletteColor` overloads; `ColorPaletteParser` parses both `PaletteDefinition` and `ColorPalette` to `IReadOnlyList<PaletteColor>`; `IPaletteRepository` and `PaletteInfo`. (Snapshot no longer carries palette data; toolbar reads palette name from the renderer. See [ADR-0024](0024-analysissnapshot-frame-context.md).)
 - **Infrastructure**: `FilePaletteRepository`; renderer accepts and passes `IReadOnlyList<PaletteColor>?` and optional display name.
 - **Console**: Resolves palette at startup (repository or legacy); key P cycles palettes and persists `SelectedPaletteId`; help and toolbar document P and show palette name.
 - **Documentation**: README and ADR index updated; palette JSON format and directory location documented.

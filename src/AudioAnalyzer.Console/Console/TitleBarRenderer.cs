@@ -12,13 +12,13 @@ internal sealed class TitleBarRenderer : ITitleBarRenderer
 
     private readonly UiSettings _uiSettings;
     private readonly VisualizerSettings _visualizerSettings;
-    private readonly IEnumerable<IVisualizer> _visualizers;
+    private readonly IVisualizer _visualizer;
 
-    public TitleBarRenderer(UiSettings uiSettings, VisualizerSettings visualizerSettings, IEnumerable<IVisualizer> visualizers)
+    public TitleBarRenderer(UiSettings uiSettings, VisualizerSettings visualizerSettings, IVisualizer visualizer)
     {
         _uiSettings = uiSettings ?? throw new ArgumentNullException(nameof(uiSettings));
         _visualizerSettings = visualizerSettings ?? throw new ArgumentNullException(nameof(visualizerSettings));
-        _visualizers = visualizers ?? throw new ArgumentNullException(nameof(visualizers));
+        _visualizer = visualizer ?? throw new ArgumentNullException(nameof(visualizer));
     }
 
     /// <inheritdoc />
@@ -159,10 +159,8 @@ internal sealed class TitleBarRenderer : ITitleBarRenderer
 
     private (string Name, int ZIndex) GetLayerNameAndZIndex()
     {
-        var textLayers = _visualizers.FirstOrDefault(v =>
-            string.Equals(v.TechnicalName, "textlayers", StringComparison.OrdinalIgnoreCase));
-        string raw = textLayers?.GetActiveLayerDisplayName() ?? "none";
-        int zIndex = textLayers?.GetActiveLayerZIndex() ?? -1;
+        string raw = _visualizer.GetActiveLayerDisplayName() ?? "none";
+        int zIndex = _visualizer.GetActiveLayerZIndex();
         return (TextHelpers.Hackerize(raw), zIndex);
     }
 }

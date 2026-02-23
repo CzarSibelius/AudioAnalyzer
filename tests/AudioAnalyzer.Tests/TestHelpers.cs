@@ -33,7 +33,6 @@ internal static class TestHelpers
             DisplayStartRow = 8,
             TerminalWidth = width,
             TerminalHeight = height,
-            FullScreenMode = false,
             Volume = 0.5f,
             CurrentBpm = 120,
             BeatSensitivity = 1.3,

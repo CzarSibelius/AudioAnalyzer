@@ -16,7 +16,7 @@ The header title was a centered static string from `UiSettings.Title`. Users wan
 
 4. **UiSettings extension**: `TitleBarAppName` (optional short/stylized name, e.g. "aUdioNLZR"); `TitleBarPalette` (optional custom colors for AppName, Mode, Preset, Layer, Separator, Frame).
 
-5. **IVisualizer extension**: Optional `GetActiveLayerDisplayName()` returns snake_case layer type for the active layer; optional `GetActiveLayerZIndex()` returns the 0-based z-order index (or -1 if not applicable). TextLayersVisualizer implements both; other visualizers use defaults (null, -1).
+5. **IVisualizer extension**: Optional `GetActiveLayerDisplayName()` returns snake_case layer type for the active layer; optional `GetActiveLayerZIndex()` returns the 0-based z-order index (or -1 if not applicable). The title bar receives the single `IVisualizer` via constructor injection and calls these methods for the breadcrumb. TextLayersVisualizer implements both; the interface defaults are null and -1.
 
 6. **ConsoleHeader integration**: `DrawMain` and `DrawHeaderOnly` accept `ITitleBarRenderer` and delegate lines 1–3 (title box) to it. The title bar renders the frame and content.
 

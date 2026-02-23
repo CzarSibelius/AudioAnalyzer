@@ -7,6 +7,13 @@ namespace AudioAnalyzer.Console;
 /// Orchestrates display and rendering: holds display state, header callbacks, render guard and console lock,
 /// and drives header refresh and visualizer render using analysis results from the analysis engine.
 /// </summary>
+/// <remarks>
+/// <para><strong>Responsibility.</strong> Orchestrator owns the display pipeline: overlay, header row, when to refresh the header
+/// and when to run one frame (throttling, guard, dimensions), and execution of one frame
+/// (header callback + engine snapshot + renderer). It receives audio via <see cref="IVisualizationOrchestrator.OnAudioData"/>
+/// and drives throttled render from there. <see cref="ApplicationShell"/> configures this orchestrator and triggers
+/// Redraw/RedrawWithFullHeader in response to user or app events; the orchestrator does not decide app logic.</para>
+/// </remarks>
 internal sealed class VisualizationOrchestrator : IVisualizationOrchestrator
 {
     private const int UpdateIntervalMs = 50;
@@ -18,7 +25,6 @@ internal sealed class VisualizationOrchestrator : IVisualizationOrchestrator
     private int _lastTerminalHeight;
     private int _headerStartRow = 6;
     private int _displayStartRow = 6;
-    private bool _fullScreen;
     private int _overlayRowCount;
     private Action? _onRedrawHeader;
     private Action? _onRefreshHeader;
@@ -29,27 +35,20 @@ internal sealed class VisualizationOrchestrator : IVisualizationOrchestrator
     private readonly AnalysisEngine _engine;
     private readonly IVisualizationRenderer _renderer;
     private readonly IDisplayDimensions _displayDimensions;
+    private readonly IDisplayState _displayState;
 
     public VisualizationOrchestrator(
         AnalysisEngine engine,
         IVisualizationRenderer renderer,
-        IDisplayDimensions displayDimensions)
+        IDisplayDimensions displayDimensions,
+        IDisplayState displayState)
     {
         _engine = engine ?? throw new ArgumentNullException(nameof(engine));
         _renderer = renderer ?? throw new ArgumentNullException(nameof(renderer));
         _displayDimensions = displayDimensions ?? throw new ArgumentNullException(nameof(displayDimensions));
+        _displayState = displayState ?? throw new ArgumentNullException(nameof(displayState));
+        _displayState.Changed += (_, _) => UpdateDisplayStartRow();
         UpdateNumBandsFromDimensions();
-    }
-
-    /// <inheritdoc />
-    public bool FullScreen
-    {
-        get => _fullScreen;
-        set
-        {
-            _fullScreen = value;
-            UpdateDisplayStartRow();
-        }
     }
 
     /// <inheritdoc />
@@ -87,7 +86,7 @@ internal sealed class VisualizationOrchestrator : IVisualizationOrchestrator
         {
             return;
         }
-        if (_fullScreen || _overlayRowCount > 0)
+        if (_displayState.FullScreen || _overlayRowCount > 0)
         {
             return;
         }
@@ -158,7 +157,7 @@ internal sealed class VisualizationOrchestrator : IVisualizationOrchestrator
             UpdateNumBandsFromDimensions();
             _lastTerminalWidth = w;
             _lastTerminalHeight = h;
-            if (!_fullScreen && _overlayRowCount == 0)
+            if (!_displayState.FullScreen && _overlayRowCount == 0)
             {
                 _onRedrawHeader?.Invoke();
             }
@@ -188,7 +187,7 @@ internal sealed class VisualizationOrchestrator : IVisualizationOrchestrator
     {
         void RenderCore()
         {
-            if (!_fullScreen && _overlayRowCount == 0)
+            if (!_displayState.FullScreen && _overlayRowCount == 0)
             {
                 if (useFullHeaderRedraw)
                 {
@@ -201,7 +200,6 @@ internal sealed class VisualizationOrchestrator : IVisualizationOrchestrator
             }
 
             var snapshot = _engine.GetSnapshot();
-            snapshot.FullScreenMode = _fullScreen;
             snapshot.DisplayStartRow = _displayStartRow;
             snapshot.TerminalWidth = w;
             snapshot.TerminalHeight = h;
@@ -241,7 +239,7 @@ internal sealed class VisualizationOrchestrator : IVisualizationOrchestrator
         {
             _displayStartRow = _overlayRowCount;
         }
-        else if (_fullScreen)
+        else if (_displayState.FullScreen)
         {
             _displayStartRow = 0;
         }

@@ -1,7 +1,7 @@
 namespace AudioAnalyzer.Application.Abstractions;
 
 /// <summary>
-/// Frame context for rendering. Contains analysis data (filled by the engine) and optional display data (filled by the renderer).
+/// Frame context for rendering. Contains analysis data (layout, FFT, waveform, volume, beats) filled by the engine.
 /// Consumed by IVisualizationRenderer and IVisualizer implementations.
 /// </summary>
 public sealed class AnalysisSnapshot
@@ -9,8 +9,6 @@ public sealed class AnalysisSnapshot
     public int DisplayStartRow { get; set; }
     public int TerminalWidth { get; set; }
     public int TerminalHeight { get; set; }
-    /// <summary>When true, the renderer uses the full console for the visualizer and skips the toolbar.</summary>
-    public bool FullScreenMode { get; set; }
 
     public float Volume { get; set; }
     public double CurrentBpm { get; set; }
@@ -32,7 +30,4 @@ public sealed class AnalysisSnapshot
     public float RightChannel { get; set; }
     public float LeftPeakHold { get; set; }
     public float RightPeakHold { get; set; }
-
-    /// <summary>Display name of the current palette (for toolbar). Set by the renderer when palette is applied.</summary>
-    public string? CurrentPaletteName { get; set; }
 }

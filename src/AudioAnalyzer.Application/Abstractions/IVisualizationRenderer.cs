@@ -4,6 +4,7 @@ namespace AudioAnalyzer.Application.Abstractions;
 
 public interface IVisualizationRenderer
 {
+    /// <summary>Renders the toolbar and visualizer. Full-screen mode is read from injected display state.</summary>
     void Render(AnalysisSnapshot snapshot);
 
     /// <summary>Sets the palette for the visualizer. Call when palette selection changes.</summary>
