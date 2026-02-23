@@ -5,17 +5,19 @@ using AudioAnalyzer.Domain;
 namespace AudioAnalyzer.Console;
 
 /// <summary>Renders the toolbar and visualizer to the console. Implements IVisualizationRenderer.</summary>
-public sealed class VisualizationPaneLayout : IVisualizationRenderer
+internal sealed class VisualizationPaneLayout : IVisualizationRenderer
 {
     private readonly IVisualizer _visualizer;
     private readonly UiSettings _uiSettings;
+    private readonly IDisplayState _displayState;
     private readonly IScrollingTextViewport _labelViewport;
     private (IReadOnlyList<PaletteColor>? Palette, string? DisplayName) _palette;
 
-    public VisualizationPaneLayout(IVisualizer visualizer, UiSettings? uiSettings, IScrollingTextViewportFactory viewportFactory)
+    public VisualizationPaneLayout(IVisualizer visualizer, UiSettings? uiSettings, IDisplayState displayState, IScrollingTextViewportFactory viewportFactory)
     {
         _visualizer = visualizer ?? throw new ArgumentNullException(nameof(visualizer));
         _uiSettings = uiSettings ?? new UiSettings();
+        _displayState = displayState ?? throw new ArgumentNullException(nameof(displayState));
         _labelViewport = viewportFactory.CreateViewport();
     }
 
@@ -40,7 +42,7 @@ public sealed class VisualizationPaneLayout : IVisualizationRenderer
             int visualizerStartRow;
             int maxLines;
 
-            if (snapshot.FullScreenMode)
+            if (_displayState.FullScreen)
             {
                 visualizerStartRow = 0;
                 maxLines = Math.Max(1, snapshot.TerminalHeight - 1);
@@ -65,11 +67,6 @@ public sealed class VisualizationPaneLayout : IVisualizationRenderer
             {
                 ClearRegion(visualizerStartRow, maxLines, termWidth);
                 _hasRendered = true;
-            }
-
-            if (_visualizer is { SupportsPaletteCycling: true })
-            {
-                snapshot.CurrentPaletteName = _palette.DisplayName;
             }
 
             if (_visualizer != null)
@@ -145,7 +142,7 @@ public sealed class VisualizationPaneLayout : IVisualizationRenderer
         }
 
         string suffixCell = GetSuffixCell(snapshot, cell1Width);
-        string paletteCell = GetPaletteCell(snapshot, labelColor, palette.Normal, cell2Width);
+        string paletteCell = GetPaletteCell(labelColor, palette.Normal, cell2Width);
         string helpCell = AnsiConsole.ColorCode(dimmedColor) + "H=Help" + AnsiConsole.ResetCode;
         helpCell = AnsiConsole.PadToDisplayWidth(helpCell, cell3Width);
 
@@ -180,14 +177,14 @@ public sealed class VisualizationPaneLayout : IVisualizationRenderer
         return cell;
     }
 
-    private string GetPaletteCell(AnalysisSnapshot snapshot, PaletteColor labelColor, PaletteColor normalColor, int width)
+    private string GetPaletteCell(PaletteColor labelColor, PaletteColor normalColor, int width)
     {
-        if (!SupportsPaletteCycling() || string.IsNullOrEmpty(snapshot.CurrentPaletteName))
+        if (!SupportsPaletteCycling() || string.IsNullOrEmpty(_palette.DisplayName))
         {
             return new string(' ', width);
         }
         string label = _labelViewport.FormatLabel("Palette", "P");
-        string value = $"{AnsiConsole.ColorCode(labelColor)}{label}{AnsiConsole.ResetCode}{AnsiConsole.ColorCode(normalColor)}{snapshot.CurrentPaletteName}{AnsiConsole.ResetCode}";
+        string value = $"{AnsiConsole.ColorCode(labelColor)}{label}{AnsiConsole.ResetCode}{AnsiConsole.ColorCode(normalColor)}{_palette.DisplayName}{AnsiConsole.ResetCode}";
         string cell = AnsiConsole.PadToDisplayWidth(
             StaticTextViewport.TruncateWithEllipsis(new AnsiText(value), width), width);
         return cell;

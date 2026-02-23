@@ -12,8 +12,6 @@ namespace AudioAnalyzer.Visualizers;
 /// </summary>
 public sealed class TextLayersVisualizer : IVisualizer
 {
-    public string TechnicalName => "textlayers";
-    public string DisplayName => "Layered text";
     public bool SupportsPaletteCycling => true;
 
     private readonly TextLayersVisualizerSettings? _settings;

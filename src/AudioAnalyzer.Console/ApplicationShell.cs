@@ -7,7 +7,16 @@ using AudioAnalyzer.Visualizers;
 
 namespace AudioAnalyzer.Console;
 
-/// <summary>Main application shell: orchestrates engine, renderer, header, modals, key handling, and device capture lifecycle.</summary>
+/// <summary>
+/// Main application shell: orchestrates engine, renderer, header, modals, key handling, and device capture lifecycle.
+/// </summary>
+/// <remarks>
+/// <para><strong>Responsibility.</strong> Shell is the host: it runs the main loop, owns device lifecycle and modal state,
+/// routes keys to the renderer and main-loop key handler, and contains app logic (mode switch, preset cycle, palette cycle).
+/// It configures the visualization orchestrator (header callbacks, render guard, console lock) and triggers redraws
+/// (e.g. after key handling); it does not perform rendering or audio processing—that is delegated to
+/// <see cref="IVisualizationOrchestrator"/> and the engine/renderer.</para>
+/// </remarks>
 [SuppressMessage("Reliability", "CA1001:Types that own disposable fields should be disposable", Justification = "Single Run/Shutdown lifecycle; _headerRefreshCts explicitly disposed in Shutdown().")]
 internal sealed class ApplicationShell
 {
@@ -18,6 +27,7 @@ internal sealed class ApplicationShell
     private readonly IShowRepository _showRepository;
     private readonly IPaletteRepository _paletteRepo;
     private readonly AnalysisEngine _engine;
+    private readonly IDisplayState _displayState;
     private readonly IVisualizationOrchestrator _orchestrator;
     private readonly IVisualizationRenderer _renderer;
     private readonly ShowPlaybackController _showPlaybackController;
@@ -39,6 +49,7 @@ internal sealed class ApplicationShell
         IShowRepository showRepository,
         IPaletteRepository paletteRepo,
         AnalysisEngine engine,
+        IDisplayState displayState,
         IVisualizationOrchestrator orchestrator,
         IVisualizationRenderer renderer,
         ShowPlaybackController showPlaybackController,
@@ -57,6 +68,7 @@ internal sealed class ApplicationShell
         _showRepository = showRepository;
         _paletteRepo = paletteRepo;
         _engine = engine;
+        _displayState = displayState ?? throw new ArgumentNullException(nameof(displayState));
         _orchestrator = orchestrator ?? throw new ArgumentNullException(nameof(orchestrator));
         _renderer = renderer;
         _showPlaybackController = showPlaybackController ?? throw new ArgumentNullException(nameof(showPlaybackController));
@@ -155,6 +167,7 @@ internal sealed class ApplicationShell
             SaveSettings = () => _settingsPersistence.Save(),
             SaveVisualizerSettings = () => _visualizerSettingsRepo.SaveVisualizerSettings(_visualizerSettings),
             GetDeviceName = () => _deviceController.CurrentDeviceName,
+            DisplayState = _displayState,
             Orchestrator = _orchestrator,
             Engine = _engine,
             HeaderDrawer = _headerDrawer,
@@ -281,7 +294,7 @@ internal sealed class ApplicationShell
             _renderer.SetPalette(palette, string.IsNullOrEmpty(displayName) ? next.Id : displayName);
         }
         _settingsPersistence.Save();
-        if (!_orchestrator.FullScreen)
+        if (!_displayState.FullScreen)
         {
             _orchestrator.RedrawWithFullHeader();
         }

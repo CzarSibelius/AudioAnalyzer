@@ -63,7 +63,7 @@ public sealed class AnalysisEngine
 
     /// <summary>
     /// Returns the current analysis snapshot (analysis data only). Display fields (DisplayStartRow,
-    /// TerminalWidth, TerminalHeight, FullScreenMode) are left at default; the caller/orchestrator sets them before rendering.
+    /// TerminalWidth, TerminalHeight) are left at default; the caller/orchestrator sets them before rendering.
     /// </summary>
     public AnalysisSnapshot GetSnapshot()
     {

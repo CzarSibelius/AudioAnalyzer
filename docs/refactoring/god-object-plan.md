@@ -5,6 +5,14 @@ See original analysis for context. Agents: mark `[x]` when a task is implemented
 
 ---
 
+## ApplicationShell vs VisualizationOrchestrator
+
+- **ApplicationShell** is the host: main loop, device lifecycle, key and modal handling, app logic (mode/preset/palette). It configures the orchestrator (header callbacks, render guard, console lock) and triggers redraws; it does not perform rendering or audio processing.
+- **VisualizationOrchestrator** owns the display pipeline: overlay, header row, when to refresh the header and when to run one frame (throttling, guard, dimensions), and execution of one frame (header + engine snapshot + renderer). Full-screen is in **IDisplayState** (injected); orchestrator reacts to display state changes. It receives audio in OnAudioData and drives throttled render from there.
+- Redraw triggers: Shell calls Redraw/RedrawWithFullHeader in response to user or app events; orchestrator also triggers render from OnAudioData (throttled). So shell = “redraw because of event”; orchestrator = “redraw because of audio tick” and “execute one frame.”
+
+---
+
 ## Phase 1: ApplicationShell (17 deps → ~7)
 
 ### 1.1 IHeaderDrawer

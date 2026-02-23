@@ -66,6 +66,7 @@ internal static class ServiceConfiguration
             sp.GetRequiredService<ITextLayersToolbarBuilder>(),
             sp.GetRequiredService<UiSettings>()));
 
+        services.AddSingleton<IDisplayState, DisplayState>();
         services.AddSingleton<IVisualizationRenderer, VisualizationPaneLayout>();
         services.AddSingleton<IBeatDetector, BeatDetector>();
         services.AddSingleton<IVolumeAnalyzer, VolumeAnalyzer>();

@@ -7,11 +7,14 @@ namespace AudioAnalyzer.Console;
 /// render guard and console lock, and drives periodic header refresh and visualizer render using
 /// analysis results from the analysis engine.
 /// </summary>
+/// <remarks>
+/// <strong>Responsibility boundary.</strong> Implementations own the render pipeline (when and how to run one frame).
+/// Full-screen and other display state are owned by <see cref="IDisplayState"/> and injected where needed.
+/// The application shell configures the orchestrator (callbacks, guard, lock) and triggers Redraw/RedrawWithFullHeader;
+/// the orchestrator executes one frame (header + snapshot + render) and, when receiving audio, drives throttled render.
+/// </remarks>
 internal interface IVisualizationOrchestrator
 {
-    /// <summary>When true, the visualizer uses the full console; header and toolbar are hidden.</summary>
-    bool FullScreen { get; set; }
-
     /// <summary>
     /// Configures header callbacks and the row where the header starts.
     /// </summary>
