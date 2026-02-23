@@ -51,6 +51,7 @@ See original analysis for context. Agents: mark `[x]` when a task is implemented
 
 ### 2.4 Engine as coordinator
 - [x] AnalysisEngine delegates to volume, beat, FFT; fills snapshot; calls renderer
+- [x] AnalysisEngine analysis-only: ProcessAudio only does analysis, returns results via GetSnapshot(); display/rendering moved to IVisualizationOrchestrator (VisualizationOrchestrator)
 - [ ] Profile ProcessAudio if desired (ADR-0030, ADR-0040); extraction used DI per ADR-0040
 
 ---

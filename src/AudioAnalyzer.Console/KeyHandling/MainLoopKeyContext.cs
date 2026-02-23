@@ -6,6 +6,8 @@ namespace AudioAnalyzer.Console;
 /// <summary>Context passed to main loop key handlers. Provides shared state and operations.</summary>
 internal sealed class MainLoopKeyContext
 {
+    /// <summary>Orchestrator for display state and redraw (fullscreen, overlay, Redraw, RedrawWithFullHeader).</summary>
+    public required IVisualizationOrchestrator Orchestrator { get; init; }
     /// <summary>When set to true, the main loop will exit.</summary>
     public bool ShouldQuit { get; set; }
 

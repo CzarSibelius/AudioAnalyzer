@@ -11,20 +11,20 @@ internal sealed class ShowEditModal : IShowEditModal
     private const int OverlayRowCount = 16;
     private const int LeftColWidth = 32;
 
-    private readonly AnalysisEngine _analysisEngine;
+    private readonly IVisualizationOrchestrator _orchestrator;
     private readonly VisualizerSettings _visualizerSettings;
     private readonly IShowRepository _showRepo;
     private readonly IPresetRepository _presetRepo;
     private readonly UiSettings _uiSettings;
 
     public ShowEditModal(
-        AnalysisEngine analysisEngine,
+        IVisualizationOrchestrator orchestrator,
         VisualizerSettings visualizerSettings,
         IShowRepository showRepo,
         IPresetRepository presetRepo,
         UiSettings uiSettings)
     {
-        _analysisEngine = analysisEngine ?? throw new ArgumentNullException(nameof(analysisEngine));
+        _orchestrator = orchestrator ?? throw new ArgumentNullException(nameof(orchestrator));
         _visualizerSettings = visualizerSettings ?? throw new ArgumentNullException(nameof(visualizerSettings));
         _showRepo = showRepo ?? throw new ArgumentNullException(nameof(showRepo));
         _presetRepo = presetRepo ?? throw new ArgumentNullException(nameof(presetRepo));
@@ -301,7 +301,7 @@ internal sealed class ShowEditModal : IShowEditModal
             DrawContent,
             HandleKey,
             consoleLock,
-            onClose: () => _analysisEngine.SetOverlayActive(false),
-            onEnter: () => _analysisEngine.SetOverlayActive(true, OverlayRowCount));
+            onClose: () => _orchestrator.SetOverlayActive(false),
+            onEnter: () => _orchestrator.SetOverlayActive(true, OverlayRowCount));
     }
 }

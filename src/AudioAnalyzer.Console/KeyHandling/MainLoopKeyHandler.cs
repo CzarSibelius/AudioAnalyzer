@@ -13,13 +13,13 @@ internal sealed class MainLoopKeyHandler : IKeyHandler<MainLoopKeyContext>
         {
             case ConsoleKey.Tab:
                 ctx.OnModeSwitch();
-                if (!ctx.Engine.FullScreen)
+                if (!ctx.Orchestrator.FullScreen)
                 {
-                    ctx.Engine.RedrawWithFullHeader();
+                    ctx.Orchestrator.RedrawWithFullHeader();
                 }
                 else
                 {
-                    ctx.Engine.Redraw();
+                    ctx.Orchestrator.Redraw();
                 }
                 return true;
 
@@ -28,13 +28,13 @@ internal sealed class MainLoopKeyHandler : IKeyHandler<MainLoopKeyContext>
                 {
                     ctx.OnPresetCycle();
                     ctx.SaveSettings();
-                    if (!ctx.Engine.FullScreen)
+                    if (!ctx.Orchestrator.FullScreen)
                     {
-                        ctx.Engine.RedrawWithFullHeader();
+                        ctx.Orchestrator.RedrawWithFullHeader();
                     }
                     else
                     {
-                        ctx.Engine.Redraw();
+                        ctx.Orchestrator.Redraw();
                     }
                 }
                 return true;
@@ -52,13 +52,13 @@ internal sealed class MainLoopKeyHandler : IKeyHandler<MainLoopKeyContext>
                         ctx.SaveVisualizerSettings();
                     });
                 }
-                if (!ctx.Engine.FullScreen)
+                if (!ctx.Orchestrator.FullScreen)
                 {
-                    ctx.Engine.RedrawWithFullHeader();
+                    ctx.Orchestrator.RedrawWithFullHeader();
                 }
                 else
                 {
-                    ctx.Engine.Redraw();
+                    ctx.Orchestrator.Redraw();
                 }
                 return true;
 
@@ -77,13 +77,13 @@ internal sealed class MainLoopKeyHandler : IKeyHandler<MainLoopKeyContext>
                 {
                     ctx.RestartCapture();
                 }
-                if (!ctx.Engine.FullScreen)
+                if (!ctx.Orchestrator.FullScreen)
                 {
-                    ctx.Engine.RedrawWithFullHeader();
+                    ctx.Orchestrator.RedrawWithFullHeader();
                 }
                 else
                 {
-                    ctx.Engine.Redraw();
+                    ctx.Orchestrator.Redraw();
                 }
                 return true;
 
@@ -93,9 +93,9 @@ internal sealed class MainLoopKeyHandler : IKeyHandler<MainLoopKeyContext>
                     onClose: () =>
                     {
                         ctx.SetModalOpen(false);
-                        if (ctx.Engine.FullScreen)
+                        if (ctx.Orchestrator.FullScreen)
                         {
-                            ctx.Engine.Redraw();
+                            ctx.Orchestrator.Redraw();
                         }
                         else
                         {
@@ -121,16 +121,16 @@ internal sealed class MainLoopKeyHandler : IKeyHandler<MainLoopKeyContext>
                 return true;
 
             case ConsoleKey.F:
-                ctx.Engine.FullScreen = !ctx.Engine.FullScreen;
-                if (ctx.Engine.FullScreen)
+                ctx.Orchestrator.FullScreen = !ctx.Orchestrator.FullScreen;
+                if (ctx.Orchestrator.FullScreen)
                 {
                     System.Console.Clear();
                     System.Console.CursorVisible = false;
-                    ctx.Engine.Redraw();
+                    ctx.Orchestrator.Redraw();
                 }
                 else
                 {
-                    ctx.Engine.RedrawWithFullHeader();
+                    ctx.Orchestrator.RedrawWithFullHeader();
                 }
                 return true;
 
