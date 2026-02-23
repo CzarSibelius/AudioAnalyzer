@@ -1,4 +1,3 @@
-using AudioAnalyzer.Application;
 using AudioAnalyzer.Application.Abstractions;
 
 namespace AudioAnalyzer.Console;
@@ -7,16 +6,16 @@ namespace AudioAnalyzer.Console;
 internal sealed class DeviceCaptureController : IDeviceCaptureController
 {
     private readonly IAudioDeviceInfo _deviceInfo;
-    private readonly AnalysisEngine _engine;
+    private readonly IVisualizationOrchestrator _orchestrator;
     private readonly object _deviceLock = new();
 
     private IAudioInput? _currentInput;
     private string _currentDeviceName = "";
 
-    public DeviceCaptureController(IAudioDeviceInfo deviceInfo, AnalysisEngine engine)
+    public DeviceCaptureController(IAudioDeviceInfo deviceInfo, IVisualizationOrchestrator orchestrator)
     {
         _deviceInfo = deviceInfo ?? throw new ArgumentNullException(nameof(deviceInfo));
-        _engine = engine ?? throw new ArgumentNullException(nameof(engine));
+        _orchestrator = orchestrator ?? throw new ArgumentNullException(nameof(orchestrator));
     }
 
     /// <inheritdoc />
@@ -47,7 +46,7 @@ internal sealed class DeviceCaptureController : IDeviceCaptureController
                         return;
                     }
 
-                    _engine.ProcessAudio(e.Buffer, e.BytesRecorded, e.Format);
+                    _orchestrator.OnAudioData(e.Buffer, e.BytesRecorded, e.Format);
                 }
             };
             _currentInput.Start();

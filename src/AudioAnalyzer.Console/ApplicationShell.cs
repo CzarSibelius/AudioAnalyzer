@@ -18,6 +18,7 @@ internal sealed class ApplicationShell
     private readonly IShowRepository _showRepository;
     private readonly IPaletteRepository _paletteRepo;
     private readonly AnalysisEngine _engine;
+    private readonly IVisualizationOrchestrator _orchestrator;
     private readonly IVisualizationRenderer _renderer;
     private readonly ShowPlaybackController _showPlaybackController;
     private readonly IHeaderDrawer _headerDrawer;
@@ -38,6 +39,7 @@ internal sealed class ApplicationShell
         IShowRepository showRepository,
         IPaletteRepository paletteRepo,
         AnalysisEngine engine,
+        IVisualizationOrchestrator orchestrator,
         IVisualizationRenderer renderer,
         ShowPlaybackController showPlaybackController,
         IHeaderDrawer headerDrawer,
@@ -55,6 +57,7 @@ internal sealed class ApplicationShell
         _showRepository = showRepository;
         _paletteRepo = paletteRepo;
         _engine = engine;
+        _orchestrator = orchestrator ?? throw new ArgumentNullException(nameof(orchestrator));
         _renderer = renderer;
         _showPlaybackController = showPlaybackController ?? throw new ArgumentNullException(nameof(showPlaybackController));
         _headerDrawer = headerDrawer ?? throw new ArgumentNullException(nameof(headerDrawer));
@@ -74,12 +77,12 @@ internal sealed class ApplicationShell
         bool modalOpen = false;
         object consoleLock = new();
 
-        _engine.SetHeaderCallback(
+        _orchestrator.SetHeaderCallback(
             () => _headerDrawer.DrawMain(_deviceController.CurrentDeviceName),
             () => _headerDrawer.DrawHeaderOnly(_deviceController.CurrentDeviceName),
             6);
-        _engine.SetRenderGuard(() => !modalOpen);
-        _engine.SetConsoleLock(consoleLock);
+        _orchestrator.SetRenderGuard(() => !modalOpen);
+        _orchestrator.SetConsoleLock(consoleLock);
 
         _headerRefreshCts = new CancellationTokenSource();
         _ = Task.Run(async () =>
@@ -91,7 +94,7 @@ internal sealed class ApplicationShell
                 {
                     try
                     {
-                        _engine.RefreshHeaderIfNeeded();
+                        _orchestrator.RefreshHeaderIfNeeded();
                     }
                     catch (Exception ex)
                     {
@@ -106,7 +109,7 @@ internal sealed class ApplicationShell
         });
 
         _deviceController.StartCapture(initialDeviceId, initialDeviceName);
-        _engine.RedrawWithFullHeader();
+        _orchestrator.RedrawWithFullHeader();
 
         bool running = true;
         while (running)
@@ -122,7 +125,7 @@ internal sealed class ApplicationShell
                 if (_renderer.HandleKey(key))
                 {
                     _settingsPersistence.Save();
-                    _engine.Redraw();
+                    _orchestrator.Redraw();
                 }
                 else
                 {
@@ -148,10 +151,11 @@ internal sealed class ApplicationShell
         {
             SetModalOpen = setModalOpen,
             ConsoleLock = consoleLock,
-            RefreshHeaderAndRedraw = () => _engine.RedrawWithFullHeader(),
+            RefreshHeaderAndRedraw = () => _orchestrator.RedrawWithFullHeader(),
             SaveSettings = () => _settingsPersistence.Save(),
             SaveVisualizerSettings = () => _visualizerSettingsRepo.SaveVisualizerSettings(_visualizerSettings),
             GetDeviceName = () => _deviceController.CurrentDeviceName,
+            Orchestrator = _orchestrator,
             Engine = _engine,
             HeaderDrawer = _headerDrawer,
             OnModeSwitch = () => HandleModeSwitch(consoleLock),
@@ -277,13 +281,13 @@ internal sealed class ApplicationShell
             _renderer.SetPalette(palette, string.IsNullOrEmpty(displayName) ? next.Id : displayName);
         }
         _settingsPersistence.Save();
-        if (!_engine.FullScreen)
+        if (!_orchestrator.FullScreen)
         {
-            _engine.RedrawWithFullHeader();
+            _orchestrator.RedrawWithFullHeader();
         }
         else
         {
-            _engine.Redraw();
+            _orchestrator.Redraw();
         }
     }
 

@@ -1,4 +1,3 @@
-using AudioAnalyzer.Application;
 using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Domain;
 using AudioAnalyzer.Visualizers;
@@ -10,20 +9,20 @@ internal sealed class SettingsModal : ISettingsModal
 {
     private const int OverlayRowCount = 18;
 
-    private readonly AnalysisEngine _analysisEngine;
+    private readonly IVisualizationOrchestrator _orchestrator;
     private readonly VisualizerSettings _visualizerSettings;
     private readonly IPresetRepository _presetRepository;
     private readonly ISettingsModalRenderer _renderer;
     private readonly IKeyHandler<SettingsModalKeyContext> _keyHandler;
 
     public SettingsModal(
-        AnalysisEngine analysisEngine,
+        IVisualizationOrchestrator orchestrator,
         VisualizerSettings visualizerSettings,
         IPresetRepository presetRepository,
         ISettingsModalRenderer renderer,
         IKeyHandler<SettingsModalKeyContext> keyHandler)
     {
-        _analysisEngine = analysisEngine ?? throw new ArgumentNullException(nameof(analysisEngine));
+        _orchestrator = orchestrator ?? throw new ArgumentNullException(nameof(orchestrator));
         _visualizerSettings = visualizerSettings ?? throw new ArgumentNullException(nameof(visualizerSettings));
         _presetRepository = presetRepository ?? throw new ArgumentNullException(nameof(presetRepository));
         _renderer = renderer ?? throw new ArgumentNullException(nameof(renderer));
@@ -77,9 +76,9 @@ internal sealed class SettingsModal : ISettingsModal
             onClose: () =>
             {
                 saveSettings();
-                _analysisEngine.SetOverlayActive(false);
+                _orchestrator.SetOverlayActive(false);
             },
-            onEnter: () => _analysisEngine.SetOverlayActive(true, OverlayRowCount),
+            onEnter: () => _orchestrator.SetOverlayActive(true, OverlayRowCount),
             onScrollTick: DrawHintLineOnly);
     }
 }
