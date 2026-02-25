@@ -58,6 +58,9 @@ Decisions are numbered and kept under version control so the rationale stays wit
 | [0040](0040-dependency-injection-preference.md) | Prefer dependency injection unless performance requires otherwise | Accepted |
 | [0041](0041-god-object-refactoring-strategy.md) | God object refactoring strategy (ApplicationShell, AnalysisEngine, SettingsModal) | Accepted |
 | [0042](0042-ui-component-renderer-keyhandler-pattern.md) | UI component pattern — renderer plus IKeyHandler&lt;TContext&gt; | Accepted |
+| [0043](0043-textlayer-state-store.md) | Text layer state store — per-layer state via ITextLayerStateStore | Accepted |
+| [0044](0044-textlayer-renderer-generic-state-type.md) | Text layer renderer generic interface — state type in contract | Accepted |
+| [0045](0045-max-text-layers-constant.md) | Global maximum of 9 text layers as a single constant (not user-editable) | Accepted |
 
 ## Process
 

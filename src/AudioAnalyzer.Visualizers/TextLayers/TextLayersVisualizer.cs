@@ -18,13 +18,22 @@ public sealed class TextLayersVisualizer : IVisualizer
     private readonly IPaletteRepository _paletteRepo;
     private readonly IConsoleWriter _consoleWriter;
     private readonly UiSettings _uiSettings;
-    private readonly Dictionary<TextLayerType, ITextLayerRenderer> _renderers;
+    private readonly Dictionary<TextLayerType, TextLayerRendererBase> _renderers;
     private readonly IKeyHandler<TextLayersKeyContext> _keyHandler;
     private readonly ITextLayersToolbarBuilder _toolbarBuilder;
-    /// <summary>Index of the layer whose palette P cycles. Updated when user presses 1–9.</summary>
+    private readonly ITextLayerStateStore _stateStore;
+    /// <summary>Index of the layer whose palette P cycles. Updated when user presses 1–<see cref="TextLayersLimits.MaxLayerCount"/>.</summary>
     private int _paletteCycleLayerIndex;
 
-    public TextLayersVisualizer(TextLayersVisualizerSettings? settings, IPaletteRepository paletteRepo, IEnumerable<ITextLayerRenderer> renderers, IConsoleWriter consoleWriter, IKeyHandler<TextLayersKeyContext> keyHandler, ITextLayersToolbarBuilder toolbarBuilder, UiSettings? uiSettings = null)
+    public TextLayersVisualizer(
+        TextLayersVisualizerSettings? settings,
+        IPaletteRepository paletteRepo,
+        IEnumerable<TextLayerRendererBase> renderers,
+        IConsoleWriter consoleWriter,
+        IKeyHandler<TextLayersKeyContext> keyHandler,
+        ITextLayersToolbarBuilder toolbarBuilder,
+        ITextLayerStateStore stateStore,
+        UiSettings? uiSettings = null)
     {
         _settings = settings;
         _paletteRepo = paletteRepo;
@@ -33,23 +42,12 @@ public sealed class TextLayersVisualizer : IVisualizer
         _renderers = renderers.ToDictionary(r => r.LayerType);
         _keyHandler = keyHandler ?? throw new ArgumentNullException(nameof(keyHandler));
         _toolbarBuilder = toolbarBuilder ?? throw new ArgumentNullException(nameof(toolbarBuilder));
+        _stateStore = stateStore ?? throw new ArgumentNullException(nameof(stateStore));
     }
 
     private readonly ViewportCellBuffer _buffer = new();
     /// <summary>Per-layer state: (offset for scroll/marquee/wave, snippet index). Index matches sorted layer list.</summary>
     private readonly List<(double Offset, int SnippetIndex)> _layerStates = new();
-    /// <summary>Falling letter particles per layer index (only for FallingLetters layers).</summary>
-    private readonly List<List<FallingLetterState>> _fallingLettersByLayer = new();
-    /// <summary>ASCII image state per layer index (only for AsciiImage layers).</summary>
-    private readonly List<AsciiImageState> _asciiImageStateByLayer = new();
-    /// <summary>Geiss background state per layer index (only for GeissBackground layers).</summary>
-    private readonly List<GeissBackgroundState> _geissBackgroundStateByLayer = new();
-    /// <summary>Beat circles state per layer index (only for BeatCircles layers).</summary>
-    private readonly List<BeatCirclesState> _beatCirclesStateByLayer = new();
-    /// <summary>Unknown Pleasures state per layer index (only for UnknownPleasures layers).</summary>
-    private readonly List<UnknownPleasuresState> _unknownPleasuresStateByLayer = new();
-    /// <summary>Maschine state per layer index (only for Maschine layers).</summary>
-    private readonly List<MaschineState> _maschineStateByLayer = new();
     private int _lastBeatCount = -1;
     private int _beatFlashFrames;
 
@@ -78,30 +76,7 @@ public sealed class TextLayersVisualizer : IVisualizer
         {
             _layerStates.Add((0, 0));
         }
-        while (_fallingLettersByLayer.Count < sortedLayers.Count)
-        {
-            _fallingLettersByLayer.Add(new List<FallingLetterState>());
-        }
-        while (_asciiImageStateByLayer.Count < sortedLayers.Count)
-        {
-            _asciiImageStateByLayer.Add(new AsciiImageState());
-        }
-        while (_geissBackgroundStateByLayer.Count < sortedLayers.Count)
-        {
-            _geissBackgroundStateByLayer.Add(new GeissBackgroundState());
-        }
-        while (_beatCirclesStateByLayer.Count < sortedLayers.Count)
-        {
-            _beatCirclesStateByLayer.Add(new BeatCirclesState());
-        }
-        while (_unknownPleasuresStateByLayer.Count < sortedLayers.Count)
-        {
-            _unknownPleasuresStateByLayer.Add(new UnknownPleasuresState());
-        }
-        while (_maschineStateByLayer.Count < sortedLayers.Count)
-        {
-            _maschineStateByLayer.Add(new MaschineState());
-        }
+        _stateStore.EnsureCapacity(sortedLayers.Count);
 
         if (snapshot.BeatCount != _lastBeatCount)
         {
@@ -134,13 +109,7 @@ public sealed class TextLayersVisualizer : IVisualizer
                 SpeedBurst = speedBurst,
                 Width = w,
                 Height = h,
-                LayerIndex = i,
-                FallingLettersForLayer = _fallingLettersByLayer[i],
-                AsciiImageStateForLayer = _asciiImageStateByLayer[i],
-                GeissBackgroundStateForLayer = _geissBackgroundStateByLayer[i],
-                BeatCirclesStateForLayer = _beatCirclesStateByLayer[i],
-                UnknownPleasuresStateForLayer = _unknownPleasuresStateByLayer[i],
-                MaschineStateForLayer = _maschineStateByLayer[i]
+                LayerIndex = i
             };
             state = renderer.Draw(layer, ref state, ctx);
             _layerStates[i] = state;
@@ -261,8 +230,8 @@ public sealed class TextLayersVisualizer : IVisualizer
     }
 
     /// <summary>
-    /// Handles keys 1–9 to select the active layer; Left/Right to cycle the active layer's type;
-    /// Shift+1–9 to toggle layer enabled/disabled; I to cycle to the next picture in AsciiImage layers.
+    /// Handles keys 1–<see cref="TextLayersLimits.MaxLayerCount"/> to select the active layer; Left/Right to cycle the active layer's type;
+    /// Shift+1–<see cref="TextLayersLimits.MaxLayerCount"/> to toggle layer enabled/disabled; I to cycle to the next picture in AsciiImage layers.
     /// 1 = layer 1 (back), 9 = layer 9 (front). Returns true if the key was handled.
     /// </summary>
     public bool HandleKey(ConsoleKeyInfo key)
@@ -302,29 +271,7 @@ public sealed class TextLayersVisualizer : IVisualizer
 
     private void ClearLayerStateWhenSwitching(int layerIndex, TextLayerType previousType)
     {
-        if (previousType == TextLayerType.FallingLetters && layerIndex < _fallingLettersByLayer.Count)
-        {
-            _fallingLettersByLayer[layerIndex].Clear();
-        }
-        if (previousType == TextLayerType.AsciiImage && layerIndex < _asciiImageStateByLayer.Count)
-        {
-            _asciiImageStateByLayer[layerIndex] = new AsciiImageState();
-        }
-        if (previousType == TextLayerType.GeissBackground && layerIndex < _geissBackgroundStateByLayer.Count)
-        {
-            _geissBackgroundStateByLayer[layerIndex] = new GeissBackgroundState();
-        }
-        if (previousType == TextLayerType.BeatCircles && layerIndex < _beatCirclesStateByLayer.Count)
-        {
-            _beatCirclesStateByLayer[layerIndex] = new BeatCirclesState();
-        }
-        if (previousType == TextLayerType.UnknownPleasures && layerIndex < _unknownPleasuresStateByLayer.Count)
-        {
-            _unknownPleasuresStateByLayer[layerIndex] = new UnknownPleasuresState();
-        }
-        if (previousType == TextLayerType.Maschine && layerIndex < _maschineStateByLayer.Count)
-        {
-            _maschineStateByLayer[layerIndex] = new MaschineState();
-        }
+        _ = previousType;
+        _stateStore.ClearState(layerIndex);
     }
 }

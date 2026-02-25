@@ -13,6 +13,6 @@ public interface IVisualizationRenderer
     /// <summary>Whether the visualizer uses the global palette (P key).</summary>
     bool SupportsPaletteCycling();
 
-    /// <summary>Handles visualizer-specific key bindings (e.g. 1–9 for TextLayers). Returns true if the key was consumed.</summary>
+    /// <summary>Handles visualizer-specific key bindings (e.g. 1–<see cref="TextLayersLimits.MaxLayerCount"/> for TextLayers). Returns true if the key was consumed.</summary>
     bool HandleKey(ConsoleKeyInfo key);
 }

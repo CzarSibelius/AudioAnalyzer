@@ -15,7 +15,7 @@ alwaysApply: true
 
 5. **NuGet packages**: When adding or changing NuGet dependencies, follow [ADR-0013](docs/adr/0013-secure-nuget-packages.md) — avoid insecure or obsolete packages.
 
-6. **New visualizers**: Create new visualizer content as `ITextLayerRenderer` layers in TextLayersVisualizer, not as standalone `IVisualizer` implementations. See [ADR-0014](docs/adr/0014-visualizers-as-layers.md).
+6. **New visualizers**: Create new visualizer content as text layer renderers (inherit TextLayerRendererBase, implement ITextLayerRenderer&lt;TState&gt;) in TextLayersVisualizer, not as standalone IVisualizer implementations. See [ADR-0014](docs/adr/0014-visualizers-as-layers.md).
 
 7. **Layer settings**: TextLayerSettings has common props plus Custom (JSON); layer-specific settings go in *Settings.cs next to the layer; use `GetCustom<TSettings>()` in Draw. See [ADR-0021](docs/adr/0021-textlayer-settings-common-custom.md).
 
@@ -29,7 +29,7 @@ alwaysApply: true
 
 12. **UI text overflow**: Use IScrollingTextViewport (from IScrollingTextViewportFactory.CreateViewport()) for dynamic text (toolbar, status lines) that may exceed width; use ellipsis truncation (TruncateWithEllipsis) for static text (titles, labels). Wrap strings in PlainText or AnsiText; use AnsiText when content may contain ANSI escape sequences. See [ADR-0020](docs/adr/0020-ui-text-components-scrolling-and-ellipsis.md), [ADR-0032](docs/adr/0032-typed-display-text.md), [ADR-0037](docs/adr/0037-scrolling-text-viewport-injectable-service.md).
 
-13. **Layer dependency injection**: Layers that need external services (e.g. INowPlayingProvider) receive them via constructor injection. Snapshot does not carry service-derived data. Layers are registered in the DI container (AddTextLayerRenderers); TextLayersVisualizer receives IEnumerable&lt;ITextLayerRenderer&gt;. See [ADR-0028](docs/adr/0028-layer-dependency-injection.md).
+13. **Layer dependency injection**: Layers that need external services (e.g. INowPlayingProvider) receive them via constructor injection. Snapshot does not carry service-derived data. Layers are registered in the DI container (AddTextLayerRenderers); TextLayersVisualizer receives IEnumerable&lt;TextLayerRendererBase&gt;. See [ADR-0028](docs/adr/0028-layer-dependency-injection.md).
 
 14. **Settings format changes**: Do not add migration logic for old settings. When schema changes cause incompatibility, backup the file with `{name}.{timestamp}.bak` and create new from defaults. See [ADR-0029](docs/adr/0029-no-settings-migration.md).
 
@@ -58,3 +58,9 @@ alwaysApply: true
 26. **God object refactoring**: When refactoring ApplicationShell, AnalysisEngine, or SettingsModal, follow [ADR-0041](docs/adr/0041-god-object-refactoring-strategy.md) and the task list in [docs/refactoring/god-object-plan.md](docs/refactoring/god-object-plan.md). Mark tasks `[x]` when implemented.
 
 27. **UI component key handling**: UI components that need both rendering and key handling use a component-specific renderer interface plus `IKeyHandler<TContext>` for a component-specific context type. Use `Handle(ConsoleKeyInfo, TContext)`; do not add a shared renderer interface (signatures differ). See [ADR-0042](docs/adr/0042-ui-component-renderer-keyhandler-pattern.md).
+
+28. **Layer state store**: Per-layer animation state is held in a singleton implementing `ITextLayerStateStore<TState>` for each state type. Stateful layers inject the store for their state type (e.g. `ITextLayerStateStore<BeatCirclesState>`) and call `GetState(ctx.LayerIndex)` in Draw. TextLayerDrawContext carries only shared frame data (buffer, snapshot, palette, dimensions, layer index). New stateful layers extend the store (add `ITextLayerStateStore<NewState>` to the implementation and register it); do not add new required properties to TextLayerDrawContext. See [ADR-0043](docs/adr/0043-textlayer-state-store.md).
+
+29. **Layer renderer state type**: Every text layer renderer inherits TextLayerRendererBase and implements `ITextLayerRenderer<TState>` (marker) so the per-layer state type is part of the contract. Stateful layers implement `ITextLayerRenderer<TheirStateType>`; stateless layers implement `ITextLayerRenderer<NoLayerState>`. See [ADR-0044](docs/adr/0044-textlayer-renderer-generic-state-type.md).
+
+30. **Max text layers**: The global maximum number of text layers is 9, defined by `TextLayersLimits.MaxLayerCount` (Domain). Use this constant for layer count limits, padding, defaults, and key bindings 1–9; do not hardcode 9. The value is not user-editable (not in appsettings or settings UI). See [ADR-0045](docs/adr/0045-max-text-layers-constant.md).

@@ -10,17 +10,16 @@ internal static class ServiceCollectionExtensions
     /// <summary>Registers all text layer renderer implementations discovered via reflection. Requires INowPlayingProvider to be registered for NowPlayingLayer.</summary>
     public static IServiceCollection AddTextLayerRenderers(this IServiceCollection services)
     {
-        var interfaceType = typeof(ITextLayerRenderer);
-        var assembly = interfaceType.Assembly;
+        var baseType = typeof(TextLayerRendererBase);
+        var assembly = baseType.Assembly;
 
         var implementations = assembly.GetTypes()
-            .Where(t => t is { IsClass: true, IsAbstract: false } && interfaceType.IsAssignableFrom(t));
+            .Where(t => t is { IsClass: true, IsAbstract: false } && baseType.IsAssignableFrom(t));
 
         foreach (var impl in implementations)
         {
-            services.AddSingleton(interfaceType, impl);
+            services.AddSingleton(baseType, impl);
         }
-
         return services;
     }
 }

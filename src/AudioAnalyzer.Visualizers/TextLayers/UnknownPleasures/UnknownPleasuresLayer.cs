@@ -6,17 +6,23 @@ namespace AudioAnalyzer.Visualizers;
 /// Renders stacked waveform snapshots (Unknown Pleasures style). Bottom line is realtime;
 /// others are beat-triggered frozen snapshots.
 /// </summary>
-public sealed class UnknownPleasuresLayer : ITextLayerRenderer
+public sealed class UnknownPleasuresLayer : TextLayerRendererBase, ITextLayerRenderer<UnknownPleasuresState>
 {
     private const int SnapshotWidth = 120;
     private const int MaxSnapshots = 14;
 
     /// <summary>ASCII gradient from light to heavy (space, dot, comma, hyphen, quote, etc.).</summary>
     private static readonly string AsciiGradient = " .,'-_\"/~*#";
+    private readonly ITextLayerStateStore<UnknownPleasuresState> _stateStore;
 
-    public TextLayerType LayerType => TextLayerType.UnknownPleasures;
+    public UnknownPleasuresLayer(ITextLayerStateStore<UnknownPleasuresState> stateStore)
+    {
+        _stateStore = stateStore ?? throw new ArgumentNullException(nameof(stateStore));
+    }
 
-    public (double Offset, int SnippetIndex) Draw(
+    public override TextLayerType LayerType => TextLayerType.UnknownPleasures;
+
+    public override (double Offset, int SnippetIndex) Draw(
         TextLayerSettings layer,
         ref (double Offset, int SnippetIndex) state,
         TextLayerDrawContext ctx)
@@ -44,7 +50,7 @@ public sealed class UnknownPleasuresLayer : ITextLayerRenderer
         }
 
         double gain = snapshot.TargetMaxMagnitude > 0.0001 ? Math.Min(1000, 1.0 / snapshot.TargetMaxMagnitude) : 1000;
-        var upState = ctx.UnknownPleasuresStateForLayer;
+        var upState = _stateStore.GetState(ctx.LayerIndex);
 
         // Take a snapshot only on beat (or first frame so something is shown)
         bool onBeat = snapshot.BeatCount > upState.LastBeatCount;

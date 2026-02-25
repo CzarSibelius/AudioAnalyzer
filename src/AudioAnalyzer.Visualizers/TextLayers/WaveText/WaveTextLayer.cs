@@ -3,11 +3,11 @@ using AudioAnalyzer.Domain;
 namespace AudioAnalyzer.Visualizers;
 
 /// <summary>Renders text with sinusoidal wave motion.</summary>
-public sealed class WaveTextLayer : ITextLayerRenderer
+public sealed class WaveTextLayer : TextLayerRendererBase, ITextLayerRenderer<NoLayerState>
 {
-    public TextLayerType LayerType => TextLayerType.WaveText;
+    public override TextLayerType LayerType => TextLayerType.WaveText;
 
-    public (double Offset, int SnippetIndex) Draw(
+    public override (double Offset, int SnippetIndex) Draw(
         TextLayerSettings layer,
         ref (double Offset, int SnippetIndex) state,
         TextLayerDrawContext ctx)

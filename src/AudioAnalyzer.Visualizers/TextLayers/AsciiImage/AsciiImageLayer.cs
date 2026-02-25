@@ -3,13 +3,19 @@ using AudioAnalyzer.Domain;
 namespace AudioAnalyzer.Visualizers;
 
 /// <summary>Renders an ASCII art layer from images in a configured folder, with optional scroll and zoom.</summary>
-public sealed class AsciiImageLayer : ITextLayerRenderer
+public sealed class AsciiImageLayer : TextLayerRendererBase, ITextLayerRenderer<AsciiImageState>
 {
     private static readonly string[] s_imageExtensions = [".bmp", ".gif", ".jpg", ".jpeg", ".png", ".webp"];
+    private readonly ITextLayerStateStore<AsciiImageState> _stateStore;
 
-    public TextLayerType LayerType => TextLayerType.AsciiImage;
+    public AsciiImageLayer(ITextLayerStateStore<AsciiImageState> stateStore)
+    {
+        _stateStore = stateStore ?? throw new ArgumentNullException(nameof(stateStore));
+    }
 
-    public (double Offset, int SnippetIndex) Draw(
+    public override TextLayerType LayerType => TextLayerType.AsciiImage;
+
+    public override (double Offset, int SnippetIndex) Draw(
         TextLayerSettings layer,
         ref (double Offset, int SnippetIndex) state,
         TextLayerDrawContext ctx)
@@ -28,7 +34,7 @@ public sealed class AsciiImageLayer : ITextLayerRenderer
         int imageIndex = state.SnippetIndex % Math.Max(1, imagePaths.Count);
         string imagePath = imagePaths[imageIndex];
 
-        var asciiState = ctx.AsciiImageStateForLayer;
+        var asciiState = _stateStore.GetState(ctx.LayerIndex);
 
         // Convert at 2x size to allow scroll and zoom room
         int convertW = w * 2;

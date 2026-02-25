@@ -16,7 +16,7 @@
 
 4. **Legacy migration (removed)**: Previously, `[JsonExtensionData]` and `MigrateExtensionDataToCustom()` migrated legacy top-level properties into Custom. Per [ADR-0029](0029-no-settings-migration.md), migration has been removed; incompatible settings are backed up and reset.
 
-5. **ITextLayerRenderer remains untyped**: The interface does not take a generic; layers receive `TextLayerSettings` and resolve their own T via `GetCustom<T>()`.
+5. **Layer settings**: Layers receive `TextLayerSettings` and resolve their own settings type via `GetCustom<TSettings>()`. The renderer contract is on TextLayerRendererBase; the state type is on ITextLayerRenderer&lt;TState&gt; (ADR-0044).
 
 ## Consequences
 

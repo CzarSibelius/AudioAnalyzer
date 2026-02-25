@@ -12,7 +12,7 @@ Data flowed through the render pipeline via `AnalysisSnapshot` even when it orig
 
 2. **AnalysisSnapshot does not carry service-derived data**. The snapshot remains frame context: engine output (FFT, waveform, volume, beats, layout). Toolbar/UI display data (e.g. palette name) is read from the renderer’s own state, not from the snapshot. Data from long-lived services (INowPlayingProvider, future lyrics API, etc.) is not passed through the snapshot.
 
-3. **Layers are registered in the DI container and resolved via `IEnumerable<ITextLayerRenderer>`**. All `ITextLayerRenderer` implementations are registered in ServiceConfiguration (via `AddTextLayerRenderers()`). TextLayersVisualizer receives `IEnumerable<ITextLayerRenderer>`, builds a dictionary by `LayerType`, and no longer constructs layers manually. Layers that need services (e.g. NowPlayingLayer with `INowPlayingProvider`) get them via constructor injection when resolved from the container.
+3. **Layers are registered in the DI container and resolved via `IEnumerable<TextLayerRendererBase>`**. All text layer renderer implementations are registered in ServiceConfiguration (via `AddTextLayerRenderers()`). TextLayersVisualizer receives `IEnumerable<TextLayerRendererBase>`, builds a dictionary by `LayerType`, and no longer constructs layers manually. Layers that need services (e.g. NowPlayingLayer with `INowPlayingProvider`) get them via constructor injection when resolved from the container.
 
 4. **Adding new layers**: Create the layer class in the Visualizers assembly; it is discovered and registered via reflection in `AddTextLayerRenderers()`. No edits to ServiceCollectionExtensions or TextLayersVisualizer required.
 
@@ -20,6 +20,6 @@ Data flowed through the render pipeline via `AnalysisSnapshot` even when it orig
 
 - NowPlayingLayer injects `INowPlayingProvider`; `CurrentNowPlayingText` removed from AnalysisSnapshot.
 - VisualizationPaneLayout no longer receives or uses `INowPlayingProvider`.
-- TextLayersVisualizer receives `IEnumerable<ITextLayerRenderer>` and builds a dictionary; it no longer needs `INowPlayingProvider` or `CreateRenderers()`.
-- ServiceConfiguration: `AddTextLayerRenderers()` registers all layers; TextLayersVisualizer gets `IEnumerable<ITextLayerRenderer>`; INowPlayingProvider is resolved by NowPlayingLayer when created by the container.
+- TextLayersVisualizer receives `IEnumerable<TextLayerRendererBase>` and builds a dictionary; it no longer needs `INowPlayingProvider` or `CreateRenderers()`.
+- ServiceConfiguration: `AddTextLayerRenderers()` registers all layers; TextLayersVisualizer gets `IEnumerable<TextLayerRendererBase>`; INowPlayingProvider is resolved by NowPlayingLayer when created by the container.
 - References: [NowPlayingLayer](../../src/AudioAnalyzer.Visualizers/TextLayers/NowPlaying/NowPlayingLayer.cs), [ADR-0024](0024-analysissnapshot-frame-context.md).

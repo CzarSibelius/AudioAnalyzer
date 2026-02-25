@@ -12,7 +12,7 @@ public sealed class TextLayersKeyContext
     /// <summary>Current TextLayers config (e.g. default PaletteId).</summary>
     public TextLayersVisualizerSettings? Settings { get; set; }
 
-    /// <summary>Index of the layer whose palette P cycles (1–9 select). Mutated by the handler.</summary>
+    /// <summary>Index of the layer whose palette P cycles (1–<see cref="TextLayersLimits.MaxLayerCount"/> select). Mutated by the handler.</summary>
     public int PaletteCycleLayerIndex { get; set; }
 
     /// <summary>Palette repository for P-key cycling.</summary>

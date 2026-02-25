@@ -3,11 +3,11 @@ using AudioAnalyzer.Domain;
 namespace AudioAnalyzer.Visualizers;
 
 /// <summary>Renders a scrolling marquee text layer.</summary>
-public sealed class MarqueeLayer : ITextLayerRenderer
+public sealed class MarqueeLayer : TextLayerRendererBase, ITextLayerRenderer<NoLayerState>
 {
-    public TextLayerType LayerType => TextLayerType.Marquee;
+    public override TextLayerType LayerType => TextLayerType.Marquee;
 
-    public (double Offset, int SnippetIndex) Draw(
+    public override (double Offset, int SnippetIndex) Draw(
         TextLayerSettings layer,
         ref (double Offset, int SnippetIndex) state,
         TextLayerDrawContext ctx)

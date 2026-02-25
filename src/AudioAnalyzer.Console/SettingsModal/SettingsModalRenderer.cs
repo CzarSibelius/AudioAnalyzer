@@ -89,7 +89,7 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
                 System.Console.Write(new string(' ', rightColWidth));
             }
 
-            for (int i = 0; i < sortedLayers.Count && i < 9; i++)
+            for (int i = 0; i < sortedLayers.Count && i < TextLayersLimits.MaxLayerCount; i++)
             {
                 int row = 5 + i;
                 if (row >= OverlayRowCount)

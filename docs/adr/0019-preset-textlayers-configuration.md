@@ -4,7 +4,7 @@
 
 ## Context
 
-All visualizer content is implemented as `ITextLayerRenderer` layers in TextLayers mode (per [ADR-0014](0014-visualizers-as-layers.md)). The app has only one visualization mode (TextLayers). Cycling through `IVisualizer` modes with the V key was vestigial. Users need a way to save and switch between different TextLayers configurations (9 layers + palette). A Preset is a named snapshot of such a configuration.
+All visualizer content is implemented as text layer renderers (TextLayerRendererBase) in TextLayers mode (per [ADR-0014](0014-visualizers-as-layers.md)). The app has only one visualization mode (TextLayers). Cycling through `IVisualizer` modes with the V key was vestigial. Users need a way to save and switch between different TextLayers configurations (9 layers + palette). A Preset is a named snapshot of such a configuration.
 
 ## Decision
 

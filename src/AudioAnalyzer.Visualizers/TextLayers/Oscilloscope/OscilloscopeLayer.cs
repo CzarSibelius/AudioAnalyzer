@@ -3,11 +3,11 @@ using AudioAnalyzer.Domain;
 namespace AudioAnalyzer.Visualizers;
 
 /// <summary>Renders the time-domain waveform as a layer (oscilloscope trace).</summary>
-public sealed class OscilloscopeLayer : ITextLayerRenderer
+public sealed class OscilloscopeLayer : TextLayerRendererBase, ITextLayerRenderer<NoLayerState>
 {
-    public TextLayerType LayerType => TextLayerType.Oscilloscope;
+    public override TextLayerType LayerType => TextLayerType.Oscilloscope;
 
-    public (double Offset, int SnippetIndex) Draw(
+    public override (double Offset, int SnippetIndex) Draw(
         TextLayerSettings layer,
         ref (double Offset, int SnippetIndex) state,
         TextLayerDrawContext ctx)

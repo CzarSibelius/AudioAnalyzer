@@ -51,6 +51,14 @@ internal static class ServiceConfiguration
             return new NullNowPlayingProvider();
         });
 
+        services.AddSingleton<TextLayerStateStore>();
+        services.AddSingleton<ITextLayerStateStore>(sp => sp.GetRequiredService<TextLayerStateStore>());
+        services.AddSingleton<ITextLayerStateStore<FallingLettersLayerState>>(sp => sp.GetRequiredService<TextLayerStateStore>());
+        services.AddSingleton<ITextLayerStateStore<AsciiImageState>>(sp => sp.GetRequiredService<TextLayerStateStore>());
+        services.AddSingleton<ITextLayerStateStore<GeissBackgroundState>>(sp => sp.GetRequiredService<TextLayerStateStore>());
+        services.AddSingleton<ITextLayerStateStore<BeatCirclesState>>(sp => sp.GetRequiredService<TextLayerStateStore>());
+        services.AddSingleton<ITextLayerStateStore<UnknownPleasuresState>>(sp => sp.GetRequiredService<TextLayerStateStore>());
+        services.AddSingleton<ITextLayerStateStore<MaschineState>>(sp => sp.GetRequiredService<TextLayerStateStore>());
         services.AddTextLayerRenderers();
 
         services.AddSingleton<IConsoleWriter, ConsoleWriter>();
@@ -60,10 +68,11 @@ internal static class ServiceConfiguration
         services.AddSingleton<IVisualizer>(sp => new TextLayersVisualizer(
             sp.GetRequiredService<VisualizerSettings>().TextLayers ?? new TextLayersVisualizerSettings(),
             sp.GetRequiredService<IPaletteRepository>(),
-            sp.GetRequiredService<IEnumerable<ITextLayerRenderer>>(),
+            sp.GetRequiredService<IEnumerable<TextLayerRendererBase>>(),
             sp.GetRequiredService<IConsoleWriter>(),
             sp.GetRequiredService<IKeyHandler<TextLayersKeyContext>>(),
             sp.GetRequiredService<ITextLayersToolbarBuilder>(),
+            sp.GetRequiredService<ITextLayerStateStore>(),
             sp.GetRequiredService<UiSettings>()));
 
         services.AddSingleton<IDisplayState, DisplayState>();

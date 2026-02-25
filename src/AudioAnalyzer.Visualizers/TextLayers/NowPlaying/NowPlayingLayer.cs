@@ -4,18 +4,18 @@ using AudioAnalyzer.Domain;
 namespace AudioAnalyzer.Visualizers;
 
 /// <summary>Renders the currently playing media (Artist - Title) from the system. Falls back to TextSnippets when no session.</summary>
-public sealed class NowPlayingLayer : ITextLayerRenderer
+public sealed class NowPlayingLayer : TextLayerRendererBase, ITextLayerRenderer<NoLayerState>
 {
     private readonly INowPlayingProvider _nowPlayingProvider;
 
-    public TextLayerType LayerType => TextLayerType.NowPlaying;
+    public override TextLayerType LayerType => TextLayerType.NowPlaying;
 
     public NowPlayingLayer(INowPlayingProvider nowPlayingProvider)
     {
         _nowPlayingProvider = nowPlayingProvider;
     }
 
-    public (double Offset, int SnippetIndex) Draw(
+    public override (double Offset, int SnippetIndex) Draw(
         TextLayerSettings layer,
         ref (double Offset, int SnippetIndex) state,
         TextLayerDrawContext ctx)
