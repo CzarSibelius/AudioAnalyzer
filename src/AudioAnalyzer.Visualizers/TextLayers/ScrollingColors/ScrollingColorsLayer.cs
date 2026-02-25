@@ -3,11 +3,11 @@ using AudioAnalyzer.Domain;
 namespace AudioAnalyzer.Visualizers;
 
 /// <summary>Renders a scrolling color grid layer.</summary>
-public sealed class ScrollingColorsLayer : ITextLayerRenderer
+public sealed class ScrollingColorsLayer : TextLayerRendererBase, ITextLayerRenderer<NoLayerState>
 {
-    public TextLayerType LayerType => TextLayerType.ScrollingColors;
+    public override TextLayerType LayerType => TextLayerType.ScrollingColors;
 
-    public (double Offset, int SnippetIndex) Draw(
+    public override (double Offset, int SnippetIndex) Draw(
         TextLayerSettings layer,
         ref (double Offset, int SnippetIndex) state,
         TextLayerDrawContext ctx)

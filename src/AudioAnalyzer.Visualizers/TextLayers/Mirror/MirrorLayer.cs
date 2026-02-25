@@ -9,9 +9,9 @@ namespace AudioAnalyzer.Visualizers;
 /// the other half is overwritten with its mirror (horizontal or vertical).
 /// Place this layer above the layers you want mirrored.
 /// </summary>
-public sealed class MirrorLayer : ITextLayerRenderer
+public sealed class MirrorLayer : TextLayerRendererBase, ITextLayerRenderer<NoLayerState>
 {
-    public TextLayerType LayerType => TextLayerType.Mirror;
+    public override TextLayerType LayerType => TextLayerType.Mirror;
 
     private static void FlipRegion180(ViewportCellBuffer buffer, int xMin, int yMin, int rectW, int rectH)
     {
@@ -48,7 +48,7 @@ public sealed class MirrorLayer : ITextLayerRenderer
         }
     }
 
-    public (double Offset, int SnippetIndex) Draw(
+    public override (double Offset, int SnippetIndex) Draw(
         TextLayerSettings layer,
         ref (double Offset, int SnippetIndex) state,
         TextLayerDrawContext ctx)

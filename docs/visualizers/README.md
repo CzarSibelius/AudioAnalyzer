@@ -4,7 +4,7 @@ This directory contains per-layer and TextLayers reference documentation: behavi
 
 ## Architecture
 
-The app has **one visualizer**: `TextLayersVisualizer` (implements `IVisualizer`). All visual content — oscilloscope, VU meters, spectrum bars, plasma backgrounds, beat circles, etc. — comes from configurable `ITextLayerRenderer` layers. Users compose views by adding layers to presets; **V** cycles presets, **S** edits layer settings. See [ADR-0014](../adr/0014-visualizers-as-layers.md).
+The app has **one visualizer**: `TextLayersVisualizer` (implements `IVisualizer`). All visual content — oscilloscope, VU meters, spectrum bars, plasma backgrounds, beat circles, etc. — comes from configurable text layer renderers (classes inheriting `TextLayerRendererBase`). Users compose views by adding layers to presets; **V** cycles presets, **S** edits layer settings. See [ADR-0014](../adr/0014-visualizers-as-layers.md).
 
 ## Index
 
@@ -31,7 +31,7 @@ All visual content lives in `src/AudioAnalyzer.Visualizers/TextLayers/<LayerName
 
 When adding or changing visualizer content:
 
-1. **Add layers, not standalone visualizers** — new content must be an `ITextLayerRenderer` layer, not a new `IVisualizer`. See [ADR-0014](../adr/0014-visualizers-as-layers.md).
+1. **Add layers, not standalone visualizers** — new content must be a text layer renderer (inherit TextLayerRendererBase, implement ITextLayerRenderer&lt;TState&gt;), not a new IVisualizer. See [ADR-0014](../adr/0014-visualizers-as-layers.md).
 2. **Read the relevant spec** in `docs/visualizers/` and the index above.
 3. **Follow the viewport rule**: `.cursor/rules/visualizers-viewport.mdc` — respect viewport bounds.
 4. **Follow ADRs**: [ADR-0004](../adr/0004-visualizer-encapsulation.md) (encapsulation), [ADR-0005](../adr/0005-layered-visualizer-cell-buffer.md) (TextLayers cell buffer), [ADR-0008](../adr/0008-visualizer-settings-di.md) (settings via constructor injection).

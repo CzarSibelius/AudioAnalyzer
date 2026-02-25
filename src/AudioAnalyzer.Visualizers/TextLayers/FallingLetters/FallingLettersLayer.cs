@@ -3,16 +3,24 @@ using AudioAnalyzer.Domain;
 namespace AudioAnalyzer.Visualizers;
 
 /// <summary>Renders falling letter particles.</summary>
-public sealed class FallingLettersLayer : ITextLayerRenderer
+public sealed class FallingLettersLayer : TextLayerRendererBase, ITextLayerRenderer<FallingLettersLayerState>
 {
-    public TextLayerType LayerType => TextLayerType.FallingLetters;
+    private readonly ITextLayerStateStore<FallingLettersLayerState> _stateStore;
 
-    public (double Offset, int SnippetIndex) Draw(
+    public FallingLettersLayer(ITextLayerStateStore<FallingLettersLayerState> stateStore)
+    {
+        _stateStore = stateStore ?? throw new ArgumentNullException(nameof(stateStore));
+    }
+
+    public override TextLayerType LayerType => TextLayerType.FallingLetters;
+
+    public override (double Offset, int SnippetIndex) Draw(
         TextLayerSettings layer,
         ref (double Offset, int SnippetIndex) state,
         TextLayerDrawContext ctx)
     {
-        var particles = ctx.FallingLettersForLayer;
+        var layerState = _stateStore.GetState(ctx.LayerIndex);
+        var particles = layerState.Particles;
         int w = ctx.Width;
         int h = ctx.Height;
 

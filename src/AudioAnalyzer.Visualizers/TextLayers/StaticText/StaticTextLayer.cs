@@ -3,11 +3,11 @@ using AudioAnalyzer.Domain;
 namespace AudioAnalyzer.Visualizers;
 
 /// <summary>Renders static centered text.</summary>
-public sealed class StaticTextLayer : ITextLayerRenderer
+public sealed class StaticTextLayer : TextLayerRendererBase, ITextLayerRenderer<NoLayerState>
 {
-    public TextLayerType LayerType => TextLayerType.StaticText;
+    public override TextLayerType LayerType => TextLayerType.StaticText;
 
-    public (double Offset, int SnippetIndex) Draw(
+    public override (double Offset, int SnippetIndex) Draw(
         TextLayerSettings layer,
         ref (double Offset, int SnippetIndex) state,
         TextLayerDrawContext ctx)

@@ -4,13 +4,19 @@ using AudioAnalyzer.Domain;
 namespace AudioAnalyzer.Visualizers;
 
 /// <summary>Renders the Geiss plasma-style background layer.</summary>
-public sealed class GeissBackgroundLayer : ITextLayerRenderer
+public sealed class GeissBackgroundLayer : TextLayerRendererBase, ITextLayerRenderer<GeissBackgroundState>
 {
     private static readonly char[] PlasmaChars = [' ', '·', ':', ';', '+', '*', '#', '@', '█'];
+    private readonly ITextLayerStateStore<GeissBackgroundState> _stateStore;
 
-    public TextLayerType LayerType => TextLayerType.GeissBackground;
+    public GeissBackgroundLayer(ITextLayerStateStore<GeissBackgroundState> stateStore)
+    {
+        _stateStore = stateStore ?? throw new ArgumentNullException(nameof(stateStore));
+    }
 
-    public (double Offset, int SnippetIndex) Draw(
+    public override TextLayerType LayerType => TextLayerType.GeissBackground;
+
+    public override (double Offset, int SnippetIndex) Draw(
         TextLayerSettings layer,
         ref (double Offset, int SnippetIndex) state,
         TextLayerDrawContext ctx)
@@ -18,7 +24,7 @@ public sealed class GeissBackgroundLayer : ITextLayerRenderer
         int w = ctx.Width;
         int h = ctx.Height;
         var snapshot = ctx.Snapshot;
-        var geissState = ctx.GeissBackgroundStateForLayer;
+        var geissState = _stateStore.GetState(ctx.LayerIndex);
 
         double phaseSpeed = layer.SpeedMultiplier * ctx.SpeedBurst * 0.15;
         geissState.Phase += phaseSpeed;

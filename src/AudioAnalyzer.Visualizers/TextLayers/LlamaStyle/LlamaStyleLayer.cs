@@ -4,11 +4,11 @@ using AudioAnalyzer.Domain;
 namespace AudioAnalyzer.Visualizers;
 
 /// <summary>Renders spectrum bars (LlamaStyle). Supports Winamp and Spectrum Analyzer features via configurable options.</summary>
-public sealed class LlamaStyleLayer : ITextLayerRenderer
+public sealed class LlamaStyleLayer : TextLayerRendererBase, ITextLayerRenderer<NoLayerState>
 {
-    public TextLayerType LayerType => TextLayerType.LlamaStyle;
+    public override TextLayerType LayerType => TextLayerType.LlamaStyle;
 
-    public (double Offset, int SnippetIndex) Draw(
+    public override (double Offset, int SnippetIndex) Draw(
         TextLayerSettings layer,
         ref (double Offset, int SnippetIndex) state,
         TextLayerDrawContext ctx)

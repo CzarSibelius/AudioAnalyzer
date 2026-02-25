@@ -6,11 +6,11 @@ namespace AudioAnalyzer.Visualizers;
 /// Fills the entire viewport with a single color and configurable fill character
 /// (full block, half blocks, shades, space, or custom ASCII). Use low ZOrder for background, high for overlay.
 /// </summary>
-public sealed class FillLayer : ITextLayerRenderer
+public sealed class FillLayer : TextLayerRendererBase, ITextLayerRenderer<NoLayerState>
 {
-    public TextLayerType LayerType => TextLayerType.Fill;
+    public override TextLayerType LayerType => TextLayerType.Fill;
 
-    public (double Offset, int SnippetIndex) Draw(
+    public override (double Offset, int SnippetIndex) Draw(
         TextLayerSettings layer,
         ref (double Offset, int SnippetIndex) state,
         TextLayerDrawContext ctx)

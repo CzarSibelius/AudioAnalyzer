@@ -15,7 +15,7 @@ public sealed class TextLayersToolbarContext
     /// <summary>Current TextLayers config.</summary>
     public TextLayersVisualizerSettings? Settings { get; set; }
 
-    /// <summary>Index of the layer whose palette is shown (1–9).</summary>
+    /// <summary>Index of the layer whose palette is shown (1–<see cref="TextLayersLimits.MaxLayerCount"/>).</summary>
     public int PaletteCycleLayerIndex { get; set; }
 
     /// <summary>Palette repository to resolve palette names.</summary>

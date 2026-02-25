@@ -10,11 +10,18 @@ namespace AudioAnalyzer.Visualizers;
 /// one line per beat, each new line offset one character left so aligned columns form a diagonal.
 /// Aligned characters use a configurable accent color; after one line per character the cycle loops.
 /// </summary>
-public sealed class MaschineLayer : ITextLayerRenderer
+public sealed class MaschineLayer : TextLayerRendererBase, ITextLayerRenderer<MaschineState>
 {
-    public TextLayerType LayerType => TextLayerType.Maschine;
+    private readonly ITextLayerStateStore<MaschineState> _stateStore;
 
-    public (double Offset, int SnippetIndex) Draw(
+    public MaschineLayer(ITextLayerStateStore<MaschineState> stateStore)
+    {
+        _stateStore = stateStore ?? throw new ArgumentNullException(nameof(stateStore));
+    }
+
+    public override TextLayerType LayerType => TextLayerType.Maschine;
+
+    public override (double Offset, int SnippetIndex) Draw(
         TextLayerSettings layer,
         ref (double Offset, int SnippetIndex) state,
         TextLayerDrawContext ctx)
@@ -33,7 +40,7 @@ public sealed class MaschineLayer : ITextLayerRenderer
             return state;
         }
 
-        var maschineState = ctx.MaschineStateForLayer;
+        var maschineState = _stateStore.GetState(ctx.LayerIndex);
         string text = snippets[maschineState.SnippetIndex % snippets.Count];
         if (text.Length == 0)
         {

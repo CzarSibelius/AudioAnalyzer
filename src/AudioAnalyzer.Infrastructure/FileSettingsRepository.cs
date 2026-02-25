@@ -246,7 +246,7 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
         };
     }
 
-    /// <summary>Ensures VisualizerSettings exists and TextLayers has at least 9 layers when present. Per ADR-0029, no migration of legacy formats.</summary>
+    /// <summary>Ensures VisualizerSettings exists and TextLayers has at least <see cref="TextLayersLimits.MaxLayerCount"/> layers when present. Per ADR-0029, no migration of legacy formats.</summary>
     private static void EnsureVisualizerSettingsStructure(SettingsFile file)
     {
         file.VisualizerSettings ??= new VisualizerSettings();
@@ -274,7 +274,7 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
         return s;
     }
 
-    /// <summary>Default: 9 layers with GeissBackground + BeatCircles, then varied foreground types. Keys 1–9 map to layers 1–9.</summary>
+    /// <summary>Default: <see cref="TextLayersLimits.MaxLayerCount"/> layers with GeissBackground + BeatCircles, then varied foreground types. Keys 1–9 map to layers 1–9.</summary>
     private static TextLayersVisualizerSettings CreateDefaultTextLayersSettings()
     {
         var layers = new List<TextLayerSettings>
@@ -292,12 +292,16 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
         return new TextLayersVisualizerSettings { Layers = layers };
     }
 
-    /// <summary>Ensures TextLayers has at least 9 layers so keys 1–9 always map to a layer. Pads with default layers if fewer.</summary>
+    /// <summary>Ensures TextLayers has at least <see cref="TextLayersLimits.MaxLayerCount"/> layers so keys 1–9 always map to a layer. Pads with default layers if fewer; caps to MaxLayerCount if more (e.g. legacy config).</summary>
     private static void EnsureTextLayersHasNineLayers(TextLayersVisualizerSettings textLayers)
     {
         textLayers.Layers ??= new List<TextLayerSettings>();
+        if (textLayers.Layers.Count > TextLayersLimits.MaxLayerCount)
+        {
+            textLayers.Layers = textLayers.Layers.OrderBy(l => l.ZOrder).Take(TextLayersLimits.MaxLayerCount).ToList();
+        }
         int maxZ = textLayers.Layers.Count > 0 ? textLayers.Layers.Max(l => l.ZOrder) : -1;
-        while (textLayers.Layers.Count < 9)
+        while (textLayers.Layers.Count < TextLayersLimits.MaxLayerCount)
         {
             maxZ++;
             textLayers.Layers.Add(new TextLayerSettings

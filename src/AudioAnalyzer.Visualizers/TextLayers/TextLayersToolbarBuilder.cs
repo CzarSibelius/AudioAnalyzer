@@ -5,7 +5,7 @@ using AudioAnalyzer.Domain;
 
 namespace AudioAnalyzer.Visualizers;
 
-/// <summary>Builds the TextLayers toolbar suffix: layer digits 1–9, hints, oscilloscope gain, palette name.</summary>
+/// <summary>Builds the TextLayers toolbar suffix: layer digits 1–<see cref="TextLayersLimits.MaxLayerCount"/>, hints, oscilloscope gain, palette name.</summary>
 public sealed class TextLayersToolbarBuilder : ITextLayersToolbarBuilder
 {
     /// <inheritdoc />
@@ -32,7 +32,7 @@ public sealed class TextLayersToolbarBuilder : ITextLayersToolbarBuilder
         var palette = context.UiSettings.Palette ?? new UiPalette();
         var sb = new StringBuilder();
         AnsiConsole.AppendColored(sb, "Layers:", palette.Label);
-        for (int i = 0; i < 9; i++)
+        for (int i = 0; i < TextLayersLimits.MaxLayerCount; i++)
         {
             char digit = (char)('1' + i);
             if (i >= sortedLayers.Count)
@@ -56,7 +56,7 @@ public sealed class TextLayersToolbarBuilder : ITextLayersToolbarBuilder
                 }
             }
         }
-        sb.Append(" (1-9 select, \u2190\u2192 type, Shift+1-9 toggle");
+        sb.Append(" (1-" + TextLayersLimits.MaxLayerCount + " select, \u2190\u2192 type, Shift+1-" + TextLayersLimits.MaxLayerCount + " toggle");
         var hasAscii = sortedLayers.Any(l => l.LayerType == TextLayerType.AsciiImage);
         if (hasAscii)
         {

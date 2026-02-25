@@ -4,17 +4,23 @@ using AudioAnalyzer.Domain;
 namespace AudioAnalyzer.Visualizers;
 
 /// <summary>Renders expanding beat circles over the layer below.</summary>
-public sealed class BeatCirclesLayer : ITextLayerRenderer
+public sealed class BeatCirclesLayer : TextLayerRendererBase, ITextLayerRenderer<BeatCirclesState>
 {
     private static readonly ConsoleColor[] BeatCircleColors =
     [
         ConsoleColor.Cyan, ConsoleColor.Magenta, ConsoleColor.Yellow,
         ConsoleColor.Green, ConsoleColor.Red, ConsoleColor.Blue
     ];
+    private readonly ITextLayerStateStore<BeatCirclesState> _stateStore;
 
-    public TextLayerType LayerType => TextLayerType.BeatCircles;
+    public BeatCirclesLayer(ITextLayerStateStore<BeatCirclesState> stateStore)
+    {
+        _stateStore = stateStore ?? throw new ArgumentNullException(nameof(stateStore));
+    }
 
-    public (double Offset, int SnippetIndex) Draw(
+    public override TextLayerType LayerType => TextLayerType.BeatCircles;
+
+    public override (double Offset, int SnippetIndex) Draw(
         TextLayerSettings layer,
         ref (double Offset, int SnippetIndex) state,
         TextLayerDrawContext ctx)
@@ -22,7 +28,7 @@ public sealed class BeatCirclesLayer : ITextLayerRenderer
         int w = ctx.Width;
         int h = ctx.Height;
         var snapshot = ctx.Snapshot;
-        var beatState = ctx.BeatCirclesStateForLayer;
+        var beatState = _stateStore.GetState(ctx.LayerIndex);
 
         double bassIntensity = beatState.BassIntensity;
         if (snapshot.SmoothedMagnitudes.Length > 0)

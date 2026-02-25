@@ -3,11 +3,11 @@ using AudioAnalyzer.Domain;
 namespace AudioAnalyzer.Visualizers;
 
 /// <summary>Renders matrix-style falling digits.</summary>
-public sealed class MatrixRainLayer : ITextLayerRenderer
+public sealed class MatrixRainLayer : TextLayerRendererBase, ITextLayerRenderer<NoLayerState>
 {
-    public TextLayerType LayerType => TextLayerType.MatrixRain;
+    public override TextLayerType LayerType => TextLayerType.MatrixRain;
 
-    public (double Offset, int SnippetIndex) Draw(
+    public override (double Offset, int SnippetIndex) Draw(
         TextLayerSettings layer,
         ref (double Offset, int SnippetIndex) state,
         TextLayerDrawContext ctx)
