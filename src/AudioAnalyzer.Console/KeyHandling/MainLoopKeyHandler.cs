@@ -3,7 +3,7 @@ using AudioAnalyzer.Domain;
 
 namespace AudioAnalyzer.Console;
 
-/// <summary>Handles main loop keys: Tab, V, S, D, H, +/-, P, F, Escape.</summary>
+/// <summary>Handles main loop keys: Tab, V, S, D, H, +/-, P, F, Ctrl+Shift+E (screen dump), Escape.</summary>
 internal sealed class MainLoopKeyHandler : IKeyHandler<MainLoopKeyContext>
 {
     /// <inheritdoc />
@@ -133,6 +133,14 @@ internal sealed class MainLoopKeyHandler : IKeyHandler<MainLoopKeyContext>
                     ctx.Orchestrator.RedrawWithFullHeader();
                 }
                 return true;
+
+            case ConsoleKey.E:
+                if (key.Modifiers.HasFlag(ConsoleModifiers.Control) && key.Modifiers.HasFlag(ConsoleModifiers.Shift))
+                {
+                    _ = ctx.DumpScreen();
+                    return true;
+                }
+                return false;
 
             default:
                 return false;

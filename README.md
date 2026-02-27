@@ -66,9 +66,21 @@ Tests use **System.IO.Abstractions.TestingHelpers** (MockFileSystem) instead of 
    - **S** – Open Preset modal (Preset editor) or Show edit modal (Show play), ESC close
    - **D** – Change audio input device
    - **F** – Toggle full screen (visualizer only, no header/toolbar)
+   - **Ctrl+Shift+E** – Dump current screen to a text file (ASCII screenshot) in the `screen-dumps` folder
    - **ESC** – Quit
 
    Settings (device, mode, per-visualizer palette, beat sensitivity, oscilloscope gain) are saved automatically when you change them.
+
+### Screen dump (ASCII screenshot)
+
+You can capture the current terminal screen to a plain-text file for bug reports or for AI agents to inspect:
+
+- **Interactive**: Press **Ctrl+Shift+E** anytime. The dump is written to a **`screen-dumps`** directory next to the executable, as `screen-{yyyyMMdd-HHmmss}.txt`. ANSI color codes are stripped so the file is plain ASCII.
+- **Automation**: Run with `--dump-after N` to let the app run for N seconds, then dump the screen and exit (no interaction). Use `--dump-path <dir>` to choose the output directory. Example (for scripts or AI agents):
+  ```bash
+  dotnet run --project src/AudioAnalyzer.Console/AudioAnalyzer.Console.csproj -- --dump-after 2
+  ```
+  If no device was saved, the app uses Demo Mode so the device-selection modal is skipped. The resulting file can be used to describe visual issues to humans or AI.
 
 ## What It Does
 
@@ -205,4 +217,4 @@ The app uses **TextLayersVisualizer** exclusively; all visual content is provide
 
 Visualizers receive a **viewport** (`VisualizerViewport`: start row, max lines, width). They must not write more than `viewport.MaxLines` lines and no line longer than `viewport.Width`. The composite renderer validates dimensions and display start row before calling visualizers; if a visualizer throws, the exception message is shown in the viewport (one line, truncated with ellipsis) and the next frame can recover — see [ADR-0012](docs/adr/0012-visualizer-exception-handling.md). Text overflow: use `IScrollingTextViewport` (from `IScrollingTextViewportFactory.CreateViewport()`) for dynamic text, `StaticTextViewport.TruncateWithEllipsis` for static text — see [ADR-0020](docs/adr/0020-ui-text-components-scrolling-and-ellipsis.md), [ADR-0037](docs/adr/0037-scrolling-text-viewport-injectable-service.md). This keeps resizes and bad data from corrupting the console UI.
 
-Per-layer specs (behavior, settings, viewport constraints) are in [docs/visualizers/](docs/visualizers/README.md). A full list of console UI components (header, modals, viewports, key handlers) is in [docs/ui-components.md](docs/ui-components.md). C# coding standards (including no empty try-catch, non-empty XML summaries, one file per class) are in `.cursor/rules/csharp-standards.mdc`, `.cursor/rules/no-empty-catch.mdc`, and [ADR-0016](docs/adr/0016-csharp-documentation-and-file-organization.md).
+Per-layer specs (behavior, settings, viewport constraints) are in [docs/visualizers/](docs/visualizers/README.md). A full list of console UI components (header, modals, viewports, key handlers) is in [docs/ui-components.md](docs/ui-components.md). UI layout specs that use a screen-dump screenshot plus a line-numbered description for each row are defined in [docs/ui-spec-format.md](docs/ui-spec-format.md); see [docs/ui-spec-main-view-example.md](docs/ui-spec-main-view-example.md) for an example. C# coding standards (including no empty try-catch, non-empty XML summaries, one file per class) are in `.cursor/rules/csharp-standards.mdc`, `.cursor/rules/no-empty-catch.mdc`, and [ADR-0016](docs/adr/0016-csharp-documentation-and-file-organization.md).

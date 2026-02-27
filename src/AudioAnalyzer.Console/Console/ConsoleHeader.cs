@@ -151,7 +151,7 @@ internal static class ConsoleHeader
         }
 
         // Line 6: Help (Dimmed per ADR-0033)
-        string line6Raw = StaticTextViewport.TruncateWithEllipsis(new PlainText("Press H for help, D device, F full screen, ESC quit"), width).PadRight(width);
+        string line6Raw = StaticTextViewport.TruncateWithEllipsis(new PlainText("Press H for help, D device, F full screen, PrintScr dump, ESC quit"), width).PadRight(width);
         string line6 = AnsiConsole.ColorCode(palette.Dimmed) + line6Raw + AnsiConsole.ResetCode;
 
         try

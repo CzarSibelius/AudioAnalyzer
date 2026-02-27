@@ -106,6 +106,7 @@ internal static class ServiceConfiguration
                 sp.GetRequiredService<AnalysisEngine>(),
                 sp.GetRequiredService<UiSettings>());
         });
+        services.AddSingleton<IScreenDumpService, ScreenDumpService>();
         services.AddSingleton<ApplicationShell>();
 
         return services.BuildServiceProvider();

@@ -38,8 +38,10 @@ internal sealed class ApplicationShell
     private readonly IHelpModal _helpModal;
     private readonly ISettingsModal _settingsModal;
     private readonly IShowEditModal _showEditModal;
+    private readonly IScreenDumpService _screenDumpService;
 
     private CancellationTokenSource? _headerRefreshCts;
+    private volatile bool _quitAfterDump;
 
     public ApplicationShell(
         IDeviceCaptureController deviceController,
@@ -59,7 +61,8 @@ internal sealed class ApplicationShell
         IDeviceSelectionModal deviceSelectionModal,
         IHelpModal helpModal,
         ISettingsModal settingsModal,
-        IShowEditModal showEditModal)
+        IShowEditModal showEditModal,
+        IScreenDumpService screenDumpService)
     {
         _deviceController = deviceController ?? throw new ArgumentNullException(nameof(deviceController));
         _visualizerSettingsRepo = visualizerSettingsRepo;
@@ -79,13 +82,17 @@ internal sealed class ApplicationShell
         _helpModal = helpModal ?? throw new ArgumentNullException(nameof(helpModal));
         _settingsModal = settingsModal ?? throw new ArgumentNullException(nameof(settingsModal));
         _showEditModal = showEditModal ?? throw new ArgumentNullException(nameof(showEditModal));
+        _screenDumpService = screenDumpService ?? throw new ArgumentNullException(nameof(screenDumpService));
     }
 
     /// <summary>Runs the main loop. Does not return until the user quits.</summary>
     /// <param name="initialDeviceId">Initial audio device id (or null for loopback).</param>
     /// <param name="initialDeviceName">Display name of the initial device.</param>
-    public void Run(string? initialDeviceId, string initialDeviceName)
+    /// <param name="dumpAfterSeconds">If set, dump screen after this many seconds and exit (for automation).</param>
+    /// <param name="dumpPath">Optional directory for the dump file when using dump-after.</param>
+    public void Run(string? initialDeviceId, string initialDeviceName, int? dumpAfterSeconds = null, string? dumpPath = null)
     {
+        _quitAfterDump = false;
         bool modalOpen = false;
         object consoleLock = new();
 
@@ -123,9 +130,31 @@ internal sealed class ApplicationShell
         _deviceController.StartCapture(initialDeviceId, initialDeviceName);
         _orchestrator.RedrawWithFullHeader();
 
+        int? dumpDelay = dumpAfterSeconds > 0 ? dumpAfterSeconds : null;
+        if (dumpDelay is int d)
+        {
+            int delaySecs = d;
+            _ = Task.Run(async () =>
+            {
+                await Task.Delay(TimeSpan.FromSeconds(delaySecs)).ConfigureAwait(false);
+                lock (consoleLock)
+                {
+                    _orchestrator.Redraw();
+                    _screenDumpService.DumpToFile(stripAnsi: true, directory: dumpPath);
+                    _quitAfterDump = true;
+                }
+            });
+        }
+
         bool running = true;
         while (running)
         {
+            if (_quitAfterDump)
+            {
+                running = false;
+                break;
+            }
+
             if (_visualizerSettings.ApplicationMode == ApplicationMode.ShowPlay)
             {
                 _showPlaybackController.Tick();
@@ -181,7 +210,8 @@ internal sealed class ApplicationShell
             DeviceSelectionModal = _deviceSelectionModal,
             HelpModal = _helpModal,
             GetApplicationMode = () => _visualizerSettings.ApplicationMode,
-            OnPaletteCycle = CyclePalette
+            OnPaletteCycle = CyclePalette,
+            DumpScreen = () => _screenDumpService.DumpToFile()
         };
     }
 

@@ -5,6 +5,24 @@ using AudioAnalyzer.Domain;
 using AudioAnalyzer.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 
+// Parse CLI for screen-dump automation
+int? dumpAfterSeconds = null;
+string? dumpPath = null;
+string[] cliArgs = Environment.GetCommandLineArgs();
+for (int i = 1; i < cliArgs.Length; i++)
+{
+    if (cliArgs[i] == "--dump-after" && i + 1 < cliArgs.Length && int.TryParse(cliArgs[i + 1], out int dumpN) && dumpN > 0)
+    {
+        dumpAfterSeconds = dumpN;
+        i++;
+    }
+    else if (cliArgs[i] == "--dump-path" && i + 1 < cliArgs.Length)
+    {
+        dumpPath = cliArgs[i + 1];
+        i++;
+    }
+}
+
 // Load settings before building the renderer so visualizer settings are available for DI
 var presetRepo = new FilePresetRepository();
 var settingsRepo = new FileSettingsRepository(presetRepo);
@@ -18,7 +36,23 @@ var devices = deviceInfo.GetDevices();
 var (initialDeviceId, initialName) = DeviceResolver.TryResolveFromSettings(devices, settings);
 if (initialName == "")
 {
-    (initialDeviceId, initialName) = provider.GetRequiredService<IDeviceSelectionModal>().Show(null, _ => { });
+    if (dumpAfterSeconds != null)
+    {
+        var demo = devices.FirstOrDefault(d => d.Id?.StartsWith("demo:", StringComparison.Ordinal) == true);
+        if (demo != null)
+        {
+            initialDeviceId = demo.Id;
+            initialName = demo.Name;
+        }
+        else
+        {
+            (initialDeviceId, initialName) = provider.GetRequiredService<IDeviceSelectionModal>().Show(null, _ => { });
+        }
+    }
+    else
+    {
+        (initialDeviceId, initialName) = provider.GetRequiredService<IDeviceSelectionModal>().Show(null, _ => { });
+    }
 }
 
 if (initialName == "")
@@ -31,4 +65,4 @@ var shell = provider.GetRequiredService<ApplicationShell>();
 var engine = provider.GetRequiredService<AnalysisEngine>();
 engine.BeatSensitivity = settings.BeatSensitivity;
 
-shell.Run(initialDeviceId, initialName);
+shell.Run(initialDeviceId, initialName, dumpAfterSeconds, dumpPath);

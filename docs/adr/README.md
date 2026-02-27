@@ -61,6 +61,7 @@ Decisions are numbered and kept under version control so the rationale stays wit
 | [0043](0043-textlayer-state-store.md) | Text layer state store — per-layer state via ITextLayerStateStore | Accepted |
 | [0044](0044-textlayer-renderer-generic-state-type.md) | Text layer renderer generic interface — state type in contract | Accepted |
 | [0045](0045-max-text-layers-constant.md) | Global maximum of 9 text layers as a single constant (not user-editable) | Accepted |
+| [0046](0046-screen-dump-ascii-screenshot.md) | Screen dump (ASCII screenshot) for bug reports and AI agents | Accepted |
 
 ## Process
 

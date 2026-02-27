@@ -70,4 +70,7 @@ internal sealed class MainLoopKeyContext
 
     /// <summary>Cycles to the next palette.</summary>
     public required Action OnPaletteCycle { get; init; }
+
+    /// <summary>Dumps the current screen to a file. Returns the file path or null on failure.</summary>
+    public required Func<string?> DumpScreen { get; init; }
 }

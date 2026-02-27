@@ -47,6 +47,7 @@ internal sealed class HelpModal : IHelpModal
         System.Console.WriteLine("  S         Preset modal (Preset editor) or Show edit modal (Show play), ESC close");
         System.Console.WriteLine("  ESC       Quit the application");
         System.Console.WriteLine("  F         Toggle full screen (visualizer only, no header/toolbar)");
+        System.Console.WriteLine("  Ctrl+Shift+E  Dump screen to text file (screen-dumps folder)");
         System.Console.WriteLine();
         System.Console.WriteLine(labelCode + "  PRESET SETTINGS MODAL (S)" + reset);
         System.Console.WriteLine("  ─────────────────────────────────────");

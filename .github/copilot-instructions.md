@@ -20,7 +20,7 @@ Never complete a task without confirming successful compilation. **The build mus
 1. Run `dotnet build .\AudioAnalyzer.sln` — must succeed with 0 warnings.
 2. Run `dotnet test tests\AudioAnalyzer.Tests\AudioAnalyzer.Tests.csproj` — all tests must pass.
 3. Optionally run `dotnet format .\AudioAnalyzer.sln --verify-no-changes` to verify formatting.
-4. If modifying UI/display: manually test with Demo Mode (D → select Demo) at 80x24 and 200x50.
+4. If modifying UI/display: manually test with Demo Mode (D → select Demo) at 80x24 and 200x50. When debugging visual problems, use **screen dump** (Ctrl+Shift+E in-app, or `--dump-after N` to run then dump) to capture the terminal state as text.
 
 ### Static analysis
 After making code changes, check linter diagnostics for the modified files and fix any reported errors; fix warnings unless the rule is explicitly disabled for that line. Do not introduce new build warnings. Optionally run `dotnet format --verify-no-changes` to verify formatting (or `dotnet format` to fix); this uses .editorconfig.
@@ -38,6 +38,7 @@ After making code changes, check linter diagnostics for the modified files and f
 - **Performance**: Console writes, polling, and timing must be performant; follow ADR-0030 in docs/adr/ when adding console I/O, key polling, or frame-rate logic.
 - **Dependency injection**: Prefer DI for new components (constructor injection, register in ServiceConfiguration). Deviate only when profiling shows it harms performance on hot paths; document rationale. See ADR-0040 in docs/adr/.
 - **God object refactoring**: When refactoring ApplicationShell, AnalysisEngine, or SettingsModal, follow ADR-0041 and the task list in docs/refactoring/god-object-plan.md; mark tasks `[x]` when implemented.
+- **Screen dump**: Screen capture (ASCII screenshot) uses IScreenDumpService; default output is plain ASCII. Hotkey Ctrl+Shift+E; CLI: --dump-after N, --dump-path (see ADR-0046 in docs/adr/). **When debugging or testing visual/UI problems, use screen dump** (Ctrl+Shift+E in the running app, or `--dump-after N` to run N seconds and dump then exit) to capture the current state as plain text for inspection or sharing.
 
 ### User Control Requirements
 - **Every feature must be toggleable by the user in realtime** via keyboard shortcuts
@@ -108,6 +109,7 @@ When modifying display code:
 3. Test in short terminal (24 rows)
 4. Test in tall terminal (50+ rows)
 5. Resize terminal during runtime to verify dynamic scaling
+6. **When debugging or testing visual/UI issues**: use **screen dump** to capture the current state — press **Ctrl+Shift+E** in the running app, or run with `--dump-after N` (e.g. `--dump-after 5`) to capture after N seconds. Output is written to the `screen-dumps` folder as plain ASCII for inspection or sharing.
 
 When modifying audio processing:
 1. Test with music (wide frequency range)
@@ -146,6 +148,7 @@ When modifying audio processing:
 - Use descriptive commit messages referencing feature/fix
 
 ## Debugging Tips
+- **Visual/UI issues**: Use **screen dump** to capture the terminal state as text. In the running app press **Ctrl+Shift+E**; or run with `--dump-after N` (e.g. `--dump-after 5`) to dump after N seconds and exit. Output goes to the `screen-dumps` folder — use it to inspect layout, overflow, or rendering problems.
 - Volume too low: Increase auto-gain multiplier (currently 0.8)
 - Bars jumping: Increase `SmoothingFactor` (0.7 → 0.8)
 - BPM inaccurate: Adjust `BeatThreshold` (currently 1.3x average)

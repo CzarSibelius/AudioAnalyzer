@@ -64,3 +64,5 @@ alwaysApply: true
 29. **Layer renderer state type**: Every text layer renderer inherits TextLayerRendererBase and implements `ITextLayerRenderer<TState>` (marker) so the per-layer state type is part of the contract. Stateful layers implement `ITextLayerRenderer<TheirStateType>`; stateless layers implement `ITextLayerRenderer<NoLayerState>`. See [ADR-0044](docs/adr/0044-textlayer-renderer-generic-state-type.md).
 
 30. **Max text layers**: The global maximum number of text layers is 9, defined by `TextLayersLimits.MaxLayerCount` (Domain). Use this constant for layer count limits, padding, defaults, and key bindings 1–9; do not hardcode 9. The value is not user-editable (not in appsettings or settings UI). See [ADR-0045](docs/adr/0045-max-text-layers-constant.md).
+
+31. **Screen dump**: Screen capture (ASCII screenshot) is provided by `IScreenDumpService`; default output is plain ASCII (ANSI stripped). Use the service for any new dump behavior; hotkey is PrintScreen, CLI options are `--dump-after N` and `--dump-path`. See [ADR-0046](docs/adr/0046-screen-dump-ascii-screenshot.md).
