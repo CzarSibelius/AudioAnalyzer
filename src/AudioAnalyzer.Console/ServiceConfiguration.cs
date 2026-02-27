@@ -86,11 +86,13 @@ internal static class ServiceConfiguration
         services.AddSingleton<IScrollingTextEngine, ScrollingTextEngine>();
         services.AddSingleton<IScrollingTextViewportFactory, ScrollingTextViewportFactory>();
         services.AddSingleton<ITitleBarRenderer, TitleBarRenderer>();
+        services.AddSingleton<IKeyHandler<DeviceSelectionKeyContext>, DeviceSelectionKeyHandler>();
         services.AddSingleton<IDeviceSelectionModal, DeviceSelectionModal>();
         services.AddSingleton<IHelpModal, HelpModal>();
         services.AddSingleton<ISettingsModalRenderer, SettingsModalRenderer>();
         services.AddSingleton<IKeyHandler<SettingsModalKeyContext>, SettingsModalKeyHandler>();
         services.AddSingleton<ISettingsModal, SettingsModal>();
+        services.AddSingleton<IKeyHandler<ShowEditModalKeyContext>, ShowEditModalKeyHandler>();
         services.AddSingleton<IShowEditModal, ShowEditModal>();
         services.AddSingleton<IKeyHandler<MainLoopKeyContext>, MainLoopKeyHandler>();
         services.AddSingleton<IDeviceCaptureController, DeviceCaptureController>();

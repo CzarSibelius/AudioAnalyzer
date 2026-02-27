@@ -4,17 +4,24 @@ using AudioAnalyzer.Domain;
 
 namespace AudioAnalyzer.Console;
 
-/// <summary>Device selection modal per ADR-0006. Uses RunModal with draw + handleKey, returns selection.</summary>
+/// <summary>Device selection modal per ADR-0006. Key handling via IKeyHandler per ADR-0047.</summary>
 internal sealed class DeviceSelectionModal : IDeviceSelectionModal
 {
     private readonly IAudioDeviceInfo _deviceInfo;
+    private readonly IKeyHandler<DeviceSelectionKeyContext> _keyHandler;
     private readonly ISettingsRepository _settingsRepo;
     private readonly AppSettings _settings;
     private readonly UiSettings _uiSettings;
 
-    public DeviceSelectionModal(IAudioDeviceInfo deviceInfo, ISettingsRepository settingsRepo, AppSettings settings, UiSettings uiSettings)
+    public DeviceSelectionModal(
+        IAudioDeviceInfo deviceInfo,
+        IKeyHandler<DeviceSelectionKeyContext> keyHandler,
+        ISettingsRepository settingsRepo,
+        AppSettings settings,
+        UiSettings uiSettings)
     {
         _deviceInfo = deviceInfo ?? throw new ArgumentNullException(nameof(deviceInfo));
+        _keyHandler = keyHandler ?? throw new ArgumentNullException(nameof(keyHandler));
         _settingsRepo = settingsRepo ?? throw new ArgumentNullException(nameof(settingsRepo));
         _settings = settings ?? throw new ArgumentNullException(nameof(settings));
         _uiSettings = uiSettings ?? throw new ArgumentNullException(nameof(uiSettings));
@@ -54,8 +61,13 @@ internal sealed class DeviceSelectionModal : IDeviceSelectionModal
             }
         }
 
-        string? resultId = null;
-        string resultName = "";
+        var context = new DeviceSelectionKeyContext
+        {
+            Devices = devices,
+            SelectedIndex = selectedIndex,
+            Settings = _settings,
+            SettingsRepo = _settingsRepo
+        };
 
         var palette = (_uiSettings ?? new UiSettings()).Palette ?? new UiPalette();
         var selBg = palette.Background ?? PaletteColor.FromConsoleColor(ConsoleColor.DarkBlue);
@@ -77,7 +89,7 @@ internal sealed class DeviceSelectionModal : IDeviceSelectionModal
             for (int i = 0; i < devices.Count; i++)
             {
                 bool isCurrent = currentDeviceName != null && devices[i].Name == currentDeviceName;
-                string prefix = i == selectedIndex ? " ► " : "   ";
+                string prefix = i == context.SelectedIndex ? " ► " : "   ";
                 string suffix = isCurrent ? " (current)" : "";
                 string line = $"{prefix}{devices[i].Name}{suffix}";
                 if (line.Length < width - 1)
@@ -90,7 +102,7 @@ internal sealed class DeviceSelectionModal : IDeviceSelectionModal
                 }
 
                 string lineToWrite;
-                if (i == selectedIndex)
+                if (i == context.SelectedIndex)
                 {
                     lineToWrite = AnsiConsole.BackgroundCode(selBg) + AnsiConsole.ColorCode(selFg) + line + AnsiConsole.ResetCode;
                 }
@@ -107,50 +119,9 @@ internal sealed class DeviceSelectionModal : IDeviceSelectionModal
             System.Console.WriteLine(new string(' ', width - 1));
         }
 
-        bool HandleDeviceKey(ConsoleKeyInfo key)
-        {
-            switch (key.Key)
-            {
-                case ConsoleKey.UpArrow:
-                    selectedIndex = (selectedIndex - 1 + devices.Count) % devices.Count;
-                    return false;
-                case ConsoleKey.DownArrow:
-                    selectedIndex = (selectedIndex + 1) % devices.Count;
-                    return false;
-                case ConsoleKey.Enter:
-                    var selected = devices[selectedIndex];
-                    _settings.InputMode = selected.Id == null ? "loopback" : "device";
-                    if (selected.Id != null)
-                    {
-                        if (selected.Id.StartsWith("capture:", StringComparison.Ordinal))
-                        {
-                            _settings.DeviceName = selected.Id.Substring(8);
-                        }
-                        else if (selected.Id.StartsWith("loopback:", StringComparison.Ordinal))
-                        {
-                            _settings.DeviceName = selected.Id.Substring(9);
-                        }
-                        else
-                        {
-                            _settings.DeviceName = selected.Id;
-                        }
-                    }
-                    else
-                    {
-                        _settings.DeviceName = null;
-                    }
-                    _settingsRepo.SaveAppSettings(_settings);
-                    resultId = selected.Id;
-                    resultName = selected.Name;
-                    return true;
-                case ConsoleKey.Escape:
-                    return true;
-                default:
-                    return false;
-            }
-        }
+        bool HandleKey(ConsoleKeyInfo key) => _keyHandler.Handle(key, context);
 
-        ModalSystem.RunModal(DrawDeviceContent, HandleDeviceKey, onClose: () => setModalOpen(false), onEnter: () => setModalOpen(true));
-        return (resultId, resultName);
+        ModalSystem.RunModal(DrawDeviceContent, HandleKey, onClose: () => setModalOpen(false), onEnter: () => setModalOpen(true));
+        return (context.ResultId, context.ResultName);
     }
 }

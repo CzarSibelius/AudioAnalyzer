@@ -66,3 +66,5 @@ alwaysApply: true
 30. **Max text layers**: The global maximum number of text layers is 9, defined by `TextLayersLimits.MaxLayerCount` (Domain). Use this constant for layer count limits, padding, defaults, and key bindings 1–9; do not hardcode 9. The value is not user-editable (not in appsettings or settings UI). See [ADR-0045](docs/adr/0045-max-text-layers-constant.md).
 
 31. **Screen dump**: Screen capture (ASCII screenshot) is provided by `IScreenDumpService`; default output is plain ASCII (ANSI stripped). Use the service for any new dump behavior; hotkey is PrintScreen, CLI options are `--dump-after N` and `--dump-path`. See [ADR-0046](docs/adr/0046-screen-dump-ascii-screenshot.md).
+
+32. **Key handling**: Every component/class that handles keypresses must implement `IKeyHandler<TContext>` or delegate to one. No inline key-handling logic. See [ADR-0047](docs/adr/0047-all-key-handling-via-ikeyhandler.md).
