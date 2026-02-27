@@ -68,3 +68,5 @@ alwaysApply: true
 31. **Screen dump**: Screen capture (ASCII screenshot) is provided by `IScreenDumpService`; default output is plain ASCII (ANSI stripped). Use the service for any new dump behavior; hotkey is PrintScreen, CLI options are `--dump-after N` and `--dump-path`. See [ADR-0046](docs/adr/0046-screen-dump-ascii-screenshot.md).
 
 32. **Key handling**: Every component/class that handles keypresses must implement `IKeyHandler<TContext>` or delegate to one. No inline key-handling logic. See [ADR-0047](docs/adr/0047-all-key-handling-via-ikeyhandler.md).
+
+33. **Key handler bindings**: Key handlers must expose which keys they handle via the method on `IKeyHandler<TContext>` that returns bindings (key/modifiers, description, optional section). Used by dynamic help and other consumers. New handlers must implement this method. See [ADR-0048](docs/adr/0048-key-handlers-expose-bindings.md).

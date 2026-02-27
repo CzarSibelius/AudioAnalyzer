@@ -1,6 +1,7 @@
 using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Domain;
 using AudioAnalyzer.Visualizers;
+using KeyHandling = AudioAnalyzer.Console.KeyHandling;
 
 namespace AudioAnalyzer.Console;
 
@@ -8,11 +9,197 @@ namespace AudioAnalyzer.Console;
 internal sealed class SettingsModalKeyHandler : IKeyHandler<SettingsModalKeyContext>
 {
     private const int NavKeyRepeatMs = 120;
+    private const string Section = "Preset settings modal (S)";
     private readonly IPaletteRepository _paletteRepo;
 
     public SettingsModalKeyHandler(IPaletteRepository paletteRepo)
     {
         _paletteRepo = paletteRepo ?? throw new ArgumentNullException(nameof(paletteRepo));
+    }
+
+    private IReadOnlyList<KeyHandling.KeyBindingEntry<SettingsModalKeyContext>> GetLayerListEntries()
+    {
+        return
+        [
+            new KeyHandling.KeyBindingEntry<SettingsModalKeyContext>(
+                Matches: k => k.Key == ConsoleKey.Escape,
+                Action: (_, context) => true,
+                Key: "Escape",
+                Description: "Close modal",
+                Section),
+            new KeyHandling.KeyBindingEntry<SettingsModalKeyContext>(
+                Matches: k => k.Key == ConsoleKey.Enter,
+                Action: (_, context) =>
+                {
+                    var state = context.State;
+                    var sortedLayers = context.SortedLayers;
+                    var selectedLayer = sortedLayers.Count > 0 && state.SelectedLayerIndex < sortedLayers.Count ? sortedLayers[state.SelectedLayerIndex] : null;
+                    if (selectedLayer != null)
+                    {
+                        state.Focus = SettingsModalFocus.SettingsList;
+                        state.SelectedSettingIndex = 0;
+                    }
+                    return false;
+                },
+                Key: "Enter",
+                Description: "Move to settings panel or cycle selected setting",
+                Section),
+            new KeyHandling.KeyBindingEntry<SettingsModalKeyContext>(
+                Matches: k => k.Modifiers.HasFlag(ConsoleModifiers.Control) && (k.Key == ConsoleKey.UpArrow || k.Key == ConsoleKey.DownArrow),
+                Action: (key, context) =>
+                {
+                    var state = context.State;
+                    var sortedLayers = context.SortedLayers;
+                    if (sortedLayers.Count == 0) return false;
+                    if (key.Key == ConsoleKey.UpArrow && state.SelectedLayerIndex > 0)
+                    {
+                        var a = sortedLayers[state.SelectedLayerIndex];
+                        var b = sortedLayers[state.SelectedLayerIndex - 1];
+                        (a.ZOrder, b.ZOrder) = (b.ZOrder, a.ZOrder);
+                        context.SortedLayers = context.TextLayers.Layers?.OrderBy(l => l.ZOrder).ToList() ?? [];
+                        state.SelectedLayerIndex--;
+                        context.SaveSettings();
+                        return false;
+                    }
+                    if (key.Key == ConsoleKey.DownArrow && state.SelectedLayerIndex < sortedLayers.Count - 1)
+                    {
+                        var a = sortedLayers[state.SelectedLayerIndex];
+                        var b = sortedLayers[state.SelectedLayerIndex + 1];
+                        (a.ZOrder, b.ZOrder) = (b.ZOrder, a.ZOrder);
+                        context.SortedLayers = context.TextLayers.Layers?.OrderBy(l => l.ZOrder).ToList() ?? [];
+                        state.SelectedLayerIndex++;
+                        context.SaveSettings();
+                        return false;
+                    }
+                    return false;
+                },
+                Key: "Ctrl+↑/↓",
+                Description: "Reorder layer",
+                Section),
+            new KeyHandling.KeyBindingEntry<SettingsModalKeyContext>(
+                Matches: k => k.Key == ConsoleKey.UpArrow || k.Key == ConsoleKey.DownArrow,
+                Action: (key, context) =>
+                {
+                    var state = context.State;
+                    var sortedLayers = context.SortedLayers;
+                    if (key.Key == ConsoleKey.UpArrow)
+                        state.SelectedLayerIndex = sortedLayers.Count > 0 ? (state.SelectedLayerIndex - 1 + sortedLayers.Count) % sortedLayers.Count : 0;
+                    else
+                        state.SelectedLayerIndex = sortedLayers.Count > 0 ? (state.SelectedLayerIndex + 1) % sortedLayers.Count : 0;
+                    return false;
+                },
+                Key: "↑/↓",
+                Description: "Select layer or setting",
+                Section),
+            new KeyHandling.KeyBindingEntry<SettingsModalKeyContext>(
+                Matches: k => k.Key == ConsoleKey.Spacebar,
+                Action: (_, context) =>
+                {
+                    var sortedLayers = context.SortedLayers;
+                    var state = context.State;
+                    var selectedLayer = sortedLayers.Count > 0 && state.SelectedLayerIndex < sortedLayers.Count ? sortedLayers[state.SelectedLayerIndex] : null;
+                    if (selectedLayer != null) { selectedLayer.Enabled = !selectedLayer.Enabled; context.SaveSettings(); }
+                    return false;
+                },
+                Key: "Space",
+                Description: "Toggle layer enabled/disabled",
+                Section),
+            new KeyHandling.KeyBindingEntry<SettingsModalKeyContext>(
+                Matches: k => k.Key == ConsoleKey.LeftArrow || k.Key == ConsoleKey.RightArrow,
+                Action: (key, context) =>
+                {
+                    var sortedLayers = context.SortedLayers;
+                    var state = context.State;
+                    var selectedLayer = sortedLayers.Count > 0 && state.SelectedLayerIndex < sortedLayers.Count ? sortedLayers[state.SelectedLayerIndex] : null;
+                    if (selectedLayer != null)
+                    {
+                        selectedLayer.LayerType = key.Key == ConsoleKey.LeftArrow
+                            ? TextLayerSettings.CycleTypeBackward(selectedLayer)
+                            : TextLayerSettings.CycleTypeForward(selectedLayer);
+                        context.SaveSettings();
+                    }
+                    return false;
+                },
+                Key: "←/→",
+                Description: "Change layer type (left panel)",
+                Section),
+            new KeyHandling.KeyBindingEntry<SettingsModalKeyContext>(
+                Matches: k => k.Key == ConsoleKey.R,
+                Action: (_, context) =>
+                {
+                    var vs = context.VisualizerSettings;
+                    var state = context.State;
+                    if (vs.Presets is { Count: > 0 })
+                    {
+                        var p = vs.Presets.FirstOrDefault(x => string.Equals(x.Id, vs.ActivePresetId, StringComparison.OrdinalIgnoreCase)) ?? vs.Presets[0];
+                        state.RenameBuffer = p.Name?.Trim() ?? "";
+                        state.Renaming = true;
+                        state.Focus = SettingsModalFocus.Renaming;
+                    }
+                    return false;
+                },
+                Key: "R",
+                Description: "Rename preset",
+                Section),
+            new KeyHandling.KeyBindingEntry<SettingsModalKeyContext>(
+                Matches: k => k.Key == ConsoleKey.N,
+                Action: (_, context) =>
+                {
+                    var vs = context.VisualizerSettings;
+                    var textLayers = context.TextLayers;
+                    var newPreset = new Preset { Name = $"Preset {vs.Presets?.Count + 1 ?? 1}", Config = textLayers.DeepCopy() };
+                    var createdId = context.PresetRepository.Create(newPreset);
+                    vs.ActivePresetId = createdId;
+                    vs.Presets = context.PresetRepository.GetAll().Select(p => new Preset { Id = p.Id, Name = p.Name, Config = new TextLayersVisualizerSettings() }).ToList();
+                    context.TextLayers = vs.TextLayers ?? new TextLayersVisualizerSettings();
+                    context.SortedLayers = context.TextLayers.Layers?.OrderBy(l => l.ZOrder).ToList() ?? [];
+                    context.SaveSettings();
+                    return false;
+                },
+                Key: "N",
+                Description: "New preset (duplicate of current)",
+                Section),
+            new KeyHandling.KeyBindingEntry<SettingsModalKeyContext>(
+                Matches: k => DigitFromKey(k.Key) != 0 && !k.Modifiers.HasFlag(ConsoleModifiers.Shift),
+                Action: (key, context) =>
+                {
+                    var state = context.State;
+                    var sortedLayers = context.SortedLayers;
+                    int layerIdx = DigitFromKey(key.Key) - 1;
+                    if (layerIdx < sortedLayers.Count)
+                        state.SelectedLayerIndex = layerIdx;
+                    return false;
+                },
+                Key: "1-9",
+                Description: "Select layer",
+                Section),
+            new KeyHandling.KeyBindingEntry<SettingsModalKeyContext>(
+                Matches: k => DigitFromKey(k.Key) != 0 && k.Modifiers.HasFlag(ConsoleModifiers.Shift),
+                Action: (key, context) =>
+                {
+                    var sortedLayers = context.SortedLayers;
+                    int layerIdx = DigitFromKey(key.Key) - 1;
+                    if (layerIdx < sortedLayers.Count)
+                    {
+                        sortedLayers[layerIdx].Enabled = !sortedLayers[layerIdx].Enabled;
+                        context.SaveSettings();
+                    }
+                    return false;
+                },
+                Key: "Shift+1-9",
+                Description: "Toggle layer enabled/disabled by slot",
+                Section),
+        ];
+    }
+
+    /// <inheritdoc />
+    public IReadOnlyList<KeyBinding> GetBindings()
+    {
+        var layerList = GetLayerListEntries().Select(e => e.ToKeyBinding()).ToList();
+        return layerList
+            .Concat([new KeyBinding("+/-", "Cycle selected setting (when cycleable)", Section)])
+            .Concat([new KeyBinding("←/Escape", "Back to layer list from settings panel", Section)])
+            .ToList();
     }
 
     /// <inheritdoc />
@@ -126,82 +313,12 @@ internal sealed class SettingsModalKeyHandler : IKeyHandler<SettingsModalKeyCont
 
         if (state.Focus == SettingsModalFocus.LayerList)
         {
-            if (key.Key == ConsoleKey.Escape) { return true; }
-            if (key.Key == ConsoleKey.Enter && selectedLayer != null)
+            foreach (var entry in GetLayerListEntries())
             {
-                state.Focus = SettingsModalFocus.SettingsList;
-                state.SelectedSettingIndex = 0;
-                return false;
-            }
-            if (key.Modifiers.HasFlag(ConsoleModifiers.Control) && sortedLayers.Count > 0)
-            {
-                if (key.Key == ConsoleKey.UpArrow && state.SelectedLayerIndex > 0)
+                if (entry.Matches(key))
                 {
-                    var a = sortedLayers[state.SelectedLayerIndex];
-                    var b = sortedLayers[state.SelectedLayerIndex - 1];
-                    (a.ZOrder, b.ZOrder) = (b.ZOrder, a.ZOrder);
-                    context.SortedLayers = context.TextLayers.Layers?.OrderBy(l => l.ZOrder).ToList() ?? [];
-                    state.SelectedLayerIndex--;
-                    context.SaveSettings();
-                    return false;
+                    return entry.Action(key, context);
                 }
-                if (key.Key == ConsoleKey.DownArrow && state.SelectedLayerIndex < sortedLayers.Count - 1)
-                {
-                    var a = sortedLayers[state.SelectedLayerIndex];
-                    var b = sortedLayers[state.SelectedLayerIndex + 1];
-                    (a.ZOrder, b.ZOrder) = (b.ZOrder, a.ZOrder);
-                    context.SortedLayers = context.TextLayers.Layers?.OrderBy(l => l.ZOrder).ToList() ?? [];
-                    state.SelectedLayerIndex++;
-                    context.SaveSettings();
-                    return false;
-                }
-            }
-            if (key.Key == ConsoleKey.UpArrow) { state.SelectedLayerIndex = sortedLayers.Count > 0 ? (state.SelectedLayerIndex - 1 + sortedLayers.Count) % sortedLayers.Count : 0; return false; }
-            if (key.Key == ConsoleKey.DownArrow) { state.SelectedLayerIndex = sortedLayers.Count > 0 ? (state.SelectedLayerIndex + 1) % sortedLayers.Count : 0; return false; }
-            if (key.Key == ConsoleKey.Spacebar && selectedLayer != null) { selectedLayer.Enabled = !selectedLayer.Enabled; context.SaveSettings(); return false; }
-            if (key.Key == ConsoleKey.LeftArrow)
-            {
-                if (selectedLayer != null) { selectedLayer.LayerType = TextLayerSettings.CycleTypeBackward(selectedLayer); context.SaveSettings(); }
-                return false;
-            }
-            if (key.Key == ConsoleKey.RightArrow)
-            {
-                if (selectedLayer != null) { selectedLayer.LayerType = TextLayerSettings.CycleTypeForward(selectedLayer); context.SaveSettings(); }
-                return false;
-            }
-            if (key.Key == ConsoleKey.R)
-            {
-                if (vs.Presets is { Count: > 0 })
-                {
-                    var p = vs.Presets.FirstOrDefault(x => string.Equals(x.Id, vs.ActivePresetId, StringComparison.OrdinalIgnoreCase)) ?? vs.Presets[0];
-                    state.RenameBuffer = p.Name?.Trim() ?? "";
-                    state.Renaming = true;
-                    state.Focus = SettingsModalFocus.Renaming;
-                }
-                return false;
-            }
-            if (key.Key == ConsoleKey.Backspace && state.Renaming) { if (state.RenameBuffer.Length > 0) { state.RenameBuffer = state.RenameBuffer[..^1]; } return false; }
-            if (key.Key == ConsoleKey.N)
-            {
-                var newPreset = new Preset { Name = $"Preset {vs.Presets?.Count + 1 ?? 1}", Config = textLayers.DeepCopy() };
-                var createdId = context.PresetRepository.Create(newPreset);
-                vs.ActivePresetId = createdId;
-                vs.Presets = context.PresetRepository.GetAll().Select(p => new Preset { Id = p.Id, Name = p.Name, Config = new TextLayersVisualizerSettings() }).ToList();
-                context.TextLayers = vs.TextLayers ?? new TextLayersVisualizerSettings();
-                context.SortedLayers = context.TextLayers.Layers?.OrderBy(l => l.ZOrder).ToList() ?? [];
-                context.SaveSettings();
-                return false;
-            }
-            int digit = DigitFromKey(key.Key);
-            if (digit != 0)
-            {
-                int layerIdx = digit - 1;
-                if (layerIdx < sortedLayers.Count)
-                {
-                    if (key.Modifiers.HasFlag(ConsoleModifiers.Shift)) { sortedLayers[layerIdx].Enabled = !sortedLayers[layerIdx].Enabled; context.SaveSettings(); }
-                    else { state.SelectedLayerIndex = layerIdx; }
-                }
-                return false;
             }
         }
 

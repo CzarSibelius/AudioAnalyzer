@@ -39,7 +39,7 @@ After making code changes, check linter diagnostics for the modified files and f
 - **Dependency injection**: Prefer DI for new components (constructor injection, register in ServiceConfiguration). Deviate only when profiling shows it harms performance on hot paths; document rationale. See ADR-0040 in docs/adr/.
 - **God object refactoring**: When refactoring ApplicationShell, AnalysisEngine, or SettingsModal, follow ADR-0041 and the task list in docs/refactoring/god-object-plan.md; mark tasks `[x]` when implemented.
 - **Screen dump**: Screen capture (ASCII screenshot) uses IScreenDumpService; default output is plain ASCII. Hotkey Ctrl+Shift+E; CLI: --dump-after N, --dump-path (see ADR-0046 in docs/adr/). **When debugging or testing visual/UI problems, use screen dump** (Ctrl+Shift+E in the running app, or `--dump-after N` to run N seconds and dump then exit) to capture the current state as plain text for inspection or sharing.
-- **Key handling**: Every component/class that handles keypresses must implement IKeyHandler&lt;TContext&gt; or delegate to one; no inline key-handling logic (see ADR-0047 in docs/adr/).
+- **Key handling**: Every component/class that handles keypresses must implement IKeyHandler&lt;TContext&gt; or delegate to one; no inline key-handling logic (see ADR-0047 in docs/adr/). Key handlers must expose their bindings via the interface method for dynamic help and other consumers (see ADR-0048 in docs/adr/).
 
 ### User Control Requirements
 - **Every feature must be toggleable by the user in realtime** via keyboard shortcuts

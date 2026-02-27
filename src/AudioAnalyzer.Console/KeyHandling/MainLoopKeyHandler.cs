@@ -1,149 +1,197 @@
 using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Domain;
+using KeyHandling = AudioAnalyzer.Console.KeyHandling;
 
 namespace AudioAnalyzer.Console;
 
 /// <summary>Handles main loop keys: Tab, V, S, D, H, +/-, P, F, Ctrl+Shift+E (screen dump), Escape.</summary>
 internal sealed class MainLoopKeyHandler : IKeyHandler<MainLoopKeyContext>
 {
-    /// <inheritdoc />
-    public bool Handle(ConsoleKeyInfo key, MainLoopKeyContext ctx)
-    {
-        switch (key.Key)
-        {
-            case ConsoleKey.Tab:
-                ctx.OnModeSwitch();
-                if (!ctx.DisplayState.FullScreen)
-                {
-                    ctx.Orchestrator.RedrawWithFullHeader();
-                }
-                else
-                {
-                    ctx.Orchestrator.Redraw();
-                }
-                return true;
+    private const string Section = "Keyboard controls";
 
-            case ConsoleKey.V:
-                if (ctx.GetApplicationMode() == ApplicationMode.PresetEditor)
+    private static IReadOnlyList<KeyHandling.KeyBindingEntry<MainLoopKeyContext>> GetEntries()
+    {
+        return
+        [
+            new KeyHandling.KeyBindingEntry<MainLoopKeyContext>(
+                Matches: k => k.Key == ConsoleKey.Tab,
+                Action: (_, ctx) =>
                 {
-                    ctx.OnPresetCycle();
-                    ctx.SaveSettings();
+                    ctx.OnModeSwitch();
                     if (!ctx.DisplayState.FullScreen)
-                    {
                         ctx.Orchestrator.RedrawWithFullHeader();
+                    else
+                        ctx.Orchestrator.Redraw();
+                    return true;
+                },
+                Key: "Tab",
+                Description: "Switch between Preset editor and Show play",
+                Section),
+            new KeyHandling.KeyBindingEntry<MainLoopKeyContext>(
+                Matches: k => k.Key == ConsoleKey.V,
+                Action: (_, ctx) =>
+                {
+                    if (ctx.GetApplicationMode() == ApplicationMode.PresetEditor)
+                    {
+                        ctx.OnPresetCycle();
+                        ctx.SaveSettings();
+                        if (!ctx.DisplayState.FullScreen)
+                            ctx.Orchestrator.RedrawWithFullHeader();
+                        else
+                            ctx.Orchestrator.Redraw();
+                    }
+                    return true;
+                },
+                Key: "V",
+                Description: "Cycle to next preset (Preset editor only)",
+                Section),
+            new KeyHandling.KeyBindingEntry<MainLoopKeyContext>(
+                Matches: k => k.Key == ConsoleKey.S,
+                Action: (_, ctx) =>
+                {
+                    if (ctx.GetApplicationMode() == ApplicationMode.PresetEditor)
+                    {
+                        ctx.SettingsModal.Show(ctx.ConsoleLock, ctx.SaveSettings);
                     }
                     else
                     {
+                        ctx.ShowEditModal.Show(ctx.ConsoleLock, () =>
+                        {
+                            ctx.SaveSettings();
+                            ctx.SaveVisualizerSettings();
+                        });
+                    }
+                    if (!ctx.DisplayState.FullScreen)
+                        ctx.Orchestrator.RedrawWithFullHeader();
+                    else
+                        ctx.Orchestrator.Redraw();
+                    return true;
+                },
+                Key: "S",
+                Description: "Preset modal (Preset editor) or Show edit modal (Show play)",
+                Section),
+            new KeyHandling.KeyBindingEntry<MainLoopKeyContext>(
+                Matches: k => k.Key == ConsoleKey.Escape,
+                Action: (_, ctx) =>
+                {
+                    ctx.ShouldQuit = true;
+                    return true;
+                },
+                Key: "Escape",
+                Description: "Quit the application",
+                Section),
+            new KeyHandling.KeyBindingEntry<MainLoopKeyContext>(
+                Matches: k => k.Key == ConsoleKey.D,
+                Action: (_, ctx) =>
+                {
+                    ctx.StopCapture();
+                    var (newId, newName) = ctx.DeviceSelectionModal.Show(ctx.GetDeviceName(), ctx.SetModalOpen);
+                    if (newName != "")
+                        ctx.StartCapture(newId, newName);
+                    else
+                        ctx.RestartCapture();
+                    if (!ctx.DisplayState.FullScreen)
+                        ctx.Orchestrator.RedrawWithFullHeader();
+                    else
+                        ctx.Orchestrator.Redraw();
+                    return true;
+                },
+                Key: "D",
+                Description: "Change audio input device",
+                Section),
+            new KeyHandling.KeyBindingEntry<MainLoopKeyContext>(
+                Matches: k => k.Key == ConsoleKey.H,
+                Action: (_, ctx) =>
+                {
+                    ctx.HelpModal.Show(
+                        onEnter: () => ctx.SetModalOpen(true),
+                        onClose: () =>
+                        {
+                            ctx.SetModalOpen(false);
+                            if (ctx.DisplayState.FullScreen)
+                                ctx.Orchestrator.Redraw();
+                            else
+                                ctx.RefreshHeaderAndRedraw();
+                        });
+                    return true;
+                },
+                Key: "H",
+                Description: "Show this help menu",
+                Section),
+            new KeyHandling.KeyBindingEntry<MainLoopKeyContext>(
+                Matches: k => k.Key is ConsoleKey.OemPlus or ConsoleKey.Add or ConsoleKey.OemMinus or ConsoleKey.Subtract,
+                Action: (key, ctx) =>
+                {
+                    if (key.Key is ConsoleKey.OemPlus or ConsoleKey.Add)
+                        ctx.Engine.BeatSensitivity += 0.1;
+                    else
+                        ctx.Engine.BeatSensitivity -= 0.1;
+                    ctx.SaveSettings();
+                    return true;
+                },
+                Key: "+/-",
+                Description: "Adjust beat sensitivity",
+                Section),
+            new KeyHandling.KeyBindingEntry<MainLoopKeyContext>(
+                Matches: k => k.Key == ConsoleKey.P,
+                Action: (_, ctx) =>
+                {
+                    ctx.OnPaletteCycle();
+                    return true;
+                },
+                Key: "P",
+                Description: "Cycle color palette",
+                Section),
+            new KeyHandling.KeyBindingEntry<MainLoopKeyContext>(
+                Matches: k => k.Key == ConsoleKey.F,
+                Action: (_, ctx) =>
+                {
+                    ctx.DisplayState.FullScreen = !ctx.DisplayState.FullScreen;
+                    if (ctx.DisplayState.FullScreen)
+                    {
+                        System.Console.Clear();
+                        System.Console.CursorVisible = false;
                         ctx.Orchestrator.Redraw();
                     }
-                }
-                return true;
-
-            case ConsoleKey.S:
-                if (ctx.GetApplicationMode() == ApplicationMode.PresetEditor)
-                {
-                    ctx.SettingsModal.Show(ctx.ConsoleLock, ctx.SaveSettings);
-                }
-                else
-                {
-                    ctx.ShowEditModal.Show(ctx.ConsoleLock, () =>
+                    else
                     {
-                        ctx.SaveSettings();
-                        ctx.SaveVisualizerSettings();
-                    });
-                }
-                if (!ctx.DisplayState.FullScreen)
-                {
-                    ctx.Orchestrator.RedrawWithFullHeader();
-                }
-                else
-                {
-                    ctx.Orchestrator.Redraw();
-                }
-                return true;
-
-            case ConsoleKey.Escape:
-                ctx.ShouldQuit = true;
-                return true;
-
-            case ConsoleKey.D:
-                ctx.StopCapture();
-                var (newId, newName) = ctx.DeviceSelectionModal.Show(ctx.GetDeviceName(), ctx.SetModalOpen);
-                if (newName != "")
-                {
-                    ctx.StartCapture(newId, newName);
-                }
-                else
-                {
-                    ctx.RestartCapture();
-                }
-                if (!ctx.DisplayState.FullScreen)
-                {
-                    ctx.Orchestrator.RedrawWithFullHeader();
-                }
-                else
-                {
-                    ctx.Orchestrator.Redraw();
-                }
-                return true;
-
-            case ConsoleKey.H:
-                ctx.HelpModal.Show(
-                    onEnter: () => ctx.SetModalOpen(true),
-                    onClose: () =>
-                    {
-                        ctx.SetModalOpen(false);
-                        if (ctx.DisplayState.FullScreen)
-                        {
-                            ctx.Orchestrator.Redraw();
-                        }
-                        else
-                        {
-                            ctx.RefreshHeaderAndRedraw();
-                        }
-                    });
-                return true;
-
-            case ConsoleKey.OemPlus:
-            case ConsoleKey.Add:
-                ctx.Engine.BeatSensitivity += 0.1;
-                ctx.SaveSettings();
-                return true;
-
-            case ConsoleKey.OemMinus:
-            case ConsoleKey.Subtract:
-                ctx.Engine.BeatSensitivity -= 0.1;
-                ctx.SaveSettings();
-                return true;
-
-            case ConsoleKey.P:
-                ctx.OnPaletteCycle();
-                return true;
-
-            case ConsoleKey.F:
-                ctx.DisplayState.FullScreen = !ctx.DisplayState.FullScreen;
-                if (ctx.DisplayState.FullScreen)
-                {
-                    System.Console.Clear();
-                    System.Console.CursorVisible = false;
-                    ctx.Orchestrator.Redraw();
-                }
-                else
-                {
-                    ctx.Orchestrator.RedrawWithFullHeader();
-                }
-                return true;
-
-            case ConsoleKey.E:
-                if (key.Modifiers.HasFlag(ConsoleModifiers.Control) && key.Modifiers.HasFlag(ConsoleModifiers.Shift))
-                {
-                    _ = ctx.DumpScreen();
+                        ctx.Orchestrator.RedrawWithFullHeader();
+                    }
                     return true;
-                }
-                return false;
+                },
+                Key: "F",
+                Description: "Toggle full screen (visualizer only)",
+                Section),
+            new KeyHandling.KeyBindingEntry<MainLoopKeyContext>(
+                Matches: k => k.Key == ConsoleKey.E && k.Modifiers.HasFlag(ConsoleModifiers.Control) && k.Modifiers.HasFlag(ConsoleModifiers.Shift),
+                Action: (_, ctx) =>
+                {
+                    ctx.DumpScreen(); // discard file path return value
+                    return true;
+                },
+                Key: "Ctrl+Shift+E",
+                Description: "Dump screen to text file",
+                Section),
+        ];
+    }
 
-            default:
-                return false;
+    private static readonly Lazy<IReadOnlyList<KeyHandling.KeyBindingEntry<MainLoopKeyContext>>> s_entries =
+        new(GetEntries);
+
+    /// <inheritdoc />
+    public IReadOnlyList<KeyBinding> GetBindings() =>
+        s_entries.Value.Select(e => e.ToKeyBinding()).ToList();
+
+    /// <inheritdoc />
+    public bool Handle(ConsoleKeyInfo key, MainLoopKeyContext ctx)
+    {
+        foreach (var entry in s_entries.Value)
+        {
+            if (entry.Matches(key))
+            {
+                return entry.Action(key, ctx);
+            }
         }
+        return false;
     }
 }
