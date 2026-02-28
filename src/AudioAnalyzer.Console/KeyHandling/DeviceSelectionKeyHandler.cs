@@ -4,8 +4,8 @@ using KeyHandling = AudioAnalyzer.Console.KeyHandling;
 
 namespace AudioAnalyzer.Console;
 
-/// <summary>Handles key input for the device selection modal: up/down to select, Enter to confirm, Escape to cancel.</summary>
-internal sealed class DeviceSelectionKeyHandler : IKeyHandler<DeviceSelectionKeyContext>
+/// <summary>Config for device selection modal keys: up/down to select, Enter to confirm, Escape to cancel.</summary>
+internal sealed class DeviceSelectionKeyHandlerConfig : IKeyHandlerConfig<DeviceSelectionKeyContext>
 {
     private const string Section = "Device selection";
 

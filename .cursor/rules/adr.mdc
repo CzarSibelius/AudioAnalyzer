@@ -57,7 +57,7 @@ alwaysApply: true
 
 26. **God object refactoring**: When refactoring ApplicationShell, AnalysisEngine, or SettingsModal, follow [ADR-0041](docs/adr/0041-god-object-refactoring-strategy.md) and the task list in [docs/refactoring/god-object-plan.md](docs/refactoring/god-object-plan.md). Mark tasks `[x]` when implemented.
 
-27. **UI component key handling**: UI components that need both rendering and key handling use a component-specific renderer interface plus `IKeyHandler<TContext>` for a component-specific context type. Use `Handle(ConsoleKeyInfo, TContext)`; do not add a shared renderer interface (signatures differ). See [ADR-0042](docs/adr/0042-ui-component-renderer-keyhandler-pattern.md).
+27. **UI component key handling**: UI components that need both rendering and key handling use a component-specific renderer interface plus `IKeyHandler<TContext>` for a component-specific context type. `TContext` must implement `IKeyHandlerContext`; use `Handle(ConsoleKeyInfo, TContext)`. Do not add a shared renderer interface (signatures differ). Key-handler behaviour is implemented via `IKeyHandlerConfig<TContext>`; `IKeyHandler<>` is registered as open generic `GenericKeyHandler<>`, which delegates to the config. See [ADR-0042](docs/adr/0042-ui-component-renderer-keyhandler-pattern.md).
 
 28. **Layer state store**: Per-layer animation state is held in a singleton implementing `ITextLayerStateStore<TState>` for each state type. Stateful layers inject the store for their state type (e.g. `ITextLayerStateStore<BeatCirclesState>`) and call `GetState(ctx.LayerIndex)` in Draw. TextLayerDrawContext carries only shared frame data (buffer, snapshot, palette, dimensions, layer index). New stateful layers extend the store (add `ITextLayerStateStore<NewState>` to the implementation and register it); do not add new required properties to TextLayerDrawContext. See [ADR-0043](docs/adr/0043-textlayer-state-store.md).
 
@@ -70,3 +70,5 @@ alwaysApply: true
 32. **Key handling**: Every component/class that handles keypresses must implement `IKeyHandler<TContext>` or delegate to one. No inline key-handling logic. See [ADR-0047](docs/adr/0047-all-key-handling-via-ikeyhandler.md).
 
 33. **Key handler bindings**: Key handlers must expose which keys they handle via the method on `IKeyHandler<TContext>` that returns bindings (key/modifiers, description, optional section). Used by dynamic help and other consumers. New handlers must implement this method. See [ADR-0048](docs/adr/0048-key-handlers-expose-bindings.md).
+
+34. **Dynamic help**: Help screen content is driven by the active screen/view (e.g. Preset editor vs Show play). Content is assembled from handler bindings (GetBindings()) and optional blurbs; current application mode determines section order or prioritization. See [ADR-0049](docs/adr/0049-dynamic-help-screen.md).

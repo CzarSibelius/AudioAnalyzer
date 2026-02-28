@@ -1,5 +1,6 @@
 <Project>
   <PropertyGroup>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <!-- Enforce .editorconfig code style rules as build diagnostics -->
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <!-- Use latest recommended analyzer rules -->

@@ -4,8 +4,8 @@ using KeyHandling = AudioAnalyzer.Console.KeyHandling;
 
 namespace AudioAnalyzer.Console;
 
-/// <summary>Handles key input for the show edit overlay: rename, new show, add/delete/reorder entries, duration edit. Per ADR-0047.</summary>
-internal sealed class ShowEditModalKeyHandler : IKeyHandler<ShowEditModalKeyContext>
+/// <summary>Config for show edit overlay keys: rename, new show, add/delete/reorder entries, duration edit. Per ADR-0047.</summary>
+internal sealed class ShowEditModalKeyHandlerConfig : IKeyHandlerConfig<ShowEditModalKeyContext>
 {
     private const string Section = "Show edit modal (S when in Show play)";
 
@@ -55,7 +55,9 @@ internal sealed class ShowEditModalKeyHandler : IKeyHandler<ShowEditModalKeyCont
                 {
                     var showRef = context.ShowRepo.GetById(context.CurrentShowId ?? "");
                     if (showRef == null || context.AllPresets.Count == 0)
+                    {
                         return false;
+                    }
                     var firstPresetId = context.AllPresets[0].Id;
                     showRef.Entries.Add(new ShowEntry
                     {
@@ -77,10 +79,14 @@ internal sealed class ShowEditModalKeyHandler : IKeyHandler<ShowEditModalKeyCont
                     var showRef = context.ShowRepo.GetById(context.CurrentShowId ?? "");
                     var entries = showRef?.Entries ?? new List<ShowEntry>();
                     if (showRef == null || entries.Count == 0 || context.SelectedIndex >= entries.Count)
+                    {
                         return false;
+                    }
                     showRef.Entries.RemoveAt(context.SelectedIndex);
                     if (context.SelectedIndex >= showRef.Entries.Count && showRef.Entries.Count > 0)
+                    {
                         context.SelectedIndex = showRef.Entries.Count - 1;
+                    }
                     context.ShowRepo.Save(context.CurrentShowId!, showRef);
                     context.SaveVisualizerSettings();
                     return false;
@@ -95,7 +101,9 @@ internal sealed class ShowEditModalKeyHandler : IKeyHandler<ShowEditModalKeyCont
                     var showRef = context.ShowRepo.GetById(context.CurrentShowId ?? "");
                     var entries = showRef?.Entries ?? new List<ShowEntry>();
                     if (showRef == null || entries.Count == 0 || context.SelectedIndex >= entries.Count || context.AllPresets.Count == 0)
+                    {
                         return false;
+                    }
                     var entry = entries[context.SelectedIndex];
                     int idx = 0;
                     for (int i = 0; i < context.AllPresets.Count; i++)
@@ -121,7 +129,9 @@ internal sealed class ShowEditModalKeyHandler : IKeyHandler<ShowEditModalKeyCont
                     var showRef = context.ShowRepo.GetById(context.CurrentShowId ?? "");
                     var entries = showRef?.Entries ?? new List<ShowEntry>();
                     if (showRef == null || entries.Count == 0 || context.SelectedIndex >= entries.Count)
+                    {
                         return false;
+                    }
                     var entry = entries[context.SelectedIndex];
                     entry.Duration ??= new DurationConfig();
                     entry.Duration.Unit = entry.Duration.Unit == DurationUnit.Seconds ? DurationUnit.Beats : DurationUnit.Seconds;
@@ -139,7 +149,9 @@ internal sealed class ShowEditModalKeyHandler : IKeyHandler<ShowEditModalKeyCont
                     var showRef = context.ShowRepo.GetById(context.CurrentShowId ?? "");
                     var entries = showRef?.Entries ?? new List<ShowEntry>();
                     if (showRef == null || entries.Count == 0 || context.SelectedIndex >= entries.Count)
+                    {
                         return false;
+                    }
                     var entry = entries[context.SelectedIndex];
                     context.DurationBuffer = (entry.Duration?.Value ?? 30).ToString(System.Globalization.CultureInfo.InvariantCulture);
                     context.EditingDuration = true;

@@ -4,19 +4,25 @@ using AudioAnalyzer.Domain;
 
 namespace AudioAnalyzer.Console;
 
-/// <summary>Help modal content and presentation per ADR-0006.</summary>
+/// <summary>Help modal content and presentation. Content is dynamic from key handler bindings per ADR-0049.</summary>
 internal sealed class HelpModal : IHelpModal
 {
-    private readonly UiSettings _uiSettings;
+    private const int KeyColumnWidth = 14;
 
-    public HelpModal(UiSettings uiSettings)
+    private readonly UiSettings _uiSettings;
+    private readonly IHelpContentProvider _helpContentProvider;
+    private ApplicationMode _currentMode = ApplicationMode.PresetEditor;
+
+    public HelpModal(UiSettings uiSettings, IHelpContentProvider helpContentProvider)
     {
         _uiSettings = uiSettings ?? throw new ArgumentNullException(nameof(uiSettings));
+        _helpContentProvider = helpContentProvider ?? throw new ArgumentNullException(nameof(helpContentProvider));
     }
 
     /// <inheritdoc />
-    public void Show(Action? onEnter, Action? onClose)
+    public void Show(ApplicationMode? currentMode = null, Action? onEnter = null, Action? onClose = null)
     {
+        _currentMode = currentMode ?? ApplicationMode.PresetEditor;
         ModalSystem.RunModal(() => DrawContent(), _ => true, onClose, onEnter);
     }
 
@@ -35,54 +41,23 @@ internal sealed class HelpModal : IHelpModal
         System.Console.WriteLine("║" + new string(' ', pad) + title + new string(' ', width - pad - title.Length - 2) + "║");
         System.Console.WriteLine("╚" + new string('═', width - 2) + "╝");
         System.Console.WriteLine();
-        System.Console.WriteLine(labelCode + "  KEYBOARD CONTROLS" + reset);
-        System.Console.WriteLine("  ─────────────────────────────────────");
-        System.Console.WriteLine("  H         Show this help menu");
-        System.Console.WriteLine("  Tab       Switch between Preset editor and Show play");
-        System.Console.WriteLine("  V         Cycle to next preset (Preset editor only)");
-        System.Console.WriteLine("  P         Cycle color palette (palette-aware visualizers)");
-        System.Console.WriteLine("  +/-       Adjust beat sensitivity");
-        System.Console.WriteLine("  [ / ]     Adjust oscilloscope gain (Layered text, when Oscilloscope layer selected)");
-        System.Console.WriteLine("  D         Change audio input device");
-        System.Console.WriteLine("  S         Preset modal (Preset editor) or Show edit modal (Show play), ESC close");
-        System.Console.WriteLine("  ESC       Quit the application");
-        System.Console.WriteLine("  F         Toggle full screen (visualizer only, no header/toolbar)");
-        System.Console.WriteLine("  Ctrl+Shift+E  Dump screen to text file (screen-dumps folder)");
+        string currentView = _currentMode == ApplicationMode.ShowPlay ? "Show play" : "Preset editor";
+        System.Console.WriteLine(dimmedCode + "  Current: " + currentView + reset);
         System.Console.WriteLine();
-        System.Console.WriteLine(labelCode + "  PRESET SETTINGS MODAL (S)" + reset);
-        System.Console.WriteLine("  ─────────────────────────────────────");
-        System.Console.WriteLine("  1-9       Select layer");
-        System.Console.WriteLine("  ←→       Change layer type (left panel)");
-        System.Console.WriteLine("  ENTER     Move to settings panel (when layer selected)");
-        System.Console.WriteLine("  SPACE     Toggle layer enabled/disabled (when layer selected)");
-        System.Console.WriteLine("  Shift+1-9 Toggle layer enabled/disabled by slot");
-        System.Console.WriteLine("  ↑↓       Select layer or setting");
-        System.Console.WriteLine("  ENTER     Cycle selected setting (or edit strings)");
-        System.Console.WriteLine("  +/-       Cycle selected setting (when cycleable)");
-        System.Console.WriteLine("  ↑↓       Confirm when editing strings");
-        System.Console.WriteLine("  ←/ESC  Back to layer list from settings panel");
-        System.Console.WriteLine("  R         Rename preset");
-        System.Console.WriteLine("  N         New preset (duplicate of current)");
-        System.Console.WriteLine("  ESC       Close modal");
-        System.Console.WriteLine();
-        System.Console.WriteLine(labelCode + "  DEVICE SELECTION MENU" + reset);
-        System.Console.WriteLine("  ─────────────────────────────────────");
-        System.Console.WriteLine("  ↑/↓       Navigate devices");
-        System.Console.WriteLine("  ENTER     Select device");
-        System.Console.WriteLine("  ESC       Cancel and return");
-        System.Console.WriteLine();
-        System.Console.WriteLine(labelCode + "  SHOW EDIT MODAL (S when in Show play)" + reset);
-        System.Console.WriteLine("  ─────────────────────────────────────");
-        System.Console.WriteLine("  Up/Down   Select entry");
-        System.Console.WriteLine("  A         Add preset entry");
-        System.Console.WriteLine("  D         Delete selected entry");
-        System.Console.WriteLine("  P         Cycle preset for selected entry");
-        System.Console.WriteLine("  Enter     Edit duration value");
-        System.Console.WriteLine("  U         Toggle duration unit (Seconds/Beats)");
-        System.Console.WriteLine("  R         Rename show");
-        System.Console.WriteLine("  N         New show");
-        System.Console.WriteLine("  ESC       Close modal");
-        System.Console.WriteLine();
+
+        IReadOnlyList<HelpSection> sections = _helpContentProvider.GetSections(_currentMode);
+        foreach (var section in sections)
+        {
+            System.Console.WriteLine(labelCode + "  " + section.SectionTitle.ToUpperInvariant() + reset);
+            System.Console.WriteLine("  ─────────────────────────────────────");
+            foreach (var binding in section.Bindings)
+            {
+                string keyPadded = AnsiConsole.PadToDisplayWidth(binding.Key, KeyColumnWidth);
+                System.Console.WriteLine("  " + keyPadded + "  " + binding.Description);
+            }
+            System.Console.WriteLine();
+        }
+
         System.Console.WriteLine(labelCode + "  PRESETS & SHOWS" + reset);
         System.Console.WriteLine("  ─────────────────────────────────────");
         System.Console.WriteLine("  Preset editor: Each preset is a TextLayers config (up to " + TextLayersLimits.MaxLayerCount + " layers + palette). V cycles.");

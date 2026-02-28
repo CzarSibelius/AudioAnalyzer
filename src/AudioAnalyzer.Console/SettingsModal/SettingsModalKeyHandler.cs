@@ -5,19 +5,19 @@ using KeyHandling = AudioAnalyzer.Console.KeyHandling;
 
 namespace AudioAnalyzer.Console;
 
-/// <summary>Handles key input for the settings overlay: layer list, settings list, renaming, setting edit, preset create.</summary>
-internal sealed class SettingsModalKeyHandler : IKeyHandler<SettingsModalKeyContext>
+/// <summary>Config for settings overlay keys: layer list, settings list, renaming, setting edit, preset create.</summary>
+internal sealed class SettingsModalKeyHandlerConfig : IKeyHandlerConfig<SettingsModalKeyContext>
 {
     private const int NavKeyRepeatMs = 120;
     private const string Section = "Preset settings modal (S)";
     private readonly IPaletteRepository _paletteRepo;
 
-    public SettingsModalKeyHandler(IPaletteRepository paletteRepo)
+    public SettingsModalKeyHandlerConfig(IPaletteRepository paletteRepo)
     {
         _paletteRepo = paletteRepo ?? throw new ArgumentNullException(nameof(paletteRepo));
     }
 
-    private IReadOnlyList<KeyHandling.KeyBindingEntry<SettingsModalKeyContext>> GetLayerListEntries()
+    private static IReadOnlyList<KeyHandling.KeyBindingEntry<SettingsModalKeyContext>> GetLayerListEntries()
     {
         return
         [
@@ -50,7 +50,10 @@ internal sealed class SettingsModalKeyHandler : IKeyHandler<SettingsModalKeyCont
                 {
                     var state = context.State;
                     var sortedLayers = context.SortedLayers;
-                    if (sortedLayers.Count == 0) return false;
+                    if (sortedLayers.Count == 0)
+                    {
+                        return false;
+                    }
                     if (key.Key == ConsoleKey.UpArrow && state.SelectedLayerIndex > 0)
                     {
                         var a = sortedLayers[state.SelectedLayerIndex];
@@ -83,9 +86,13 @@ internal sealed class SettingsModalKeyHandler : IKeyHandler<SettingsModalKeyCont
                     var state = context.State;
                     var sortedLayers = context.SortedLayers;
                     if (key.Key == ConsoleKey.UpArrow)
+                    {
                         state.SelectedLayerIndex = sortedLayers.Count > 0 ? (state.SelectedLayerIndex - 1 + sortedLayers.Count) % sortedLayers.Count : 0;
+                    }
                     else
+                    {
                         state.SelectedLayerIndex = sortedLayers.Count > 0 ? (state.SelectedLayerIndex + 1) % sortedLayers.Count : 0;
+                    }
                     return false;
                 },
                 Key: "↑/↓",
@@ -167,7 +174,9 @@ internal sealed class SettingsModalKeyHandler : IKeyHandler<SettingsModalKeyCont
                     var sortedLayers = context.SortedLayers;
                     int layerIdx = DigitFromKey(key.Key) - 1;
                     if (layerIdx < sortedLayers.Count)
+                    {
                         state.SelectedLayerIndex = layerIdx;
+                    }
                     return false;
                 },
                 Key: "1-9",

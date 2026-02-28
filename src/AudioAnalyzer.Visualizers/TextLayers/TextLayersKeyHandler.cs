@@ -3,8 +3,8 @@ using AudioAnalyzer.Domain;
 
 namespace AudioAnalyzer.Visualizers;
 
-/// <summary>Handles key input for the TextLayers visualizer: 1–<see cref="TextLayersLimits.MaxLayerCount"/> select/toggle, P palette, [ ] gain, I next image, Left/Right cycle type.</summary>
-public sealed class TextLayersKeyHandler : IKeyHandler<TextLayersKeyContext>
+/// <summary>Config for TextLayers visualizer keys: 1–<see cref="TextLayersLimits.MaxLayerCount"/> select/toggle, P palette, [ ] gain, I next image, Left/Right cycle type.</summary>
+public sealed class TextLayersKeyHandlerConfig : IKeyHandlerConfig<TextLayersKeyContext>
 {
     private const string Section = "Layered text";
 
@@ -32,7 +32,10 @@ public sealed class TextLayersKeyHandler : IKeyHandler<TextLayersKeyContext>
                     var paletteLayer = sortedLayers[idx];
                     var currentId = paletteLayer.PaletteId ?? config?.PaletteId ?? "";
                     var all = context.PaletteRepo.GetAll();
-                    if (all.Count == 0) return true;
+                    if (all.Count == 0)
+                    {
+                        return true;
+                    }
                     int nextIndex = 0;
                     for (int i = 0; i < all.Count; i++)
                     {
@@ -56,7 +59,10 @@ public sealed class TextLayersKeyHandler : IKeyHandler<TextLayersKeyContext>
                     var sortedLayers = context.SortedLayers;
                     int layerIndex = Math.Clamp(context.PaletteCycleLayerIndex, 0, sortedLayers.Count - 1);
                     var layer = sortedLayers[layerIndex];
-                    if (layer.LayerType != TextLayerType.Oscilloscope) return false;
+                    if (layer.LayerType != TextLayerType.Oscilloscope)
+                    {
+                        return false;
+                    }
                     var osc = layer.GetCustom<OscilloscopeSettings>() ?? new OscilloscopeSettings();
                     double delta = key.Key is ConsoleKey.Oem6 ? 0.5 : -0.5;
                     osc.Gain = Math.Clamp(osc.Gain + delta, 1.0, 10.0);
@@ -74,7 +80,10 @@ public sealed class TextLayersKeyHandler : IKeyHandler<TextLayersKeyContext>
                     bool anyAdvanced = false;
                     for (int i = 0; i < sortedLayers.Count; i++)
                     {
-                        if (sortedLayers[i].LayerType != TextLayerType.AsciiImage) continue;
+                        if (sortedLayers[i].LayerType != TextLayerType.AsciiImage)
+                        {
+                            continue;
+                        }
                         context.AdvanceSnippetIndex(i);
                         anyAdvanced = true;
                     }
@@ -107,9 +116,15 @@ public sealed class TextLayersKeyHandler : IKeyHandler<TextLayersKeyContext>
                     int digit = DigitFromKey(key.Key);
                     var sortedLayers = context.SortedLayers;
                     var config = context.Settings;
-                    if (digit == 0 || config?.Layers is not { Count: > 0 }) return false;
+                    if (digit == 0 || config?.Layers is not { Count: > 0 })
+                    {
+                        return false;
+                    }
                     int layerIdx = digit - 1;
-                    if (layerIdx >= sortedLayers.Count) return false;
+                    if (layerIdx >= sortedLayers.Count)
+                    {
+                        return false;
+                    }
                     context.PaletteCycleLayerIndex = layerIdx;
                     var l = sortedLayers[layerIdx];
                     l.Enabled = !l.Enabled;
@@ -125,9 +140,15 @@ public sealed class TextLayersKeyHandler : IKeyHandler<TextLayersKeyContext>
                     int digit = DigitFromKey(key.Key);
                     var sortedLayers = context.SortedLayers;
                     var config = context.Settings;
-                    if (digit == 0 || config?.Layers is not { Count: > 0 }) return false;
+                    if (digit == 0 || config?.Layers is not { Count: > 0 })
+                    {
+                        return false;
+                    }
                     int layerIdx = digit - 1;
-                    if (layerIdx >= sortedLayers.Count) return false;
+                    if (layerIdx >= sortedLayers.Count)
+                    {
+                        return false;
+                    }
                     context.PaletteCycleLayerIndex = layerIdx;
                     return true;
                 },
@@ -148,7 +169,9 @@ public sealed class TextLayersKeyHandler : IKeyHandler<TextLayersKeyContext>
     {
         var sortedLayers = context.SortedLayers;
         if (sortedLayers is not { Count: > 0 })
+        {
             return false;
+        }
 
         foreach (var entry in s_entries.Value)
         {

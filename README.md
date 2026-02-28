@@ -53,7 +53,7 @@ Tests use **System.IO.Abstractions.TestingHelpers** (MockFileSystem) instead of 
 1. On first run (or if no device was saved), choose an audio input: **Demo Mode** (synthetic stream at 90/120/140 BPM for testing without audio), loopback (system output), or a specific capture device (↑/↓ to move, ENTER to select, ESC to cancel).
 2. The analyzer shows real-time volume and frequency analysis. Play audio to see it in action.
 3. **Keyboard controls:**
-   - **H** – Show help (all keys and presets)
+   - **H** – Show help (shortcuts for current view; content varies by Preset editor vs Show play)
    - **Tab** – Switch between Preset editor and Show play (when Shows exist)
    - **V** – Cycle to next preset (Preset editor only; toolbar shows preset name)
    - **P** – Cycle color palette (for palette-aware visualizers; affects only the current visualizer and persists to that visualizer's settings)

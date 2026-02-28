@@ -1,10 +1,11 @@
 using AudioAnalyzer.Application;
+using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Domain;
 
 namespace AudioAnalyzer.Console;
 
 /// <summary>Context passed to main loop key handlers. Provides shared state and operations.</summary>
-internal sealed class MainLoopKeyContext
+internal sealed class MainLoopKeyContext : IKeyHandlerContext
 {
     /// <summary>Display state (e.g. full-screen). Use for reading or toggling full-screen; orchestrator reacts to changes.</summary>
     public required IDisplayState DisplayState { get; init; }

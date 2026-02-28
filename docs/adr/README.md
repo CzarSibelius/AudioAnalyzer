@@ -64,6 +64,7 @@ Decisions are numbered and kept under version control so the rationale stays wit
 | [0046](0046-screen-dump-ascii-screenshot.md) | Screen dump (ASCII screenshot) for bug reports and AI agents | Accepted |
 | [0047](0047-all-key-handling-via-ikeyhandler.md) | All key handling via IKeyHandler | Accepted |
 | [0048](0048-key-handlers-expose-bindings.md) | Key handlers expose bindings for discovery | Accepted |
+| [0049](0049-dynamic-help-screen.md) | Dynamic help screen — content based on active view | Accepted |
 
 ## Process
 

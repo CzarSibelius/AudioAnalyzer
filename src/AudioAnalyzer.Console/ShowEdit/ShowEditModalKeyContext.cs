@@ -4,7 +4,7 @@ using AudioAnalyzer.Domain;
 namespace AudioAnalyzer.Console;
 
 /// <summary>Mutable context passed to the show edit modal key handler.</summary>
-internal sealed class ShowEditModalKeyContext
+internal sealed class ShowEditModalKeyContext : IKeyHandlerContext
 {
     /// <summary>Current show id. Mutated by the handler.</summary>
     public string? CurrentShowId { get; set; }

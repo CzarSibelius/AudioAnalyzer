@@ -14,6 +14,7 @@ Help content and other features need to know which keys each key handler uses. T
    - **Key** (and modifiers where relevant, e.g. Ctrl+Shift+E) so consumers can display "Ctrl+Shift+E" or "Tab".
    - **Description** (short text for help, e.g. "Dump screen to file").
    - Optionally a **section/category** (e.g. "Main", "Preset modal") so the help UI can group by handler or section without hardcoding section names.
+   - Optionally **ApplicableMode** (e.g. `ApplicationMode.PresetEditor`): when set, the binding is shown in dynamic help only when help is opened in that mode; when null, shown in both modes. Per ADR-0049.
 
    Define a small DTO (e.g. `KeyBinding` or `KeyBindingInfo`) in Application.Abstractions so both Application and Console/Visualizers can reference it. The method is parameterless; bindings are static per handler and do not depend on TContext.
 
@@ -27,7 +28,7 @@ To keep `GetBindings()` and `Handle()` in sync, handlers use a **single source o
 
 - **Matcher**: `Func<ConsoleKeyInfo, bool>` — returns true when the key matches (e.g. one entry can match "+/-" by accepting OemPlus, Add, OemMinus, Subtract).
 - **Action**: `Func<ConsoleKeyInfo, TContext, bool>` — invoked when the key matches; return value is the `Handle()` result (true = handled).
-- **Display**: Key string, Description, Section — used to build the `KeyBinding` DTO for discovery.
+- **Display**: Key string, Description, Section, optional ApplicableMode — used to build the `KeyBinding` DTO for discovery.
 
 Then:
 

@@ -4,7 +4,7 @@ using AudioAnalyzer.Domain;
 namespace AudioAnalyzer.Visualizers;
 
 /// <summary>Mutable context passed to the TextLayers key handler each key. Caller fills snapshot and callbacks; handler may mutate PaletteCycleLayerIndex and layer settings.</summary>
-public sealed class TextLayersKeyContext
+public sealed class TextLayersKeyContext : IKeyHandlerContext
 {
     /// <summary>Layers ordered by ZOrder. References match config; handler may mutate layer properties.</summary>
     public IReadOnlyList<TextLayerSettings> SortedLayers { get; set; } = [];

@@ -5,7 +5,7 @@ using AudioAnalyzer.Visualizers;
 namespace AudioAnalyzer.Console;
 
 /// <summary>Mutable context passed to the settings modal key handler each key.</summary>
-internal sealed class SettingsModalKeyContext
+internal sealed class SettingsModalKeyContext : IKeyHandlerContext
 {
     /// <summary>Modal state (focus, selection, buffers). Mutated by the handler.</summary>
     public SettingsModalState State { get; set; } = new();

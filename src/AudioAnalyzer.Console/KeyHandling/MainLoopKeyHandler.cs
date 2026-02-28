@@ -4,8 +4,8 @@ using KeyHandling = AudioAnalyzer.Console.KeyHandling;
 
 namespace AudioAnalyzer.Console;
 
-/// <summary>Handles main loop keys: Tab, V, S, D, H, +/-, P, F, Ctrl+Shift+E (screen dump), Escape.</summary>
-internal sealed class MainLoopKeyHandler : IKeyHandler<MainLoopKeyContext>
+/// <summary>Config for main loop keys: Tab, V, S, D, H, +/-, P, F, Ctrl+Shift+E (screen dump), Escape.</summary>
+internal sealed class MainLoopKeyHandlerConfig : IKeyHandlerConfig<MainLoopKeyContext>
 {
     private const string Section = "Keyboard controls";
 
@@ -19,9 +19,13 @@ internal sealed class MainLoopKeyHandler : IKeyHandler<MainLoopKeyContext>
                 {
                     ctx.OnModeSwitch();
                     if (!ctx.DisplayState.FullScreen)
+                    {
                         ctx.Orchestrator.RedrawWithFullHeader();
+                    }
                     else
+                    {
                         ctx.Orchestrator.Redraw();
+                    }
                     return true;
                 },
                 Key: "Tab",
@@ -36,15 +40,20 @@ internal sealed class MainLoopKeyHandler : IKeyHandler<MainLoopKeyContext>
                         ctx.OnPresetCycle();
                         ctx.SaveSettings();
                         if (!ctx.DisplayState.FullScreen)
+                        {
                             ctx.Orchestrator.RedrawWithFullHeader();
+                        }
                         else
+                        {
                             ctx.Orchestrator.Redraw();
+                        }
                     }
                     return true;
                 },
                 Key: "V",
                 Description: "Cycle to next preset (Preset editor only)",
-                Section),
+                Section,
+                ApplicableMode: ApplicationMode.PresetEditor),
             new KeyHandling.KeyBindingEntry<MainLoopKeyContext>(
                 Matches: k => k.Key == ConsoleKey.S,
                 Action: (_, ctx) =>
@@ -62,9 +71,13 @@ internal sealed class MainLoopKeyHandler : IKeyHandler<MainLoopKeyContext>
                         });
                     }
                     if (!ctx.DisplayState.FullScreen)
+                    {
                         ctx.Orchestrator.RedrawWithFullHeader();
+                    }
                     else
+                    {
                         ctx.Orchestrator.Redraw();
+                    }
                     return true;
                 },
                 Key: "S",
@@ -87,13 +100,21 @@ internal sealed class MainLoopKeyHandler : IKeyHandler<MainLoopKeyContext>
                     ctx.StopCapture();
                     var (newId, newName) = ctx.DeviceSelectionModal.Show(ctx.GetDeviceName(), ctx.SetModalOpen);
                     if (newName != "")
+                    {
                         ctx.StartCapture(newId, newName);
+                    }
                     else
+                    {
                         ctx.RestartCapture();
+                    }
                     if (!ctx.DisplayState.FullScreen)
+                    {
                         ctx.Orchestrator.RedrawWithFullHeader();
+                    }
                     else
+                    {
                         ctx.Orchestrator.Redraw();
+                    }
                     return true;
                 },
                 Key: "D",
@@ -104,14 +125,19 @@ internal sealed class MainLoopKeyHandler : IKeyHandler<MainLoopKeyContext>
                 Action: (_, ctx) =>
                 {
                     ctx.HelpModal.Show(
+                        ctx.GetApplicationMode(),
                         onEnter: () => ctx.SetModalOpen(true),
                         onClose: () =>
                         {
                             ctx.SetModalOpen(false);
                             if (ctx.DisplayState.FullScreen)
+                            {
                                 ctx.Orchestrator.Redraw();
+                            }
                             else
+                            {
                                 ctx.RefreshHeaderAndRedraw();
+                            }
                         });
                     return true;
                 },
@@ -123,9 +149,13 @@ internal sealed class MainLoopKeyHandler : IKeyHandler<MainLoopKeyContext>
                 Action: (key, ctx) =>
                 {
                     if (key.Key is ConsoleKey.OemPlus or ConsoleKey.Add)
+                    {
                         ctx.Engine.BeatSensitivity += 0.1;
+                    }
                     else
+                    {
                         ctx.Engine.BeatSensitivity -= 0.1;
+                    }
                     ctx.SaveSettings();
                     return true;
                 },

@@ -4,8 +4,8 @@ namespace AudioAnalyzer.Application.Abstractions;
 /// Common contract for key handlers that take a context type. UI components (main loop, modals, visualizers)
 /// use a renderer plus an implementation of this interface for consistent key handling.
 /// </summary>
-/// <typeparam name="TContext">Component-specific context (state and operations) passed each key.</typeparam>
-public interface IKeyHandler<in TContext>
+/// <typeparam name="TContext">Component-specific context (state and operations) passed each key. Must implement <see cref="IKeyHandlerContext"/>.</typeparam>
+public interface IKeyHandler<in TContext> where TContext : IKeyHandlerContext
 {
     /// <summary>Returns the key bindings this handler supports. Used by dynamic help and other consumers. Per ADR-0048.</summary>
     /// <returns>List of key binding entries (key display, description, optional section). Must stay in sync with <see cref="Handle"/>.</returns>

@@ -4,7 +4,7 @@ using AudioAnalyzer.Domain;
 namespace AudioAnalyzer.Console;
 
 /// <summary>Mutable context passed to the device selection modal key handler.</summary>
-internal sealed class DeviceSelectionKeyContext
+internal sealed class DeviceSelectionKeyContext : IKeyHandlerContext
 {
     /// <summary>Available audio devices. Read-only.</summary>
     public required IReadOnlyList<AudioDeviceEntry> Devices { get; init; }

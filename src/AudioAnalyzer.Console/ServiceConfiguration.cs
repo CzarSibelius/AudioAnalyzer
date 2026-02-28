@@ -62,7 +62,8 @@ internal static class ServiceConfiguration
         services.AddTextLayerRenderers();
 
         services.AddSingleton<IConsoleWriter, ConsoleWriter>();
-        services.AddSingleton<IKeyHandler<TextLayersKeyContext>, TextLayersKeyHandler>();
+        services.AddSingleton(typeof(IKeyHandler<>), typeof(GenericKeyHandler<>));
+        services.AddSingleton<IKeyHandlerConfig<TextLayersKeyContext>, TextLayersKeyHandlerConfig>();
         services.AddSingleton<ITextLayersToolbarBuilder, TextLayersToolbarBuilder>();
 
         services.AddSingleton<IVisualizer>(sp => new TextLayersVisualizer(
@@ -86,15 +87,16 @@ internal static class ServiceConfiguration
         services.AddSingleton<IScrollingTextEngine, ScrollingTextEngine>();
         services.AddSingleton<IScrollingTextViewportFactory, ScrollingTextViewportFactory>();
         services.AddSingleton<ITitleBarRenderer, TitleBarRenderer>();
-        services.AddSingleton<IKeyHandler<DeviceSelectionKeyContext>, DeviceSelectionKeyHandler>();
+        services.AddSingleton<IKeyHandlerConfig<DeviceSelectionKeyContext>, DeviceSelectionKeyHandlerConfig>();
         services.AddSingleton<IDeviceSelectionModal, DeviceSelectionModal>();
+        services.AddSingleton<IHelpContentProvider, HelpContentProvider>();
         services.AddSingleton<IHelpModal, HelpModal>();
         services.AddSingleton<ISettingsModalRenderer, SettingsModalRenderer>();
-        services.AddSingleton<IKeyHandler<SettingsModalKeyContext>, SettingsModalKeyHandler>();
+        services.AddSingleton<IKeyHandlerConfig<SettingsModalKeyContext>, SettingsModalKeyHandlerConfig>();
         services.AddSingleton<ISettingsModal, SettingsModal>();
-        services.AddSingleton<IKeyHandler<ShowEditModalKeyContext>, ShowEditModalKeyHandler>();
+        services.AddSingleton<IKeyHandlerConfig<ShowEditModalKeyContext>, ShowEditModalKeyHandlerConfig>();
         services.AddSingleton<IShowEditModal, ShowEditModal>();
-        services.AddSingleton<IKeyHandler<MainLoopKeyContext>, MainLoopKeyHandler>();
+        services.AddSingleton<IKeyHandlerConfig<MainLoopKeyContext>, MainLoopKeyHandlerConfig>();
         services.AddSingleton<IDeviceCaptureController, DeviceCaptureController>();
         services.AddSingleton<IAppSettingsPersistence, AppSettingsPersistence>();
         services.AddSingleton<IHeaderDrawer>(sp =>
