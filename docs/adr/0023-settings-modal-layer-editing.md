@@ -4,7 +4,7 @@
 
 ## Context
 
-Layer settings (common: Enabled, LayerType, ZOrder, BeatReaction, SpeedMultiplier, ColorIndex, PaletteId, TextSnippets; custom: Gain, LlamaStyle*, AsciiImage*, etc.) are edited in scattered ways: some in the S modal (type, enabled), some via global keys when a layer is selected ([ ] gain, P palette, I image), and others only via preset JSON. There is no single, documented place for layer editing.
+Layer settings (common: Enabled, LayerType, ZOrder, SpeedMultiplier, ColorIndex, PaletteId, TextSnippets; custom: BeatReaction where the layer supports it, Gain, LlamaStyle*, AsciiImage*, etc.) are edited in scattered ways: some in the S modal (type, enabled), some via global keys when a layer is selected ([ ] gain, P palette, I image), and others only via preset JSON. There is no single, documented place for layer editing.
 
 ## Decision
 

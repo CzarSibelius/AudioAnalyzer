@@ -5,6 +5,10 @@ namespace AudioAnalyzer.Visualizers;
 /// <summary>Layer-specific settings for AsciiImage. Only AsciiImageLayer reads these.</summary>
 public sealed class AsciiImageSettings
 {
+    /// <summary>How a beat affects this layer. Default None.</summary>
+    [Setting("BeatReaction", "Beat reaction")]
+    public AsciiImageBeatReaction BeatReaction { get; set; } = AsciiImageBeatReaction.None;
+
     /// <summary>Path to folder containing images. Can be null/empty.</summary>
     [Setting("ImagePath", "Image path")]
     public string? ImageFolderPath { get; set; }

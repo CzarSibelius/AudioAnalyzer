@@ -50,7 +50,6 @@ public sealed class LayerRenderingTests
               "Enabled": true,
               "ZOrder": 0,
               "TextSnippets": ["Test"],
-              "BeatReaction": "None",
               "SpeedMultiplier": 1.0
             }
             """;

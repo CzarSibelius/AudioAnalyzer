@@ -111,7 +111,7 @@ TextLayers presets are stored as **JSON files** in a **`presets`** directory nex
 **Preset JSON format:**
 
 - **`Name`** (optional): Display name (e.g. `"Preset 1"`).
-- **`Config`**: TextLayersVisualizerSettings — `PaletteId` plus `Layers` array (9 layers with `LayerType`, `Enabled`, `ZOrder`, `TextSnippets`, `BeatReaction`, etc.).
+- **`Config`**: TextLayersVisualizerSettings — `PaletteId` plus `Layers` array (9 layers with `LayerType`, `Enabled`, `ZOrder`, `TextSnippets`, `SpeedMultiplier`, etc.). Layers that support beat reaction store it in `Custom` (e.g. `Custom.BeatReaction`); not all layer types expose beat reaction.
 
 Example (`presets/preset-1.json`):
 

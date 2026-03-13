@@ -70,6 +70,7 @@ Decisions are numbered and kept under version control so the rationale stays wit
 | [0052](0052-ui-container-component-renderer.md) | UI container, component, and generic component renderer | Accepted |
 | [0053](0053-iuicomponent-all-ui.md) | Use IUiComponent for all UI (including modals) | Accepted |
 | [0054](0054-ui-component-state-ownership.md) | UI component state ownership and IUiStateUpdater | Accepted |
+| [0055](0055-layer-specific-beat-reaction.md) | Layer-specific beat reaction (no common BeatReaction) | Accepted |
 
 ## Process
 

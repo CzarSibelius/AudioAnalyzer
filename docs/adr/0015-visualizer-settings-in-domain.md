@@ -8,7 +8,7 @@ Infrastructure previously depended on Visualizers because `FileSettingsRepositor
 
 ## Decision
 
-1. **Visualizer settings types in Domain**: `VisualizerSettings` and all per-visualizer settings types (`GeissVisualizerSettings`, `OscilloscopeVisualizerSettings`, `UnknownPleasuresVisualizerSettings`, `TextLayersVisualizerSettings`, `TextLayerSettings`, `TextLayerType`, `TextLayerBeatReaction`, `AsciiImageMovement`) are moved to the Domain project. They are configuration DTOs used for persistence and injection.
+1. **Visualizer settings types in Domain**: `VisualizerSettings` and all per-visualizer settings types (`GeissVisualizerSettings`, `OscilloscopeVisualizerSettings`, `UnknownPleasuresVisualizerSettings`, `TextLayersVisualizerSettings`, `TextLayerSettings`, `TextLayerType`, `AsciiImageMovement`) are moved to the Domain project. They are configuration DTOs used for persistence and injection. Beat reaction is layer-specific and lives in Visualizers (Custom + layer-specific enums); see [ADR-0055](0055-layer-specific-beat-reaction.md).
 
 2. **IVisualizerSettingsRepository in Application**: The interface is moved to `Application.Abstractions`. It uses `Domain.VisualizerSettings` as its return/parameter type.
 

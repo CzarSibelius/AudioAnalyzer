@@ -12,12 +12,12 @@ We want a new visualization mode that composites multiple independent layers (e.
 
 2. **Per-layer config**: Layer list and per-layer settings (type, ZOrder, text snippets, beat reaction, speed, color index) live in **`VisualizerSettings.TextLayers`** (Domain). Config is passed into the visualizer via **`AnalysisSnapshot.TextLayersConfig`**; the renderer sets this only when the current mode is TextLayers. Layers are independent and configurable one at a time via the settings file (e.g. `appsettings.json`).
 
-3. **Layer types and beat reactions**: Supported layer types (e.g. ScrollingColors, Marquee, FallingLetters, MatrixRain, WaveText, StaticText) and beat reactions (None, SpeedBurst, Flash, SpawnMore, Pulse, ColorPop) are defined in Domain enums. The visualizer encapsulates all drawing and state (marquee offset, falling particles, etc.); no new public interfaces are required.
+3. **Layer types and beat reactions**: Supported layer types (e.g. ScrollingColors, Marquee, FallingLetters, MatrixRain, WaveText, StaticText) are defined in Domain (`TextLayerType`). Beat reactions are per-layer: each layer type that supports beat reaction has its own enum and stores it in Custom (see [ADR-0055](0055-layer-specific-beat-reaction.md)). The visualizer encapsulates all drawing and state (marquee offset, falling particles, etc.); no new public interfaces are required.
 
 ## Consequences
 
 - **Application.Abstractions**: `ViewportCellBuffer` type for compositing; `AnalysisSnapshot.TextLayersConfig` for passing config. Buffer is used only by the TextLayers visualizer.
-- **Domain**: `TextLayerType`, `TextLayerBeatReaction`, `TextLayerSettings`, `TextLayersVisualizerSettings`; `VisualizerSettings.TextLayers`; `VisualizationMode.TextLayers`.
+- **Domain**: `TextLayerType`, `TextLayerSettings`, `TextLayersVisualizerSettings`; `VisualizerSettings.TextLayers`; `VisualizationMode.TextLayers`.
 - **Infrastructure**: Renderer has a setter for text-layers settings and sets `snapshot.TextLayersConfig` when rendering TextLayers mode. Default layers are created in the settings repository when loading if missing.
 - **Visualizers**: One `TextLayersVisualizer` implementation with internal layer strategies and per-layer state; respects viewport bounds and uses the shared palette from the snapshot.
 - **Documentation**: README and this ADR document the mode, layer types, beat reactions, and settings structure.

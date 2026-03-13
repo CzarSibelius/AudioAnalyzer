@@ -61,7 +61,7 @@ internal sealed class SettingDescriptor
         ["Custom", "_customCache"];
 
     private static readonly string[] s_commonPropOrder =
-        ["Enabled", "LayerType", "ZOrder", "BeatReaction", "SpeedMultiplier", "ColorIndex", "PaletteId", "TextSnippets"];
+        ["Enabled", "LayerType", "ZOrder", "SpeedMultiplier", "ColorIndex", "PaletteId", "TextSnippets"];
 
     private static void AddCommonDescriptors(
         List<SettingDescriptor> list,
@@ -148,6 +148,13 @@ internal sealed class SettingDescriptor
         [TextLayerType.Mirror] = typeof(MirrorSettings),
         [TextLayerType.Maschine] = typeof(MaschineSettings),
         [TextLayerType.Fill] = typeof(FillSettings),
+        [TextLayerType.ScrollingColors] = typeof(ScrollingColorsSettings),
+        [TextLayerType.MatrixRain] = typeof(MatrixRainSettings),
+        [TextLayerType.WaveText] = typeof(WaveTextSettings),
+        [TextLayerType.GeissBackground] = typeof(GeissBackgroundSettings),
+        [TextLayerType.Marquee] = typeof(MarqueeSettings),
+        [TextLayerType.StaticText] = typeof(StaticTextSettings),
+        [TextLayerType.FallingLetters] = typeof(FallingLettersSettings),
     };
 
     private static void AddCustomDescriptors(List<SettingDescriptor> list, TextLayerSettings layer, Type customType)
@@ -224,7 +231,6 @@ internal sealed class SettingDescriptor
             {
                 case "Enabled": l.Enabled = bool.Parse(v); break;
                 case "ZOrder": l.ZOrder = Math.Clamp(int.Parse(v, CultureInfo.InvariantCulture), 0, 8); break;
-                case "BeatReaction": l.BeatReaction = Enum.Parse<TextLayerBeatReaction>(v); break;
                 case "SpeedMultiplier": l.SpeedMultiplier = Math.Clamp(double.Parse(v, CultureInfo.InvariantCulture), 0.1, 3.0); break;
                 case "ColorIndex": l.ColorIndex = Math.Clamp(int.Parse(v, CultureInfo.InvariantCulture), 0, 99); break;
             }
@@ -239,11 +245,6 @@ internal sealed class SettingDescriptor
             {
                 case "Enabled": l.Enabled = !l.Enabled; break;
                 case "ZOrder": l.ZOrder = f ? Math.Min(8, l.ZOrder + 1) : Math.Max(0, l.ZOrder - 1); break;
-                case "BeatReaction":
-                    var beatVals = Enum.GetValues<TextLayerBeatReaction>();
-                    var bi = Array.IndexOf(beatVals, l.BeatReaction);
-                    l.BeatReaction = beatVals[f ? (bi + 1) % beatVals.Length : (bi - 1 + beatVals.Length) % beatVals.Length];
-                    break;
                 case "SpeedMultiplier":
                     l.SpeedMultiplier = f ? Math.Min(3.0, l.SpeedMultiplier + 0.1) : Math.Max(0.1, l.SpeedMultiplier - 0.1);
                     break;

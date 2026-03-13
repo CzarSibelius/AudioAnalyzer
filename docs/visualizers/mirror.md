@@ -20,7 +20,7 @@ None. Mirror only reads and copies the buffer; it does not use analysis snapshot
 - **Rotation** (enum, cycle): Optional rotation of the mirrored (destination) region.
   - **None** — Mirrored content shown as-is.
   - **Flip180** — Flip the mirrored region 180° (both axes).
-- **PaletteId** / **Enabled** / **ZOrder** / **BeatReaction** etc.: Standard common layer settings (Mirror ignores palette and beat reaction).
+- **PaletteId** / **Enabled** / **ZOrder** etc.: Standard common layer settings. Mirror does not support beat reaction (no BeatReaction setting).
 
 ## Key bindings
 

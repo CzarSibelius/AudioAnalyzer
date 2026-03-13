@@ -22,9 +22,10 @@ public sealed class MatrixRainLayer : TextLayerRendererBase, ITextLayerRenderer<
             chars = string.Join("", snippets).Length > 0 ? string.Join("", snippets) : "01";
         }
 
+        var s = layer.GetCustom<MatrixRainSettings>() ?? new MatrixRainSettings();
         double colPhase = state.Offset;
         state.Offset += 0.15 * layer.SpeedMultiplier * ctx.SpeedBurst;
-        if (layer.BeatReaction == TextLayerBeatReaction.Flash && ctx.Snapshot.BeatFlashActive)
+        if (s.BeatReaction == MatrixRainBeatReaction.Flash && ctx.Snapshot.BeatFlashActive)
         {
             colPhase += Random.Shared.Next(0, 20);
         }

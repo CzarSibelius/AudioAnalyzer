@@ -2,6 +2,7 @@ using System.IO.Abstractions.TestingHelpers;
 using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Domain;
 using AudioAnalyzer.Infrastructure;
+using AudioAnalyzer.Visualizers;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
@@ -46,21 +47,20 @@ public sealed class PresetLoadingTests
         });
 
         var presetRepo = new FilePresetRepository(fileSystem, TestHelpers.PresetsPath);
+        var marqueeLayer = new TextLayerSettings
+        {
+            LayerType = TextLayerType.Marquee,
+            Enabled = true,
+            ZOrder = 0,
+            TextSnippets = ["Round-trip test"],
+            SpeedMultiplier = 1.2
+        };
+        marqueeLayer.SetCustom(new MarqueeSettings { BeatReaction = MarqueeBeatReaction.None });
+
         var config = new TextLayersVisualizerSettings
         {
             PaletteId = "default",
-            Layers =
-            [
-                new TextLayerSettings
-                {
-                    LayerType = TextLayerType.Marquee,
-                    Enabled = true,
-                    ZOrder = 0,
-                    TextSnippets = ["Round-trip test"],
-                    BeatReaction = TextLayerBeatReaction.None,
-                    SpeedMultiplier = 1.2
-                }
-            ]
+            Layers = [marqueeLayer]
         };
 
         string id = presetRepo.Create(new Preset { Name = "RoundTrip", Config = config });

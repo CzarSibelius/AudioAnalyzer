@@ -21,14 +21,15 @@ public sealed class WaveTextLayer : TextLayerRendererBase, ITextLayerRenderer<No
             text = " ";
         }
 
-        if (layer.BeatReaction == TextLayerBeatReaction.Flash && ctx.Snapshot.BeatFlashActive)
+        var s = layer.GetCustom<WaveTextSettings>() ?? new WaveTextSettings();
+        if (s.BeatReaction == WaveTextBeatReaction.Flash && ctx.Snapshot.BeatFlashActive)
         {
             state.SnippetIndex = (state.SnippetIndex + 1) % Math.Max(1, snippets.Count);
         }
 
         state.Offset += 0.05 * layer.SpeedMultiplier * ctx.SpeedBurst;
         double phase = state.Offset;
-        double amplitude = 2.0 + (ctx.Snapshot.BeatFlashActive && layer.BeatReaction == TextLayerBeatReaction.Pulse ? 2.0 : 0);
+        double amplitude = 2.0 + (ctx.Snapshot.BeatFlashActive && s.BeatReaction == WaveTextBeatReaction.Pulse ? 2.0 : 0);
         int centerY = h / 2;
         int startX = Math.Max(0, (w - text.Length) / 2);
         int paletteCount = ctx.Palette.Count;

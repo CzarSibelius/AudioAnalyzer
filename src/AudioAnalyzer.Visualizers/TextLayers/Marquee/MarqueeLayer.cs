@@ -23,14 +23,15 @@ public sealed class MarqueeLayer : TextLayerRendererBase, ITextLayerRenderer<NoL
             text = " ";
         }
 
+        var s = layer.GetCustom<MarqueeSettings>() ?? new MarqueeSettings();
         double speed = layer.SpeedMultiplier * ctx.SpeedBurst * 0.8;
-        if (layer.BeatReaction == TextLayerBeatReaction.SpeedBurst && ctx.Snapshot.BeatFlashActive)
+        if (s.BeatReaction == MarqueeBeatReaction.SpeedBurst && ctx.Snapshot.BeatFlashActive)
         {
             speed *= 2.5;
         }
 
         state.Offset += speed;
-        if (layer.BeatReaction == TextLayerBeatReaction.Flash && ctx.Snapshot.BeatFlashActive)
+        if (s.BeatReaction == MarqueeBeatReaction.Flash && ctx.Snapshot.BeatFlashActive)
         {
             state.Offset += 1.0;
         }
@@ -42,7 +43,7 @@ public sealed class MarqueeLayer : TextLayerRendererBase, ITextLayerRenderer<NoL
         }
 
         int centerY = h / 2;
-        bool pulse = layer.BeatReaction == TextLayerBeatReaction.Pulse && ctx.Snapshot.BeatFlashActive;
+        bool pulse = s.BeatReaction == MarqueeBeatReaction.Pulse && ctx.Snapshot.BeatFlashActive;
         var color = ctx.Palette[Math.Max(0, layer.ColorIndex % ctx.Palette.Count)];
         if (pulse)
         {

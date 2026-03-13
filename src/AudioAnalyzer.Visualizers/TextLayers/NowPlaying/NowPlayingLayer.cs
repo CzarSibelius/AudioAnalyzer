@@ -34,27 +34,27 @@ public sealed class NowPlayingLayer : TextLayerRendererBase, ITextLayerRenderer<
             text = " ";
         }
 
+        var settings = layer.GetCustom<NowPlayingSettings>() ?? new NowPlayingSettings();
         double speed = layer.SpeedMultiplier * ctx.SpeedBurst * 0.8;
-        if (layer.BeatReaction == TextLayerBeatReaction.SpeedBurst && ctx.Snapshot.BeatFlashActive)
+        if (settings.BeatReaction == NowPlayingBeatReaction.SpeedBurst && ctx.Snapshot.BeatFlashActive)
         {
             speed *= 2.5;
         }
 
         state.Offset += speed;
-        if (layer.BeatReaction == TextLayerBeatReaction.Flash && ctx.Snapshot.BeatFlashActive)
+        if (settings.BeatReaction == NowPlayingBeatReaction.Flash && ctx.Snapshot.BeatFlashActive)
         {
             state.Offset += 1.0;
         }
 
-        var settings = layer.GetCustom<NowPlayingSettings>();
-        string position = settings?.VerticalPosition?.Trim() ?? "Center";
+        string position = settings.VerticalPosition?.Trim() ?? "Center";
         int drawY = position.ToLowerInvariant() switch
         {
             "top" => 0,
             "bottom" => Math.Max(0, h - 1),
             _ => h / 2
         };
-        bool pulse = layer.BeatReaction == TextLayerBeatReaction.Pulse && ctx.Snapshot.BeatFlashActive;
+        bool pulse = settings.BeatReaction == NowPlayingBeatReaction.Pulse && ctx.Snapshot.BeatFlashActive;
         var color = ctx.Palette[Math.Max(0, layer.ColorIndex % ctx.Palette.Count)];
         if (pulse)
         {

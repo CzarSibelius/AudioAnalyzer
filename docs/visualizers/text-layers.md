@@ -48,12 +48,19 @@ A **Show** is an ordered collection of presets with per-entry duration. In **Sho
 - **Preset file format**: `Name`, `Config` (TextLayersVisualizerSettings); id = filename without extension.
 - **TextLayers.PaletteId** (string, optional): Default palette id for layers that do not have their own. Fallback when a layer's `PaletteId` is null/empty.
 - **TextLayers.Layers** (array): Each layer has:
-  - Common: `LayerType`, `Enabled`, `ZOrder`, `TextSnippets`, `BeatReaction`, `SpeedMultiplier`, `ColorIndex`, `PaletteId`
-  - `Custom`: Layer-specific settings as a JSON object. Only the owning layer deserializes it. Per [ADR-0021](../adr/0021-textlayer-settings-common-custom.md):
-    - AsciiImage: `ImageFolderPath`, `Movement` (None/Scroll/Zoom/Both), `PaletteSource` (LayerPalette/ImageColors), `ZoomMin`, `ZoomMax`, `ZoomSpeed`, `ZoomStyle` (Sine/Breathe/PingPong), `ScrollRatioY`
+  - Common: `LayerType`, `Enabled`, `ZOrder`, `TextSnippets`, `SpeedMultiplier`, `ColorIndex`, `PaletteId`
+  - `Custom`: Layer-specific settings as a JSON object. Only the owning layer deserializes it. **Beat reaction** is layer-specific: only layers that support it have a `BeatReaction` property in Custom (with a layer-specific enum). Layers that do not use beat reaction (BeatCircles, Mirror, Fill, Oscilloscope, UnknownPleasures, VuMeter, LlamaStyle, Maschine) have no BeatReaction. See [ADR-0055](../adr/0055-layer-specific-beat-reaction.md). Per [ADR-0021](../adr/0021-textlayer-settings-common-custom.md):
+    - AsciiImage: `BeatReaction` (None/SpeedBurst/Flash/Pulse), `ImageFolderPath`, `Movement` (None/Scroll/Zoom/Both), `PaletteSource` (LayerPalette/ImageColors), `ZoomMin`, `ZoomMax`, `ZoomSpeed`, `ZoomStyle` (Sine/Breathe/PingPong), `ScrollRatioY`
     - Oscilloscope: `Gain` (1.0–10.0), `Filled` (bool)
     - LlamaStyle: `ShowVolumeBar`, `ShowRowLabels`, `ShowFrequencyLabels` (bool); `ColorScheme` ("Winamp"|"Spectrum"); `PeakMarkerStyle` ("Blocks"|"DoubleLine"); `BarWidth` (2|3)
-    - NowPlaying: `VerticalPosition` ("Top"|"Center"|"Bottom")
+    - NowPlaying: `BeatReaction` (None/SpeedBurst/Flash/Pulse), `VerticalPosition` ("Top"|"Center"|"Bottom")
+    - ScrollingColors: `BeatReaction` (None/SpeedBurst/ColorPop)
+    - MatrixRain: `BeatReaction` (None/Flash)
+    - WaveText: `BeatReaction` (None/Flash/Pulse)
+    - GeissBackground: `BeatReaction` (None/Flash)
+    - Marquee: `BeatReaction` (None/SpeedBurst/Flash/Pulse)
+    - StaticText: `BeatReaction` (None/Flash/Pulse)
+    - FallingLetters: `BeatReaction` (None/SpawnMore/SpeedBurst)
     - Mirror: `Direction`, `SplitPercent`, `Rotation`
     - Maschine: `AccentColorIndex` (int), `AccentColumnMode` (Fixed|Moving)
     - Fill: `FillType` (FullBlock, HalfBlockUpper, HalfBlockLower, LightShade, MediumShade, DarkShade, Space, Custom), `CustomChar` (string, used when FillType is Custom)
@@ -92,6 +99,6 @@ A **Show** is an ordered collection of presets with per-entry duration. In **Sho
 - **UnknownPleasures layer**: Stacked waveform snapshots; bottom line realtime, others beat-triggered; uses SmoothedMagnitudes, NumBands, TargetMaxMagnitude, BeatCount; per-layer palette.
 - **VuMeter layer**: Classic stereo VU meters; Left/Right channel levels, peak hold, dB scale, balance indicator; uses LeftChannel, RightChannel, LeftPeakHold, RightPeakHold.
 - **LlamaStyle layer**: Spectrum bars (ex-Winamp/Spectrum Analyzer); configurable volume bar, row labels, frequency labels, color scheme (Winamp vs Spectrum), peak marker style, bar width; uses SmoothedMagnitudes, PeakHold, TargetMaxMagnitude, NumBands, Volume.
-- **NowPlaying layer**: Displays currently playing media from system (e.g. Windows GSMTC). Injects INowPlayingProvider and calls GetNowPlaying(); uses NowPlayingInfo.ToDisplayString() for the line (callers can instead use Title/Artist/Album). Falls back to TextSnippets[0] when null, else "—". Centered when text fits width, marquee scroll when longer. VerticalPosition (Top/Center/Bottom) controls row. Supports BeatReaction, SpeedMultiplier, ColorIndex, PaletteId. See [ADR-0027](../adr/0027-now-playing-header.md), [ADR-0028](../adr/0028-layer-dependency-injection.md).
-- **Beat reactions**: SpeedBurst (faster), Flash (advance/change), SpawnMore (spawn particles), Pulse (amplitude/color change), ColorPop (color offset).
+- **NowPlaying layer**: Displays currently playing media from system (e.g. Windows GSMTC). Injects INowPlayingProvider and calls GetNowPlaying(); uses NowPlayingInfo.ToDisplayString() for the line (callers can instead use Title/Artist/Album). Falls back to TextSnippets[0] when null, else "—". Centered when text fits width, marquee scroll when longer. VerticalPosition (Top/Center/Bottom) controls row. Custom: BeatReaction (None/SpeedBurst/Flash/Pulse), SpeedMultiplier, ColorIndex, PaletteId. See [ADR-0027](../adr/0027-now-playing-header.md), [ADR-0028](../adr/0028-layer-dependency-injection.md).
+- **Beat reactions**: Per-layer; only layers that support beat reaction expose it (in Custom). Options vary by layer: e.g. SpeedBurst (faster), Flash (advance/change), SpawnMore (spawn particles), Pulse (amplitude/color change), ColorPop (color offset). See [ADR-0055](../adr/0055-layer-specific-beat-reaction.md).
 - **References**: [ADR-0004](../adr/0004-visualizer-encapsulation.md), [ADR-0005](../adr/0005-layered-visualizer-cell-buffer.md), [ADR-0021](../adr/0021-textlayer-settings-common-custom.md), [ADR-0023](../adr/0023-settings-modal-layer-editing.md), [ADR-0025](../adr/0025-reflection-based-layer-settings.md).

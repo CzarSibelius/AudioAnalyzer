@@ -60,8 +60,8 @@ internal static class TestHelpers
               "Name": "Test Preset",
               "Config": {
                 "Layers": [
-                  { "LayerType": "GeissBackground", "Enabled": true, "ZOrder": 0, "BeatReaction": "Flash", "SpeedMultiplier": 1.0 },
-                  { "LayerType": "StaticText", "Enabled": true, "ZOrder": 1, "TextSnippets": ["Test"], "BeatReaction": "None" }
+                  { "LayerType": "GeissBackground", "Enabled": true, "ZOrder": 0, "SpeedMultiplier": 1.0, "Custom": { "BeatReaction": "Flash" } },
+                  { "LayerType": "StaticText", "Enabled": true, "ZOrder": 1, "TextSnippets": ["Test"], "Custom": { "BeatReaction": "None" } }
                 ]
               }
             }

@@ -22,7 +22,7 @@ None. Fill does not use analysis snapshot data.
   - **Space** — Space.
   - **Custom** — Use the character from **Custom character**.
 - **Custom character** (string, text-edit): Single character used when Fill type is Custom. Default `#`. Only the first character is used.
-- **PaletteId** / **Enabled** / **ZOrder** / **BeatReaction** etc.: Standard common layer settings (Fill ignores beat reaction).
+- **PaletteId** / **Enabled** / **ZOrder** etc.: Standard common layer settings. Fill does not support beat reaction (no BeatReaction setting).
 
 ## Key bindings
 

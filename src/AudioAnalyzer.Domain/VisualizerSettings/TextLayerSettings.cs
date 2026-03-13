@@ -17,9 +17,6 @@ public class TextLayerSettings
     /// <summary>Text snippets used when the layer type is text-based. Can be empty for non-text layers.</summary>
     public List<string> TextSnippets { get; set; } = new();
 
-    /// <summary>How a beat affects this layer.</summary>
-    public TextLayerBeatReaction BeatReaction { get; set; } = TextLayerBeatReaction.None;
-
     /// <summary>Speed multiplier (e.g. scroll speed). Default 1.0.</summary>
     public double SpeedMultiplier { get; set; } = 1.0;
 
@@ -104,7 +101,6 @@ public class TextLayerSettings
             Enabled = Enabled,
             ZOrder = ZOrder,
             TextSnippets = new List<string>(TextSnippets),
-            BeatReaction = BeatReaction,
             SpeedMultiplier = SpeedMultiplier,
             ColorIndex = ColorIndex,
             PaletteId = PaletteId,

@@ -56,7 +56,7 @@ public sealed class AsciiImageLayer : TextLayerRendererBase, ITextLayerRenderer<
         }
 
         double speed = layer.SpeedMultiplier * ctx.SpeedBurst * 0.3;
-        if (layer.BeatReaction == TextLayerBeatReaction.SpeedBurst && ctx.Snapshot.BeatFlashActive)
+        if (s.BeatReaction == AsciiImageBeatReaction.SpeedBurst && ctx.Snapshot.BeatFlashActive)
         {
             speed *= 2.0;
         }
@@ -79,7 +79,7 @@ public sealed class AsciiImageLayer : TextLayerRendererBase, ITextLayerRenderer<
             }
         }
 
-        if (layer.BeatReaction == TextLayerBeatReaction.Flash && ctx.Snapshot.BeatFlashActive)
+        if (s.BeatReaction == AsciiImageBeatReaction.Flash && ctx.Snapshot.BeatFlashActive)
         {
             state.SnippetIndex = (state.SnippetIndex + 1) % Math.Max(1, imagePaths.Count);
         }
@@ -96,7 +96,7 @@ public sealed class AsciiImageLayer : TextLayerRendererBase, ITextLayerRenderer<
         bool useImageColors = s.PaletteSource == AsciiImagePaletteSource.ImageColors && frame.HasRgb;
         int paletteCount = ctx.Palette.Count;
         int colorBase = Math.Max(0, layer.ColorIndex % paletteCount);
-        bool pulse = layer.BeatReaction == TextLayerBeatReaction.Pulse && ctx.Snapshot.BeatFlashActive;
+        bool pulse = s.BeatReaction == AsciiImageBeatReaction.Pulse && ctx.Snapshot.BeatFlashActive;
         if (pulse)
         {
             colorBase = (colorBase + 1) % paletteCount;

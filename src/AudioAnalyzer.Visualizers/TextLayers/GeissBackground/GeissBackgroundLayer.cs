@@ -51,8 +51,9 @@ public sealed class GeissBackgroundLayer : TextLayerRendererBase, ITextLayerRend
             geissState.TrebleIntensity = geissState.TrebleIntensity * 0.7 + (trebleSum / (snapshot.SmoothedMagnitudes.Length - trebleStart)) * 0.3;
         }
 
+        var s = layer.GetCustom<GeissBackgroundSettings>() ?? new GeissBackgroundSettings();
         bool usePalette = ctx.Palette.Count > 0;
-        double plasmaBoost = (layer.BeatReaction == TextLayerBeatReaction.Flash && snapshot.BeatFlashActive) ? 0.3 : 0;
+        double plasmaBoost = (s.BeatReaction == GeissBackgroundBeatReaction.Flash && snapshot.BeatFlashActive) ? 0.3 : 0;
 
         for (int y = 0; y < h; y++)
         {

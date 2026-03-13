@@ -35,8 +35,9 @@ public sealed class FallingLettersLayer : TextLayerRendererBase, ITextLayerRende
             charsSource = ".*#%";
         }
 
+        var s = layer.GetCustom<FallingLettersSettings>() ?? new FallingLettersSettings();
         double fallSpeed = layer.SpeedMultiplier * ctx.SpeedBurst * 0.4;
-        if (layer.BeatReaction == TextLayerBeatReaction.SpawnMore && ctx.Snapshot.BeatFlashActive)
+        if (s.BeatReaction == FallingLettersBeatReaction.SpawnMore && ctx.Snapshot.BeatFlashActive)
         {
             for (int k = 0; k < 3; k++)
             {
@@ -44,7 +45,7 @@ public sealed class FallingLettersLayer : TextLayerRendererBase, ITextLayerRende
                 particles.Add(new FallingLetterState { Col = col, Y = 0, Character = charsSource[Random.Shared.Next(0, charsSource.Length)] });
             }
         }
-        if (layer.BeatReaction == TextLayerBeatReaction.SpeedBurst && ctx.Snapshot.BeatFlashActive)
+        if (s.BeatReaction == FallingLettersBeatReaction.SpeedBurst && ctx.Snapshot.BeatFlashActive)
         {
             fallSpeed *= 2.0;
         }

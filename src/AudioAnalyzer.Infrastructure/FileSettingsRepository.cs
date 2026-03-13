@@ -5,6 +5,7 @@ using System.Text.Json.Serialization;
 using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Application.Palette;
 using AudioAnalyzer.Domain;
+using AudioAnalyzer.Visualizers;
 
 namespace AudioAnalyzer.Infrastructure;
 
@@ -279,17 +280,55 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
     {
         var layers = new List<TextLayerSettings>
         {
-            new() { LayerType = TextLayerType.GeissBackground, ZOrder = 0, BeatReaction = TextLayerBeatReaction.Flash, SpeedMultiplier = 1.0 },
-            new() { LayerType = TextLayerType.BeatCircles, ZOrder = 1, BeatReaction = TextLayerBeatReaction.None, SpeedMultiplier = 1.0 },
-            new() { LayerType = TextLayerType.Marquee, ZOrder = 2, TextSnippets = ["Layered text", "Audio visualizer"], BeatReaction = TextLayerBeatReaction.SpeedBurst, SpeedMultiplier = 1.0 },
-            new() { LayerType = TextLayerType.Marquee, ZOrder = 3, TextSnippets = ["Layer 3"], BeatReaction = TextLayerBeatReaction.None, SpeedMultiplier = 0.8 },
-            new() { LayerType = TextLayerType.WaveText, ZOrder = 4, TextSnippets = ["Wave"], BeatReaction = TextLayerBeatReaction.Pulse, SpeedMultiplier = 1.0 },
-            new() { LayerType = TextLayerType.StaticText, ZOrder = 5, TextSnippets = ["Static"], BeatReaction = TextLayerBeatReaction.None },
-            new() { LayerType = TextLayerType.FallingLetters, ZOrder = 6, TextSnippets = [".*#%"], BeatReaction = TextLayerBeatReaction.SpawnMore, SpeedMultiplier = 1.0 },
-            new() { LayerType = TextLayerType.MatrixRain, ZOrder = 7, BeatReaction = TextLayerBeatReaction.Flash, SpeedMultiplier = 1.0 },
-            new() { LayerType = TextLayerType.StaticText, ZOrder = 8, TextSnippets = ["Top"], BeatReaction = TextLayerBeatReaction.Pulse }
+            CreateLayer(TextLayerType.GeissBackground, 0, ["Layered text"], speed: 1.0, geissBeat: GeissBackgroundBeatReaction.Flash),
+            new() { LayerType = TextLayerType.BeatCircles, ZOrder = 1, SpeedMultiplier = 1.0 },
+            CreateLayer(TextLayerType.Marquee, 2, ["Layered text", "Audio visualizer"], speed: 1.0, marqueeBeat: MarqueeBeatReaction.SpeedBurst),
+            CreateLayer(TextLayerType.Marquee, 3, ["Layer 3"], speed: 0.8, marqueeBeat: MarqueeBeatReaction.None),
+            CreateLayer(TextLayerType.WaveText, 4, ["Wave"], speed: 1.0, waveTextBeat: WaveTextBeatReaction.Pulse),
+            CreateLayer(TextLayerType.StaticText, 5, ["Static"], staticTextBeat: StaticTextBeatReaction.None),
+            CreateLayer(TextLayerType.FallingLetters, 6, [".*#%"], speed: 1.0, fallingLettersBeat: FallingLettersBeatReaction.SpawnMore),
+            CreateLayer(TextLayerType.MatrixRain, 7, [], speed: 1.0, matrixRainBeat: MatrixRainBeatReaction.Flash),
+            CreateLayer(TextLayerType.StaticText, 8, ["Top"], staticTextBeat: StaticTextBeatReaction.Pulse)
         };
         return new TextLayersVisualizerSettings { Layers = layers };
+    }
+
+    private static TextLayerSettings CreateLayer(TextLayerType layerType, int zOrder, List<string> textSnippets, double speed = 1.0,
+        GeissBackgroundBeatReaction? geissBeat = null, MarqueeBeatReaction? marqueeBeat = null, WaveTextBeatReaction? waveTextBeat = null,
+        StaticTextBeatReaction? staticTextBeat = null, FallingLettersBeatReaction? fallingLettersBeat = null, MatrixRainBeatReaction? matrixRainBeat = null)
+    {
+        var layer = new TextLayerSettings
+        {
+            LayerType = layerType,
+            ZOrder = zOrder,
+            TextSnippets = textSnippets,
+            SpeedMultiplier = speed
+        };
+        if (geissBeat.HasValue)
+        {
+            layer.SetCustom(new GeissBackgroundSettings { BeatReaction = geissBeat.Value });
+        }
+        if (marqueeBeat.HasValue)
+        {
+            layer.SetCustom(new MarqueeSettings { BeatReaction = marqueeBeat.Value });
+        }
+        if (waveTextBeat.HasValue)
+        {
+            layer.SetCustom(new WaveTextSettings { BeatReaction = waveTextBeat.Value });
+        }
+        if (staticTextBeat.HasValue)
+        {
+            layer.SetCustom(new StaticTextSettings { BeatReaction = staticTextBeat.Value });
+        }
+        if (fallingLettersBeat.HasValue)
+        {
+            layer.SetCustom(new FallingLettersSettings { BeatReaction = fallingLettersBeat.Value });
+        }
+        if (matrixRainBeat.HasValue)
+        {
+            layer.SetCustom(new MatrixRainSettings { BeatReaction = matrixRainBeat.Value });
+        }
+        return layer;
     }
 
     /// <summary>Ensures TextLayers has at least <see cref="TextLayersLimits.MaxLayerCount"/> layers so keys 1–9 always map to a layer. Pads with default layers if fewer; caps to MaxLayerCount if more (e.g. legacy config).</summary>
@@ -304,14 +343,15 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
         while (textLayers.Layers.Count < TextLayersLimits.MaxLayerCount)
         {
             maxZ++;
-            textLayers.Layers.Add(new TextLayerSettings
+            var padLayer = new TextLayerSettings
             {
                 LayerType = TextLayerType.Marquee,
                 ZOrder = maxZ,
                 TextSnippets = [$"Layer {textLayers.Layers.Count + 1}"],
-                BeatReaction = TextLayerBeatReaction.None,
                 SpeedMultiplier = 1.0
-            });
+            };
+            padLayer.SetCustom(new MarqueeSettings { BeatReaction = MarqueeBeatReaction.None });
+            textLayers.Layers.Add(padLayer);
         }
     }
 

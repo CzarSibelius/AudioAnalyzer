@@ -12,6 +12,7 @@ Renders images from a configured folder as ASCII art. Converts each image to a c
 ## Settings
 
 - **Schema**: `TextLayerSettings` when `LayerType == AsciiImage`; custom settings in `AsciiImageSettings`
+- **BeatReaction** (enum, default: None): How a beat affects the layer. **None**, **SpeedBurst** (faster movement), **Flash** (cycle to next image), **Pulse** (color step on beat). Edited in S modal.
 - **ImageFolderPath** (string, optional): Path to folder containing images (BMP, GIF, JPEG, PNG, WebP). Sorted alphabetically.
 - **Movement** (enum, default: Scroll): None, Scroll, Zoom, or Both
 - **PaletteSource** (enum, default: LayerPalette): LayerPalette (map brightness to layer's palette) or ImageColors (use per-pixel RGB from image)
