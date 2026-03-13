@@ -54,7 +54,7 @@ internal sealed class TitleBarContentProvider : ITitleBarContentProvider
         {
             sb.Append(AnsiConsole.ColorCode(palette.Separator));
             sb.Append('[');
-            sb.Append(layerZIndex);
+            sb.Append(layerZIndex + 1); // Display 1-based layer index
             sb.Append("]:");
             sb.Append(AnsiConsole.ResetCode);
         }

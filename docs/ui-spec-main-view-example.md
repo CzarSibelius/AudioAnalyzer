@@ -5,7 +5,7 @@ This example follows the [UI spec format](ui-spec-format.md). It documents the m
 ## Screenshot
 
 ```text
-         aUdioNLZR/pReset/pReset_2[0]:aScii_image         
+         aUdioNLZR/pReset/pReset_2[1]:aScii_image         
 Device:DIA High DefNow:Svampyr - xtalzkullz 145bpm         
 BPM: 144  Beat: 1,1 (+/-)     Volume/dB:  8,3%  -21,7dB     
 Layers:123456789 | Palette(L1):Default                     
@@ -35,7 +35,7 @@ Layers:123456789 | Palette(L1):Default
 
 ## Line reference
 
-- **1** — Title bar: single-line breadcrumb, left-aligned (app name / mode / preset name [layer index]: layer type, e.g. `aUdioNLZR/pReset/pReset_2[0]:aScii_image`). Padding on the right to fill width.
+- **1** — Title bar: single-line breadcrumb, left-aligned (app name / mode / preset name [layer index 1–9]: layer type, e.g. `aUdioNLZR/pReset/pReset_2[1]:aScii_image`). Padding on the right to fill width.
 - **2** — Device line: left-aligned. Device label and value (`Device:value`), then now-playing scrolling viewport (`Now:value`). Label format uses colon with no space before value; cells use 8-char block sizing where applicable.
 - **3** — BPM value, beat position with +/- hint, volume percentage and dB. Left-aligned; labels `BPM:`, `Beat:`, `Volume/dB:` with no space after colon (e.g. `BPM:144  Beat:1,1 (+/-)     Volume/dB:8,3%  -21,7dB`). 8-char block sizing where applicable.
 - **4** — Toolbar: left-aligned. Separate labeled fields: Layers (digits 1–9), optional Gain (when oscilloscope), Palette(Ln) (palette name). When content exceeds width, overflowing cells scroll so all layer numbers remain visible. Label format `Label:value`; key bindings are in the help modal (H).
