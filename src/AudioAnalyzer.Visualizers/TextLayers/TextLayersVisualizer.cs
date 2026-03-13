@@ -156,16 +156,41 @@ public sealed class TextLayersVisualizer : IVisualizer
     public string? GetToolbarSuffix(AnalysisSnapshot snapshot)
     {
         var sortedLayers = TryGetSortedLayersSnapshot(_settings);
+        var list = sortedLayers ?? [];
+        int idx = list.Count > 0 ? Math.Clamp(_paletteCycleLayerIndex, 0, list.Count - 1) : 0;
+        var layer = list.Count > 0 ? list[idx] : null;
         var context = new TextLayersToolbarContext
         {
             Snapshot = snapshot,
-            SortedLayers = sortedLayers ?? [],
+            SortedLayers = list,
             Settings = _settings,
             PaletteCycleLayerIndex = _paletteCycleLayerIndex,
             PaletteRepo = _paletteRepo,
-            UiSettings = _uiSettings
+            UiSettings = _uiSettings,
+            OscilloscopeGain = layer?.LayerType == TextLayerType.Oscilloscope ? (layer.GetCustom<OscilloscopeSettings>()?.Gain ?? 2.5) : null
         };
         return _toolbarBuilder.BuildSuffix(context);
+    }
+
+    /// <inheritdoc />
+    public IReadOnlyList<Viewport>? GetToolbarViewports(AnalysisSnapshot snapshot)
+    {
+        var sortedLayers = TryGetSortedLayersSnapshot(_settings);
+        var list = sortedLayers ?? [];
+        int idx = list.Count > 0 ? Math.Clamp(_paletteCycleLayerIndex, 0, list.Count - 1) : 0;
+        var layer = list.Count > 0 ? list[idx] : null;
+        var context = new TextLayersToolbarContext
+        {
+            Snapshot = snapshot,
+            SortedLayers = list,
+            Settings = _settings,
+            PaletteCycleLayerIndex = _paletteCycleLayerIndex,
+            PaletteRepo = _paletteRepo,
+            UiSettings = _uiSettings,
+            OscilloscopeGain = layer?.LayerType == TextLayerType.Oscilloscope ? (layer.GetCustom<OscilloscopeSettings>()?.Gain ?? 2.5) : null
+        };
+        var viewports = _toolbarBuilder.BuildViewports(context);
+        return viewports.Count > 0 ? viewports : null;
     }
 
     /// <inheritdoc />

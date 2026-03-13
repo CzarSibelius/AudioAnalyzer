@@ -34,21 +34,21 @@ internal static class ModalSystem
     /// Runs an overlay modal that draws only into the top overlayRowCount rows, leaving the visualizer visible below.
     /// </summary>
     /// <param name="overlayRowCount">Number of rows for the overlay.</param>
+    /// <param name="consoleWidth">Console width in columns (from IConsoleDimensions; used for clearing overlay rows).</param>
     /// <param name="drawContent">Draws the overlay content.</param>
     /// <param name="handleKey">Handles key input. Returns true to close.</param>
     /// <param name="consoleLock">When set, acquired during clear+draw to avoid interleaving with engine render.</param>
     /// <param name="onClose">Called when the overlay closes.</param>
     /// <param name="onEnter">Called when the overlay opens.</param>
     /// <param name="onScrollTick">Called on each poll when no key available; use for auto-scrolling content.</param>
-    public static void RunOverlayModal(int overlayRowCount, Action drawContent, Func<ConsoleKeyInfo, bool> handleKey, object? consoleLock = null, Action? onClose = null, Action? onEnter = null, Action? onScrollTick = null)
+    public static void RunOverlayModal(int overlayRowCount, int consoleWidth, Action drawContent, Func<ConsoleKeyInfo, bool> handleKey, object? consoleLock = null, Action? onClose = null, Action? onEnter = null, Action? onScrollTick = null)
     {
         System.Console.CursorVisible = false;
         onEnter?.Invoke();
 
         void ClearAndDraw()
         {
-            int width = ConsoleHeader.GetConsoleWidth();
-            string blank = new string(' ', width);
+            string blank = new string(' ', consoleWidth);
             for (int r = 0; r < overlayRowCount; r++)
             {
                 try

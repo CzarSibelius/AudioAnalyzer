@@ -12,19 +12,22 @@ internal sealed class DeviceSelectionModal : IDeviceSelectionModal
     private readonly ISettingsRepository _settingsRepo;
     private readonly AppSettings _settings;
     private readonly UiSettings _uiSettings;
+    private readonly IConsoleDimensions _consoleDimensions;
 
     public DeviceSelectionModal(
         IAudioDeviceInfo deviceInfo,
         IKeyHandler<DeviceSelectionKeyContext> keyHandler,
         ISettingsRepository settingsRepo,
         AppSettings settings,
-        UiSettings uiSettings)
+        UiSettings uiSettings,
+        IConsoleDimensions consoleDimensions)
     {
         _deviceInfo = deviceInfo ?? throw new ArgumentNullException(nameof(deviceInfo));
         _keyHandler = keyHandler ?? throw new ArgumentNullException(nameof(keyHandler));
         _settingsRepo = settingsRepo ?? throw new ArgumentNullException(nameof(settingsRepo));
         _settings = settings ?? throw new ArgumentNullException(nameof(settings));
         _uiSettings = uiSettings ?? throw new ArgumentNullException(nameof(uiSettings));
+        _consoleDimensions = consoleDimensions ?? throw new ArgumentNullException(nameof(consoleDimensions));
     }
 
     /// <inheritdoc />
@@ -76,7 +79,7 @@ internal sealed class DeviceSelectionModal : IDeviceSelectionModal
 
         void DrawDeviceContent()
         {
-            int width = ConsoleHeader.GetConsoleWidth();
+            int width = _consoleDimensions.GetConsoleWidth();
             string title = " SELECT AUDIO INPUT ";
             int pad = Math.Max(0, (width - title.Length - 2) / 2);
             System.Console.WriteLine("╔" + new string('═', width - 2) + "╗");

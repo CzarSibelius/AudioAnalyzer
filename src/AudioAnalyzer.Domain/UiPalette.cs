@@ -9,7 +9,7 @@ public class UiPalette
     /// <summary>Default UI text color.</summary>
     public PaletteColor Normal { get; set; } = PaletteColor.FromRgb(220, 220, 220);
 
-    /// <summary>Highlighted/active UI text (e.g. selected layer number, now-playing).</summary>
+    /// <summary>Highlighted/active UI text (e.g. now-playing).</summary>
     public PaletteColor Highlighted { get; set; } = PaletteColor.FromConsoleColor(ConsoleColor.Yellow);
 
     /// <summary>Dimmed or disabled UI text.</summary>

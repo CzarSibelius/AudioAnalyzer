@@ -12,7 +12,7 @@ Device names and other UI text can contain emoji (e.g. speaker icon) or wide cha
 
 2. **New IDisplayText methods**: `GetDisplayWidth()`, `GetDisplaySubstring(startCol, widthCols)`, `PadToDisplayWidth(widthCols)`. Implemented in PlainText, AnsiText; AnsiConsole has static equivalents that skip ANSI escape sequences.
 
-3. **Scrolling and truncation use display width**: ScrollingTextEngine, ScrollingTextViewport.RenderWithLabel, ConsoleHeader, VisualizationPaneLayout, TitleBarRenderer, and StaticTextViewport.TruncateToWidth/TruncateWithEllipsis use display width (terminal columns) when fitting text. Scroll offset and slice width are in column units.
+3. **Scrolling and truncation use display width**: ScrollingTextEngine, ScrollingTextViewport.RenderWithLabel, LabeledRowRenderer (including title and toolbar rows), and StaticTextViewport.TruncateToWidth/TruncateWithEllipsis use display width (terminal columns) when fitting text. Scroll offset and slice width are in column units.
 
 4. **Existing grapheme APIs preserved**: `GetVisibleLength`, `GetVisibleSubstring`, `PadToWidth` remain for grapheme-based operations where that is the intended semantic.
 

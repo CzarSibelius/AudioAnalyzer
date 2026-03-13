@@ -14,19 +14,22 @@ internal sealed class SettingsModal : ISettingsModal
     private readonly IPresetRepository _presetRepository;
     private readonly ISettingsModalRenderer _renderer;
     private readonly IKeyHandler<SettingsModalKeyContext> _keyHandler;
+    private readonly IConsoleDimensions _consoleDimensions;
 
     public SettingsModal(
         IVisualizationOrchestrator orchestrator,
         VisualizerSettings visualizerSettings,
         IPresetRepository presetRepository,
         ISettingsModalRenderer renderer,
-        IKeyHandler<SettingsModalKeyContext> keyHandler)
+        IKeyHandler<SettingsModalKeyContext> keyHandler,
+        IConsoleDimensions consoleDimensions)
     {
         _orchestrator = orchestrator ?? throw new ArgumentNullException(nameof(orchestrator));
         _visualizerSettings = visualizerSettings ?? throw new ArgumentNullException(nameof(visualizerSettings));
         _presetRepository = presetRepository ?? throw new ArgumentNullException(nameof(presetRepository));
         _renderer = renderer ?? throw new ArgumentNullException(nameof(renderer));
         _keyHandler = keyHandler ?? throw new ArgumentNullException(nameof(keyHandler));
+        _consoleDimensions = consoleDimensions ?? throw new ArgumentNullException(nameof(consoleDimensions));
     }
 
     /// <inheritdoc />
@@ -53,13 +56,13 @@ internal sealed class SettingsModal : ISettingsModal
 
         void DrawSettingsContent()
         {
-            int width = ConsoleHeader.GetConsoleWidth();
+            int width = _consoleDimensions.GetConsoleWidth();
             _renderer.Draw(state, context.SortedLayers, width);
         }
 
         void DrawHintLineOnly()
         {
-            int width = ConsoleHeader.GetConsoleWidth();
+            int width = _consoleDimensions.GetConsoleWidth();
             _renderer.DrawHintLine(state, width);
         }
 
@@ -70,6 +73,7 @@ internal sealed class SettingsModal : ISettingsModal
 
         ModalSystem.RunOverlayModal(
             OverlayRowCount,
+            _consoleDimensions.GetConsoleWidth(),
             DrawSettingsContent,
             HandleSettingsKey,
             consoleLock,

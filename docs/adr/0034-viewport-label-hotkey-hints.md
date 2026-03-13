@@ -1,6 +1,6 @@
 # ADR-0034: Viewport label hotkey hints
 
-**Status**: Accepted
+**Status**: Superseded (key hints removed from UI to avoid duplication with help modal; see plan "Remove duplicate key-binding UI"). The API (FormatLabel/RenderWithLabel with optional hotkey) remains; call sites pass null so labels show as "Label:" only. Help modal (H) is the single place for key-binding discovery.
 
 ## Context
 

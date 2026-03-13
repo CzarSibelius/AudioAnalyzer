@@ -17,6 +17,7 @@ internal sealed class ShowEditModal : IShowEditModal
     private readonly IPresetRepository _presetRepo;
     private readonly IKeyHandler<ShowEditModalKeyContext> _keyHandler;
     private readonly UiSettings _uiSettings;
+    private readonly IConsoleDimensions _consoleDimensions;
 
     public ShowEditModal(
         IVisualizationOrchestrator orchestrator,
@@ -24,7 +25,8 @@ internal sealed class ShowEditModal : IShowEditModal
         IShowRepository showRepo,
         IPresetRepository presetRepo,
         IKeyHandler<ShowEditModalKeyContext> keyHandler,
-        UiSettings uiSettings)
+        UiSettings uiSettings,
+        IConsoleDimensions consoleDimensions)
     {
         _orchestrator = orchestrator ?? throw new ArgumentNullException(nameof(orchestrator));
         _visualizerSettings = visualizerSettings ?? throw new ArgumentNullException(nameof(visualizerSettings));
@@ -32,6 +34,7 @@ internal sealed class ShowEditModal : IShowEditModal
         _presetRepo = presetRepo ?? throw new ArgumentNullException(nameof(presetRepo));
         _keyHandler = keyHandler ?? throw new ArgumentNullException(nameof(keyHandler));
         _uiSettings = uiSettings ?? throw new ArgumentNullException(nameof(uiSettings));
+        _consoleDimensions = consoleDimensions ?? throw new ArgumentNullException(nameof(consoleDimensions));
     }
 
     /// <inheritdoc />
@@ -65,7 +68,7 @@ internal sealed class ShowEditModal : IShowEditModal
             VisualizerSettings = _visualizerSettings
         };
 
-        int width = ConsoleHeader.GetConsoleWidth();
+        int width = _consoleDimensions.GetConsoleWidth();
         int rightColWidth = Math.Max(10, width - LeftColWidth - 1);
 
         var palette = (_uiSettings ?? new UiSettings()).Palette ?? new UiPalette();
@@ -159,6 +162,7 @@ internal sealed class ShowEditModal : IShowEditModal
 
         ModalSystem.RunOverlayModal(
             OverlayRowCount,
+            _consoleDimensions.GetConsoleWidth(),
             DrawContent,
             HandleKey,
             consoleLock,

@@ -1,7 +1,6 @@
-using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Domain;
 
-namespace AudioAnalyzer.Visualizers;
+namespace AudioAnalyzer.Application.Abstractions;
 
 /// <summary>Context for building the TextLayers toolbar suffix string (layer digits, hints, gain, palette name).</summary>
 public sealed class TextLayersToolbarContext
@@ -23,4 +22,7 @@ public sealed class TextLayersToolbarContext
 
     /// <summary>UI palette and colors for toolbar styling.</summary>
     public UiSettings UiSettings { get; set; } = null!;
+
+    /// <summary>When the selected layer is Oscilloscope, the gain to show in the toolbar. Set by the visualizer.</summary>
+    public double? OscilloscopeGain { get; set; }
 }

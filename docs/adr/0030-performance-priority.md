@@ -35,7 +35,7 @@ The application is a real-time console audio visualizer. It redraws the terminal
 
 1. **ViewportCellBuffer diff-based rendering** (implemented): Maintains a "previous frame" buffer; only calls `SetCursorPosition` + `Console.Write` for rows whose content changed. Reuses a single `StringBuilder` per buffer. Reduces console I/O when visualizer output is largely static.
 
-2. **Toolbar and header skip-write** (header implemented): [ConsoleHeader](../../src/AudioAnalyzer.Console/Console/ConsoleHeader.cs) caches each line and skips write when identical. Cache invalidated after Console.Clear (DrawMain). Toolbar in [VisualizationPaneLayout](../../src/AudioAnalyzer.Console/Console/VisualizationPaneLayout.cs) not yet optimized.
+2. **Toolbar and header skip-write**: Header skip-write was removed during the renderer-interfaces migration ([renderer-interfaces-migration.md](../../docs/refactoring/renderer-interfaces-migration.md)): dispatcher always writes header lines (no cache). Toolbar in main content still writes every frame; optional skip-write not implemented.
 
 3. **Cheaper time check in AnalysisEngine**: Replace `DateTime.Now` with `Environment.TickCount64` for `UpdateIntervalMs` throttling.
 

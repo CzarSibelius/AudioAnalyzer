@@ -6,6 +6,14 @@ This document defines the format for UI specification documents that describe th
 
 UI specs document what appears on each line of the console so that implementers, testers, and agents can refer to exact row numbers and know what each row represents. Screenshots come from the [screen-dump](../adr/0046-screen-dump-ascii-screenshot.md) feature (ASCII screenshot).
 
+## Layout and alignment
+
+Layout follows [ADR-0050](../adr/0050-ui-alignment-blocks-label-format.md):
+
+- **Left alignment:** UI is left-aligned; padding is on the right. Content starts at column 0 (or at the start of its region).
+- **8-character blocks:** Components use space in 8-character (column) blocks. Label components default to 8 columns for the label and 8 for the value unless specified otherwise in the spec.
+- **Label format:** Labels are formatted as `Label:value` (colon immediately after the label, no space before the value).
+
 ## Format structure
 
 1. **Title and context** (optional): Short title and when this layout applies (e.g. main view, preset mode).

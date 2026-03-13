@@ -62,9 +62,11 @@ internal static class ServiceConfiguration
         services.AddTextLayerRenderers();
 
         services.AddSingleton<IConsoleWriter, ConsoleWriter>();
+        services.AddSingleton<IConsoleDimensions, ConsoleDimensions>();
         services.AddSingleton(typeof(IKeyHandler<>), typeof(GenericKeyHandler<>));
         services.AddSingleton<IKeyHandlerConfig<TextLayersKeyContext>, TextLayersKeyHandlerConfig>();
-        services.AddSingleton<ITextLayersToolbarBuilder, TextLayersToolbarBuilder>();
+        services.AddSingleton<ITextLayersToolbarBuilder>(sp =>
+            new TextLayersToolbarBuilder(sp.GetRequiredService<IScrollingTextViewportFactory>().CreateViewport()));
 
         services.AddSingleton<IVisualizer>(sp => new TextLayersVisualizer(
             sp.GetRequiredService<VisualizerSettings>().TextLayers ?? new TextLayersVisualizerSettings(),
@@ -77,7 +79,30 @@ internal static class ServiceConfiguration
             sp.GetRequiredService<UiSettings>()));
 
         services.AddSingleton<IDisplayState, DisplayState>();
-        services.AddSingleton<IVisualizationRenderer, VisualizationPaneLayout>();
+        services.AddSingleton<IUiComponentRenderer<IUiComponent>>(sp =>
+            new UiComponentRenderer(
+                sp.GetRequiredService<IUiComponentRenderer<LabeledRowComponent>>(),
+                sp.GetRequiredService<IUiComponentRenderer<VisualizerAreaComponent>>()));
+        services.AddSingleton<IUiStateUpdater<HeaderContainer>, HeaderContainerStateUpdater>();
+        services.AddSingleton<IUiStateUpdater<IUiComponent>>(sp =>
+            new UiComponentStateUpdater(sp.GetRequiredService<IUiStateUpdater<HeaderContainer>>()));
+        services.AddSingleton<ITitleBarContentProvider, TitleBarContentProvider>();
+        services.AddSingleton<IHeaderContainer>(sp =>
+            new HeaderContainer(
+                sp.GetRequiredService<IUiComponentRenderer<IUiComponent>>(),
+                sp.GetRequiredService<IUiStateUpdater<IUiComponent>>(),
+                sp.GetRequiredService<IDisplayDimensions>(),
+                sp.GetRequiredService<INowPlayingProvider>(),
+                sp.GetRequiredService<AnalysisEngine>(),
+                sp.GetRequiredService<UiSettings>(),
+                sp.GetRequiredService<ITitleBarContentProvider>()));
+        services.AddSingleton<IVisualizationRenderer>(sp =>
+            new MainContentContainer(
+                sp.GetRequiredService<IUiComponentRenderer<IUiComponent>>(),
+                sp.GetRequiredService<IUiStateUpdater<IUiComponent>>(),
+                sp.GetRequiredService<IVisualizer>(),
+                sp.GetRequiredService<IDisplayState>(),
+                sp.GetRequiredService<UiSettings>()));
         services.AddSingleton<IBeatDetector, BeatDetector>();
         services.AddSingleton<IVolumeAnalyzer, VolumeAnalyzer>();
         services.AddSingleton<IFftBandProcessor, FftBandProcessor>();
@@ -86,7 +111,10 @@ internal static class ServiceConfiguration
         services.AddSingleton<ShowPlaybackController>();
         services.AddSingleton<IScrollingTextEngine, ScrollingTextEngine>();
         services.AddSingleton<IScrollingTextViewportFactory, ScrollingTextViewportFactory>();
-        services.AddSingleton<ITitleBarRenderer, TitleBarRenderer>();
+        services.AddSingleton<LabeledRowRenderer>();
+        services.AddSingleton<ILabeledRowRenderer>(sp => sp.GetRequiredService<LabeledRowRenderer>());
+        services.AddSingleton<IUiComponentRenderer<LabeledRowComponent>>(sp => sp.GetRequiredService<LabeledRowRenderer>());
+        services.AddSingleton<IUiComponentRenderer<VisualizerAreaComponent>, VisualizerAreaRenderer>();
         services.AddSingleton<IKeyHandlerConfig<DeviceSelectionKeyContext>, DeviceSelectionKeyHandlerConfig>();
         services.AddSingleton<IDeviceSelectionModal, DeviceSelectionModal>();
         services.AddSingleton<IHelpContentProvider, HelpContentProvider>();
@@ -99,17 +127,6 @@ internal static class ServiceConfiguration
         services.AddSingleton<IKeyHandlerConfig<MainLoopKeyContext>, MainLoopKeyHandlerConfig>();
         services.AddSingleton<IDeviceCaptureController, DeviceCaptureController>();
         services.AddSingleton<IAppSettingsPersistence, AppSettingsPersistence>();
-        services.AddSingleton<IHeaderDrawer>(sp =>
-        {
-            var factory = sp.GetRequiredService<IScrollingTextViewportFactory>();
-            return new HeaderDrawer(
-                sp.GetRequiredService<ITitleBarRenderer>(),
-                factory.CreateViewport(),
-                factory.CreateViewport(),
-                sp.GetRequiredService<INowPlayingProvider>(),
-                sp.GetRequiredService<AnalysisEngine>(),
-                sp.GetRequiredService<UiSettings>());
-        });
         services.AddSingleton<IScreenDumpService, ScreenDumpService>();
         services.AddSingleton<ApplicationShell>();
 

@@ -95,6 +95,7 @@ See original analysis for context. Agents: mark `[x]` when a task is implemented
 - [x] Add TextLayersToolbarContext and ITextLayersToolbarBuilder (BuildSuffix(context))
 - [x] Implement TextLayersToolbarBuilder; GetToolbarSuffix delegates to builder
 - [x] Register and inject into TextLayersVisualizer
+- [x] Moved toolbar builder (interface, context, implementation) to **Application** as general UI; visualizer only supplies context (including OscilloscopeGain).
 
 ### 4.3 Optional: palette resolver / layer state
 - [ ] If desired: extract ITextLayersPaletteResolver; per-layer state holder

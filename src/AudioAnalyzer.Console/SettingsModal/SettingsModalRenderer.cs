@@ -12,22 +12,23 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
     private const int OverlayRowCount = 18;
     private const int LeftColWidth = 28;
     private static readonly int SettingsVisibleRows = OverlayRowCount - 5;
+    private const int SettingsModalHintSlotIndex = 10;
 
     private readonly VisualizerSettings _visualizerSettings;
     private readonly UiSettings _uiSettings;
     private readonly IPaletteRepository _paletteRepo;
-    private readonly IScrollingTextViewport _hintViewport;
+    private readonly ILabeledRowRenderer _rowRenderer;
 
     public SettingsModalRenderer(
         VisualizerSettings visualizerSettings,
         UiSettings uiSettings,
         IPaletteRepository paletteRepo,
-        IScrollingTextViewportFactory viewportFactory)
+        ILabeledRowRenderer rowRenderer)
     {
         _visualizerSettings = visualizerSettings ?? throw new ArgumentNullException(nameof(visualizerSettings));
         _uiSettings = uiSettings ?? throw new ArgumentNullException(nameof(uiSettings));
         _paletteRepo = paletteRepo ?? throw new ArgumentNullException(nameof(paletteRepo));
-        _hintViewport = (viewportFactory ?? throw new ArgumentNullException(nameof(viewportFactory))).CreateViewport();
+        _rowRenderer = rowRenderer ?? throw new ArgumentNullException(nameof(rowRenderer));
     }
 
     /// <inheritdoc />
@@ -72,9 +73,10 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
             System.Console.Write(StaticTextViewport.TruncateToWidth(new PlainText("╚" + new string('═', width - 2) + "╝"), width).PadRight(width));
             System.Console.SetCursorPosition(0, 3);
             string hint = GetHintText(state);
-            string hintLine = hint.Length > width
-                ? _hintViewport.Render(new PlainText(hint), width, scrollSpeed)
-                : hint.PadRight(width);
+            var hintViewport = new Viewport("", () => new PlainText(hint));
+            var hintViewports = new[] { hintViewport };
+            var hintWidths = new[] { width };
+            string hintLine = _rowRenderer.RenderRow(hintViewports, hintWidths, width, palette, scrollSpeed, SettingsModalHintSlotIndex);
             System.Console.Write(hintLine);
             System.Console.SetCursorPosition(0, 4);
             System.Console.Write(StaticTextViewport.TruncateToWidth(new PlainText("  ─" + new string('─', LeftColWidth - 2) + "┬" + new string('─', rightColWidth) + "─"), width).PadRight(width));
@@ -124,7 +126,8 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
                     if (i >= settingsRows.Count) { break; }
                     var row = settingsRows[i];
                     bool showBuffer = state.Focus == SettingsModalFocus.EditingSetting && i == state.SelectedSettingIndex && row.EditMode == SettingEditMode.TextEdit;
-                    string lineText = $"{row.Label}: {(showBuffer ? state.EditingBuffer + "_" : row.DisplayValue)}";
+                    string labelWithColon = string.IsNullOrEmpty(row.Label) ? "" : row.Label + ":";
+                    string lineText = $"{labelWithColon}{(showBuffer ? state.EditingBuffer + "_" : row.DisplayValue)}";
                     string line = StaticTextViewport.TruncateWithEllipsis(new PlainText(lineText), rightColWidth);
                     string linePadded = line.PadRight(rightColWidth);
                     string lineToWrite = (i == state.SelectedSettingIndex && (state.Focus == SettingsModalFocus.SettingsList || state.Focus == SettingsModalFocus.EditingSetting))
@@ -150,9 +153,11 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
         if (width < 40) { return; }
         string hint = GetHintText(state);
         double scrollSpeed = _uiSettings?.DefaultScrollingSpeed ?? 0.25;
-        string hintLine = hint.Length > width
-            ? _hintViewport.Render(new PlainText(hint), width, scrollSpeed)
-            : hint.PadRight(width);
+        var palette = _uiSettings?.Palette ?? new UiPalette();
+        var hintViewport = new Viewport("", () => new PlainText(hint));
+        var hintViewports = new[] { hintViewport };
+        var hintWidths = new[] { width };
+        string hintLine = _rowRenderer.RenderRow(hintViewports, hintWidths, width, palette, scrollSpeed, SettingsModalHintSlotIndex);
         try
         {
             System.Console.SetCursorPosition(0, 3);

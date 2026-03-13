@@ -1,22 +1,19 @@
 # UI spec example: Main view (preset mode)
 
-This example follows the [UI spec format](ui-spec-format.md). It documents the main console layout when a preset is active and the visualizer is showing layer content (e.g. ASCII image layer). Screenshot source: `screen-dumps/screen-20260225-153434.txt`.
+This example follows the [UI spec format](ui-spec-format.md). It documents the main console layout when a preset is active and the visualizer is showing layer content (e.g. ASCII image layer). Layout follows [ADR-0050](adr/0050-ui-alignment-blocks-label-format.md): left-aligned UI, 8-character block sizing, and label format `Label:value` (no space after colon). The title bar is a single line (breadcrumb only). Regenerate the screenshot from a screen dump (Print Screen or `--dump-after N`) to capture the current output.
 
 ## Screenshot
 
 ```text
-╔══════════════════════════════════════════════════════════╗
-║         aUdioNLZR/pReset/pReset_2[0]:aScii_image         ║
-╚══════════════════════════════════════════════════════════╝
-Device(D):DIA High DefNow:Svampyr - xtalzkullz 145bpm       
+         aUdioNLZR/pReset/pReset_2[0]:aScii_image         
+Device:DIA High DefNow:Svampyr - xtalzkullz 145bpm         
 BPM: 144  Beat: 1,1 (+/-)     Volume/dB:  8,3%  -21,7dB     
-Press H for help, D device, F full screen, PrintScr dump, E…
-Layers:123456789 (1-9 select, ←→ ty…             H=Help     
+Layers:123456789 | Palette(L1):Default                     
       ..       .:.        -#=+-+=+:        .:.       ..     
-       :.      ::          -=*.*+-          ::      .:      
-       :       .:           :: -.           ::       .      
-       :.      ::         ..      .         ::      .:      
-       ..      .:      ..  ..   ..  .       :.      ..      
+       :.      ::          -=*.*+-          ::      .:       
+       :       .:           :: -.           ::       .       
+       :.      ::         ..      .         ::      .:       
+       ..      .:      ..  ..   ..  .       :.      ..       
 ... .. ::      :. ........  .   .  ..... .. .:      :: .....
 ....  :...    ...:  .......          ....  :...    ...:  ...
 :.:-.  ..:    :.:   :-::.:::.   ::::::.:-.  :.:    :..   :-:
@@ -28,24 +25,24 @@ Layers:123456789 (1-9 select, ←→ ty…             H=Help
 .:-.   . -    -.: . :...:-===   +***:.:-.   :.-    - . . :..
 -=.    ..:    :..   :.==+*=.    -**=::=.    ..:    :..   :.=
 ... .. ::      :. ........  .   .  ..... .. .:      :: .....
-       ..      .:      ..  ..   ..  .       :.      ..      
-       :.      ::         ..      .         ::      .:      
-       :       .:           :: -.           ::       .      
-       :.      ::          -=*.*+-          ::      .:      
-      ..       .:.        -#=+-+=+:        .:.       ..     
+       ..      .:      ..  ..   ..  .       :.      ..       
+       :.      ::         ..      .         ::      .:       
+       :       .:           :: -.           ::       .       
+       :.      ::          -=*.*+-          ::      .:       
+      ..       .:.        -#=+-+=+:        .:.       ..      
                                                              
 ```
 
 ## Line reference
 
-- **1** — Title bar top border (box-drawing).
-- **2** — Title bar content: app name / mode / preset name [layer index]: layer type (e.g. `aUdioNLZR/pReset/pReset_2[0]:aScii_image`).
-- **3** — Title bar bottom border (box-drawing).
-- **4** — Device line: device label with hotkey (D), then now-playing (scrolling viewport): track title and BPM (e.g. `Device(D):…` `Now:Svampyr - xtalzkullz 145bpm`).
-- **5** — BPM value, beat position with +/- hint, volume percentage and dB (e.g. `BPM: 144  Beat: 1,1 (+/-)     Volume/dB:  8,3%  -21,7dB`).
-- **6** — Shortcuts line (scrolling if long): H help, D device, F full screen, PrintScr dump, etc.
-- **7** — Toolbar: layers 1–9, selection and type hint (←→), right-aligned H=Help.
-- **8** — First row of visualizer viewport (layer content; here ASCII art).
+- **1** — Title bar: single-line breadcrumb, left-aligned (app name / mode / preset name [layer index]: layer type, e.g. `aUdioNLZR/pReset/pReset_2[0]:aScii_image`). Padding on the right to fill width.
+- **2** — Device line: left-aligned. Device label and value (`Device:value`), then now-playing scrolling viewport (`Now:value`). Label format uses colon with no space before value; cells use 8-char block sizing where applicable.
+- **3** — BPM value, beat position with +/- hint, volume percentage and dB. Left-aligned; labels `BPM:`, `Beat:`, `Volume/dB:` with no space after colon (e.g. `BPM:144  Beat:1,1 (+/-)     Volume/dB:8,3%  -21,7dB`). 8-char block sizing where applicable.
+- **4** — Toolbar: left-aligned. Separate labeled fields: Layers (digits 1–9), optional Gain (when oscilloscope), Palette(Ln) (palette name). When content exceeds width, overflowing cells scroll so all layer numbers remain visible. Label format `Label:value`; key bindings are in the help modal (H).
+- **5** — First row of visualizer viewport (layer content; here ASCII art).
+- **6** — Visualizer content.
+- **7** — Visualizer content.
+- **8** — Visualizer content.
 - **9** — Visualizer content.
 - **10** — Visualizer content.
 - **11** — Visualizer content.
@@ -53,18 +50,15 @@ Layers:123456789 (1-9 select, ←→ ty…             H=Help
 - **13** — Visualizer content.
 - **14** — Visualizer content.
 - **15** — Visualizer content.
-- **16** — Visualizer content.
+- **16** — Visualizer content: now-playing overlay line (e.g. track title in block characters).
 - **17** — Visualizer content.
 - **18** — Visualizer content.
-- **19** — Visualizer content: now-playing overlay line (e.g. track title in block characters).
+- **19** — Visualizer content.
 - **20** — Visualizer content.
 - **21** — Visualizer content.
 - **22** — Visualizer content.
 - **23** — Visualizer content.
 - **24** — Visualizer content.
 - **25** — Visualizer content.
-- **26** — Visualizer content.
-- **27** — Visualizer content.
-- **28** — Visualizer content.
-- **29** — Last row of visualizer content.
-- **30** — Blank line (bottom padding / unused rows).
+- **26** — Last row of visualizer content.
+- **27** — Blank line (bottom padding / unused rows).

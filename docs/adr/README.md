@@ -65,6 +65,11 @@ Decisions are numbered and kept under version control so the rationale stays wit
 | [0047](0047-all-key-handling-via-ikeyhandler.md) | All key handling via IKeyHandler | Accepted |
 | [0048](0048-key-handlers-expose-bindings.md) | Key handlers expose bindings for discovery | Accepted |
 | [0049](0049-dynamic-help-screen.md) | Dynamic help screen — content based on active view | Accepted |
+| [0050](0050-ui-alignment-blocks-label-format.md) | UI alignment, 8-character blocks, and label format | Accepted |
+| [0051](0051-viewport-as-data-layouts-compose.md) | Viewport as data; layouts compose viewports; row renderer owns scroll state | Accepted |
+| [0052](0052-ui-container-component-renderer.md) | UI container, component, and generic component renderer | Accepted |
+| [0053](0053-iuicomponent-all-ui.md) | Use IUiComponent for all UI (including modals) | Accepted |
+| [0054](0054-ui-component-state-ownership.md) | UI component state ownership and IUiStateUpdater | Accepted |
 
 ## Process
 

@@ -51,7 +51,7 @@ public sealed class ScrollingTextViewport : IScrollingTextViewport
             return "";
         }
 
-        var effectiveLabel = !string.IsNullOrEmpty(hotkey) ? FormatLabel(label ?? "", hotkey) : (label ?? "");
+        var effectiveLabel = FormatLabel(label ?? "", hotkey);
         int labelDisplayWidth = string.IsNullOrEmpty(effectiveLabel)
             ? 0
             : DisplayWidth.GetDisplayWidth(effectiveLabel);

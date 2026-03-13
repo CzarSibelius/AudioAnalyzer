@@ -57,7 +57,7 @@ The following sections described the state **before** the refactor. They are kep
 
 **ADR**: "They must not branch on visualizer identity for logic that belongs inside the visualizer."
 
-**Current code** ([VisualizationPaneLayout.cs](../../src/AudioAnalyzer.Infrastructure/VisualizationPaneLayout.cs) – `GetToolbarLine2`):
+**Current code** (historical; toolbar now built by TextLayersToolbarBuilder in Application (general UI), no H=Help or key hints in UI):
 
 ```csharp
 if (mode == VisualizationMode.Oscilloscope)

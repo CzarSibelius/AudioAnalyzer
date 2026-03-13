@@ -23,8 +23,8 @@ internal sealed class VisualizationOrchestrator : IVisualizationOrchestrator
     private DateTime _lastUpdate = DateTime.Now;
     private int _lastTerminalWidth;
     private int _lastTerminalHeight;
-    private int _headerStartRow = 6;
-    private int _displayStartRow = 6;
+    private int _headerStartRow = 3;
+    private int _displayStartRow = 3;
     private int _overlayRowCount;
     private Action? _onRedrawHeader;
     private Action? _onRefreshHeader;

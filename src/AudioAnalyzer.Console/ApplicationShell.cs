@@ -31,7 +31,7 @@ internal sealed class ApplicationShell
     private readonly IVisualizationOrchestrator _orchestrator;
     private readonly IVisualizationRenderer _renderer;
     private readonly ShowPlaybackController _showPlaybackController;
-    private readonly IHeaderDrawer _headerDrawer;
+    private readonly IHeaderContainer _headerContainer;
     private readonly IKeyHandler<MainLoopKeyContext> _keyHandler;
     private readonly IAppSettingsPersistence _settingsPersistence;
     private readonly IDeviceSelectionModal _deviceSelectionModal;
@@ -55,7 +55,7 @@ internal sealed class ApplicationShell
         IVisualizationOrchestrator orchestrator,
         IVisualizationRenderer renderer,
         ShowPlaybackController showPlaybackController,
-        IHeaderDrawer headerDrawer,
+        IHeaderContainer headerContainer,
         IKeyHandler<MainLoopKeyContext> keyHandler,
         IAppSettingsPersistence settingsPersistence,
         IDeviceSelectionModal deviceSelectionModal,
@@ -75,7 +75,7 @@ internal sealed class ApplicationShell
         _orchestrator = orchestrator ?? throw new ArgumentNullException(nameof(orchestrator));
         _renderer = renderer;
         _showPlaybackController = showPlaybackController ?? throw new ArgumentNullException(nameof(showPlaybackController));
-        _headerDrawer = headerDrawer ?? throw new ArgumentNullException(nameof(headerDrawer));
+        _headerContainer = headerContainer ?? throw new ArgumentNullException(nameof(headerContainer));
         _keyHandler = keyHandler ?? throw new ArgumentNullException(nameof(keyHandler));
         _settingsPersistence = settingsPersistence ?? throw new ArgumentNullException(nameof(settingsPersistence));
         _deviceSelectionModal = deviceSelectionModal ?? throw new ArgumentNullException(nameof(deviceSelectionModal));
@@ -97,9 +97,9 @@ internal sealed class ApplicationShell
         object consoleLock = new();
 
         _orchestrator.SetHeaderCallback(
-            () => _headerDrawer.DrawMain(_deviceController.CurrentDeviceName),
-            () => _headerDrawer.DrawHeaderOnly(_deviceController.CurrentDeviceName),
-            6);
+            () => _headerContainer.DrawMain(_deviceController.CurrentDeviceName),
+            () => _headerContainer.DrawHeaderOnly(_deviceController.CurrentDeviceName),
+            3);
         _orchestrator.SetRenderGuard(() => !modalOpen);
         _orchestrator.SetConsoleLock(consoleLock);
 
@@ -199,7 +199,7 @@ internal sealed class ApplicationShell
             DisplayState = _displayState,
             Orchestrator = _orchestrator,
             Engine = _engine,
-            HeaderDrawer = _headerDrawer,
+            HeaderContainer = _headerContainer,
             OnModeSwitch = () => HandleModeSwitch(consoleLock),
             OnPresetCycle = CycleToNextPreset,
             SettingsModal = _settingsModal,

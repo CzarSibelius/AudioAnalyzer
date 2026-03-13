@@ -11,12 +11,14 @@ internal sealed class HelpModal : IHelpModal
 
     private readonly UiSettings _uiSettings;
     private readonly IHelpContentProvider _helpContentProvider;
+    private readonly IConsoleDimensions _consoleDimensions;
     private ApplicationMode _currentMode = ApplicationMode.PresetEditor;
 
-    public HelpModal(UiSettings uiSettings, IHelpContentProvider helpContentProvider)
+    public HelpModal(UiSettings uiSettings, IHelpContentProvider helpContentProvider, IConsoleDimensions consoleDimensions)
     {
         _uiSettings = uiSettings ?? throw new ArgumentNullException(nameof(uiSettings));
         _helpContentProvider = helpContentProvider ?? throw new ArgumentNullException(nameof(helpContentProvider));
+        _consoleDimensions = consoleDimensions ?? throw new ArgumentNullException(nameof(consoleDimensions));
     }
 
     /// <inheritdoc />
@@ -34,7 +36,7 @@ internal sealed class HelpModal : IHelpModal
         string dimmedCode = AnsiConsole.ColorCode(palette.Dimmed);
         string reset = AnsiConsole.ResetCode;
 
-        int width = ConsoleHeader.GetConsoleWidth();
+        int width = _consoleDimensions.GetConsoleWidth();
         string title = " HELP ";
         int pad = Math.Max(0, (width - title.Length - 2) / 2);
         System.Console.WriteLine("╔" + new string('═', width - 2) + "╗");

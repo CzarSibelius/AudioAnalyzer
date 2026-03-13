@@ -5,8 +5,8 @@ using AudioAnalyzer.Domain;
 
 namespace AudioAnalyzer.Console;
 
-/// <summary>Renders the title bar with hierarchical breadcrumb (app/mode/preset/layer) in cyberpunk/hacker style.</summary>
-internal sealed class TitleBarRenderer : ITitleBarRenderer
+/// <summary>Builds the title bar breadcrumb (app/mode/preset/layer) in cyberpunk/hacker style for use as preformatted row content.</summary>
+internal sealed class TitleBarContentProvider : ITitleBarContentProvider
 {
     private static readonly TitleBarPalette s_defaultPalette = new();
 
@@ -14,7 +14,7 @@ internal sealed class TitleBarRenderer : ITitleBarRenderer
     private readonly VisualizerSettings _visualizerSettings;
     private readonly IVisualizer _visualizer;
 
-    public TitleBarRenderer(UiSettings uiSettings, VisualizerSettings visualizerSettings, IVisualizer visualizer)
+    public TitleBarContentProvider(UiSettings uiSettings, VisualizerSettings visualizerSettings, IVisualizer visualizer)
     {
         _uiSettings = uiSettings ?? throw new ArgumentNullException(nameof(uiSettings));
         _visualizerSettings = visualizerSettings ?? throw new ArgumentNullException(nameof(visualizerSettings));
@@ -22,25 +22,11 @@ internal sealed class TitleBarRenderer : ITitleBarRenderer
     }
 
     /// <inheritdoc />
-    public (string Line1, string Line2, string Line3) Render(int width)
+    public IDisplayText GetTitleBarContent()
     {
-        width = Math.Max(10, width);
         var palette = _uiSettings.TitleBarPalette ?? s_defaultPalette;
-
         string breadcrumb = BuildBreadcrumb(palette);
-        string truncated = StaticTextViewport.TruncateWithEllipsis(new AnsiText(breadcrumb), width - 2);
-        int displayWidth = AnsiConsole.GetDisplayWidth(truncated);
-        int contentWidth = width - 2;
-        int leftPadding = Math.Max(0, (contentWidth - displayWidth) / 2);
-        int rightPadding = contentWidth - displayWidth - leftPadding;
-
-        string line1 = AnsiConsole.ColorCode(palette.Frame) + "╔" + new string('═', width - 2) + "╗" + AnsiConsole.ResetCode;
-        string line2 = AnsiConsole.ColorCode(palette.Frame) + "║" + AnsiConsole.ResetCode +
-            new string(' ', leftPadding) + truncated + new string(' ', rightPadding) +
-            AnsiConsole.ColorCode(palette.Frame) + "║" + AnsiConsole.ResetCode;
-        string line3 = AnsiConsole.ColorCode(palette.Frame) + "╚" + new string('═', width - 2) + "╝" + AnsiConsole.ResetCode;
-
-        return (line1, line2, line3);
+        return new AnsiText(breadcrumb);
     }
 
     private string BuildBreadcrumb(TitleBarPalette palette)

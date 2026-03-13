@@ -36,8 +36,8 @@ internal sealed class MainLoopKeyContext : IKeyHandlerContext
     /// <summary>Analysis engine for layout and beat sensitivity.</summary>
     public required AnalysisEngine Engine { get; init; }
 
-    /// <summary>Header drawer for non-fullscreen header updates.</summary>
-    public required IHeaderDrawer HeaderDrawer { get; init; }
+    /// <summary>Header container for non-fullscreen header updates.</summary>
+    public required IHeaderContainer HeaderContainer { get; init; }
 
     /// <summary>Switches between Preset editor and Show play modes.</summary>
     public required Action OnModeSwitch { get; init; }
