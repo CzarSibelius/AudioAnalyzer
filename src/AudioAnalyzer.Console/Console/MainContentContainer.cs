@@ -118,12 +118,12 @@ internal sealed class MainContentContainer : IVisualizationRenderer
         {
             return [VisualizerAreaComponent.Instance];
         }
-        (IReadOnlyList<Viewport> viewports, IReadOnlyList<int> widths) = BuildToolbarRowData(context);
-        _toolbarRow.SetRowData(viewports, widths);
+        (IReadOnlyList<LabeledValueDescriptor> descriptors, IReadOnlyList<int> widths) = BuildToolbarRowData(context);
+        _toolbarRow.SetRowData(descriptors, widths);
         return [_toolbarRow, VisualizerAreaComponent.Instance];
     }
 
-    private (IReadOnlyList<Viewport> Viewports, IReadOnlyList<int> Widths) BuildToolbarRowData(RenderContext context)
+    private (IReadOnlyList<LabeledValueDescriptor> Descriptors, IReadOnlyList<int> Widths) BuildToolbarRowData(RenderContext context)
     {
         int width = context.Snapshot?.TerminalWidth ?? context.Width;
         if (width < 30)
@@ -131,24 +131,24 @@ internal sealed class MainContentContainer : IVisualizationRenderer
             width = context.Width;
         }
 
-        IReadOnlyList<Viewport>? segmentViewports = _visualizer.GetToolbarViewports(context.Snapshot!);
-        if (segmentViewports is { Count: > 0 })
+        IReadOnlyList<LabeledValueDescriptor>? segmentDescriptors = _visualizer.GetToolbarViewports(context.Snapshot!);
+        if (segmentDescriptors is { Count: > 0 })
         {
-            IReadOnlyList<int> segmentWidths = GetToolbarSegmentWidths(width, segmentViewports.Count);
-            return (segmentViewports, segmentWidths);
+            IReadOnlyList<int> segmentWidths = GetToolbarSegmentWidths(width, segmentDescriptors.Count);
+            return (segmentDescriptors, segmentWidths);
         }
 
         (int cell1Width, int cell2Width) = GetToolbarCellWidths(width);
         string? toolbarSuffix = _visualizer.GetToolbarSuffix(context.Snapshot!);
-        var viewports = new List<Viewport>
+        var descriptors = new List<LabeledValueDescriptor>
         {
-            new Viewport("", () => toolbarSuffix != null ? new AnsiText(toolbarSuffix) : (IDisplayText)new PlainText(""), preformattedAnsi: true),
+            new LabeledValueDescriptor("", () => toolbarSuffix != null ? new AnsiText(toolbarSuffix) : (IDisplayText)new PlainText(""), preformattedAnsi: true),
             _visualizer.SupportsPaletteCycling && !string.IsNullOrEmpty(context.PaletteDisplayName)
-                ? new Viewport("Palette", () => new PlainText(context.PaletteDisplayName ?? ""), labelColor: (_uiSettings.Palette ?? new UiPalette()).Label, textColor: (_uiSettings.Palette ?? new UiPalette()).Normal)
-                : new Viewport("", () => new PlainText(""))
+                ? new LabeledValueDescriptor("Palette", () => new PlainText(context.PaletteDisplayName ?? ""), labelColor: (_uiSettings.Palette ?? new UiPalette()).Label, textColor: (_uiSettings.Palette ?? new UiPalette()).Normal)
+                : new LabeledValueDescriptor("", () => new PlainText(""))
         };
         var widths = new[] { cell1Width, cell2Width };
-        return (viewports, widths);
+        return (descriptors, widths);
     }
 
     /// <summary>Distributes total width across N toolbar segments in 8-column blocks.</summary>

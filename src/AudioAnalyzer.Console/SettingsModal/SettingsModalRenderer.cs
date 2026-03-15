@@ -159,8 +159,8 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
     private void RenderHintRow(SettingsModalState state, int width, UiPalette palette, double scrollSpeed, int startRow)
     {
         string hint = GetHintText(state);
-        var hintViewport = new Viewport("", () => new PlainText(hint));
-        _hintRow.SetRowData([hintViewport], [width]);
+        var hintDescriptor = new LabeledValueDescriptor("", () => new PlainText(hint));
+        _hintRow.SetRowData([hintDescriptor], [width]);
         var context = new RenderContext
         {
             Width = width,

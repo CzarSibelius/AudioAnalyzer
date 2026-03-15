@@ -67,15 +67,15 @@ public sealed class TextLayersToolbarBuilder : ITextLayersToolbarBuilder
     }
 
     /// <inheritdoc />
-    public IReadOnlyList<Viewport> BuildViewports(TextLayersToolbarContext context)
+    public IReadOnlyList<LabeledValueDescriptor> BuildViewports(TextLayersToolbarContext context)
     {
         var sortedLayers = context.SortedLayers;
         var palette = context.UiSettings.Palette ?? new UiPalette();
-        var list = new List<Viewport>();
+        var list = new List<LabeledValueDescriptor>();
 
         if (sortedLayers is not { Count: > 0 })
         {
-            list.Add(new Viewport("Layers", () => new PlainText("(config in settings)"), labelColor: palette.Label, textColor: palette.Dimmed));
+            list.Add(new LabeledValueDescriptor("Layers", () => new PlainText("(config in settings)"), labelColor: palette.Label, textColor: palette.Dimmed));
             return list;
         }
 
@@ -113,17 +113,17 @@ public sealed class TextLayersToolbarBuilder : ITextLayersToolbarBuilder
             }
         }
         string layersAnsi = layersSb.ToString();
-        list.Add(new Viewport("Layers", () => new AnsiText(layersAnsi), preformattedAnsi: true));
+        list.Add(new LabeledValueDescriptor("Layers", () => new AnsiText(layersAnsi), preformattedAnsi: true));
 
         if (layer.LayerType == TextLayerType.Oscilloscope)
         {
             double gain = context.OscilloscopeGain ?? 2.5;
             string gainStr = gain.ToString("F1", System.Globalization.CultureInfo.InvariantCulture);
-            list.Add(new Viewport("Gain", () => new PlainText(gainStr), labelColor: palette.Label, textColor: palette.Normal));
+            list.Add(new LabeledValueDescriptor("Gain", () => new PlainText(gainStr), labelColor: palette.Label, textColor: palette.Normal));
         }
 
         string paletteLabel = "Palette(L" + (idx + 1) + ")";
-        list.Add(new Viewport(paletteLabel, () => new PlainText(paletteName), labelColor: palette.Label, textColor: palette.Normal));
+        list.Add(new LabeledValueDescriptor(paletteLabel, () => new PlainText(paletteName), labelColor: palette.Label, textColor: palette.Normal));
         return list;
     }
 }

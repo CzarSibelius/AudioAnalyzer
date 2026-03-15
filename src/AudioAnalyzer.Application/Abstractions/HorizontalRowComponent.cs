@@ -2,7 +2,7 @@ namespace AudioAnalyzer.Application.Abstractions;
 
 /// <summary>
 /// Composite UI component that lays out <see cref="ScrollingTextComponent"/> children horizontally on one row.
-/// Use <see cref="SetRowData"/> each frame to set viewports and widths; children are reused and updated.
+/// Use <see cref="SetRowData"/> each frame to set labeled value descriptors and widths; children are reused and updated.
 /// </summary>
 public sealed class HorizontalRowComponent : IUiComponent
 {
@@ -12,26 +12,26 @@ public sealed class HorizontalRowComponent : IUiComponent
     /// <summary>Child cell components in order. Grown as needed by <see cref="SetRowData"/>.</summary>
     public IReadOnlyList<ScrollingTextComponent> Children => _children;
 
-    /// <summary>Width in columns for each cell. Must match the number of viewports passed to <see cref="SetRowData"/>.</summary>
+    /// <summary>Width in columns for each cell. Must match the number of descriptors passed to <see cref="SetRowData"/>.</summary>
     public IReadOnlyList<int> Widths => _widths;
 
     /// <summary>
-    /// Updates row data: ensures enough child components exist, sets each child from the corresponding viewport, and stores widths.
+    /// Updates row data: ensures enough child components exist, sets each child from the corresponding descriptor, and stores widths.
     /// Call each frame before render when used as the toolbar row.
     /// </summary>
-    public void SetRowData(IReadOnlyList<Viewport> viewports, IReadOnlyList<int> widths)
+    public void SetRowData(IReadOnlyList<LabeledValueDescriptor> descriptors, IReadOnlyList<int> widths)
     {
-        if (viewports == null || widths == null)
+        if (descriptors == null || widths == null)
         {
             return;
         }
-        while (_children.Count < viewports.Count)
+        while (_children.Count < descriptors.Count)
         {
             _children.Add(new ScrollingTextComponent());
         }
-        for (int i = 0; i < viewports.Count; i++)
+        for (int i = 0; i < descriptors.Count; i++)
         {
-            _children[i].SetFromViewport(viewports[i]);
+            _children[i].SetFromDescriptor(descriptors[i]);
         }
         _widths = widths;
     }

@@ -104,8 +104,8 @@ internal sealed class HeaderContainer : IHeaderContainer, IUiComponent
     /// <inheritdoc />
     public IReadOnlyList<IUiComponent>? GetChildren(RenderContext context)
     {
-        var titleViewport = new Viewport("", () => _titleBarContentProvider.GetTitleBarContent(), preformattedAnsi: true);
-        _titleRow.SetRowData([titleViewport], [context.Width]);
+        var titleDescriptor = new LabeledValueDescriptor("", () => _titleBarContentProvider.GetTitleBarContent(), preformattedAnsi: true);
+        _titleRow.SetRowData([titleDescriptor], [context.Width]);
         _row2.SetRowData(BuildRow2Viewports(), BuildRow2Widths(context.Width));
         _row3.SetRowData(BuildRow3Viewports(), BuildRow3Widths(context.Width));
         return [_titleRow, _row2, _row3];
@@ -127,14 +127,14 @@ internal sealed class HeaderContainer : IHeaderContainer, IUiComponent
         };
     }
 
-    private IReadOnlyList<Viewport> BuildRow2Viewports()
+    private IReadOnlyList<LabeledValueDescriptor> BuildRow2Viewports()
     {
         var palette = _uiSettings.Palette ?? new UiPalette();
         var nowTextColor = !string.IsNullOrEmpty(_nowPlayingText) ? palette.Highlighted : (PaletteColor?)null;
         return
         [
-            new Viewport("Device", () => new PlainText(_deviceName)),
-            new Viewport("Now", () => new PlainText(_nowPlayingText ?? ""), textColor: nowTextColor)
+            new LabeledValueDescriptor("Device", () => new PlainText(_deviceName)),
+            new LabeledValueDescriptor("Now", () => new PlainText(_nowPlayingText ?? ""), textColor: nowTextColor)
         ];
     }
 
@@ -145,17 +145,17 @@ internal sealed class HeaderContainer : IHeaderContainer, IUiComponent
         return [leftCellWidth, rightCellWidth];
     }
 
-    private IReadOnlyList<Viewport> BuildRow3Viewports()
+    private IReadOnlyList<LabeledValueDescriptor> BuildRow3Viewports()
     {
         string bpmLabel = _currentBpm >= 0 ? (_currentBpm > 0 ? "BPM" : "Beat") : "";
         return
         [
             _currentBpm >= 0
-                ? new Viewport(bpmLabel, () => new PlainText(_bpmBeatValue))
-                : new Viewport("", () => new PlainText("")),
+                ? new LabeledValueDescriptor(bpmLabel, () => new PlainText(_bpmBeatValue))
+                : new LabeledValueDescriptor("", () => new PlainText("")),
             _volume >= 0
-                ? new Viewport("Volume/dB", () => new PlainText(_volumeText))
-                : new Viewport("", () => new PlainText(""))
+                ? new LabeledValueDescriptor("Volume/dB", () => new PlainText(_volumeText))
+                : new LabeledValueDescriptor("", () => new PlainText(""))
         ];
     }
 

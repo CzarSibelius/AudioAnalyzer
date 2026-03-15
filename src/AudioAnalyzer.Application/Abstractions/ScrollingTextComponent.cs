@@ -4,7 +4,7 @@ namespace AudioAnalyzer.Application.Abstractions;
 
 /// <summary>
 /// Leaf UI component for a single scrolling text cell. Owns scroll state and last-text for content-change reset.
-/// Cell data (label, getter, colors) is set each frame via <see cref="SetFromViewport"/> when used in a horizontal row.
+/// Cell data (label, getter, colors) is set each frame via <see cref="SetFromDescriptor"/> when used in a horizontal row.
 /// </summary>
 public sealed class ScrollingTextComponent : IUiComponent
 {
@@ -24,7 +24,7 @@ public sealed class ScrollingTextComponent : IUiComponent
     /// <summary>Optional hotkey for the label (e.g. "Label(K):").</summary>
     public string? Hotkey => _hotkey;
 
-    /// <summary>Getter for the current display value. Set by <see cref="SetFromViewport"/>.</summary>
+    /// <summary>Getter for the current display value. Set by <see cref="SetFromDescriptor"/>.</summary>
     public Func<IDisplayText>? GetValue => _getValue;
 
     /// <summary>Optional label color.</summary>
@@ -46,15 +46,15 @@ public sealed class ScrollingTextComponent : IUiComponent
     /// <summary>Scroll state for this cell. Used by the renderer.</summary>
     public ref ScrollingTextViewportState GetScrollStateRef() => ref _scrollState;
 
-    /// <summary>Updates cell data from a viewport. Call each frame when used in a horizontal row.</summary>
-    public void SetFromViewport(Viewport viewport)
+    /// <summary>Updates cell data from a labeled value descriptor. Call each frame when used in a horizontal row.</summary>
+    public void SetFromDescriptor(LabeledValueDescriptor descriptor)
     {
-        _label = viewport?.Label ?? "";
-        _hotkey = viewport?.Hotkey;
-        _getValue = viewport?.GetValue;
-        _labelColor = viewport?.LabelColor;
-        _textColor = viewport?.TextColor;
-        _preformattedAnsi = viewport?.PreformattedAnsi ?? false;
+        _label = descriptor?.Label ?? "";
+        _hotkey = descriptor?.Hotkey;
+        _getValue = descriptor?.GetValue;
+        _labelColor = descriptor?.LabelColor;
+        _textColor = descriptor?.TextColor;
+        _preformattedAnsi = descriptor?.PreformattedAnsi ?? false;
     }
 
     /// <inheritdoc />

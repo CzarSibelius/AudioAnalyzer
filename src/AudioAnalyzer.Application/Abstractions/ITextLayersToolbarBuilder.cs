@@ -6,6 +6,6 @@ public interface ITextLayersToolbarBuilder
     /// <summary>Returns the toolbar suffix, or null if no layers. Empty config returns a short hint.</summary>
     string? BuildSuffix(TextLayersToolbarContext context);
 
-    /// <summary>Returns toolbar viewports with own labels (Layers, optional Gain, Palette). Empty when no layers.</summary>
-    IReadOnlyList<Viewport> BuildViewports(TextLayersToolbarContext context);
+    /// <summary>Returns toolbar descriptors with own labels (Layers, optional Gain, Palette). Empty when no layers.</summary>
+    IReadOnlyList<LabeledValueDescriptor> BuildViewports(TextLayersToolbarContext context);
 }

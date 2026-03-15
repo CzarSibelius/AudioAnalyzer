@@ -173,7 +173,7 @@ public sealed class TextLayersVisualizer : IVisualizer
     }
 
     /// <inheritdoc />
-    public IReadOnlyList<Viewport>? GetToolbarViewports(AnalysisSnapshot snapshot)
+    public IReadOnlyList<LabeledValueDescriptor>? GetToolbarViewports(AnalysisSnapshot snapshot)
     {
         var sortedLayers = TryGetSortedLayersSnapshot(_settings);
         var list = sortedLayers ?? [];
@@ -189,8 +189,8 @@ public sealed class TextLayersVisualizer : IVisualizer
             UiSettings = _uiSettings,
             OscilloscopeGain = layer?.LayerType == TextLayerType.Oscilloscope ? (layer.GetCustom<OscilloscopeSettings>()?.Gain ?? 2.5) : null
         };
-        var viewports = _toolbarBuilder.BuildViewports(context);
-        return viewports.Count > 0 ? viewports : null;
+        var descriptors = _toolbarBuilder.BuildViewports(context);
+        return descriptors.Count > 0 ? descriptors : null;
     }
 
     /// <inheritdoc />
