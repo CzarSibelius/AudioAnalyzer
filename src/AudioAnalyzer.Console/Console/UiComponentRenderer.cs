@@ -10,13 +10,16 @@ namespace AudioAnalyzer.Console;
 internal sealed class UiComponentRenderer : IUiComponentRenderer<IUiComponent>
 {
     private readonly IUiComponentRenderer<LabeledRowComponent> _labeledRow;
+    private readonly IUiComponentRenderer<HorizontalRowComponent> _horizontalRow;
     private readonly IUiComponentRenderer<VisualizerAreaComponent> _visualizerArea;
 
     public UiComponentRenderer(
         IUiComponentRenderer<LabeledRowComponent> labeledRow,
+        IUiComponentRenderer<HorizontalRowComponent> horizontalRow,
         IUiComponentRenderer<VisualizerAreaComponent> visualizerArea)
     {
         _labeledRow = labeledRow ?? throw new ArgumentNullException(nameof(labeledRow));
+        _horizontalRow = horizontalRow ?? throw new ArgumentNullException(nameof(horizontalRow));
         _visualizerArea = visualizerArea ?? throw new ArgumentNullException(nameof(visualizerArea));
     }
 
@@ -50,6 +53,7 @@ internal sealed class UiComponentRenderer : IUiComponentRenderer<IUiComponent>
         return component switch
         {
             LabeledRowComponent => _labeledRow.Render((LabeledRowComponent)component, context),
+            HorizontalRowComponent => _horizontalRow.Render((HorizontalRowComponent)component, context),
             VisualizerAreaComponent => _visualizerArea.Render((VisualizerAreaComponent)component, context),
             _ => ComponentRenderResult.Written(0)
         };

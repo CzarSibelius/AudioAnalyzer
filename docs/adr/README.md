@@ -71,6 +71,7 @@ Decisions are numbered and kept under version control so the rationale stays wit
 | [0053](0053-iuicomponent-all-ui.md) | Use IUiComponent for all UI (including modals) | Accepted |
 | [0054](0054-ui-component-state-ownership.md) | UI component state ownership and IUiStateUpdater | Accepted |
 | [0055](0055-layer-specific-beat-reaction.md) | Layer-specific beat reaction (no common BeatReaction) | Accepted |
+| [0056](0056-scrolling-text-as-uicomponent.md) | Scrolling text as IUiComponent with state (ScrollingTextComponent, HorizontalRowComponent) | Accepted |
 
 ## Process
 

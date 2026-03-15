@@ -8,14 +8,6 @@ namespace AudioAnalyzer.Application;
 /// <summary>Builds the TextLayers toolbar suffix: layer digits 1–<see cref="TextLayersLimits.MaxLayerCount"/>, oscilloscope gain (when applicable), palette name.</summary>
 public sealed class TextLayersToolbarBuilder : ITextLayersToolbarBuilder
 {
-    private readonly IScrollingTextViewport _labelViewport;
-
-    /// <summary>Creates a new toolbar builder with a viewport used for consistent label formatting.</summary>
-    public TextLayersToolbarBuilder(IScrollingTextViewport labelViewport)
-    {
-        _labelViewport = labelViewport ?? throw new ArgumentNullException(nameof(labelViewport));
-    }
-
     /// <inheritdoc />
     public string? BuildSuffix(TextLayersToolbarContext context)
     {
@@ -23,7 +15,7 @@ public sealed class TextLayersToolbarBuilder : ITextLayersToolbarBuilder
         if (sortedLayers is not { Count: > 0 })
         {
             var emptyPalette = context.UiSettings.Palette ?? new UiPalette();
-            string layersLabel = _labelViewport.FormatLabel("Layers", null);
+            string layersLabel = LabelFormatting.FormatLabel("Layers", null);
             return AnsiConsole.ColorCode(emptyPalette.Label) + layersLabel + AnsiConsole.ResetCode + AnsiConsole.ColorCode(emptyPalette.Dimmed) + "(config in settings)" + AnsiConsole.ResetCode;
         }
 
@@ -40,7 +32,7 @@ public sealed class TextLayersToolbarBuilder : ITextLayersToolbarBuilder
 
         var palette = context.UiSettings.Palette ?? new UiPalette();
         var sb = new StringBuilder();
-        AnsiConsole.AppendColored(sb, _labelViewport.FormatLabel("Layers", null), palette.Label);
+        AnsiConsole.AppendColored(sb, LabelFormatting.FormatLabel("Layers", null), palette.Label);
         for (int i = 0; i < TextLayersLimits.MaxLayerCount; i++)
         {
             char digit = (char)('1' + i);
@@ -65,11 +57,11 @@ public sealed class TextLayersToolbarBuilder : ITextLayersToolbarBuilder
         {
             double gain = context.OscilloscopeGain ?? 2.5;
             sb.Append(" | ");
-            sb.Append(_labelViewport.FormatLabel("Gain", null));
+            sb.Append(LabelFormatting.FormatLabel("Gain", null));
             sb.Append(gain.ToString("F1", System.Globalization.CultureInfo.InvariantCulture));
         }
         sb.Append(" | ");
-        sb.Append(_labelViewport.FormatLabel("Palette(L" + (idx + 1) + ")", null));
+        sb.Append(LabelFormatting.FormatLabel("Palette(L" + (idx + 1) + ")", null));
         sb.Append(paletteName);
         return sb.ToString();
     }
@@ -99,7 +91,7 @@ public sealed class TextLayersToolbarBuilder : ITextLayersToolbarBuilder
         }
 
         var layersSb = new StringBuilder();
-        AnsiConsole.AppendColored(layersSb, _labelViewport.FormatLabel("Layers", null), palette.Label);
+        AnsiConsole.AppendColored(layersSb, LabelFormatting.FormatLabel("Layers", null), palette.Label);
         for (int i = 0; i < TextLayersLimits.MaxLayerCount; i++)
         {
             char digit = (char)('1' + i);

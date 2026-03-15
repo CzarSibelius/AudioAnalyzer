@@ -65,8 +65,7 @@ internal static class ServiceConfiguration
         services.AddSingleton<IConsoleDimensions, ConsoleDimensions>();
         services.AddSingleton(typeof(IKeyHandler<>), typeof(GenericKeyHandler<>));
         services.AddSingleton<IKeyHandlerConfig<TextLayersKeyContext>, TextLayersKeyHandlerConfig>();
-        services.AddSingleton<ITextLayersToolbarBuilder>(sp =>
-            new TextLayersToolbarBuilder(sp.GetRequiredService<IScrollingTextViewportFactory>().CreateViewport()));
+        services.AddSingleton<ITextLayersToolbarBuilder, TextLayersToolbarBuilder>();
 
         services.AddSingleton<IVisualizer>(sp => new TextLayersVisualizer(
             sp.GetRequiredService<VisualizerSettings>().TextLayers ?? new TextLayersVisualizerSettings(),
@@ -79,9 +78,12 @@ internal static class ServiceConfiguration
             sp.GetRequiredService<UiSettings>()));
 
         services.AddSingleton<IDisplayState, DisplayState>();
+        services.AddSingleton<IUiComponentRenderer<ScrollingTextComponent>, ScrollingTextComponentRenderer>();
+        services.AddSingleton<IUiComponentRenderer<HorizontalRowComponent>, HorizontalRowComponentRenderer>();
         services.AddSingleton<IUiComponentRenderer<IUiComponent>>(sp =>
             new UiComponentRenderer(
                 sp.GetRequiredService<IUiComponentRenderer<LabeledRowComponent>>(),
+                sp.GetRequiredService<IUiComponentRenderer<HorizontalRowComponent>>(),
                 sp.GetRequiredService<IUiComponentRenderer<VisualizerAreaComponent>>()));
         services.AddSingleton<IUiStateUpdater<HeaderContainer>, HeaderContainerStateUpdater>();
         services.AddSingleton<IUiStateUpdater<IUiComponent>>(sp =>

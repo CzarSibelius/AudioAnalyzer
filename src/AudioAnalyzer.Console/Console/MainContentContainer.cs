@@ -17,7 +17,7 @@ internal sealed class MainContentContainer : IVisualizationRenderer
     private readonly UiSettings _uiSettings;
     private readonly IUiComponentRenderer<IUiComponent> _componentRenderer;
     private readonly IUiStateUpdater<IUiComponent> _stateUpdater;
-    private readonly LabeledRowComponent _toolbarRow;
+    private readonly HorizontalRowComponent _toolbarRow;
 
     private (IReadOnlyList<PaletteColor>? Palette, string? DisplayName) _palette;
 
@@ -42,7 +42,7 @@ internal sealed class MainContentContainer : IVisualizationRenderer
             }
         };
 
-        _toolbarRow = new LabeledRowComponent([], [0, 0], ToolbarScrollSlotIndex - 1);
+        _toolbarRow = new HorizontalRowComponent();
     }
 
     /// <inheritdoc />
@@ -111,8 +111,6 @@ internal sealed class MainContentContainer : IVisualizationRenderer
             _ = ex; /* Last-resort render failure: swallow to avoid crash */
         }
     }
-
-    private const int ToolbarScrollSlotIndex = 4;
 
     private IReadOnlyList<IUiComponent> GetMainComponents(RenderContext context)
     {

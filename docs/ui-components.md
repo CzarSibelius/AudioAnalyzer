@@ -1,6 +1,6 @@
 # List of UI Components in AudioAnalyzer
 
-The UI is a console-based presentation layer in the **Console** project, with shared viewport/text utilities in **Application**. UI is composed from **IUiComponent** trees (composites and leaves) and **IUiComponentRenderer** (dispatches by component type to concrete renderers); see [ADR-0052](adr/0052-ui-container-component-renderer.md). Component instances own their state; **IUiStateUpdater&lt;TComponent&gt;** updates state before render (ADR-0054). All single-line rows (title bar, header rows, toolbar) are **LabeledRowComponent** instances; the only other leaf type is **VisualizerAreaComponent**. Rows use **Viewport** data and **ILabeledRowRenderer** (ADR-0051). Single-cell scrolling (e.g. TextLayers toolbar) still uses **IScrollingTextViewport** from the factory. Components follow the renderer + `IKeyHandler<TContext>` pattern where they need both drawing and key handling (ADR-0042). Layout follows [ADR-0050](adr/0050-ui-alignment-blocks-label-format.md): left alignment, 8-character block sizing (default 8 cols label + 8 cols value for label components), and labels as `Label:value` (colon, no space before value).
+The UI is a console-based presentation layer in the **Console** project, with shared viewport/text utilities in **Application**. UI is composed from **IUiComponent** trees (composites and leaves) and **IUiComponentRenderer** (dispatches by component type to concrete renderers); see [ADR-0052](adr/0052-ui-container-component-renderer.md). Component instances own their state; **IUiStateUpdater&lt;TComponent&gt;** updates state before render (ADR-0054). Single-line rows: title bar and header rows are **LabeledRowComponent**; the toolbar is **HorizontalRowComponent** with **ScrollingTextComponent** children (ADR-0056). Other leaf types: **VisualizerAreaComponent**. Rows use **Viewport** data and **ILabeledRowRenderer** (ADR-0051); **LabelFormatting** provides shared label formatting. **IScrollingTextViewport** remains for single-cell use outside the tree. Components follow the renderer + `IKeyHandler<TContext>` pattern where they need both drawing and key handling (ADR-0042). Layout follows [ADR-0050](adr/0050-ui-alignment-blocks-label-format.md): left alignment, 8-character block sizing (default 8 cols label + 8 cols value for label components), and labels as `Label:value` (colon, no space before value).
 
 ---
 
@@ -18,7 +18,7 @@ The UI is a console-based presentation layer in the **Console** project, with sh
 | Component | Interface | Role |
 |-----------|------------|------|
 | **HeaderContainer** | IHeaderContainer | UI container for the header. DrawMain (clear + draw) and DrawHeaderOnly (refresh lines). State updated by **HeaderContainerStateUpdater** before render; returns three stable **LabeledRowComponent** instances (title row, Device/Now, BPM/Volume). Renders via IUiComponentRenderer. ([HeaderContainer.cs](../src/AudioAnalyzer.Console/Console/HeaderContainer.cs)) |
-| **UiComponentRenderer** | IUiComponentRenderer | Dispatches by component type to LabeledRowComponent renderer and VisualizerAreaComponent renderer. Recurses on composites. Callers run **IUiStateUpdater&lt;IUiComponent&gt;.Update** before Render. ([UiComponentRenderer.cs](../src/AudioAnalyzer.Console/Console/UiComponentRenderer.cs)) |
+| **UiComponentRenderer** | IUiComponentRenderer | Dispatches by component type to LabeledRowComponent, HorizontalRowComponent, and VisualizerAreaComponent renderers. Recurses on composites. Callers run **IUiStateUpdater&lt;IUiComponent&gt;.Update** before Render. ([UiComponentRenderer.cs](../src/AudioAnalyzer.Console/Console/UiComponentRenderer.cs)) |
 | **ITitleBarContentProvider** / **TitleBarContentProvider** | ITitleBarContentProvider | Supplies title bar content (breadcrumb `{appName}/{mode}/{preset}[z]: {layer}` in cyberpunk style) as IDisplayText. HeaderContainer builds the title row viewport from this. ([ITitleBarContentProvider.cs](../src/AudioAnalyzer.Console/Abstractions/ITitleBarContentProvider.cs), [TitleBarContentProvider.cs](../src/AudioAnalyzer.Console/Console/TitleBarContentProvider.cs)) |
 | **ConsoleDimensions** | (static helper) | GetConsoleWidth() for modals and other code that does not have IDisplayDimensions injected. ([ConsoleDimensions.cs](../src/AudioAnalyzer.Console/Console/ConsoleDimensions.cs)) |
 
@@ -39,7 +39,7 @@ The UI is a console-based presentation layer in the **Console** project, with sh
 
 | Component | Interface | Role |
 |-----------|------------|------|
-| **MainContentContainer** | IVisualizationRenderer | UI container for main content. Returns **LabeledRowComponent** (toolbar: suffix + palette cell) and **VisualizerAreaComponent** (or only VisualizerArea in fullscreen). Renders via IUiComponentRenderer. Implements SetPalette, SupportsPaletteCycling, HandleKey by delegating to the visualizer. ([MainContentContainer.cs](../src/AudioAnalyzer.Console/Console/MainContentContainer.cs)) |
+| **MainContentContainer** | IVisualizationRenderer | UI container for main content. Returns **HorizontalRowComponent** (toolbar: cells from visualizer GetToolbarViewports/GetToolbarSuffix) and **VisualizerAreaComponent** (or only VisualizerArea in fullscreen). Renders via IUiComponentRenderer. Implements SetPalette, SupportsPaletteCycling, HandleKey by delegating to the visualizer. ([MainContentContainer.cs](../src/AudioAnalyzer.Console/Console/MainContentContainer.cs)) |
 
 ---
 
@@ -49,14 +49,16 @@ These are shared primitives used by header, modals, and visualization pane (ADR-
 
 | Component | Role |
 |-----------|------|
-| **IUiComponent** | Node in the UI tree. Leaf types: **LabeledRowComponent** (all single-line rows: title, header, toolbar), **VisualizerAreaComponent** (block). Composites use **CompositeComponent**. ([IUiComponent.cs](../src/AudioAnalyzer.Application/Abstractions/IUiComponent.cs)) |
+| **IUiComponent** | Node in the UI tree. Leaf types: **LabeledRowComponent** (single-line rows: title, header; modals), **HorizontalRowComponent** (toolbar row), **ScrollingTextComponent** (single scrolling cell, used as child of HorizontalRowComponent), **VisualizerAreaComponent** (block). Composites use **CompositeComponent**. ([IUiComponent.cs](../src/AudioAnalyzer.Application/Abstractions/IUiComponent.cs)) |
 | **RenderContext** | Passed from container to renderer: Width, StartRow, MaxLines, Palette, ScrollSpeed, optional DeviceName/Snapshot/PaletteDisplayName, InvalidateWriteCache. ([RenderContext.cs](../src/AudioAnalyzer.Application/Abstractions/RenderContext.cs)) |
 | **IUiStateUpdater&lt;TComponent&gt;** | Updates component state from context before render. Dispatcher **IUiStateUpdater&lt;IUiComponent&gt;** (UiComponentStateUpdater) recurses on composites and delegates to concrete updaters (e.g. HeaderContainerStateUpdater). ([ADR-0054](adr/0054-ui-component-state-ownership.md), [IUiStateUpdater.cs](../src/AudioAnalyzer.Application/Abstractions/IUiStateUpdater.cs)) |
 | **Viewport** (data) | Data-only: label, optional hotkey, value getter `Func<IDisplayText>`, optional colors, optional **PreformattedAnsi** (render as-is with truncate-with-ellipsis). Layouts compose rows by creating viewports. No scroll state. ([Viewport.cs](../src/AudioAnalyzer.Application/Abstractions/Viewport.cs)) |
 | **ILabeledRowRenderer** / **LabeledRowRenderer** | Renders one row of viewports into one line. When rendering through the component tree, **LabeledRowComponent** owns per-slot scroll state (GetSlotState); when using RenderRow directly (e.g. modals), the renderer uses its own slot state with `startSlotIndex`. Used for title bar, header rows 2–3, toolbar, and settings hint line. ([ADR-0054](adr/0054-ui-component-state-ownership.md), [LabeledRowRenderer.cs](../src/AudioAnalyzer.Application/LabeledRowRenderer.cs)) |
-| **IScrollingTextViewport** / **ScrollingTextViewport** | Stateful single-cell scrolling: `FormatLabel`, `Render`, `RenderWithLabel`. Used where one scroll region is needed (e.g. TextLayersToolbarBuilder). Created via factory. ([ADR-0051](adr/0051-viewport-as-data-layouts-compose.md)) |
-| **IScrollingTextViewportFactory** | Creates scrolling viewports for single-cell use (e.g. toolbar builder). |
-| **ITextLayersToolbarBuilder** / **TextLayersToolbarBuilder** | Builds the TextLayers toolbar row (layer digits 1–9, optional Gain, Palette). Lives in **Application** (interface and context in Abstractions; implementation in root). The visualizer supplies **TextLayersToolbarContext**; the builder produces the toolbar suffix string or viewport list. ([ITextLayersToolbarBuilder.cs](../src/AudioAnalyzer.Application/Abstractions/ITextLayersToolbarBuilder.cs), [TextLayersToolbarBuilder.cs](../src/AudioAnalyzer.Application/TextLayersToolbarBuilder.cs), [TextLayersToolbarContext.cs](../src/AudioAnalyzer.Application/Abstractions/TextLayersToolbarContext.cs)) |
+| **ScrollingTextComponent** | Leaf IUiComponent for one scrolling text cell. Owns scroll state; cell data set via **SetFromViewport** each frame. Rendered by **ScrollingTextComponentRenderer**. Used as children of **HorizontalRowComponent** for the toolbar. ([ADR-0056](adr/0056-scrolling-text-as-uicomponent.md), [ScrollingTextComponent.cs](../src/AudioAnalyzer.Application/Abstractions/ScrollingTextComponent.cs)) |
+| **HorizontalRowComponent** | Leaf that lays out **ScrollingTextComponent** children horizontally on one row. **SetRowData(viewports, widths)** updates children each frame. Rendered by **HorizontalRowComponentRenderer**. ([HorizontalRowComponent.cs](../src/AudioAnalyzer.Application/Abstractions/HorizontalRowComponent.cs)) |
+| **LabelFormatting** | Static helper **FormatLabel(label, hotkey)** for "Label:" or "Label(K):". Used by ScrollingTextComponentRenderer and TextLayersToolbarBuilder. ([LabelFormatting.cs](../src/AudioAnalyzer.Application/Display/LabelFormatting.cs)) |
+| **IScrollingTextViewport** / **ScrollingTextViewport** | Stateful single-cell scrolling (FormatLabel, Render, RenderWithLabel). Still available via factory for use outside the component tree. ([ADR-0037](adr/0037-scrolling-text-viewport-injectable-service.md)) |
+| **ITextLayersToolbarBuilder** / **TextLayersToolbarBuilder** | Builds the TextLayers toolbar row (layer digits 1–9, optional Gain, Palette). Uses **LabelFormatting** for labels. Produces viewport list for MainContentContainer toolbar row. ([ITextLayersToolbarBuilder.cs](../src/AudioAnalyzer.Application/Abstractions/ITextLayersToolbarBuilder.cs), [TextLayersToolbarBuilder.cs](../src/AudioAnalyzer.Application/TextLayersToolbarBuilder.cs)) |
 | **StaticTextViewport** | Static truncation: `TruncateToWidth`, `TruncateWithEllipsis` (for titles, labels, fixed-width lines). ([StaticTextViewport.cs](../src/AudioAnalyzer.Application/Display/StaticTextViewport.cs)) |
 | **VisualizerViewport** | Struct (StartRow, MaxLines, Width) defining the rectangle for visualizer output. ([VisualizerViewport.cs](../src/AudioAnalyzer.Application/Abstractions/VisualizerViewport.cs)) |
 | **ViewportCellBuffer** | Cell buffer used by TextLayers visualizer to compose then flush to console. ([ViewportCellBuffer.cs](../src/AudioAnalyzer.Application/Viewports/ViewportCellBuffer.cs)) |
@@ -108,14 +110,15 @@ flowchart TB
 
   subgraph content [Content]
     MainContent[MainContentContainer]
-    ToolbarRow[Toolbar LabeledRow]
+    ToolbarRow[HorizontalRowComponent]
     VisualizerArea[Visualizer area]
   end
 
   subgraph primitives [Viewport primitives]
     ViewportData[Viewport data]
     RowRenderer[ILabeledRowRenderer]
-    ScrollingVP[IScrollingTextViewport]
+    ScrollingTextComp[ScrollingTextComponent]
+    HorizontalRowRenderer[HorizontalRowComponentRenderer]
     StaticVP[StaticTextViewport]
     VisualizerVP[VisualizerViewport]
     CellBuffer[ViewportCellBuffer]
@@ -136,9 +139,11 @@ flowchart TB
   MainContent --> ToolbarRow
   MainContent --> VisualizerArea
   ComponentRenderer --> RowRenderer
+  ComponentRenderer --> HorizontalRowRenderer
   ComponentRenderer --> VisualizerVP
   TitleRow --> RowRenderer
-  ToolbarRow --> RowRenderer
+  ToolbarRow --> HorizontalRowRenderer
+  HorizontalRowRenderer --> ScrollingTextComp
   VisualizerArea --> CellBuffer
 ```
 
@@ -147,6 +152,6 @@ flowchart TB
 ## Where components live
 
 - **Console project**: [ApplicationShell.cs](../src/AudioAnalyzer.Console/ApplicationShell.cs), [Console/](../src/AudioAnalyzer.Console/Console/) (HeaderContainer, MainContentContainer, UiComponentRenderer, TitleBarContentProvider, ConsoleDimensions, ModalSystem, HelpModal, DeviceSelectionModal, SettingsModal, ShowEditModal), [SettingsModal/](../src/AudioAnalyzer.Console/SettingsModal/), [Abstractions/](../src/AudioAnalyzer.Console/Abstractions/) (IHeaderContainer, ITitleBarContentProvider, I*Modal, ISettingsModalRenderer).
-- **Application project**: [Abstractions/](../src/AudioAnalyzer.Application/Abstractions/) (interfaces and DTOs, including Viewport, ILabeledRowRenderer), [Display/](../src/AudioAnalyzer.Application/Display/) (StaticTextViewport, PlainText, AnsiText, AnsiConsole, DisplayWidth, TextHelpers), [Viewports/](../src/AudioAnalyzer.Application/Viewports/) (ViewportCellBuffer), [LabeledRowRenderer.cs](../src/AudioAnalyzer.Application/LabeledRowRenderer.cs), [ScrollingTextViewport.cs](../src/AudioAnalyzer.Application/ScrollingTextViewport.cs), [ScrollingTextViewportFactory.cs](../src/AudioAnalyzer.Application/ScrollingTextViewportFactory.cs).
+- **Application project**: [Abstractions/](../src/AudioAnalyzer.Application/Abstractions/) (interfaces and DTOs, including Viewport, ScrollingTextComponent, HorizontalRowComponent, ILabeledRowRenderer), [Display/](../src/AudioAnalyzer.Application/Display/) (StaticTextViewport, LabelFormatting, PlainText, AnsiText, AnsiConsole, DisplayWidth), [Viewports/](../src/AudioAnalyzer.Application/Viewports/) (ViewportCellBuffer), [LabeledRowRenderer.cs](../src/AudioAnalyzer.Application/LabeledRowRenderer.cs), [ScrollingTextComponentRenderer.cs](../src/AudioAnalyzer.Application/ScrollingTextComponentRenderer.cs), [ScrollingTextViewport.cs](../src/AudioAnalyzer.Application/ScrollingTextViewport.cs), [ScrollingTextViewportFactory.cs](../src/AudioAnalyzer.Application/ScrollingTextViewportFactory.cs).
 
 All of the above are the distinct UI components; visualizers (e.g. TextLayersVisualizer, IVisualizer implementations) are content that render *into* the visualization area rather than separate top-level UI components.
