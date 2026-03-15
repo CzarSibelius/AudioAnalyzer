@@ -2,7 +2,7 @@
 
 Plan to reduce component-specific renderer interfaces by using `IUiComponentRenderer<TComponent>` for leaf components.
 
-**Current state (post-consolidation):** The UI uses a single generic row component for all lines. The dispatcher (`IUiComponentRenderer<IUiComponent>`) only resolves **LabeledRowComponent** and **VisualizerAreaComponent**. Title bar and toolbar are **LabeledRowComponent** instances (title row uses ITitleBarContentProvider and PreformattedAnsi viewport; toolbar row has two viewports). TitleBarComponent, ToolbarRowComponent, TitleBarRenderer, and ToolbarRowRenderer have been removed (see ADR-0052).
+**Current state (post-consolidation, post-ADR-0057):** The UI uses **HorizontalRowComponent** with **ScrollingTextComponent** children for all single-line rows (title bar, header rows 2–3, toolbar, settings modal hint). The dispatcher (`IUiComponentRenderer<IUiComponent>`) resolves **HorizontalRowComponent** and **VisualizerAreaComponent**. **LabeledRowComponent** and **ILabeledRowRenderer** have been removed (see [ADR-0057](adr/0057-horizontal-row-unified-single-line-rows.md)). TitleBarComponent, ToolbarRowComponent, TitleBarRenderer, and ToolbarRowRenderer were removed earlier (ADR-0052).
 
 **Scope**
 
@@ -75,7 +75,9 @@ The dispatcher today caches the last content for header rows 0–2 and skips `Se
 
 ---
 
-## Phase 2: Labeled row → `IUiComponentRenderer<LabeledRowComponent>`
+## Phase 2: Labeled row → `IUiComponentRenderer<LabeledRowComponent>` (superseded by ADR-0057)
+
+**Note:** As of [ADR-0057](../adr/0057-horizontal-row-unified-single-line-rows.md), all single-line rows use **HorizontalRowComponent**; LabeledRowComponent and ILabeledRowRenderer have been removed. The phase items below are retained for history.
 
 **Goal:** Dispatcher uses `IUiComponentRenderer<LabeledRowComponent>` instead of `ILabeledRowRenderer` for `LabeledRowComponent`. Keep `ILabeledRowRenderer` only if the settings modal (or others) still need “render a row of viewports” without going through the component tree.
 

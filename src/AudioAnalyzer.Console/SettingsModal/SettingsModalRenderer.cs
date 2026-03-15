@@ -1,4 +1,3 @@
-using AudioAnalyzer.Application;
 using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Application.Display;
 using AudioAnalyzer.Domain;
@@ -6,29 +5,32 @@ using AudioAnalyzer.Visualizers;
 
 namespace AudioAnalyzer.Console;
 
-/// <summary>Renders the settings overlay modal: frame, preset title, hint line, layer list, and settings panel.</summary>
+/// <summary>Renders the settings overlay modal: frame, preset title, hint line, layer list, and settings panel. Hint line is rendered via <see cref="IUiComponentRenderer{T}"/> using <see cref="HorizontalRowComponent"/>.</summary>
 internal sealed class SettingsModalRenderer : ISettingsModalRenderer
 {
     private const int OverlayRowCount = 18;
     private const int LeftColWidth = 28;
     private static readonly int SettingsVisibleRows = OverlayRowCount - 5;
-    private const int SettingsModalHintSlotIndex = 10;
 
     private readonly VisualizerSettings _visualizerSettings;
     private readonly UiSettings _uiSettings;
     private readonly IPaletteRepository _paletteRepo;
-    private readonly ILabeledRowRenderer _rowRenderer;
+    private readonly IUiComponentRenderer<IUiComponent> _componentRenderer;
+    private readonly HorizontalRowComponent _hintRow;
+    private readonly CompositeComponent _hintRoot;
 
     public SettingsModalRenderer(
         VisualizerSettings visualizerSettings,
         UiSettings uiSettings,
         IPaletteRepository paletteRepo,
-        ILabeledRowRenderer rowRenderer)
+        IUiComponentRenderer<IUiComponent> componentRenderer)
     {
         _visualizerSettings = visualizerSettings ?? throw new ArgumentNullException(nameof(visualizerSettings));
         _uiSettings = uiSettings ?? throw new ArgumentNullException(nameof(uiSettings));
         _paletteRepo = paletteRepo ?? throw new ArgumentNullException(nameof(paletteRepo));
-        _rowRenderer = rowRenderer ?? throw new ArgumentNullException(nameof(rowRenderer));
+        _componentRenderer = componentRenderer ?? throw new ArgumentNullException(nameof(componentRenderer));
+        _hintRow = new HorizontalRowComponent();
+        _hintRoot = new CompositeComponent(_ => [_hintRow]);
     }
 
     /// <inheritdoc />
@@ -71,13 +73,7 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
             System.Console.Write(StaticTextViewport.TruncateToWidth(new PlainText("║" + new string(' ', pad) + titleTruncated + new string(' ', width - pad - titleTruncated.Length - 2) + "║"), width).PadRight(width));
             System.Console.SetCursorPosition(0, 2);
             System.Console.Write(StaticTextViewport.TruncateToWidth(new PlainText("╚" + new string('═', width - 2) + "╝"), width).PadRight(width));
-            System.Console.SetCursorPosition(0, 3);
-            string hint = GetHintText(state);
-            var hintViewport = new Viewport("", () => new PlainText(hint));
-            var hintViewports = new[] { hintViewport };
-            var hintWidths = new[] { width };
-            string hintLine = _rowRenderer.RenderRow(hintViewports, hintWidths, width, palette, scrollSpeed, SettingsModalHintSlotIndex);
-            System.Console.Write(hintLine);
+            RenderHintRow(state, width, palette, scrollSpeed, 3);
             System.Console.SetCursorPosition(0, 4);
             System.Console.Write(StaticTextViewport.TruncateToWidth(new PlainText("  ─" + new string('─', LeftColWidth - 2) + "┬" + new string('─', rightColWidth) + "─"), width).PadRight(width));
 
@@ -151,19 +147,29 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
     public void DrawHintLine(SettingsModalState state, int width)
     {
         if (width < 40) { return; }
-        string hint = GetHintText(state);
         double scrollSpeed = _uiSettings?.DefaultScrollingSpeed ?? 0.25;
         var palette = _uiSettings?.Palette ?? new UiPalette();
-        var hintViewport = new Viewport("", () => new PlainText(hint));
-        var hintViewports = new[] { hintViewport };
-        var hintWidths = new[] { width };
-        string hintLine = _rowRenderer.RenderRow(hintViewports, hintWidths, width, palette, scrollSpeed, SettingsModalHintSlotIndex);
         try
         {
-            System.Console.SetCursorPosition(0, 3);
-            System.Console.Write(hintLine);
+            RenderHintRow(state, width, palette, scrollSpeed, 3);
         }
         catch (Exception ex) { _ = ex; /* Console write failed in hint line */ }
+    }
+
+    private void RenderHintRow(SettingsModalState state, int width, UiPalette palette, double scrollSpeed, int startRow)
+    {
+        string hint = GetHintText(state);
+        var hintViewport = new Viewport("", () => new PlainText(hint));
+        _hintRow.SetRowData([hintViewport], [width]);
+        var context = new RenderContext
+        {
+            Width = width,
+            StartRow = startRow,
+            MaxLines = 1,
+            Palette = palette,
+            ScrollSpeed = scrollSpeed
+        };
+        _componentRenderer.Render(_hintRoot, context);
     }
 
     private static string GetHintText(SettingsModalState state)

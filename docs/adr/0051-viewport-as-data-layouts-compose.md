@@ -10,16 +10,16 @@ Labeled UI rows (header Device/Now, BPM/Volume, toolbar Palette, settings hint) 
 
 1. **Viewport as data**: A **Viewport** is a simple type (label, optional hotkey, value getter `Func<IDisplayText>`, optional label/text colors). It holds no scroll state. Layouts compose UI by creating viewports (e.g. `new Viewport("Device", () => new PlainText(deviceName))`) and arranging them into rows.
 
-2. **Row renderer**: **ILabeledRowRenderer** renders a single row of viewports into one line. It holds scroll state per slot (keyed by `startSlotIndex` + cell index) and uses `IScrollingTextEngine` for overflow. Given a list of viewports and widths, it invokes each getter, applies label formatting and scrolling, and concatenates cells. Different rows (header line 2, header line 3, toolbar, settings hint) use distinct slot ranges so scroll state is not shared.
+2. **Row components**: **HorizontalRowComponent** with **ScrollingTextComponent** children renders a single row of viewports into one line (ADR-0057). Each cell owns its scroll state; `IScrollingTextEngine` is used for overflow. Layouts set data each frame via `SetRowData(viewports, widths)` and `SetFromViewport` per child.
 
-3. **Layouts**: Header, toolbar, and settings modal build their rows as `IReadOnlyList<Viewport>` (and width lists) and call `rowRenderer.RenderRow(viewports, widths, totalWidth, palette, speed, startSlotIndex)`. No separate viewport instances are injected for each cell; the same `ILabeledRowRenderer` is used for all labeled rows.
+3. **Layouts**: Header, toolbar, and settings modal build their rows as `IReadOnlyList<Viewport>` (and width lists) and call `HorizontalRowComponent.SetRowData(viewports, widths)`. No separate viewport instances are injected for each cell; the same component type is used for all single-line rows.
 
-4. **IScrollingTextViewport** remains for consumers that need a single stateful scrolling cell (e.g. TextLayersToolbarBuilder, which lives in **Application** as general UI, not in Visualizers). New layout code should prefer the Viewport + ILabeledRowRenderer pattern so layouts are data-driven.
+4. **IScrollingTextViewport** remains for consumers that need a single stateful scrolling cell (e.g. TextLayersToolbarBuilder, which lives in **Application** as general UI, not in Visualizers). New layout code should prefer the Viewport + HorizontalRowComponent pattern so layouts are data-driven.
 
 ## Consequences
 
-- Header no longer receives four `IScrollingTextViewport` instances; HeaderDrawer builds row 2 and row 3 viewport lists and uses ILabeledRowRenderer.
-- VisualizationPaneLayout and SettingsModalRenderer use ILabeledRowRenderer for the palette cell and hint line respectively.
-- ADR-0037 (scrolling viewport) is still respected: scroll state lives in the row renderer and uses IScrollingTextEngine. The "viewport" as injectable renderer is used where a single cell is needed (e.g. toolbar builder); the data Viewport type is used for row-based layouts.
+- Header builds row 2 and row 3 viewport lists and uses HorizontalRowComponent (ADR-0057).
+- Settings modal hint line and toolbar are rendered via HorizontalRowComponent in the component tree.
+- ADR-0037 (scrolling viewport) is still respected: scroll state lives on each ScrollingTextComponent and uses IScrollingTextEngine. The "viewport" as injectable renderer is used where a single cell is needed (e.g. toolbar builder); the data Viewport type is used for row-based layouts.
 - The toolbar row is now built from **HorizontalRowComponent** with **ScrollingTextComponent** children (ADR-0056); viewport data is still composed the same way and set via SetRowData.
-- References: [Viewport](../../src/AudioAnalyzer.Application/Abstractions/Viewport.cs), [ILabeledRowRenderer](../../src/AudioAnalyzer.Application/Abstractions/ILabeledRowRenderer.cs), [LabeledRowRenderer](../../src/AudioAnalyzer.Application/LabeledRowRenderer.cs), [ADR-0056](0056-scrolling-text-as-uicomponent.md).
+- References: [Viewport](../../src/AudioAnalyzer.Application/Abstractions/Viewport.cs), [HorizontalRowComponent](../../src/AudioAnalyzer.Application/Abstractions/HorizontalRowComponent.cs), [ADR-0056](0056-scrolling-text-as-uicomponent.md), [ADR-0057](0057-horizontal-row-unified-single-line-rows.md).

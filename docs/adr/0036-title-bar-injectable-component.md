@@ -10,7 +10,7 @@ The header title was a centered static string from `UiSettings.Title`. Users wan
 
 1. **Title bar format**: Display `{appName}/{mode}/{preset}[{z}]: {layer}` as a path-like breadcrumb. App name from `UiSettings.TitleBarAppName` or derived from `Title`; mode, preset, and layer use Hackerize style via `TextHelpers.Hackerize` (first letter lowercase, second uppercase, whitespace→underscores). The preset and layer are separated by `[{z_index}]:` where `z_index` is the **1-based** display index of the active layer (e.g. `1` for first/back, `9` for last/front); the visualizer still provides the 0-based z-order via `GetActiveLayerZIndex()`. If the visualizer does not provide a z-index (-1), `/` is used instead, e.g. `aUdioNLZR/pReset/gig_friday[1]: oScilloscope`.
 
-2. **Title bar as generic row**: The title bar is rendered as a **LabeledRowComponent** with one viewport: label empty, value from **ITitleBarContentProvider.GetTitleBarContent()** (returns preformatted `IDisplayText`), and `PreformattedAnsi` true so the row renderer does not apply palette colors and uses truncate-with-ellipsis. `ITitleBarContentProvider` is in Console Abstractions; `TitleBarContentProvider` implements it (breadcrumb logic, palette, Hackerize). Registered in ServiceConfiguration; HeaderContainer injects it and builds the title row. No dedicated TitleBarComponent or TitleBarRenderer (see ADR-0052: single generic row component for all lines).
+2. **Title bar as generic row**: The title bar is rendered as a generic row with one viewport (as of ADR-0057, **HorizontalRowComponent** with one **ScrollingTextComponent** child): label empty, value from **ITitleBarContentProvider.GetTitleBarContent()** (returns preformatted `IDisplayText`), and `PreformattedAnsi` true so the row renderer does not apply palette colors and uses truncate-with-ellipsis. `ITitleBarContentProvider` is in Console Abstractions; `TitleBarContentProvider` implements it (breadcrumb logic, palette, Hackerize). Registered in ServiceConfiguration; HeaderContainer injects it and builds the title row. No dedicated TitleBarComponent or TitleBarRenderer (see ADR-0052: single generic row component for all lines).
 
 3. **Cyberpunk styling**: Default neon palette (cyan, magenta, green, yellow for segments; dim gray for separators). Each segment colored separately. Optional `UiSettings.TitleBarPalette` overrides built-in defaults.
 
@@ -18,7 +18,7 @@ The header title was a centered static string from `UiSettings.Title`. Users wan
 
 5. **IVisualizer extension**: Optional `GetActiveLayerDisplayName()` returns snake_case layer type for the active layer; optional `GetActiveLayerZIndex()` returns the 0-based z-order index (or -1 if not applicable). The title bar receives the single `IVisualizer` via constructor injection and calls these methods for the breadcrumb. TextLayersVisualizer implements both; the interface defaults are null and -1.
 
-6. **Header integration**: The header (IHeaderContainer) builds a composite whose first child is a LabeledRowComponent for the title (one viewport, preformatted). The title bar is a **single line** (breadcrumb only; no frame or box).
+6. **Header integration**: The header (IHeaderContainer) builds a composite whose first child is a row component for the title (one viewport, preformatted; as of ADR-0057, HorizontalRowComponent). The title bar is a **single line** (breadcrumb only; no frame or box).
 
 ## Consequences
 

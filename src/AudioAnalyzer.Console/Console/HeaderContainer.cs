@@ -16,9 +16,9 @@ internal sealed class HeaderContainer : IHeaderContainer, IUiComponent
     private readonly UiSettings _uiSettings;
     private readonly ITitleBarContentProvider _titleBarContentProvider;
 
-    private readonly LabeledRowComponent _titleRow;
-    private readonly LabeledRowComponent _row2;
-    private readonly LabeledRowComponent _row3;
+    private readonly HorizontalRowComponent _titleRow;
+    private readonly HorizontalRowComponent _row2;
+    private readonly HorizontalRowComponent _row3;
 
     private string _deviceName = "";
     private string? _nowPlayingText;
@@ -46,9 +46,9 @@ internal sealed class HeaderContainer : IHeaderContainer, IUiComponent
         _uiSettings = uiSettings ?? throw new ArgumentNullException(nameof(uiSettings));
         _titleBarContentProvider = titleBarContentProvider ?? throw new ArgumentNullException(nameof(titleBarContentProvider));
 
-        _titleRow = new LabeledRowComponent([], [0], 0);
-        _row2 = new LabeledRowComponent([], [0, 0], 0);
-        _row3 = new LabeledRowComponent([], [0, 0], 2);
+        _titleRow = new HorizontalRowComponent();
+        _row2 = new HorizontalRowComponent();
+        _row3 = new HorizontalRowComponent();
     }
 
     /// <inheritdoc />

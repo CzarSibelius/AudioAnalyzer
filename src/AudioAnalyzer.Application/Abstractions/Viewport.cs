@@ -4,7 +4,7 @@ namespace AudioAnalyzer.Application.Abstractions;
 
 /// <summary>
 /// Data-only viewport: label and a getter that supplies the current value.
-/// Used by layouts to compose UI; rendering (scrolling, formatting) is done by <see cref="ILabeledRowRenderer"/>.
+/// Used by layouts to compose UI; rendering (scrolling, formatting) is done by <see cref="HorizontalRowComponent"/> and <see cref="ScrollingTextComponent"/>.
 /// </summary>
 public sealed class Viewport
 {

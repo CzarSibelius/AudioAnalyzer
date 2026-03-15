@@ -82,7 +82,6 @@ internal static class ServiceConfiguration
         services.AddSingleton<IUiComponentRenderer<HorizontalRowComponent>, HorizontalRowComponentRenderer>();
         services.AddSingleton<IUiComponentRenderer<IUiComponent>>(sp =>
             new UiComponentRenderer(
-                sp.GetRequiredService<IUiComponentRenderer<LabeledRowComponent>>(),
                 sp.GetRequiredService<IUiComponentRenderer<HorizontalRowComponent>>(),
                 sp.GetRequiredService<IUiComponentRenderer<VisualizerAreaComponent>>()));
         services.AddSingleton<IUiStateUpdater<HeaderContainer>, HeaderContainerStateUpdater>();
@@ -113,9 +112,6 @@ internal static class ServiceConfiguration
         services.AddSingleton<ShowPlaybackController>();
         services.AddSingleton<IScrollingTextEngine, ScrollingTextEngine>();
         services.AddSingleton<IScrollingTextViewportFactory, ScrollingTextViewportFactory>();
-        services.AddSingleton<LabeledRowRenderer>();
-        services.AddSingleton<ILabeledRowRenderer>(sp => sp.GetRequiredService<LabeledRowRenderer>());
-        services.AddSingleton<IUiComponentRenderer<LabeledRowComponent>>(sp => sp.GetRequiredService<LabeledRowRenderer>());
         services.AddSingleton<IUiComponentRenderer<VisualizerAreaComponent>, VisualizerAreaRenderer>();
         services.AddSingleton<IKeyHandlerConfig<DeviceSelectionKeyContext>, DeviceSelectionKeyHandlerConfig>();
         services.AddSingleton<IDeviceSelectionModal, DeviceSelectionModal>();

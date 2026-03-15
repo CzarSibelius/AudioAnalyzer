@@ -11,7 +11,7 @@ public interface IUiComponentRenderer<TComponent> where TComponent : IUiComponen
     /// Renders the component at context.StartRow. Returns lines consumed and optional line content;
     /// when LineContents is non-null the dispatcher writes it; when null the renderer already wrote.
     /// </summary>
-    /// <param name="component">The component to render (e.g. LabeledRowComponent, VisualizerAreaComponent).</param>
+    /// <param name="component">The component to render (e.g. HorizontalRowComponent, VisualizerAreaComponent).</param>
     /// <param name="context">Layout and optional data; StartRow is the console row to write to.</param>
     /// <returns>Lines consumed and optional content for the dispatcher to write.</returns>
     ComponentRenderResult Render(TComponent component, RenderContext context);

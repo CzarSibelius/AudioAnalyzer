@@ -72,6 +72,7 @@ Decisions are numbered and kept under version control so the rationale stays wit
 | [0054](0054-ui-component-state-ownership.md) | UI component state ownership and IUiStateUpdater | Accepted |
 | [0055](0055-layer-specific-beat-reaction.md) | Layer-specific beat reaction (no common BeatReaction) | Accepted |
 | [0056](0056-scrolling-text-as-uicomponent.md) | Scrolling text as IUiComponent with state (ScrollingTextComponent, HorizontalRowComponent) | Accepted |
+| [0057](0057-horizontal-row-unified-single-line-rows.md) | HorizontalRowComponent for all single-line viewport rows; LabeledRowComponent/ILabeledRowRenderer removed | Accepted |
 
 ## Process
 
