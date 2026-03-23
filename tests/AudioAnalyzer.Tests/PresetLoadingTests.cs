@@ -74,4 +74,39 @@ public sealed class PresetLoadingTests
         Assert.Equal(["Round-trip test"], loaded.Config.Layers[0].TextSnippets);
         Assert.Equal(1.2, loaded.Config.Layers[0].SpeedMultiplier);
     }
+
+    [Fact]
+    public void PresetSaveAndLoadRoundTripPreservesRenderBounds()
+    {
+        var paletteJson = """{"Name":"Default","Colors":["Magenta","Yellow","Green"]}""";
+        var fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>
+        {
+            [Path.Combine(TestHelpers.PalettesPath, "default.json")] = new MockFileData(paletteJson)
+        });
+
+        var presetRepo = new FilePresetRepository(fileSystem, TestHelpers.PresetsPath);
+        var layer = new TextLayerSettings
+        {
+            LayerType = TextLayerType.Fill,
+            Enabled = true,
+            ZOrder = 0,
+            RenderBounds = new TextLayerRenderBounds { X = 0.1, Y = 0.2, Width = 0.5, Height = 0.3 }
+        };
+
+        var config = new TextLayersVisualizerSettings
+        {
+            PaletteId = "default",
+            Layers = [layer]
+        };
+
+        string id = presetRepo.Create(new Preset { Name = "BoundsTest", Config = config });
+        Preset? loaded = presetRepo.GetById(id);
+        Assert.NotNull(loaded);
+        var rb = loaded!.Config.Layers[0].RenderBounds;
+        Assert.NotNull(rb);
+        Assert.Equal(0.1, rb!.X, precision: 10);
+        Assert.Equal(0.2, rb.Y, precision: 10);
+        Assert.Equal(0.5, rb.Width, precision: 10);
+        Assert.Equal(0.3, rb.Height, precision: 10);
+    }
 }

@@ -5,6 +5,7 @@ using AudioAnalyzer.Console;
 using AudioAnalyzer.Domain;
 using AudioAnalyzer.Infrastructure;
 using AudioAnalyzer.Infrastructure.NowPlaying;
+using AudioAnalyzer.Visualizers;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace AudioAnalyzer.Tests;
@@ -89,7 +90,7 @@ internal static class TestHelpers
     {
         var presetRepo = new FilePresetRepository(fileSystem, PresetsPath);
         var paletteRepo = new FilePaletteRepository(fileSystem, PalettesPath);
-        var settingsRepo = new FileSettingsRepository(fileSystem, presetRepo, SettingsPath);
+        var settingsRepo = new FileSettingsRepository(fileSystem, presetRepo, new DefaultTextLayersSettingsFactory(), SettingsPath);
         AppSettings settings = settingsRepo.LoadAppSettings();
         VisualizerSettings vs = settingsRepo.LoadVisualizerSettings();
 

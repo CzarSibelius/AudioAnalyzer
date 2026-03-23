@@ -22,6 +22,9 @@ public sealed class TextLayersVisualizer : IVisualizer
     private readonly IKeyHandler<TextLayersKeyContext> _keyHandler;
     private readonly ITextLayersToolbarBuilder _toolbarBuilder;
     private readonly ITextLayerStateStore _stateStore;
+    private readonly ITextLayerBoundsEditSession? _boundsEditSession;
+    private readonly VisualizerSettings _visualizerSettings;
+    private readonly IShowPlayToolbarInfo? _showPlayToolbarInfo;
     /// <summary>Index of the layer whose palette P cycles. Updated when user presses 1–<see cref="TextLayersLimits.MaxLayerCount"/>.</summary>
     private int _paletteCycleLayerIndex;
 
@@ -33,7 +36,10 @@ public sealed class TextLayersVisualizer : IVisualizer
         IKeyHandler<TextLayersKeyContext> keyHandler,
         ITextLayersToolbarBuilder toolbarBuilder,
         ITextLayerStateStore stateStore,
-        UiSettings? uiSettings = null)
+        VisualizerSettings visualizerSettings,
+        IShowPlayToolbarInfo? showPlayToolbarInfo = null,
+        UiSettings? uiSettings = null,
+        ITextLayerBoundsEditSession? boundsEditSession = null)
     {
         _settings = settings;
         _paletteRepo = paletteRepo;
@@ -43,6 +49,9 @@ public sealed class TextLayersVisualizer : IVisualizer
         _keyHandler = keyHandler ?? throw new ArgumentNullException(nameof(keyHandler));
         _toolbarBuilder = toolbarBuilder ?? throw new ArgumentNullException(nameof(toolbarBuilder));
         _stateStore = stateStore ?? throw new ArgumentNullException(nameof(stateStore));
+        _visualizerSettings = visualizerSettings ?? throw new ArgumentNullException(nameof(visualizerSettings));
+        _showPlayToolbarInfo = showPlayToolbarInfo;
+        _boundsEditSession = boundsEditSession;
     }
 
     private readonly ViewportCellBuffer _buffer = new();
@@ -67,11 +76,14 @@ public sealed class TextLayersVisualizer : IVisualizer
             return;
         }
 
+        _boundsEditSession?.SetLastViewport(w, h);
+
         var config = _settings;
         var defaultColors = ResolvePaletteForLayer(sortedLayers.Count > 0 ? sortedLayers[0] : null, config);
         var defaultColor = defaultColors[0];
         _buffer.EnsureSize(w, h);
         _buffer.Clear(defaultColor);
+        _buffer.ClearClipStack();
         while (_layerStates.Count < sortedLayers.Count)
         {
             _layerStates.Add((0, 0));
@@ -101,21 +113,96 @@ public sealed class TextLayersVisualizer : IVisualizer
 
             var state = _layerStates[i];
             var layerColors = ResolvePaletteForLayer(layer, config);
-            var ctx = new TextLayerDrawContext
+            var (clipL, clipT, clipW, clipH) = TextLayerRenderBounds.ToPixelRect(layer.RenderBounds, w, h);
+            _buffer.PushClip(clipL, clipT, clipW, clipH);
+            try
             {
-                Buffer = _buffer,
-                Snapshot = snapshot,
-                Palette = layerColors,
-                SpeedBurst = speedBurst,
-                Width = w,
-                Height = h,
-                LayerIndex = i
-            };
-            state = renderer.Draw(layer, ref state, ctx);
+                var ctx = new TextLayerDrawContext
+                {
+                    Buffer = _buffer,
+                    Snapshot = snapshot,
+                    Palette = layerColors,
+                    SpeedBurst = speedBurst,
+                    Width = w,
+                    Height = h,
+                    LayerIndex = i
+                };
+                state = renderer.Draw(layer, ref state, ctx);
+            }
+            finally
+            {
+                _buffer.PopClip();
+            }
+
             _layerStates[i] = state;
         }
 
+        if (_boundsEditSession?.IsActive == true
+            && _boundsEditSession.EditingSortedLayerIndex is int editIdx
+            && editIdx >= 0
+            && editIdx < sortedLayers.Count)
+        {
+            var editLayer = sortedLayers[editIdx];
+            var (bl, bt, bw, bh) = TextLayerRenderBounds.ToPixelRect(editLayer.RenderBounds, w, h);
+            var hl = ResolvePaletteForLayer(editLayer, config);
+            var borderColor = hl.Count > 1 ? hl[1] : hl[0];
+            DrawRenderBoundsOverlay(_buffer, bl, bt, bw, bh, borderColor);
+        }
+
         _buffer.FlushTo(_consoleWriter, viewport.StartRow);
+    }
+
+    private static void DrawRenderBoundsOverlay(ViewportCellBuffer buffer, int left, int top, int width, int height, PaletteColor color)
+    {
+        if (width < 1 || height < 1)
+        {
+            return;
+        }
+
+        int right = left + width - 1;
+        int bottom = top + height - 1;
+
+        if (width == 1 && height == 1)
+        {
+            buffer.Set(left, top, '+', color);
+            return;
+        }
+
+        if (height == 1)
+        {
+            for (int x = left; x <= right; x++)
+            {
+                buffer.Set(x, top, '─', color);
+            }
+
+            return;
+        }
+
+        if (width == 1)
+        {
+            for (int y = top; y <= bottom; y++)
+            {
+                buffer.Set(left, y, '│', color);
+            }
+
+            return;
+        }
+
+        buffer.Set(left, top, '┌', color);
+        buffer.Set(right, top, '┐', color);
+        buffer.Set(left, bottom, '└', color);
+        buffer.Set(right, bottom, '┘', color);
+        for (int x = left + 1; x < right; x++)
+        {
+            buffer.Set(x, top, '─', color);
+            buffer.Set(x, bottom, '─', color);
+        }
+
+        for (int y = top + 1; y < bottom; y++)
+        {
+            buffer.Set(left, y, '│', color);
+            buffer.Set(right, y, '│', color);
+        }
     }
 
     private void RenderEmpty(VisualizerViewport viewport)
@@ -155,31 +242,33 @@ public sealed class TextLayersVisualizer : IVisualizer
 
     public string? GetToolbarSuffix(AnalysisSnapshot snapshot)
     {
-        var sortedLayers = TryGetSortedLayersSnapshot(_settings);
-        var list = sortedLayers ?? [];
-        int idx = list.Count > 0 ? Math.Clamp(_paletteCycleLayerIndex, 0, list.Count - 1) : 0;
-        var layer = list.Count > 0 ? list[idx] : null;
-        var context = new TextLayersToolbarContext
-        {
-            Snapshot = snapshot,
-            SortedLayers = list,
-            Settings = _settings,
-            PaletteCycleLayerIndex = _paletteCycleLayerIndex,
-            PaletteRepo = _paletteRepo,
-            UiSettings = _uiSettings,
-            OscilloscopeGain = layer?.LayerType == TextLayerType.Oscilloscope ? (layer.GetCustom<OscilloscopeSettings>()?.Gain ?? 2.5) : null
-        };
+        var context = CreateToolbarContext(snapshot);
         return _toolbarBuilder.BuildSuffix(context);
     }
 
     /// <inheritdoc />
     public IReadOnlyList<LabeledValueDescriptor>? GetToolbarViewports(AnalysisSnapshot snapshot)
     {
+        var context = CreateToolbarContext(snapshot);
+        var descriptors = _toolbarBuilder.BuildViewports(context);
+        return descriptors.Count > 0 ? descriptors : null;
+    }
+
+    private TextLayersToolbarContext CreateToolbarContext(AnalysisSnapshot snapshot)
+    {
         var sortedLayers = TryGetSortedLayersSnapshot(_settings);
         var list = sortedLayers ?? [];
         int idx = list.Count > 0 ? Math.Clamp(_paletteCycleLayerIndex, 0, list.Count - 1) : 0;
         var layer = list.Count > 0 ? list[idx] : null;
-        var context = new TextLayersToolbarContext
+        int entryCount = 0;
+        int entryIndex = 0;
+        if (_visualizerSettings.ApplicationMode == ApplicationMode.ShowPlay && _showPlayToolbarInfo != null)
+        {
+            entryCount = _showPlayToolbarInfo.GetActiveShowEntryCount();
+            entryIndex = _showPlayToolbarInfo.CurrentEntryIndex;
+        }
+
+        return new TextLayersToolbarContext
         {
             Snapshot = snapshot,
             SortedLayers = list,
@@ -187,10 +276,12 @@ public sealed class TextLayersVisualizer : IVisualizer
             PaletteCycleLayerIndex = _paletteCycleLayerIndex,
             PaletteRepo = _paletteRepo,
             UiSettings = _uiSettings,
-            OscilloscopeGain = layer?.LayerType == TextLayerType.Oscilloscope ? (layer.GetCustom<OscilloscopeSettings>()?.Gain ?? 2.5) : null
+            OscilloscopeGain = layer?.LayerType == TextLayerType.Oscilloscope ? (layer.GetCustom<OscilloscopeSettings>()?.Gain ?? 2.5) : null,
+            ApplicationMode = _visualizerSettings.ApplicationMode,
+            ActiveShowName = _visualizerSettings.ActiveShowName,
+            ShowEntryIndex = entryIndex,
+            ShowEntryCount = entryCount
         };
-        var descriptors = _toolbarBuilder.BuildViewports(context);
-        return descriptors.Count > 0 ? descriptors : null;
     }
 
     /// <inheritdoc />

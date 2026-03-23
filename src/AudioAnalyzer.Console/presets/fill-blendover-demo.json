@@ -1,0 +1,65 @@
+{
+  "Name": "Fill BlendOver demo",
+  "Config": {
+    "Layers": [
+      {
+        "LayerType": "Fill",
+        "Enabled": true,
+        "ZOrder": 0,
+        "TextSnippets": [],
+        "SpeedMultiplier": 1,
+        "ColorIndex": 0,
+        "PaletteId": "clear-black",
+        "RenderBounds": null,
+        "Custom": {
+          "FillType": 0,
+          "CustomChar": "#",
+          "FillColorStyle": 0,
+          "GradientEndColorIndex": 0,
+          "FillGradientDirection": 0,
+          "FillCompositeMode": 0,
+          "BlendStrength": 1
+        }
+      },
+      {
+        "LayerType": "Oscilloscope",
+        "Enabled": true,
+        "ZOrder": 1,
+        "TextSnippets": [],
+        "SpeedMultiplier": 1,
+        "ColorIndex": 0,
+        "PaletteId": "default",
+        "RenderBounds": null,
+        "Custom": {
+          "Gain": 1.5,
+          "Filled": true
+        }
+      },
+      {
+        "LayerType": "Fill",
+        "Enabled": true,
+        "ZOrder": 2,
+        "TextSnippets": [],
+        "SpeedMultiplier": 1,
+        "ColorIndex": 0,
+        "PaletteId": "clear-black",
+        "RenderBounds": {
+          "X": 0,
+          "Y": 0.5,
+          "Width": 1,
+          "Height": 0.5
+        },
+        "Custom": {
+          "FillType": 0,
+          "CustomChar": "#",
+          "FillColorStyle": 0,
+          "GradientEndColorIndex": 0,
+          "FillGradientDirection": 0,
+          "FillCompositeMode": 1,
+          "BlendStrength": 0.1,
+          "BlendSpaceAsBlack": true
+        }
+      }
+    ]
+  }
+}

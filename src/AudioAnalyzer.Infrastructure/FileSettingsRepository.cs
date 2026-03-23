@@ -5,10 +5,10 @@ using System.Text.Json.Serialization;
 using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Application.Palette;
 using AudioAnalyzer.Domain;
-using AudioAnalyzer.Visualizers;
 
 namespace AudioAnalyzer.Infrastructure;
 
+/// <summary>Persists app and visualizer settings in <c>appsettings.json</c>; preset bodies live in preset files. Uses <see cref="IDefaultTextLayersSettingsFactory"/> for typed default TextLayers so this assembly does not reference Visualizers.</summary>
 public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSettingsRepository
 {
     private static readonly JsonSerializerOptions s_readOptions = new()
@@ -26,18 +26,20 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
     private readonly IFileSystem _fileSystem;
     private readonly string _settingsPath;
     private readonly IPresetRepository _presetRepo;
+    private readonly IDefaultTextLayersSettingsFactory _defaultTextLayersFactory;
 
     /// <summary>Creates a repository using the real file system.</summary>
-    public FileSettingsRepository(IPresetRepository presetRepo, string? settingsPath = null)
-        : this(new FileSystem(), presetRepo, settingsPath)
+    public FileSettingsRepository(IPresetRepository presetRepo, IDefaultTextLayersSettingsFactory defaultTextLayersFactory, string? settingsPath = null)
+        : this(new FileSystem(), presetRepo, defaultTextLayersFactory, settingsPath)
     {
     }
 
     /// <summary>Creates a repository using the provided file system (e.g. MockFileSystem for tests).</summary>
-    public FileSettingsRepository(IFileSystem fileSystem, IPresetRepository presetRepo, string? settingsPath = null)
+    public FileSettingsRepository(IFileSystem fileSystem, IPresetRepository presetRepo, IDefaultTextLayersSettingsFactory defaultTextLayersFactory, string? settingsPath = null)
     {
         _fileSystem = fileSystem ?? throw new ArgumentNullException(nameof(fileSystem));
         _presetRepo = presetRepo ?? throw new ArgumentNullException(nameof(presetRepo));
+        _defaultTextLayersFactory = defaultTextLayersFactory ?? throw new ArgumentNullException(nameof(defaultTextLayersFactory));
         _settingsPath = settingsPath ?? Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "appsettings.json");
     }
 
@@ -95,7 +97,7 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
         vs.Presets = all.Select(p => new Preset { Id = p.Id, Name = p.Name, Config = new TextLayersVisualizerSettings() }).ToList();
         if (vs.Presets.Count == 0)
         {
-            var created = _presetRepo.Create(new Preset { Name = "Preset 1", Config = vs.TextLayers?.DeepCopy() ?? CreateDefaultTextLayersSettings() });
+            var created = _presetRepo.Create(new Preset { Name = "Preset 1", Config = vs.TextLayers?.DeepCopy() ?? _defaultTextLayersFactory.CreateDefault() });
             vs.ActivePresetId = created;
             vs.Presets = _presetRepo.GetAll().Select(p => new Preset { Id = p.Id, Name = p.Name, Config = new TextLayersVisualizerSettings() }).ToList();
         }
@@ -248,7 +250,7 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
     }
 
     /// <summary>Ensures VisualizerSettings exists and TextLayers has at least <see cref="TextLayersLimits.MaxLayerCount"/> layers when present. Per ADR-0029, no migration of legacy formats.</summary>
-    private static void EnsureVisualizerSettingsStructure(SettingsFile file)
+    private void EnsureVisualizerSettingsStructure(SettingsFile file)
     {
         file.VisualizerSettings ??= new VisualizerSettings();
         if (file.VisualizerSettings.TextLayers is not null)
@@ -257,9 +259,9 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
         }
     }
 
-    private static VisualizerSettings CreateDefaultVisualizerSettings()
+    private VisualizerSettings CreateDefaultVisualizerSettings()
     {
-        var defaultConfig = CreateDefaultTextLayersSettings();
+        var defaultConfig = _defaultTextLayersFactory.CreateDefault();
         var preset = new Preset
         {
             Id = Guid.NewGuid().ToString("N"),
@@ -275,64 +277,8 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
         return s;
     }
 
-    /// <summary>Default: <see cref="TextLayersLimits.MaxLayerCount"/> layers with GeissBackground + BeatCircles, then varied foreground types. Keys 1–9 map to layers 1–9.</summary>
-    private static TextLayersVisualizerSettings CreateDefaultTextLayersSettings()
-    {
-        var layers = new List<TextLayerSettings>
-        {
-            CreateLayer(TextLayerType.GeissBackground, 0, ["Layered text"], speed: 1.0, geissBeat: GeissBackgroundBeatReaction.Flash),
-            new() { LayerType = TextLayerType.BeatCircles, ZOrder = 1, SpeedMultiplier = 1.0 },
-            CreateLayer(TextLayerType.Marquee, 2, ["Layered text", "Audio visualizer"], speed: 1.0, marqueeBeat: MarqueeBeatReaction.SpeedBurst),
-            CreateLayer(TextLayerType.Marquee, 3, ["Layer 3"], speed: 0.8, marqueeBeat: MarqueeBeatReaction.None),
-            CreateLayer(TextLayerType.WaveText, 4, ["Wave"], speed: 1.0, waveTextBeat: WaveTextBeatReaction.Pulse),
-            CreateLayer(TextLayerType.StaticText, 5, ["Static"], staticTextBeat: StaticTextBeatReaction.None),
-            CreateLayer(TextLayerType.FallingLetters, 6, [".*#%"], speed: 1.0, fallingLettersBeat: FallingLettersBeatReaction.SpawnMore),
-            CreateLayer(TextLayerType.MatrixRain, 7, [], speed: 1.0, matrixRainBeat: MatrixRainBeatReaction.Flash),
-            CreateLayer(TextLayerType.StaticText, 8, ["Top"], staticTextBeat: StaticTextBeatReaction.Pulse)
-        };
-        return new TextLayersVisualizerSettings { Layers = layers };
-    }
-
-    private static TextLayerSettings CreateLayer(TextLayerType layerType, int zOrder, List<string> textSnippets, double speed = 1.0,
-        GeissBackgroundBeatReaction? geissBeat = null, MarqueeBeatReaction? marqueeBeat = null, WaveTextBeatReaction? waveTextBeat = null,
-        StaticTextBeatReaction? staticTextBeat = null, FallingLettersBeatReaction? fallingLettersBeat = null, MatrixRainBeatReaction? matrixRainBeat = null)
-    {
-        var layer = new TextLayerSettings
-        {
-            LayerType = layerType,
-            ZOrder = zOrder,
-            TextSnippets = textSnippets,
-            SpeedMultiplier = speed
-        };
-        if (geissBeat.HasValue)
-        {
-            layer.SetCustom(new GeissBackgroundSettings { BeatReaction = geissBeat.Value });
-        }
-        if (marqueeBeat.HasValue)
-        {
-            layer.SetCustom(new MarqueeSettings { BeatReaction = marqueeBeat.Value });
-        }
-        if (waveTextBeat.HasValue)
-        {
-            layer.SetCustom(new WaveTextSettings { BeatReaction = waveTextBeat.Value });
-        }
-        if (staticTextBeat.HasValue)
-        {
-            layer.SetCustom(new StaticTextSettings { BeatReaction = staticTextBeat.Value });
-        }
-        if (fallingLettersBeat.HasValue)
-        {
-            layer.SetCustom(new FallingLettersSettings { BeatReaction = fallingLettersBeat.Value });
-        }
-        if (matrixRainBeat.HasValue)
-        {
-            layer.SetCustom(new MatrixRainSettings { BeatReaction = matrixRainBeat.Value });
-        }
-        return layer;
-    }
-
     /// <summary>Ensures TextLayers has at least <see cref="TextLayersLimits.MaxLayerCount"/> layers so keys 1–9 always map to a layer. Pads with default layers if fewer; caps to MaxLayerCount if more (e.g. legacy config).</summary>
-    private static void EnsureTextLayersHasNineLayers(TextLayersVisualizerSettings textLayers)
+    private void EnsureTextLayersHasNineLayers(TextLayersVisualizerSettings textLayers)
     {
         textLayers.Layers ??= new List<TextLayerSettings>();
         if (textLayers.Layers.Count > TextLayersLimits.MaxLayerCount)
@@ -343,15 +289,7 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
         while (textLayers.Layers.Count < TextLayersLimits.MaxLayerCount)
         {
             maxZ++;
-            var padLayer = new TextLayerSettings
-            {
-                LayerType = TextLayerType.Marquee,
-                ZOrder = maxZ,
-                TextSnippets = [$"Layer {textLayers.Layers.Count + 1}"],
-                SpeedMultiplier = 1.0
-            };
-            padLayer.SetCustom(new MarqueeSettings { BeatReaction = MarqueeBeatReaction.None });
-            textLayers.Layers.Add(padLayer);
+            textLayers.Layers.Add(_defaultTextLayersFactory.CreatePaddingMarqueeLayer(maxZ, textLayers.Layers.Count + 1));
         }
     }
 

@@ -5,9 +5,9 @@ using AudioAnalyzer.Domain;
 namespace AudioAnalyzer.Visualizers;
 
 /// <summary>
-/// Mirrors the current buffer content: one half of the screen is the source,
-/// the other half is overwritten with its mirror (horizontal or vertical).
-/// Place this layer above the layers you want mirrored.
+/// Mirrors the current buffer content inside the layer's <see cref="TextLayerSettings.RenderBounds"/> (or the full viewport when null):
+/// one half of that region is the source, the other half is overwritten with its mirror (horizontal or vertical).
+/// <see cref="MirrorSettings.SplitPercent"/> applies within that region. Place this layer above the layers you want mirrored.
 /// </summary>
 public sealed class MirrorLayer : TextLayerRendererBase, ITextLayerRenderer<NoLayerState>
 {
@@ -59,15 +59,17 @@ public sealed class MirrorLayer : TextLayerRendererBase, ITextLayerRenderer<NoLa
         var buffer = ctx.Buffer;
         var settings = layer.GetCustom<MirrorSettings>() ?? new MirrorSettings();
 
+        var (rx, ry, rw, rh) = TextLayerRenderBounds.ToPixelRect(layer.RenderBounds, w, h);
+
         if (settings.Direction == MirrorDirection.LeftToRight || settings.Direction == MirrorDirection.RightToLeft)
         {
-            if (w < 2)
+            if (rw < 2)
             {
                 return state;
             }
 
-            int split = (w * Math.Clamp(settings.SplitPercent, 1, 99)) / 100;
-            int sourceSize = Math.Min(split, w - split);
+            int split = (rw * Math.Clamp(settings.SplitPercent, 1, 99)) / 100;
+            int sourceSize = Math.Min(split, rw - split);
             if (sourceSize < 1)
             {
                 return state;
@@ -75,47 +77,46 @@ public sealed class MirrorLayer : TextLayerRendererBase, ITextLayerRenderer<NoLa
 
             if (settings.Direction == MirrorDirection.LeftToRight)
             {
-                // Source: left [0 .. sourceSize-1]. Destination: right [w-sourceSize .. w-1], mirror x -> (w-1-x).
-                for (int y = 0; y < h; y++)
+                for (int y = ry; y < ry + rh; y++)
                 {
-                    for (int x = 0; x < sourceSize; x++)
+                    for (int lx = 0; lx < sourceSize; lx++)
                     {
-                        var (c, color) = buffer.Get(x, y);
-                        buffer.Set(w - 1 - x, y, c, color);
+                        var (c, color) = buffer.Get(rx + lx, y);
+                        buffer.Set(rx + rw - 1 - lx, y, c, color);
                     }
                 }
+
                 if (settings.Rotation == MirrorRotation.Flip180)
                 {
-                    FlipRegion180(buffer, w - sourceSize, 0, sourceSize, h);
+                    FlipRegion180(buffer, rx + rw - sourceSize, ry, sourceSize, rh);
                 }
             }
             else
             {
-                // RightToLeft: source is right [w-sourceSize .. w-1], destination is left [0 .. sourceSize-1].
-                for (int y = 0; y < h; y++)
+                for (int y = ry; y < ry + rh; y++)
                 {
-                    for (int x = w - sourceSize; x < w; x++)
+                    for (int lx = rw - sourceSize; lx < rw; lx++)
                     {
-                        var (c, color) = buffer.Get(x, y);
-                        buffer.Set(w - 1 - x, y, c, color);
+                        var (c, color) = buffer.Get(rx + lx, y);
+                        buffer.Set(rx + rw - 1 - lx, y, c, color);
                     }
                 }
+
                 if (settings.Rotation == MirrorRotation.Flip180)
                 {
-                    FlipRegion180(buffer, 0, 0, sourceSize, h);
+                    FlipRegion180(buffer, rx, ry, sourceSize, rh);
                 }
             }
         }
         else
         {
-            // TopToBottom or BottomToTop: vertical mirror
-            if (h < 2)
+            if (rh < 2)
             {
                 return state;
             }
 
-            int split = (h * Math.Clamp(settings.SplitPercent, 1, 99)) / 100;
-            int sourceSize = Math.Min(split, h - split);
+            int split = (rh * Math.Clamp(settings.SplitPercent, 1, 99)) / 100;
+            int sourceSize = Math.Min(split, rh - split);
             if (sourceSize < 1)
             {
                 return state;
@@ -123,34 +124,34 @@ public sealed class MirrorLayer : TextLayerRendererBase, ITextLayerRenderer<NoLa
 
             if (settings.Direction == MirrorDirection.TopToBottom)
             {
-                // Source: top [0 .. sourceSize-1]. Destination: bottom [h-sourceSize .. h-1], mirror y -> (h-1-y).
-                for (int y = 0; y < sourceSize; y++)
+                for (int ly = 0; ly < sourceSize; ly++)
                 {
-                    for (int x = 0; x < w; x++)
+                    for (int x = rx; x < rx + rw; x++)
                     {
-                        var (c, color) = buffer.Get(x, y);
-                        buffer.Set(x, h - 1 - y, c, color);
+                        var (c, color) = buffer.Get(x, ry + ly);
+                        buffer.Set(x, ry + rh - 1 - ly, c, color);
                     }
                 }
+
                 if (settings.Rotation == MirrorRotation.Flip180)
                 {
-                    FlipRegion180(buffer, 0, h - sourceSize, w, sourceSize);
+                    FlipRegion180(buffer, rx, ry + rh - sourceSize, rw, sourceSize);
                 }
             }
             else
             {
-                // BottomToTop: source is bottom [h-sourceSize .. h-1], destination is top [0 .. sourceSize-1].
-                for (int y = h - sourceSize; y < h; y++)
+                for (int y = ry + rh - sourceSize; y < ry + rh; y++)
                 {
-                    for (int x = 0; x < w; x++)
+                    for (int x = rx; x < rx + rw; x++)
                     {
                         var (c, color) = buffer.Get(x, y);
-                        buffer.Set(x, h - 1 - y, c, color);
+                        buffer.Set(x, ry + rh - 1 - (y - ry), c, color);
                     }
                 }
+
                 if (settings.Rotation == MirrorRotation.Flip180)
                 {
-                    FlipRegion180(buffer, 0, 0, w, sourceSize);
+                    FlipRegion180(buffer, rx, ry, rw, sourceSize);
                 }
             }
         }
