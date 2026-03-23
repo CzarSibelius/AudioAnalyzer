@@ -93,8 +93,12 @@ alwaysApply: true
 
 44. **Universal title breadcrumb**: The same title breadcrumb appears on **row 0** for the main header and all modals (preset-scoped vs app-settings tracks; S modal: `preset[n]:layerType` + optional focused setting id + optional `/editor` when palette picker open). Use **ITitleBarNavigationContext** and **ITitleBarBreadcrumbFormatter**. See [ADR-0036](docs/adr/0036-title-bar-injectable-component.md), [ADR-0060](docs/adr/0060-universal-title-breadcrumb.md).
 
-45. **General Settings mode**: **Tab** reaches **ApplicationMode.Settings** (after Show play when eligible). Hub UI configures app-wide settings (audio input, title bar app name); no text-layer visualization. **S** does not open preset/Show modals; **F** does not toggle fullscreen in this mode. See [ADR-0061](docs/adr/0061-general-settings-mode.md).
+45. **General Settings mode**: **Tab** reaches **ApplicationMode.Settings** (after Show play when eligible). Hub UI configures app-wide settings (audio input, title bar app name, optional UI theme palette id); no text-layer visualization. **S** does not open preset/Show modals; **F** does not toggle fullscreen in this mode. See [ADR-0061](docs/adr/0061-general-settings-mode.md).
 
 46. **Application modes (classes)**: Top-level modes are **`IApplicationMode`** implementations (Preset editor, Show play, General settings) resolved via **`IApplicationModeFactory`** from persisted **`ApplicationMode`**. Modes own main toolbar + hub/visualizer composition; **Settings** uses a **one-row header** (breadcrumb only). Tab cycling is **`IModeTransitionService`**. See [ADR-0062](docs/adr/0062-application-mode-classes.md).
 
 47. **Uniform settings list/palette drawing**: Shared **`SettingsSurfacesListDrawing`** (scroll offset + device list) and **`SettingsSurfacesPaletteDrawing`** (palette picker + Palette setting row); General hub **`Label:value`** lines use **`HorizontalRowComponent`**. See [ADR-0063](docs/adr/0063-uniform-settings-list-and-palette-drawing.md).
+
+48. **Test project folder layout**: Under `tests/AudioAnalyzer.Tests/`, mirror each production project’s folder structure (`Domain/`, `Application/`, `Console/`, etc.); shared test utilities in `TestSupport/` (or `Common/`); cross-cutting tests in `Integration/`. See [ADR-0064](docs/adr/0064-test-project-mirrors-production-layout.md).
+
+49. **UI theme**: Optional `UiSettings.UiThemePaletteId` references the same `palettes/` files as TextLayers; `IUiThemeResolver` maps colors to UI + title bar. General Settings hub row + `IUiThemeSelectionModal`. See [ADR-0065](docs/adr/0065-ui-theme-from-layer-palettes.md).

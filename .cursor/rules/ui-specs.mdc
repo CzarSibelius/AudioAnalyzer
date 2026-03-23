@@ -9,7 +9,7 @@ When working on console UI (header, modals, main view, layout, or any on-screen 
 
 1. **Read the format**: Follow [docs/ui-spec-format.md](docs/ui-spec-format.md) for the structure of UI spec documents (screenshot block + line reference).
 2. **Read UI components**: Use [docs/ui-components.md](docs/ui-components.md) to understand which component is responsible for each part of the screen (title bar, header, modals, toolbar, visualizer area).
-3. **Read existing specs**: When changing an existing screen, read the corresponding UI spec in `docs/` (e.g. `docs/ui-spec-main-view-example.md`) so line numbers and descriptions stay accurate.
+3. **Read existing specs**: When changing an existing screen, read the corresponding UI spec in `docs/` (index: `docs/ui-spec-application-modes.md` for top-level modes; `docs/ui-spec-settings-surfaces.md` for settings modals/hub) so line numbers and descriptions stay accurate.
 4. **Update or create specs when you change layout**:
    - If you add, remove, or reorder lines in a documented screen, update that spec: refresh the screenshot (from a screen dump per ADR-0046) and update the "Line reference" section so every line is listed and described.
    - If you add a new screen or modal that should be documented, create a new UI spec file in `docs/` following the format (screenshot + line reference); optionally add a short index or link from README or other docs.
