@@ -17,6 +17,7 @@ public sealed class ViewportCellBuffer
     private PaletteColor[] _colors = [];
     private string?[] _lastWrittenByRow = [];
     private readonly StringBuilder _sb = new();
+    private readonly List<ClipRect> _clipStack = [];
 
     /// <summary>Width of the buffer (columns).</summary>
     public int Width => _width;
@@ -37,6 +38,7 @@ public sealed class ViewportCellBuffer
             return;
         }
 
+        _clipStack.Clear();
         _width = width;
         _height = height;
         int size = width * height;
@@ -56,12 +58,55 @@ public sealed class ViewportCellBuffer
         }
     }
 
-    /// <summary>Sets a cell at (x, y). Coordinates are zero-based. No-op if out of bounds.</summary>
+    /// <summary>Removes all clip regions. Call at the start of each frame before compositing layers.</summary>
+    public void ClearClipStack()
+    {
+        _clipStack.Clear();
+    }
+
+    /// <summary>Intersects the active clip with the given rectangle (cell coordinates). Balanced with <see cref="PopClip"/>.</summary>
+    public void PushClip(int left, int top, int width, int height)
+    {
+        if (_width <= 0 || _height <= 0)
+        {
+            return;
+        }
+
+        var next = ClipRect.FromBox(left, top, width, height, _width, _height);
+        if (_clipStack.Count == 0)
+        {
+            _clipStack.Add(next);
+        }
+        else
+        {
+            _clipStack.Add(_clipStack[^1].Intersect(next));
+        }
+    }
+
+    /// <summary>Pops the clip pushed last. Safe if the stack is empty.</summary>
+    public void PopClip()
+    {
+        if (_clipStack.Count > 0)
+        {
+            _clipStack.RemoveAt(_clipStack.Count - 1);
+        }
+    }
+
+    /// <summary>Sets a cell at (x, y). Coordinates are zero-based. No-op if out of bounds or outside the active clip (if any).</summary>
     public void Set(int x, int y, char c, PaletteColor color)
     {
         if (x < 0 || x >= _width || y < 0 || y >= _height)
         {
             return;
+        }
+
+        if (_clipStack.Count > 0)
+        {
+            var c0 = _clipStack[^1];
+            if (c0.IsEmpty || x < c0.MinX || x >= c0.MaxX || y < c0.MinY || y >= c0.MaxY)
+            {
+                return;
+            }
         }
 
         int i = y * _width + x;
@@ -121,6 +166,51 @@ public sealed class ViewportCellBuffer
 
             _lastWrittenByRow[y] = line;
             writer.WriteLine(startRow + y, line);
+        }
+    }
+
+    private readonly struct ClipRect
+    {
+        public int MinX { get; }
+        public int MinY { get; }
+        public int MaxX { get; }
+        public int MaxY { get; }
+        public bool IsEmpty => MinX >= MaxX || MinY >= MaxY;
+
+        private ClipRect(int minX, int minY, int maxX, int maxY)
+        {
+            MinX = minX;
+            MinY = minY;
+            MaxX = maxX;
+            MaxY = maxY;
+        }
+
+        public static ClipRect FromBox(int left, int top, int width, int height, int bufW, int bufH)
+        {
+            if (width < 1 || height < 1 || bufW < 1 || bufH < 1)
+            {
+                return new ClipRect(0, 0, 0, 0);
+            }
+
+            int minX = Math.Clamp(left, 0, bufW - 1);
+            int minY = Math.Clamp(top, 0, bufH - 1);
+            int maxX = Math.Clamp(left + width, minX + 1, bufW);
+            int maxY = Math.Clamp(top + height, minY + 1, bufH);
+            return new ClipRect(minX, minY, maxX, maxY);
+        }
+
+        public ClipRect Intersect(ClipRect other)
+        {
+            if (IsEmpty || other.IsEmpty)
+            {
+                return new ClipRect(0, 0, 0, 0);
+            }
+
+            int minX = Math.Max(MinX, other.MinX);
+            int minY = Math.Max(MinY, other.MinY);
+            int maxX = Math.Min(MaxX, other.MaxX);
+            int maxY = Math.Min(MaxY, other.MaxY);
+            return new ClipRect(minX, minY, maxX, maxY);
         }
     }
 }

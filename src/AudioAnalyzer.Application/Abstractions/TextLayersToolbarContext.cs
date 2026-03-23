@@ -25,4 +25,16 @@ public sealed class TextLayersToolbarContext
 
     /// <summary>When the selected layer is Oscilloscope, the gain to show in the toolbar. Set by the visualizer.</summary>
     public double? OscilloscopeGain { get; set; }
+
+    /// <summary>Current top-level mode; <see cref="ApplicationMode.ShowPlay"/> uses a compact toolbar.</summary>
+    public ApplicationMode ApplicationMode { get; set; } = ApplicationMode.PresetEditor;
+
+    /// <summary>When in Show play, the active show display name.</summary>
+    public string? ActiveShowName { get; set; }
+
+    /// <summary>0-based current entry index within the show.</summary>
+    public int ShowEntryIndex { get; set; }
+
+    /// <summary>Number of entries in the active show.</summary>
+    public int ShowEntryCount { get; set; }
 }

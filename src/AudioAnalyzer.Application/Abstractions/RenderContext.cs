@@ -23,7 +23,7 @@ public sealed class RenderContext
     /// <summary>Scrolling speed (characters per frame) for labeled rows.</summary>
     public double ScrollSpeed { get; set; }
 
-    /// <summary>Optional device name for header viewports.</summary>
+    /// <summary>Optional current audio input device display name (header viewports, General Settings hub).</summary>
     public string? DeviceName { get; set; }
 
     /// <summary>Optional analysis snapshot for main content (toolbar, visualizer).</summary>
