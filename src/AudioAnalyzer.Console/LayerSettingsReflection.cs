@@ -48,6 +48,7 @@ internal sealed class SettingDescriptor
         var list = new List<SettingDescriptor>();
 
         AddCommonDescriptors(list, layer, paletteRepo);
+        AddRenderBoundsDescriptor(list);
 
         if (s_customSettingsRegistry.TryGetValue(layer.LayerType, out var customType) && customType != null)
         {
@@ -58,7 +59,7 @@ internal sealed class SettingDescriptor
     }
 
     private static readonly HashSet<string> s_excludedCommonProps =
-        ["Custom", "_customCache"];
+        ["Custom", "_customCache", "RenderBounds"];
 
     private static readonly string[] s_commonPropOrder =
         ["Enabled", "LayerType", "ZOrder", "SpeedMultiplier", "ColorIndex", "PaletteId", "TextSnippets"];
@@ -106,7 +107,7 @@ internal sealed class SettingDescriptor
     private static void AddPaletteDescriptor(List<SettingDescriptor> list, IPaletteRepository paletteRepo)
     {
         list.Add(new SettingDescriptor(
-            "Palette", "Palette", SettingEditMode.Cycle,
+            "Palette", "Palette", SettingEditMode.PalettePicker,
             l => l.PaletteId ?? "(inherit)",
             (l, v) => l.PaletteId = string.IsNullOrWhiteSpace(v) || v == "(inherit)" ? null : v,
             (l, f) =>
@@ -136,6 +137,26 @@ internal sealed class SettingDescriptor
                 ? string.Join(", ", l.TextSnippets.Take(4)) + (l.TextSnippets.Count > 4 ? "..." : "")
                 : "(none)",
             (l, v) => l.TextSnippets = v.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList(),
+            null));
+    }
+
+    private static void AddRenderBoundsDescriptor(List<SettingDescriptor> list)
+    {
+        list.Add(new SettingDescriptor(
+            "RenderBounds",
+            "Render region",
+            SettingEditMode.BoundVisualEdit,
+            l =>
+            {
+                if (l.RenderBounds == null)
+                {
+                    return "Full";
+                }
+
+                var b = l.RenderBounds;
+                return string.Format(CultureInfo.InvariantCulture, "Custom X={0:F2} Y={1:F2} W={2:F2} H={3:F2}", b.X, b.Y, b.Width, b.Height);
+            },
+            null,
             null));
     }
 

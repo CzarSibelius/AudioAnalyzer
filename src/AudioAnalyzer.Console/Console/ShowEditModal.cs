@@ -8,7 +8,11 @@ namespace AudioAnalyzer.Console;
 /// <summary>Show edit overlay modal. Edit Show entries: add/remove/reorder presets, set duration. Per ADR-0031. Key handling via IKeyHandler per ADR-0047.</summary>
 internal sealed class ShowEditModal : IShowEditModal
 {
-    private const int OverlayRowCount = 16;
+    private const int BreadcrumbRowCount = 1;
+    private const int HintRow = 1;
+    private const int SeparatorRow = 2;
+    private const int FirstListRow = 3;
+    private const int OverlayRowCount = 14;
     private const int LeftColWidth = 32;
 
     private readonly IVisualizationOrchestrator _orchestrator;
@@ -18,6 +22,8 @@ internal sealed class ShowEditModal : IShowEditModal
     private readonly IKeyHandler<ShowEditModalKeyContext> _keyHandler;
     private readonly UiSettings _uiSettings;
     private readonly IConsoleDimensions _consoleDimensions;
+    private readonly ITitleBarNavigationContext _navigation;
+    private readonly ITitleBarBreadcrumbFormatter _breadcrumbFormatter;
 
     public ShowEditModal(
         IVisualizationOrchestrator orchestrator,
@@ -26,7 +32,9 @@ internal sealed class ShowEditModal : IShowEditModal
         IPresetRepository presetRepo,
         IKeyHandler<ShowEditModalKeyContext> keyHandler,
         UiSettings uiSettings,
-        IConsoleDimensions consoleDimensions)
+        IConsoleDimensions consoleDimensions,
+        ITitleBarNavigationContext navigation,
+        ITitleBarBreadcrumbFormatter breadcrumbFormatter)
     {
         _orchestrator = orchestrator ?? throw new ArgumentNullException(nameof(orchestrator));
         _visualizerSettings = visualizerSettings ?? throw new ArgumentNullException(nameof(visualizerSettings));
@@ -35,6 +43,8 @@ internal sealed class ShowEditModal : IShowEditModal
         _keyHandler = keyHandler ?? throw new ArgumentNullException(nameof(keyHandler));
         _uiSettings = uiSettings ?? throw new ArgumentNullException(nameof(uiSettings));
         _consoleDimensions = consoleDimensions ?? throw new ArgumentNullException(nameof(consoleDimensions));
+        _navigation = navigation ?? throw new ArgumentNullException(nameof(navigation));
+        _breadcrumbFormatter = breadcrumbFormatter ?? throw new ArgumentNullException(nameof(breadcrumbFormatter));
     }
 
     /// <inheritdoc />
@@ -84,34 +94,23 @@ internal sealed class ShowEditModal : IShowEditModal
 
             try
             {
-                var show = string.IsNullOrWhiteSpace(context.CurrentShowId) ? null : _showRepo.GetById(context.CurrentShowId);
-                var showName = show?.Name?.Trim() ?? "Show 1";
-                var title = context.Renaming
-                    ? $" New show name (Enter confirm, Esc cancel): {context.RenameBuffer}_ "
-                    : $" Show: {showName} (R rename, N new) ";
-                var titleTruncated = StaticTextViewport.TruncateWithEllipsis(new PlainText(title), width - 2);
-                int pad = Math.Max(0, (width - titleTruncated.Length - 2) / 2);
-                System.Console.SetCursorPosition(0, 0);
-                System.Console.Write(StaticTextViewport.TruncateToWidth(new PlainText("╔" + new string('═', width - 2) + "╗"), width).PadRight(width));
-                System.Console.SetCursorPosition(0, 1);
-                System.Console.Write(StaticTextViewport.TruncateToWidth(new PlainText("║" + new string(' ', pad) + titleTruncated + new string(' ', width - pad - titleTruncated.Length - 2) + "║"), width).PadRight(width));
-                System.Console.SetCursorPosition(0, 2);
-                System.Console.Write(StaticTextViewport.TruncateToWidth(new PlainText("╚" + new string('═', width - 2) + "╝"), width).PadRight(width));
+                TitleBarBreadcrumbRow.Write(0, width, _breadcrumbFormatter);
 
+                var show = string.IsNullOrWhiteSpace(context.CurrentShowId) ? null : _showRepo.GetById(context.CurrentShowId);
                 string hint = context.Renaming
                     ? "  Type new name, Enter save, Esc cancel"
                     : context.EditingDuration
                         ? "  Type duration value, Enter confirm, Esc cancel"
                         : "  \u2191\u2193 select, A add D delete, P preset, Enter duration, U unit, Esc close";
-                System.Console.SetCursorPosition(0, 3);
+                System.Console.SetCursorPosition(0, HintRow);
                 System.Console.Write(StaticTextViewport.TruncateWithEllipsis(new PlainText(hint), width).PadRight(width));
-                System.Console.SetCursorPosition(0, 4);
+                System.Console.SetCursorPosition(0, SeparatorRow);
                 System.Console.Write(StaticTextViewport.TruncateToWidth(new PlainText("  ─" + new string('─', LeftColWidth - 2) + "┬" + new string('─', rightColWidth) + "─"), width).PadRight(width));
 
                 var entries = show?.Entries ?? new List<ShowEntry>();
                 for (int i = 0; i < Math.Min(10, entries.Count + 2); i++)
                 {
-                    int row = 5 + i;
+                    int row = FirstListRow + i;
                     if (row >= OverlayRowCount)
                     {
                         break;
@@ -166,7 +165,15 @@ internal sealed class ShowEditModal : IShowEditModal
             DrawContent,
             HandleKey,
             consoleLock,
-            onClose: () => _orchestrator.SetOverlayActive(false),
-            onEnter: () => _orchestrator.SetOverlayActive(true, OverlayRowCount));
+            onClose: () =>
+            {
+                _navigation.View = TitleBarViewKind.Main;
+                _orchestrator.SetOverlayActive(false);
+            },
+            onEnter: () =>
+            {
+                _navigation.View = TitleBarViewKind.ShowEditModal;
+                _orchestrator.SetOverlayActive(true, OverlayRowCount);
+            });
     }
 }

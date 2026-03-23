@@ -206,7 +206,8 @@ internal sealed class SettingsModalKeyHandlerConfig : IKeyHandlerConfig<Settings
     {
         var layerList = GetLayerListEntries().Select(e => e.ToKeyBinding()).ToList();
         return layerList
-            .Concat([new KeyBinding("+/-", "Cycle selected setting (when cycleable)", Section)])
+            .Concat([new KeyBinding("+/-", "Cycle selected setting (when cycleable); on Palette row, Enter opens list", Section)])
+            .Concat([new KeyBinding("Enter", "Open palette list (Palette row); in list: preview with arrows/+/−, Enter save, Esc discard", Section)])
             .Concat([new KeyBinding("←/Escape", "Back to layer list from settings panel", Section)])
             .ToList();
     }
@@ -266,6 +267,47 @@ internal sealed class SettingsModalKeyHandlerConfig : IKeyHandlerConfig<Settings
             if (key.KeyChar is >= ' ' and <= '~' && key.KeyChar >= ' ') { state.RenameBuffer += key.KeyChar; return false; }
         }
 
+        if (state.Focus == SettingsModalFocus.PickingPalette && selectedLayer != null)
+        {
+            int count = GetPalettePickerEntryCount();
+            if (key.Key == ConsoleKey.Escape)
+            {
+                selectedLayer.PaletteId = state.PalettePickerOriginalPaletteId;
+                state.PalettePickerOriginalPaletteId = null;
+                state.Focus = SettingsModalFocus.SettingsList;
+                return false;
+            }
+
+            if (key.Key == ConsoleKey.Enter)
+            {
+                context.SaveSettings();
+                state.PalettePickerOriginalPaletteId = null;
+                state.Focus = SettingsModalFocus.SettingsList;
+                return false;
+            }
+
+            bool moveUp = key.Key == ConsoleKey.UpArrow || key.Key == ConsoleKey.Subtract || key.Key == ConsoleKey.OemMinus;
+            bool moveDown = key.Key == ConsoleKey.DownArrow || key.Key == ConsoleKey.Add || key.Key == ConsoleKey.OemPlus;
+            if (moveUp || moveDown)
+            {
+                int idx = state.PalettePickerSelectedIndex;
+                if (moveUp)
+                {
+                    idx = Math.Max(0, idx - 1);
+                }
+                else
+                {
+                    idx = Math.Min(count - 1, idx + 1);
+                }
+
+                state.PalettePickerSelectedIndex = idx;
+                ApplyPalettePickerSelection(selectedLayer, idx);
+                return false;
+            }
+
+            return false;
+        }
+
         if (state.Focus == SettingsModalFocus.EditingSetting && selectedLayer != null && state.SelectedSettingIndex < settingsRows.Count)
         {
             var row = settingsRows[state.SelectedSettingIndex];
@@ -299,9 +341,34 @@ internal sealed class SettingsModalKeyHandlerConfig : IKeyHandlerConfig<Settings
             if (selectedLayer != null && state.SelectedSettingIndex < settingsRows.Count)
             {
                 var row = settingsRows[state.SelectedSettingIndex];
+                if (key.Key == ConsoleKey.Enter && row.EditMode == SettingEditMode.BoundVisualEdit)
+                {
+                    context.RequestVisualBoundsEdit?.Invoke(state.SelectedLayerIndex);
+                    return true;
+                }
+
                 bool cycleForward = key.Key == ConsoleKey.Enter || key.Key == ConsoleKey.Add || key.Key == ConsoleKey.OemPlus;
                 bool cycleBackward = key.Key == ConsoleKey.Subtract || key.Key == ConsoleKey.OemMinus;
-                if (row.EditMode == SettingEditMode.Cycle && (cycleForward || cycleBackward))
+
+                if (row.EditMode == SettingEditMode.PalettePicker)
+                {
+                    if (key.Key == ConsoleKey.Enter)
+                    {
+                        state.PalettePickerOriginalPaletteId = selectedLayer.PaletteId;
+                        state.PalettePickerSelectedIndex = ComputeInitialPalettePickerIndex(selectedLayer);
+                        ApplyPalettePickerSelection(selectedLayer, state.PalettePickerSelectedIndex);
+                        state.Focus = SettingsModalFocus.PickingPalette;
+                        return false;
+                    }
+
+                    if (cycleForward || cycleBackward)
+                    {
+                        CycleSetting(selectedLayer, row.Id, cycleForward);
+                        context.SaveSettings();
+                        return false;
+                    }
+                }
+                else if (row.EditMode == SettingEditMode.Cycle && (cycleForward || cycleBackward))
                 {
                     CycleSetting(selectedLayer, row.Id, cycleForward);
                     context.SaveSettings();
@@ -352,6 +419,43 @@ internal sealed class SettingsModalKeyHandlerConfig : IKeyHandlerConfig<Settings
         var descriptors = SettingDescriptor.BuildAll(layer, _paletteRepo);
         var d = descriptors.FirstOrDefault(x => x.Id == id);
         d?.Cycle(layer, forward);
+    }
+
+    private int GetPalettePickerEntryCount() => 1 + _paletteRepo.GetAll().Count;
+
+    private int ComputeInitialPalettePickerIndex(TextLayerSettings layer)
+    {
+        var palettes = _paletteRepo.GetAll();
+        if (string.IsNullOrWhiteSpace(layer.PaletteId))
+        {
+            return 0;
+        }
+
+        for (int i = 0; i < palettes.Count; i++)
+        {
+            if (string.Equals(palettes[i].Id, layer.PaletteId, StringComparison.OrdinalIgnoreCase))
+            {
+                return i + 1;
+            }
+        }
+
+        return 0;
+    }
+
+    private void ApplyPalettePickerSelection(TextLayerSettings layer, int index)
+    {
+        if (index <= 0)
+        {
+            layer.PaletteId = null;
+            return;
+        }
+
+        var palettes = _paletteRepo.GetAll();
+        int pi = index - 1;
+        if (pi >= 0 && pi < palettes.Count)
+        {
+            layer.PaletteId = palettes[pi].Id;
+        }
     }
 
     private static int DigitFromKey(ConsoleKey key)

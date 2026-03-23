@@ -21,6 +21,12 @@ internal sealed class SettingsModalState
     /// <summary>Buffer for text-edit setting input.</summary>
     public string EditingBuffer { get; set; } = "";
 
+    /// <summary>Selected row in the palette picker: 0 = inherit, 1..N = index in the repository palette list + 1.</summary>
+    public int PalettePickerSelectedIndex { get; set; }
+
+    /// <summary>Layer palette id when the picker opened; Esc restores it (Enter saves the previewed choice).</summary>
+    public string? PalettePickerOriginalPaletteId { get; set; }
+
     /// <summary>Last navigation key for rate limiting.</summary>
     public ConsoleKey? LastNavKey { get; set; }
 

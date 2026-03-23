@@ -7,7 +7,7 @@ namespace AudioAnalyzer.Console;
 /// <summary>TextLayers settings overlay modal (S key). Layer list, settings panel, preset rename and create per ADR-0023.</summary>
 internal sealed class SettingsModal : ISettingsModal
 {
-    private const int OverlayRowCount = 18;
+    private const int OverlayRowCount = 16;
 
     private readonly IVisualizationOrchestrator _orchestrator;
     private readonly VisualizerSettings _visualizerSettings;
@@ -15,6 +15,8 @@ internal sealed class SettingsModal : ISettingsModal
     private readonly ISettingsModalRenderer _renderer;
     private readonly IKeyHandler<SettingsModalKeyContext> _keyHandler;
     private readonly IConsoleDimensions _consoleDimensions;
+    private readonly ITextLayerBoundsEditSession _boundsEditSession;
+    private readonly ITitleBarNavigationContext _navigation;
 
     public SettingsModal(
         IVisualizationOrchestrator orchestrator,
@@ -22,7 +24,9 @@ internal sealed class SettingsModal : ISettingsModal
         IPresetRepository presetRepository,
         ISettingsModalRenderer renderer,
         IKeyHandler<SettingsModalKeyContext> keyHandler,
-        IConsoleDimensions consoleDimensions)
+        IConsoleDimensions consoleDimensions,
+        ITextLayerBoundsEditSession boundsEditSession,
+        ITitleBarNavigationContext navigation)
     {
         _orchestrator = orchestrator ?? throw new ArgumentNullException(nameof(orchestrator));
         _visualizerSettings = visualizerSettings ?? throw new ArgumentNullException(nameof(visualizerSettings));
@@ -30,6 +34,8 @@ internal sealed class SettingsModal : ISettingsModal
         _renderer = renderer ?? throw new ArgumentNullException(nameof(renderer));
         _keyHandler = keyHandler ?? throw new ArgumentNullException(nameof(keyHandler));
         _consoleDimensions = consoleDimensions ?? throw new ArgumentNullException(nameof(consoleDimensions));
+        _boundsEditSession = boundsEditSession ?? throw new ArgumentNullException(nameof(boundsEditSession));
+        _navigation = navigation ?? throw new ArgumentNullException(nameof(navigation));
     }
 
     /// <inheritdoc />
@@ -51,24 +57,25 @@ internal sealed class SettingsModal : ISettingsModal
             TextLayers = textLayers,
             VisualizerSettings = _visualizerSettings,
             PresetRepository = _presetRepository,
-            SaveSettings = saveSettings
+            SaveSettings = saveSettings,
+            RequestVisualBoundsEdit = idx => _boundsEditSession.BeginEdit(idx, textLayers)
         };
 
         void DrawSettingsContent()
         {
             int width = _consoleDimensions.GetConsoleWidth();
-            _renderer.Draw(state, context.SortedLayers, width);
-        }
-
-        void DrawHintLineOnly()
-        {
-            int width = _consoleDimensions.GetConsoleWidth();
-            _renderer.DrawHintLine(state, width);
+            _renderer.Draw(state, context.SortedLayers, width, _orchestrator.GetSnapshotForUi());
         }
 
         bool HandleSettingsKey(ConsoleKeyInfo key)
         {
             return _keyHandler.Handle(key, context);
+        }
+
+        void OnScrollTick()
+        {
+            int width = _consoleDimensions.GetConsoleWidth();
+            _renderer.DrawIdleOverlayTick(state, context.SortedLayers, width, _orchestrator.GetSnapshotForUi());
         }
 
         ModalSystem.RunOverlayModal(
@@ -80,9 +87,18 @@ internal sealed class SettingsModal : ISettingsModal
             onClose: () =>
             {
                 saveSettings();
+                _navigation.View = TitleBarViewKind.Main;
+                _navigation.PresetSettingsPalettePickerActive = false;
+                _navigation.PresetSettingsLayerOneBased = null;
+                _navigation.PresetSettingsLayerTypeRaw = null;
+                _navigation.PresetSettingsFocusedSettingId = null;
                 _orchestrator.SetOverlayActive(false);
             },
-            onEnter: () => _orchestrator.SetOverlayActive(true, OverlayRowCount),
-            onScrollTick: DrawHintLineOnly);
+            onEnter: () =>
+            {
+                _navigation.View = TitleBarViewKind.PresetSettingsModal;
+                _orchestrator.SetOverlayActive(true, OverlayRowCount);
+            },
+            onScrollTick: OnScrollTick);
     }
 }

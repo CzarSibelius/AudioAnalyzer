@@ -29,7 +29,7 @@ internal sealed class MainLoopKeyHandlerConfig : IKeyHandlerConfig<MainLoopKeyCo
                     return true;
                 },
                 Key: "Tab",
-                Description: "Switch between Preset editor and Show play",
+                Description: "Switch between Preset editor, Show play, and General settings",
                 Section),
             new KeyHandling.KeyBindingEntry<MainLoopKeyContext>(
                 Matches: k => k.Key == ConsoleKey.V,
@@ -58,7 +58,22 @@ internal sealed class MainLoopKeyHandlerConfig : IKeyHandlerConfig<MainLoopKeyCo
                 Matches: k => k.Key == ConsoleKey.S,
                 Action: (_, ctx) =>
                 {
-                    if (ctx.GetApplicationMode() == ApplicationMode.PresetEditor)
+                    var mode = ctx.GetApplicationMode();
+                    if (mode == ApplicationMode.Settings)
+                    {
+                        if (!ctx.DisplayState.FullScreen)
+                        {
+                            ctx.Orchestrator.RedrawWithFullHeader();
+                        }
+                        else
+                        {
+                            ctx.Orchestrator.Redraw();
+                        }
+
+                        return true;
+                    }
+
+                    if (mode == ApplicationMode.PresetEditor)
                     {
                         ctx.SettingsModal.Show(ctx.ConsoleLock, ctx.SaveSettings);
                     }
@@ -70,6 +85,7 @@ internal sealed class MainLoopKeyHandlerConfig : IKeyHandlerConfig<MainLoopKeyCo
                             ctx.SaveVisualizerSettings();
                         });
                     }
+
                     if (!ctx.DisplayState.FullScreen)
                     {
                         ctx.Orchestrator.RedrawWithFullHeader();
@@ -78,6 +94,7 @@ internal sealed class MainLoopKeyHandlerConfig : IKeyHandlerConfig<MainLoopKeyCo
                     {
                         ctx.Orchestrator.Redraw();
                     }
+
                     return true;
                 },
                 Key: "S",
@@ -176,6 +193,11 @@ internal sealed class MainLoopKeyHandlerConfig : IKeyHandlerConfig<MainLoopKeyCo
                 Matches: k => k.Key == ConsoleKey.F,
                 Action: (_, ctx) =>
                 {
+                    if (ctx.GetApplicationMode() == ApplicationMode.Settings)
+                    {
+                        return true;
+                    }
+
                     ctx.DisplayState.FullScreen = !ctx.DisplayState.FullScreen;
                     if (ctx.DisplayState.FullScreen)
                     {
@@ -187,6 +209,7 @@ internal sealed class MainLoopKeyHandlerConfig : IKeyHandlerConfig<MainLoopKeyCo
                     {
                         ctx.Orchestrator.RedrawWithFullHeader();
                     }
+
                     return true;
                 },
                 Key: "F",

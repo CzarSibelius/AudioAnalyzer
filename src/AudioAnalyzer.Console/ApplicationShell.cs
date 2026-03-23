@@ -24,7 +24,6 @@ internal sealed class ApplicationShell
     private readonly IVisualizerSettingsRepository _visualizerSettingsRepo;
     private readonly VisualizerSettings _visualizerSettings;
     private readonly IPresetRepository _presetRepository;
-    private readonly IShowRepository _showRepository;
     private readonly IPaletteRepository _paletteRepo;
     private readonly AnalysisEngine _engine;
     private readonly IDisplayState _displayState;
@@ -39,6 +38,11 @@ internal sealed class ApplicationShell
     private readonly ISettingsModal _settingsModal;
     private readonly IShowEditModal _showEditModal;
     private readonly IScreenDumpService _screenDumpService;
+    private readonly IKeyHandler<GeneralSettingsHubKeyContext> _generalSettingsHubKeyHandler;
+    private readonly GeneralSettingsHubState _generalSettingsHubState;
+    private readonly UiSettings _uiSettings;
+    private readonly IModeTransitionService _modeTransitionService;
+    private readonly IApplicationModeFactory _applicationModeFactory;
 
     private CancellationTokenSource? _headerRefreshCts;
     private volatile bool _quitAfterDump;
@@ -48,7 +52,6 @@ internal sealed class ApplicationShell
         IVisualizerSettingsRepository visualizerSettingsRepo,
         VisualizerSettings visualizerSettings,
         IPresetRepository presetRepository,
-        IShowRepository showRepository,
         IPaletteRepository paletteRepo,
         AnalysisEngine engine,
         IDisplayState displayState,
@@ -62,13 +65,17 @@ internal sealed class ApplicationShell
         IHelpModal helpModal,
         ISettingsModal settingsModal,
         IShowEditModal showEditModal,
-        IScreenDumpService screenDumpService)
+        IScreenDumpService screenDumpService,
+        IKeyHandler<GeneralSettingsHubKeyContext> generalSettingsHubKeyHandler,
+        GeneralSettingsHubState generalSettingsHubState,
+        UiSettings uiSettings,
+        IModeTransitionService modeTransitionService,
+        IApplicationModeFactory applicationModeFactory)
     {
         _deviceController = deviceController ?? throw new ArgumentNullException(nameof(deviceController));
         _visualizerSettingsRepo = visualizerSettingsRepo;
         _visualizerSettings = visualizerSettings;
         _presetRepository = presetRepository;
-        _showRepository = showRepository;
         _paletteRepo = paletteRepo;
         _engine = engine;
         _displayState = displayState ?? throw new ArgumentNullException(nameof(displayState));
@@ -83,6 +90,11 @@ internal sealed class ApplicationShell
         _settingsModal = settingsModal ?? throw new ArgumentNullException(nameof(settingsModal));
         _showEditModal = showEditModal ?? throw new ArgumentNullException(nameof(showEditModal));
         _screenDumpService = screenDumpService ?? throw new ArgumentNullException(nameof(screenDumpService));
+        _generalSettingsHubKeyHandler = generalSettingsHubKeyHandler ?? throw new ArgumentNullException(nameof(generalSettingsHubKeyHandler));
+        _generalSettingsHubState = generalSettingsHubState ?? throw new ArgumentNullException(nameof(generalSettingsHubState));
+        _uiSettings = uiSettings ?? throw new ArgumentNullException(nameof(uiSettings));
+        _modeTransitionService = modeTransitionService ?? throw new ArgumentNullException(nameof(modeTransitionService));
+        _applicationModeFactory = applicationModeFactory ?? throw new ArgumentNullException(nameof(applicationModeFactory));
     }
 
     /// <summary>Runs the main loop. Does not return until the user quits.</summary>
@@ -98,8 +110,7 @@ internal sealed class ApplicationShell
 
         _orchestrator.SetHeaderCallback(
             () => _headerContainer.DrawMain(_deviceController.CurrentDeviceName),
-            () => _headerContainer.DrawHeaderOnly(_deviceController.CurrentDeviceName),
-            3);
+            () => _headerContainer.DrawHeaderOnly(_deviceController.CurrentDeviceName));
         _orchestrator.SetRenderGuard(() => !modalOpen);
         _orchestrator.SetConsoleLock(consoleLock);
 
@@ -163,6 +174,24 @@ internal sealed class ApplicationShell
             if (System.Console.KeyAvailable)
             {
                 var key = System.Console.ReadKey(true);
+                if (_applicationModeFactory.GetActiveApplicationMode().UsesGeneralSettingsHubKeyHandling)
+                {
+                    var hubCtx = CreateGeneralSettingsHubKeyContext(consoleLock, open => modalOpen = open);
+                    if (_generalSettingsHubKeyHandler.Handle(key, hubCtx))
+                    {
+                        _settingsPersistence.Save();
+                        if (!_displayState.FullScreen)
+                        {
+                            _orchestrator.RedrawWithFullHeader();
+                        }
+                        else
+                        {
+                            _orchestrator.Redraw();
+                        }
+
+                        continue;
+                    }
+                }
                 if (_renderer.HandleKey(key))
                 {
                     _settingsPersistence.Save();
@@ -200,7 +229,7 @@ internal sealed class ApplicationShell
             Orchestrator = _orchestrator,
             Engine = _engine,
             HeaderContainer = _headerContainer,
-            OnModeSwitch = () => HandleModeSwitch(consoleLock),
+            OnModeSwitch = () => _modeTransitionService.CycleToNextMode(),
             OnPresetCycle = CycleToNextPreset,
             SettingsModal = _settingsModal,
             ShowEditModal = _showEditModal,
@@ -215,49 +244,22 @@ internal sealed class ApplicationShell
         };
     }
 
-    private void HandleModeSwitch(object consoleLock)
+    private GeneralSettingsHubKeyContext CreateGeneralSettingsHubKeyContext(object consoleLock, Action<bool> setModalOpen)
     {
-        var allShows = _showRepository.GetAll();
-        if (allShows.Count == 0)
+        return new GeneralSettingsHubKeyContext
         {
-            _showEditModal.Show(consoleLock, () =>
-            {
-                _settingsPersistence.Save();
-                _visualizerSettingsRepo.SaveVisualizerSettings(_visualizerSettings);
-            });
-            allShows = _showRepository.GetAll();
-            if (allShows.Count == 0)
-            {
-                return;
-            }
-        }
-
-        if (_visualizerSettings.ApplicationMode == ApplicationMode.PresetEditor)
-        {
-            var showId = _visualizerSettings.ActiveShowId ?? allShows[0].Id;
-            var show = _showRepository.GetById(showId);
-            if (show == null)
-            {
-                showId = allShows[0].Id;
-                show = _showRepository.GetById(showId);
-            }
-            if (show != null && show.Entries is { Count: > 0 })
-            {
-                _visualizerSettings.ApplicationMode = ApplicationMode.ShowPlay;
-                _visualizerSettings.ActiveShowId = showId;
-                _visualizerSettings.ActiveShowName = show.Name?.Trim();
-                _showPlaybackController.Reset();
-                _showPlaybackController.LoadCurrentEntry();
-                _visualizerSettingsRepo.SaveVisualizerSettings(_visualizerSettings);
-            }
-        }
-        else
-        {
-            _visualizerSettings.ApplicationMode = ApplicationMode.PresetEditor;
-            _visualizerSettings.ActiveShowId = null;
-            _visualizerSettings.ActiveShowName = null;
-            _visualizerSettingsRepo.SaveVisualizerSettings(_visualizerSettings);
-        }
+            SetModalOpen = setModalOpen,
+            SaveSettings = () => _settingsPersistence.Save(),
+            GetDeviceName = () => _deviceController.CurrentDeviceName,
+            StopCapture = _deviceController.StopCapture,
+            StartCapture = _deviceController.StartCapture,
+            RestartCapture = _deviceController.RestartCapture,
+            DeviceSelectionModal = _deviceSelectionModal,
+            UiSettings = _uiSettings,
+            State = _generalSettingsHubState,
+            DisplayState = _displayState,
+            Orchestrator = _orchestrator
+        };
     }
 
     private void CycleToNextPreset()

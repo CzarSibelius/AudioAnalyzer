@@ -7,4 +7,7 @@ internal enum SettingsModalFocus
     SettingsList,
     Renaming,
     EditingSetting,
+
+    /// <summary>Right column shows palette list (inherit + repo palettes).</summary>
+    PickingPalette,
 }

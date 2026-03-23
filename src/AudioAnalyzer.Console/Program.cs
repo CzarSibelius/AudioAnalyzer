@@ -3,6 +3,7 @@ using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Console;
 using AudioAnalyzer.Domain;
 using AudioAnalyzer.Infrastructure;
+using AudioAnalyzer.Visualizers;
 using Microsoft.Extensions.DependencyInjection;
 
 // Parse CLI for screen-dump automation
@@ -25,7 +26,7 @@ for (int i = 1; i < cliArgs.Length; i++)
 
 // Load settings before building the renderer so visualizer settings are available for DI
 var presetRepo = new FilePresetRepository();
-var settingsRepo = new FileSettingsRepository(presetRepo);
+var settingsRepo = new FileSettingsRepository(presetRepo, new DefaultTextLayersSettingsFactory());
 var settings = settingsRepo.LoadAppSettings();
 var visualizerSettings = settingsRepo.LoadVisualizerSettings();
 

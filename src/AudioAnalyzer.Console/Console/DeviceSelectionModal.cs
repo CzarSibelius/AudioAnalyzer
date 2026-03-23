@@ -13,6 +13,8 @@ internal sealed class DeviceSelectionModal : IDeviceSelectionModal
     private readonly AppSettings _settings;
     private readonly UiSettings _uiSettings;
     private readonly IConsoleDimensions _consoleDimensions;
+    private readonly ITitleBarNavigationContext _navigation;
+    private readonly ITitleBarBreadcrumbFormatter _breadcrumbFormatter;
 
     public DeviceSelectionModal(
         IAudioDeviceInfo deviceInfo,
@@ -20,7 +22,9 @@ internal sealed class DeviceSelectionModal : IDeviceSelectionModal
         ISettingsRepository settingsRepo,
         AppSettings settings,
         UiSettings uiSettings,
-        IConsoleDimensions consoleDimensions)
+        IConsoleDimensions consoleDimensions,
+        ITitleBarNavigationContext navigation,
+        ITitleBarBreadcrumbFormatter breadcrumbFormatter)
     {
         _deviceInfo = deviceInfo ?? throw new ArgumentNullException(nameof(deviceInfo));
         _keyHandler = keyHandler ?? throw new ArgumentNullException(nameof(keyHandler));
@@ -28,6 +32,8 @@ internal sealed class DeviceSelectionModal : IDeviceSelectionModal
         _settings = settings ?? throw new ArgumentNullException(nameof(settings));
         _uiSettings = uiSettings ?? throw new ArgumentNullException(nameof(uiSettings));
         _consoleDimensions = consoleDimensions ?? throw new ArgumentNullException(nameof(consoleDimensions));
+        _navigation = navigation ?? throw new ArgumentNullException(nameof(navigation));
+        _breadcrumbFormatter = breadcrumbFormatter ?? throw new ArgumentNullException(nameof(breadcrumbFormatter));
     }
 
     /// <inheritdoc />
@@ -80,51 +86,38 @@ internal sealed class DeviceSelectionModal : IDeviceSelectionModal
         void DrawDeviceContent()
         {
             int width = _consoleDimensions.GetConsoleWidth();
-            string title = " SELECT AUDIO INPUT ";
-            int pad = Math.Max(0, (width - title.Length - 2) / 2);
-            System.Console.WriteLine("╔" + new string('═', width - 2) + "╗");
-            System.Console.WriteLine("║" + new string(' ', pad) + title + new string(' ', width - pad - title.Length - 2) + "║");
-            System.Console.WriteLine("╚" + new string('═', width - 2) + "╝");
-            System.Console.WriteLine();
+            TitleBarBreadcrumbRow.Write(0, width, _breadcrumbFormatter);
+
+            System.Console.SetCursorPosition(0, 1);
             System.Console.WriteLine("  Use ↑/↓ to select, ENTER to confirm, ESC to cancel");
             System.Console.WriteLine();
 
-            for (int i = 0; i < devices.Count; i++)
-            {
-                bool isCurrent = currentDeviceName != null && devices[i].Name == currentDeviceName;
-                string prefix = i == context.SelectedIndex ? " ► " : "   ";
-                string suffix = isCurrent ? " (current)" : "";
-                string line = $"{prefix}{devices[i].Name}{suffix}";
-                if (line.Length < width - 1)
-                {
-                    line = line.PadRight(width - 1);
-                }
-                else
-                {
-                    line = line[..(width - 1)];
-                }
-
-                string lineToWrite;
-                if (i == context.SelectedIndex)
-                {
-                    lineToWrite = AnsiConsole.BackgroundCode(selBg) + AnsiConsole.ColorCode(selFg) + line + AnsiConsole.ResetCode;
-                }
-                else if (isCurrent)
-                {
-                    lineToWrite = AnsiConsole.ColorCode(currentColor) + line + AnsiConsole.ResetCode;
-                }
-                else
-                {
-                    lineToWrite = line;
-                }
-                System.Console.WriteLine(lineToWrite);
-            }
-            System.Console.WriteLine(new string(' ', width - 1));
+            SettingsSurfacesListDrawing.DrawAudioDeviceList(
+                3,
+                width,
+                devices,
+                context.SelectedIndex,
+                currentDeviceName,
+                selBg,
+                selFg,
+                currentColor);
         }
 
         bool HandleKey(ConsoleKeyInfo key) => _keyHandler.Handle(key, context);
 
-        ModalSystem.RunModal(DrawDeviceContent, HandleKey, onClose: () => setModalOpen(false), onEnter: () => setModalOpen(true));
+        ModalSystem.RunModal(
+            DrawDeviceContent,
+            HandleKey,
+            onClose: () =>
+            {
+                setModalOpen(false);
+                _navigation.View = TitleBarViewKind.Main;
+            },
+            onEnter: () =>
+            {
+                setModalOpen(true);
+                _navigation.View = TitleBarViewKind.DeviceAudioInputModal;
+            });
         return (context.ResultId, context.ResultName);
     }
 }

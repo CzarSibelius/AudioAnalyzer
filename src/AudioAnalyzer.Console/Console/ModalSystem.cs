@@ -40,8 +40,9 @@ internal static class ModalSystem
     /// <param name="consoleLock">When set, acquired during clear+draw to avoid interleaving with engine render.</param>
     /// <param name="onClose">Called when the overlay closes.</param>
     /// <param name="onEnter">Called when the overlay opens.</param>
-    /// <param name="onScrollTick">Called on each poll when no key available; use for auto-scrolling content.</param>
-    public static void RunOverlayModal(int overlayRowCount, int consoleWidth, Action drawContent, Func<ConsoleKeyInfo, bool> handleKey, object? consoleLock = null, Action? onClose = null, Action? onEnter = null, Action? onScrollTick = null)
+    /// <param name="onScrollTick">Called on each poll when no key available; use for lightweight updates (e.g. hint line). Ignored when <paramref name="idleFullRedraw"/> is true.</param>
+    /// <param name="idleFullRedraw">When true, idle polls (no key) redraw the overlay without a keypress. Uses in-place redraw (no blank row clear) to avoid flicker; key handling still uses full clear+draw.</param>
+    public static void RunOverlayModal(int overlayRowCount, int consoleWidth, Action drawContent, Func<ConsoleKeyInfo, bool> handleKey, object? consoleLock = null, Action? onClose = null, Action? onEnter = null, Action? onScrollTick = null, bool idleFullRedraw = false)
     {
         System.Console.CursorVisible = false;
         onEnter?.Invoke();
@@ -61,6 +62,12 @@ internal static class ModalSystem
             drawContent();
         }
 
+        /// <summary>Redraw overlay content without clearing rows first. Avoids blank-frame flicker on idle animation; callers must paint full-width lines.</summary>
+        void DrawOverlayInPlace()
+        {
+            drawContent();
+        }
+
         // Draw overlay immediately so it's visible before first key press
         if (consoleLock != null)
         {
@@ -73,6 +80,9 @@ internal static class ModalSystem
         {
             ClearAndDraw();
         }
+
+        long lastIdleOverlayRedrawMs = 0;
+        const int IdleOverlayRedrawMinIntervalMs = 100;
 
         while (true)
         {
@@ -113,6 +123,25 @@ internal static class ModalSystem
                 else
                 {
                     ClearAndDraw();
+                }
+            }
+            else if (idleFullRedraw)
+            {
+                long nowMs = Environment.TickCount64;
+                if (nowMs - lastIdleOverlayRedrawMs >= IdleOverlayRedrawMinIntervalMs)
+                {
+                    lastIdleOverlayRedrawMs = nowMs;
+                    if (consoleLock != null)
+                    {
+                        lock (consoleLock)
+                        {
+                            DrawOverlayInPlace();
+                        }
+                    }
+                    else
+                    {
+                        DrawOverlayInPlace();
+                    }
                 }
             }
             else if (onScrollTick != null)

@@ -24,4 +24,7 @@ internal sealed class SettingsModalKeyContext : IKeyHandlerContext
 
     /// <summary>Called when settings should be persisted.</summary>
     public Action SaveSettings { get; init; } = () => { };
+
+    /// <summary>When set, Enter on the "Render region" row starts live visual bounds editing and closes the modal.</summary>
+    public Action<int>? RequestVisualBoundsEdit { get; init; }
 }

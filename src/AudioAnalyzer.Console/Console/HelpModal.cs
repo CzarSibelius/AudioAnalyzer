@@ -12,20 +12,41 @@ internal sealed class HelpModal : IHelpModal
     private readonly UiSettings _uiSettings;
     private readonly IHelpContentProvider _helpContentProvider;
     private readonly IConsoleDimensions _consoleDimensions;
+    private readonly ITitleBarNavigationContext _navigation;
+    private readonly ITitleBarBreadcrumbFormatter _breadcrumbFormatter;
     private ApplicationMode _currentMode = ApplicationMode.PresetEditor;
 
-    public HelpModal(UiSettings uiSettings, IHelpContentProvider helpContentProvider, IConsoleDimensions consoleDimensions)
+    public HelpModal(
+        UiSettings uiSettings,
+        IHelpContentProvider helpContentProvider,
+        IConsoleDimensions consoleDimensions,
+        ITitleBarNavigationContext navigation,
+        ITitleBarBreadcrumbFormatter breadcrumbFormatter)
     {
         _uiSettings = uiSettings ?? throw new ArgumentNullException(nameof(uiSettings));
         _helpContentProvider = helpContentProvider ?? throw new ArgumentNullException(nameof(helpContentProvider));
         _consoleDimensions = consoleDimensions ?? throw new ArgumentNullException(nameof(consoleDimensions));
+        _navigation = navigation ?? throw new ArgumentNullException(nameof(navigation));
+        _breadcrumbFormatter = breadcrumbFormatter ?? throw new ArgumentNullException(nameof(breadcrumbFormatter));
     }
 
     /// <inheritdoc />
     public void Show(ApplicationMode? currentMode = null, Action? onEnter = null, Action? onClose = null)
     {
         _currentMode = currentMode ?? ApplicationMode.PresetEditor;
-        ModalSystem.RunModal(() => DrawContent(), _ => true, onClose, onEnter);
+        ModalSystem.RunModal(
+            DrawContent,
+            _ => true,
+            onClose: () =>
+            {
+                _navigation.View = TitleBarViewKind.Main;
+                onClose?.Invoke();
+            },
+            onEnter: () =>
+            {
+                _navigation.View = TitleBarViewKind.HelpModal;
+                onEnter?.Invoke();
+            });
     }
 
     /// <summary>Draws help content only; does not clear or read input. Used by RunModal. Uses palette colors per ADR-0033.</summary>
@@ -37,13 +58,15 @@ internal sealed class HelpModal : IHelpModal
         string reset = AnsiConsole.ResetCode;
 
         int width = _consoleDimensions.GetConsoleWidth();
-        string title = " HELP ";
-        int pad = Math.Max(0, (width - title.Length - 2) / 2);
-        System.Console.WriteLine("╔" + new string('═', width - 2) + "╗");
-        System.Console.WriteLine("║" + new string(' ', pad) + title + new string(' ', width - pad - title.Length - 2) + "║");
-        System.Console.WriteLine("╚" + new string('═', width - 2) + "╝");
-        System.Console.WriteLine();
-        string currentView = _currentMode == ApplicationMode.ShowPlay ? "Show play" : "Preset editor";
+        TitleBarBreadcrumbRow.Write(0, width, _breadcrumbFormatter);
+
+        string currentView = _currentMode switch
+        {
+            ApplicationMode.ShowPlay => "Show play",
+            ApplicationMode.Settings => "General settings",
+            _ => "Preset editor",
+        };
+        System.Console.SetCursorPosition(0, 1);
         System.Console.WriteLine(dimmedCode + "  Current: " + currentView + reset);
         System.Console.WriteLine();
 

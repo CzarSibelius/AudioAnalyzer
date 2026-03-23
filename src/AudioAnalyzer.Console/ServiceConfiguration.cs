@@ -1,6 +1,7 @@
 using System.IO.Abstractions;
 using AudioAnalyzer.Application;
 using AudioAnalyzer.Application.Abstractions;
+using AudioAnalyzer.Application.Display;
 using AudioAnalyzer.Application.BeatDetection;
 using AudioAnalyzer.Application.Fft;
 using AudioAnalyzer.Application.VolumeAnalysis;
@@ -66,6 +67,14 @@ internal static class ServiceConfiguration
         services.AddSingleton(typeof(IKeyHandler<>), typeof(GenericKeyHandler<>));
         services.AddSingleton<IKeyHandlerConfig<TextLayersKeyContext>, TextLayersKeyHandlerConfig>();
         services.AddSingleton<ITextLayersToolbarBuilder, TextLayersToolbarBuilder>();
+        services.AddSingleton<ITextLayerBoundsEditSession, TextLayerBoundsEditSession>();
+        services.AddSingleton<PresetEditorApplicationMode>();
+        services.AddSingleton<ShowPlayApplicationMode>();
+        services.AddSingleton<SettingsApplicationMode>();
+        services.AddSingleton<IApplicationModeFactory, ApplicationModeFactory>();
+        services.AddSingleton<IApplicationModeHeaderProvider, ApplicationModeHeaderProvider>();
+        services.AddSingleton<IShowPlayToolbarInfo, ShowPlayToolbarInfo>();
+        services.AddSingleton<IModeTransitionService, ModeTransitionService>();
 
         services.AddSingleton<IVisualizer>(sp => new TextLayersVisualizer(
             sp.GetRequiredService<VisualizerSettings>().TextLayers ?? new TextLayersVisualizerSettings(),
@@ -75,7 +84,10 @@ internal static class ServiceConfiguration
             sp.GetRequiredService<IKeyHandler<TextLayersKeyContext>>(),
             sp.GetRequiredService<ITextLayersToolbarBuilder>(),
             sp.GetRequiredService<ITextLayerStateStore>(),
-            sp.GetRequiredService<UiSettings>()));
+            sp.GetRequiredService<VisualizerSettings>(),
+            sp.GetRequiredService<IShowPlayToolbarInfo>(),
+            sp.GetRequiredService<UiSettings>(),
+            sp.GetRequiredService<ITextLayerBoundsEditSession>()));
 
         services.AddSingleton<IDisplayState, DisplayState>();
         services.AddSingleton<IUiComponentRenderer<ScrollingTextComponent>, ScrollingTextComponentRenderer>();
@@ -83,10 +95,13 @@ internal static class ServiceConfiguration
         services.AddSingleton<IUiComponentRenderer<IUiComponent>>(sp =>
             new UiComponentRenderer(
                 sp.GetRequiredService<IUiComponentRenderer<HorizontalRowComponent>>(),
-                sp.GetRequiredService<IUiComponentRenderer<VisualizerAreaComponent>>()));
+                sp.GetRequiredService<IUiComponentRenderer<VisualizerAreaComponent>>(),
+                sp.GetRequiredService<IUiComponentRenderer<GeneralSettingsHubAreaComponent>>()));
         services.AddSingleton<IUiStateUpdater<HeaderContainer>, HeaderContainerStateUpdater>();
         services.AddSingleton<IUiStateUpdater<IUiComponent>>(sp =>
             new UiComponentStateUpdater(sp.GetRequiredService<IUiStateUpdater<HeaderContainer>>()));
+        services.AddSingleton<ITitleBarNavigationContext, TitleBarNavigationContext>();
+        services.AddSingleton<ITitleBarBreadcrumbFormatter, TitleBarBreadcrumbFormatter>();
         services.AddSingleton<ITitleBarContentProvider, TitleBarContentProvider>();
         services.AddSingleton<IHeaderContainer>(sp =>
             new HeaderContainer(
@@ -96,14 +111,20 @@ internal static class ServiceConfiguration
                 sp.GetRequiredService<INowPlayingProvider>(),
                 sp.GetRequiredService<AnalysisEngine>(),
                 sp.GetRequiredService<UiSettings>(),
-                sp.GetRequiredService<ITitleBarContentProvider>()));
+                sp.GetRequiredService<ITitleBarContentProvider>(),
+                sp.GetRequiredService<IApplicationModeFactory>()));
+        services.AddSingleton<Lazy<IDeviceCaptureController>>(sp =>
+            new Lazy<IDeviceCaptureController>(() => sp.GetRequiredService<IDeviceCaptureController>()));
         services.AddSingleton<IVisualizationRenderer>(sp =>
             new MainContentContainer(
                 sp.GetRequiredService<IUiComponentRenderer<IUiComponent>>(),
                 sp.GetRequiredService<IUiStateUpdater<IUiComponent>>(),
                 sp.GetRequiredService<IVisualizer>(),
                 sp.GetRequiredService<IDisplayState>(),
-                sp.GetRequiredService<UiSettings>()));
+                sp.GetRequiredService<UiSettings>(),
+                sp.GetRequiredService<ITextLayerBoundsEditSession>(),
+                sp.GetRequiredService<IApplicationModeFactory>(),
+                sp.GetRequiredService<Lazy<IDeviceCaptureController>>()));
         services.AddSingleton<IBeatDetector, BeatDetector>();
         services.AddSingleton<IVolumeAnalyzer, VolumeAnalyzer>();
         services.AddSingleton<IFftBandProcessor, FftBandProcessor>();
@@ -113,6 +134,10 @@ internal static class ServiceConfiguration
         services.AddSingleton<IScrollingTextEngine, ScrollingTextEngine>();
         services.AddSingleton<IScrollingTextViewportFactory, ScrollingTextViewportFactory>();
         services.AddSingleton<IUiComponentRenderer<VisualizerAreaComponent>, VisualizerAreaRenderer>();
+        services.AddSingleton<GeneralSettingsHubState>();
+        services.AddSingleton<IUiComponentRenderer<GeneralSettingsHubAreaComponent>, GeneralSettingsHubAreaRenderer>();
+        services.AddSingleton<IKeyHandlerConfig<GeneralSettingsHubKeyContext>, GeneralSettingsHubKeyHandlerConfig>();
+        services.AddSingleton<IKeyHandler<GeneralSettingsHubKeyContext>, GenericKeyHandler<GeneralSettingsHubKeyContext>>();
         services.AddSingleton<IKeyHandlerConfig<DeviceSelectionKeyContext>, DeviceSelectionKeyHandlerConfig>();
         services.AddSingleton<IDeviceSelectionModal, DeviceSelectionModal>();
         services.AddSingleton<IHelpContentProvider, HelpContentProvider>();

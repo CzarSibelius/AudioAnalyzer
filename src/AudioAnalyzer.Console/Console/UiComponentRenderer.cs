@@ -11,13 +11,16 @@ internal sealed class UiComponentRenderer : IUiComponentRenderer<IUiComponent>
 {
     private readonly IUiComponentRenderer<HorizontalRowComponent> _horizontalRow;
     private readonly IUiComponentRenderer<VisualizerAreaComponent> _visualizerArea;
+    private readonly IUiComponentRenderer<GeneralSettingsHubAreaComponent> _generalSettingsHubArea;
 
     public UiComponentRenderer(
         IUiComponentRenderer<HorizontalRowComponent> horizontalRow,
-        IUiComponentRenderer<VisualizerAreaComponent> visualizerArea)
+        IUiComponentRenderer<VisualizerAreaComponent> visualizerArea,
+        IUiComponentRenderer<GeneralSettingsHubAreaComponent> generalSettingsHubArea)
     {
         _horizontalRow = horizontalRow ?? throw new ArgumentNullException(nameof(horizontalRow));
         _visualizerArea = visualizerArea ?? throw new ArgumentNullException(nameof(visualizerArea));
+        _generalSettingsHubArea = generalSettingsHubArea ?? throw new ArgumentNullException(nameof(generalSettingsHubArea));
     }
 
     /// <inheritdoc />
@@ -51,6 +54,7 @@ internal sealed class UiComponentRenderer : IUiComponentRenderer<IUiComponent>
         {
             HorizontalRowComponent => _horizontalRow.Render((HorizontalRowComponent)component, context),
             VisualizerAreaComponent => _visualizerArea.Render((VisualizerAreaComponent)component, context),
+            GeneralSettingsHubAreaComponent => _generalSettingsHubArea.Render((GeneralSettingsHubAreaComponent)component, context),
             _ => ComponentRenderResult.Written(0)
         };
     }
@@ -84,5 +88,6 @@ internal sealed class UiComponentRenderer : IUiComponentRenderer<IUiComponent>
     public void ResetVisualizerAreaCleared()
     {
         _visualizerArea.ResetVisualizerAreaCleared();
+        _generalSettingsHubArea.ResetVisualizerAreaCleared();
     }
 }

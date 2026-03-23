@@ -1,3 +1,4 @@
+using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Domain;
 using AudioAnalyzer.Visualizers;
 
@@ -10,10 +11,12 @@ internal interface ISettingsModalRenderer
     /// <param name="state">Current modal state (focus, selection, buffers).</param>
     /// <param name="sortedLayers">Layers ordered by ZOrder.</param>
     /// <param name="width">Console width in columns.</param>
-    void Draw(SettingsModalState state, IReadOnlyList<TextLayerSettings> sortedLayers, int width);
+    /// <param name="analysisSnapshot">Current analysis snapshot (beat/BPM for palette name coloring).</param>
+    void Draw(SettingsModalState state, IReadOnlyList<TextLayerSettings> sortedLayers, int width, AnalysisSnapshot analysisSnapshot);
 
-    /// <summary>Draws only the hint line at row 3. Used for scroll tick without full redraw.</summary>
-    /// <param name="state">Current modal state.</param>
-    /// <param name="width">Console width in columns.</param>
-    void DrawHintLine(SettingsModalState state, int width);
+    /// <summary>
+    /// Idle poll: redraws the hint line and, when visible, the Palette settings cell or the open palette picker list
+    /// when beat/tick animation frame advances (same phase as toolbar). Batched in one synchronized-output frame to reduce flicker.
+    /// </summary>
+    void DrawIdleOverlayTick(SettingsModalState state, IReadOnlyList<TextLayerSettings> sortedLayers, int width, AnalysisSnapshot analysisSnapshot);
 }

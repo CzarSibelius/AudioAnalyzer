@@ -5,7 +5,7 @@ using AudioAnalyzer.Domain;
 
 namespace AudioAnalyzer.Console;
 
-/// <summary>Header region: title bar, device/now row, BPM/volume row. Implements <see cref="IUiComponent"/> and composes child <see cref="IUiComponent"/>s; renders via <see cref="IUiComponentRenderer{TComponent}"/>.</summary>
+/// <summary>Header region: title bar; in Preset/Show modes also device/now and BPM/volume rows. In General settings, only the title breadcrumb row. Implements <see cref="IUiComponent"/> and composes child <see cref="IUiComponent"/>s; renders via <see cref="IUiComponentRenderer{TComponent}"/>.</summary>
 internal sealed class HeaderContainer : IHeaderContainer, IUiComponent
 {
     private readonly IUiComponentRenderer<IUiComponent> _componentRenderer;
@@ -15,6 +15,7 @@ internal sealed class HeaderContainer : IHeaderContainer, IUiComponent
     private readonly AnalysisEngine _engine;
     private readonly UiSettings _uiSettings;
     private readonly ITitleBarContentProvider _titleBarContentProvider;
+    private readonly IApplicationModeFactory _applicationModeFactory;
 
     private readonly HorizontalRowComponent _titleRow;
     private readonly HorizontalRowComponent _row2;
@@ -36,7 +37,8 @@ internal sealed class HeaderContainer : IHeaderContainer, IUiComponent
         INowPlayingProvider nowPlayingProvider,
         AnalysisEngine engine,
         UiSettings uiSettings,
-        ITitleBarContentProvider titleBarContentProvider)
+        ITitleBarContentProvider titleBarContentProvider,
+        IApplicationModeFactory applicationModeFactory)
     {
         _componentRenderer = componentRenderer ?? throw new ArgumentNullException(nameof(componentRenderer));
         _stateUpdater = stateUpdater ?? throw new ArgumentNullException(nameof(stateUpdater));
@@ -45,6 +47,7 @@ internal sealed class HeaderContainer : IHeaderContainer, IUiComponent
         _engine = engine ?? throw new ArgumentNullException(nameof(engine));
         _uiSettings = uiSettings ?? throw new ArgumentNullException(nameof(uiSettings));
         _titleBarContentProvider = titleBarContentProvider ?? throw new ArgumentNullException(nameof(titleBarContentProvider));
+        _applicationModeFactory = applicationModeFactory ?? throw new ArgumentNullException(nameof(applicationModeFactory));
 
         _titleRow = new HorizontalRowComponent();
         _row2 = new HorizontalRowComponent();
@@ -106,6 +109,12 @@ internal sealed class HeaderContainer : IHeaderContainer, IUiComponent
     {
         var titleDescriptor = new LabeledValueDescriptor("", () => _titleBarContentProvider.GetTitleBarContent(), preformattedAnsi: true);
         _titleRow.SetRowData([titleDescriptor], [context.Width]);
+        int headerLines = _applicationModeFactory.GetActiveApplicationMode().HeaderLineCount;
+        if (headerLines <= 1)
+        {
+            return [_titleRow];
+        }
+
         _row2.SetRowData(BuildRow2Viewports(), BuildRow2Widths(context.Width));
         _row3.SetRowData(BuildRow3Viewports(), BuildRow3Widths(context.Width));
         return [_titleRow, _row2, _row3];
@@ -115,11 +124,12 @@ internal sealed class HeaderContainer : IHeaderContainer, IUiComponent
     {
         int width = Math.Max(10, _displayDimensions.Width);
         var palette = _uiSettings.Palette ?? new UiPalette();
+        int headerLines = _applicationModeFactory.GetActiveApplicationMode().HeaderLineCount;
         return new RenderContext
         {
             Width = width,
             StartRow = 0,
-            MaxLines = 3,
+            MaxLines = Math.Max(1, headerLines),
             Palette = palette,
             ScrollSpeed = _uiSettings.DefaultScrollingSpeed,
             DeviceName = deviceName,

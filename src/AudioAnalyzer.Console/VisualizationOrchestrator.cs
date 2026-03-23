@@ -23,7 +23,6 @@ internal sealed class VisualizationOrchestrator : IVisualizationOrchestrator
     private DateTime _lastUpdate = DateTime.Now;
     private int _lastTerminalWidth;
     private int _lastTerminalHeight;
-    private int _headerStartRow = 3;
     private int _displayStartRow = 3;
     private int _overlayRowCount;
     private Action? _onRedrawHeader;
@@ -36,27 +35,29 @@ internal sealed class VisualizationOrchestrator : IVisualizationOrchestrator
     private readonly IVisualizationRenderer _renderer;
     private readonly IDisplayDimensions _displayDimensions;
     private readonly IDisplayState _displayState;
+    private readonly IApplicationModeHeaderProvider _headerLayout;
 
     public VisualizationOrchestrator(
         AnalysisEngine engine,
         IVisualizationRenderer renderer,
         IDisplayDimensions displayDimensions,
-        IDisplayState displayState)
+        IDisplayState displayState,
+        IApplicationModeHeaderProvider headerLayout)
     {
         _engine = engine ?? throw new ArgumentNullException(nameof(engine));
         _renderer = renderer ?? throw new ArgumentNullException(nameof(renderer));
         _displayDimensions = displayDimensions ?? throw new ArgumentNullException(nameof(displayDimensions));
         _displayState = displayState ?? throw new ArgumentNullException(nameof(displayState));
+        _headerLayout = headerLayout ?? throw new ArgumentNullException(nameof(headerLayout));
         _displayState.Changed += (_, _) => UpdateDisplayStartRow();
         UpdateNumBandsFromDimensions();
     }
 
     /// <inheritdoc />
-    public void SetHeaderCallback(Action? redrawHeader, Action? refreshHeader, int startRow)
+    public void SetHeaderCallback(Action? redrawHeader, Action? refreshHeader)
     {
         _onRedrawHeader = redrawHeader;
         _onRefreshHeader = refreshHeader;
-        _headerStartRow = startRow;
         UpdateDisplayStartRow();
     }
 
@@ -134,6 +135,9 @@ internal sealed class VisualizationOrchestrator : IVisualizationOrchestrator
     }
 
     /// <inheritdoc />
+    public AnalysisSnapshot GetSnapshotForUi() => _engine.GetSnapshot();
+
+    /// <inheritdoc />
     public void OnAudioData(byte[] buffer, int bytesRecorded, AudioFormat format)
     {
         _engine.ProcessAudio(buffer, bytesRecorded, format);
@@ -185,6 +189,8 @@ internal sealed class VisualizationOrchestrator : IVisualizationOrchestrator
 
     private void DoRender(int w, int h, bool useFullHeaderRedraw)
     {
+        UpdateDisplayStartRow();
+
         void RenderCore()
         {
             if (!_displayState.FullScreen && _overlayRowCount == 0)
@@ -245,7 +251,7 @@ internal sealed class VisualizationOrchestrator : IVisualizationOrchestrator
         }
         else
         {
-            _displayStartRow = _headerStartRow;
+            _displayStartRow = _headerLayout.HeaderLineCount;
         }
     }
 

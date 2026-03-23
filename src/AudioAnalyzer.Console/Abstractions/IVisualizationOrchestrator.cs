@@ -16,12 +16,11 @@ namespace AudioAnalyzer.Console;
 internal interface IVisualizationOrchestrator
 {
     /// <summary>
-    /// Configures header callbacks and the row where the header starts.
+    /// Configures header callbacks. Main content start row follows the active application mode header line count.
     /// </summary>
     /// <param name="redrawHeader">Full redraw (clear + header), e.g. on resize or keypress.</param>
     /// <param name="refreshHeader">Redraw only the header lines (no clear), called before each render.</param>
-    /// <param name="startRow">Row index where the header starts.</param>
-    void SetHeaderCallback(Action? redrawHeader, Action? refreshHeader, int startRow);
+    void SetHeaderCallback(Action? redrawHeader, Action? refreshHeader);
 
     /// <summary>
     /// When set, the orchestrator skips rendering when the guard returns false (e.g. when a modal is open).
@@ -54,4 +53,9 @@ internal interface IVisualizationOrchestrator
     /// Call from the audio capture callback.
     /// </summary>
     void OnAudioData(byte[] buffer, int bytesRecorded, AudioFormat format);
+
+    /// <summary>
+    /// Current analysis snapshot for UI (e.g. settings modal palette phase). Delegates to the analysis engine.
+    /// </summary>
+    AnalysisSnapshot GetSnapshotForUi();
 }

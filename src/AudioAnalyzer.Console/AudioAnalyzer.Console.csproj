@@ -29,6 +29,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="palettes\*.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="presets\*.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

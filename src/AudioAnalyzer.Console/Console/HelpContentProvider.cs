@@ -11,6 +11,7 @@ internal sealed class HelpContentProvider : IHelpContentProvider
     private const string SectionLayeredText = "Layered text";
     private const string SectionPresetSettingsModal = "Preset settings modal (S)";
     private const string SectionShowEditModal = "Show edit modal (S when in Show play)";
+    private const string SectionGeneralSettingsHub = "General settings hub";
     private const string SectionDeviceSelection = "Device selection";
     private const string SectionGeneral = "General";
 
@@ -18,20 +19,26 @@ internal sealed class HelpContentProvider : IHelpContentProvider
     private readonly IKeyHandlerConfig<DeviceSelectionKeyContext> _deviceSelectionConfig;
     private readonly IKeyHandlerConfig<SettingsModalKeyContext> _settingsModalConfig;
     private readonly IKeyHandlerConfig<ShowEditModalKeyContext> _showEditConfig;
+    private readonly IKeyHandlerConfig<GeneralSettingsHubKeyContext> _generalSettingsHubConfig;
     private readonly IKeyHandlerConfig<TextLayersKeyContext> _textLayersConfig;
+    private readonly ITextLayerBoundsEditSession _boundsEditSession;
 
     public HelpContentProvider(
         IKeyHandlerConfig<MainLoopKeyContext> mainLoopConfig,
         IKeyHandlerConfig<DeviceSelectionKeyContext> deviceSelectionConfig,
         IKeyHandlerConfig<SettingsModalKeyContext> settingsModalConfig,
         IKeyHandlerConfig<ShowEditModalKeyContext> showEditConfig,
-        IKeyHandlerConfig<TextLayersKeyContext> textLayersConfig)
+        IKeyHandlerConfig<GeneralSettingsHubKeyContext> generalSettingsHubConfig,
+        IKeyHandlerConfig<TextLayersKeyContext> textLayersConfig,
+        ITextLayerBoundsEditSession boundsEditSession)
     {
         _mainLoopConfig = mainLoopConfig ?? throw new ArgumentNullException(nameof(mainLoopConfig));
         _deviceSelectionConfig = deviceSelectionConfig ?? throw new ArgumentNullException(nameof(deviceSelectionConfig));
         _settingsModalConfig = settingsModalConfig ?? throw new ArgumentNullException(nameof(settingsModalConfig));
         _showEditConfig = showEditConfig ?? throw new ArgumentNullException(nameof(showEditConfig));
+        _generalSettingsHubConfig = generalSettingsHubConfig ?? throw new ArgumentNullException(nameof(generalSettingsHubConfig));
         _textLayersConfig = textLayersConfig ?? throw new ArgumentNullException(nameof(textLayersConfig));
+        _boundsEditSession = boundsEditSession ?? throw new ArgumentNullException(nameof(boundsEditSession));
     }
 
     /// <inheritdoc />
@@ -42,6 +49,7 @@ internal sealed class HelpContentProvider : IHelpContentProvider
         allBindings.AddRange(_deviceSelectionConfig.GetBindings());
         allBindings.AddRange(_settingsModalConfig.GetBindings());
         allBindings.AddRange(_showEditConfig.GetBindings());
+        allBindings.AddRange(_generalSettingsHubConfig.GetBindings());
         allBindings.AddRange(_textLayersConfig.GetBindings());
 
         var bySection = new Dictionary<string, List<KeyBinding>>(StringComparer.Ordinal);
@@ -61,8 +69,21 @@ internal sealed class HelpContentProvider : IHelpContentProvider
         }
 
         // Only include the modal section for the current mode (mode-specific help).
-        string modalSection = currentMode == ApplicationMode.ShowPlay ? SectionShowEditModal : SectionPresetSettingsModal;
-        string[] sectionOrder = [SectionKeyboardControls, SectionLayeredText, modalSection, SectionDeviceSelection, SectionGeneral];
+        string modalSection = currentMode switch
+        {
+            ApplicationMode.ShowPlay => SectionShowEditModal,
+            ApplicationMode.Settings => SectionGeneralSettingsHub,
+            _ => SectionPresetSettingsModal,
+        };
+        var sectionOrder = new List<string> { SectionKeyboardControls };
+        if (currentMode != ApplicationMode.Settings)
+        {
+            sectionOrder.Add(SectionLayeredText);
+        }
+
+        sectionOrder.Add(modalSection);
+        sectionOrder.Add(SectionDeviceSelection);
+        sectionOrder.Add(SectionGeneral);
 
         var result = new List<HelpSection>();
         foreach (var title in sectionOrder)
@@ -72,6 +93,12 @@ internal sealed class HelpContentProvider : IHelpContentProvider
                 result.Add(new HelpSection(title, bindings));
             }
         }
+
+        if (_boundsEditSession.IsActive)
+        {
+            result.Add(new HelpSection("Layer render bounds (visual edit)", _boundsEditSession.GetHelpBindings().ToList()));
+        }
+
         return result;
     }
 }
