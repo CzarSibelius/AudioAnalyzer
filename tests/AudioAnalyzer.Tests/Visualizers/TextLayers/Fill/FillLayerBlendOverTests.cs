@@ -5,7 +5,7 @@ using AudioAnalyzer.Domain;
 using AudioAnalyzer.Visualizers;
 using Xunit;
 
-namespace AudioAnalyzer.Tests;
+namespace AudioAnalyzer.Tests.Visualizers.TextLayers.Fill;
 
 /// <summary>Verifies Fill BlendOver reads per-cell under-color (not a single averaged slab).</summary>
 public sealed class FillLayerBlendOverTests

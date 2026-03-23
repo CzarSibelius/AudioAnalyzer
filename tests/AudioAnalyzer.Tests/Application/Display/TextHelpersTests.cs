@@ -2,7 +2,7 @@ using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Application.Display;
 using Xunit;
 
-namespace AudioAnalyzer.Tests;
+namespace AudioAnalyzer.Tests.Application.Display;
 
 /// <summary>Tests for TextHelpers.Hackerize transformation.</summary>
 public sealed class TextHelpersTests

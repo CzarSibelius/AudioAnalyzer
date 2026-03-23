@@ -8,7 +8,7 @@ using AudioAnalyzer.Infrastructure.NowPlaying;
 using AudioAnalyzer.Visualizers;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace AudioAnalyzer.Tests;
+namespace AudioAnalyzer.Tests.TestSupport;
 
 /// <summary>Shared test setup for render and preset tests. Uses MockFileSystem for deterministic, isolated tests.</summary>
 internal static class TestHelpers

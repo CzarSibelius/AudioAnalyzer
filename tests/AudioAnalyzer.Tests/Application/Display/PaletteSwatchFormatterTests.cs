@@ -3,7 +3,7 @@ using AudioAnalyzer.Application.Display;
 using AudioAnalyzer.Domain;
 using Xunit;
 
-namespace AudioAnalyzer.Tests;
+namespace AudioAnalyzer.Tests.Application.Display;
 
 /// <summary>Unit tests for <see cref="PaletteSwatchFormatter"/>.</summary>
 public sealed class PaletteSwatchFormatterTests
@@ -53,5 +53,40 @@ public sealed class PaletteSwatchFormatterTests
         var snap = new AnalysisSnapshot { CurrentBpm = 120, BeatCount = 7 };
         int p = PaletteSwatchFormatter.ComputeToolbarPhaseOffset(snap, 5);
         Assert.Equal(7 % 5, p);
+    }
+
+    [Fact]
+    public void PaletteAnimationFrameAdvanced_bpm_path_advances_on_beat_change()
+    {
+        var snap = new AnalysisSnapshot { CurrentBpm = 120, BeatCount = 7 };
+        bool advanced = PaletteSwatchFormatter.PaletteAnimationFrameAdvanced(snap, 6, 0, out int beatCount, out _);
+        Assert.True(advanced);
+        Assert.Equal(7, beatCount);
+    }
+
+    [Fact]
+    public void PaletteAnimationFrameAdvanced_bpm_path_false_when_same_beat()
+    {
+        var snap = new AnalysisSnapshot { CurrentBpm = 120, BeatCount = 7 };
+        bool advanced = PaletteSwatchFormatter.PaletteAnimationFrameAdvanced(snap, 7, 0, out _, out _);
+        Assert.False(advanced);
+    }
+
+    [Fact]
+    public void PaletteAnimationFrameAdvanced_tick_path_false_when_same_bucket()
+    {
+        long bucket = PaletteSwatchFormatter.GetPaletteAnimationTickBucket();
+        var snap = new AnalysisSnapshot { CurrentBpm = 0, BeatCount = 0 };
+        bool advanced = PaletteSwatchFormatter.PaletteAnimationFrameAdvanced(snap, 0, bucket, out _, out long b1);
+        Assert.False(advanced);
+        Assert.Equal(bucket, b1);
+    }
+
+    [Fact]
+    public void PaletteAnimationFrameAdvanced_tick_path_true_when_bucket_differs()
+    {
+        var snap = new AnalysisSnapshot { CurrentBpm = 0, BeatCount = 0 };
+        bool advanced = PaletteSwatchFormatter.PaletteAnimationFrameAdvanced(snap, 0, -1, out _, out _);
+        Assert.True(advanced);
     }
 }

@@ -3,7 +3,7 @@ using AudioAnalyzer.Application.Display;
 using AudioAnalyzer.Domain;
 using Xunit;
 
-namespace AudioAnalyzer.Tests;
+namespace AudioAnalyzer.Tests.Application.Display;
 
 /// <summary>Tests for <see cref="TitleBarBreadcrumbFormatter"/> (ADR-0060).</summary>
 public sealed class TitleBarBreadcrumbFormatterTests
@@ -46,13 +46,29 @@ public sealed class TitleBarBreadcrumbFormatterTests
 
     private static UiSettings CreateUiSettings() => new() { TitleBarAppName = "aUdioNLZR" };
 
+    private sealed class TestUiThemeResolver : IUiThemeResolver
+    {
+        private readonly UiSettings _ui;
+
+        public TestUiThemeResolver(UiSettings ui) => _ui = ui;
+
+        public UiPalette GetEffectiveUiPalette() => _ui.Palette ?? new UiPalette();
+
+        public TitleBarPalette GetEffectiveTitleBarPalette() => _ui.TitleBarPalette ?? new TitleBarPalette();
+    }
+
+    private static TitleBarBreadcrumbFormatter CreateFormatter(VisualizerSettings vs, IVisualizer viz, ITitleBarNavigationContext nav)
+    {
+        var ui = CreateUiSettings();
+        return new TitleBarBreadcrumbFormatter(ui, new TestUiThemeResolver(ui), vs, viz, nav);
+    }
+
     [Fact]
     public void MainView_IncludesLayerSegment_WhenZIndexKnown()
     {
         var nav = new TestNav { View = TitleBarViewKind.Main };
         var vs = CreateVisualizerSettings();
-        var f = new TitleBarBreadcrumbFormatter(
-            CreateUiSettings(),
+        var f = CreateFormatter(
             vs,
             new StubVisualizer { LayerName = "ascii_image", Z = 0 },
             nav);
@@ -69,8 +85,7 @@ public sealed class TitleBarBreadcrumbFormatterTests
     public void PresetSettingsModal_OmitsSettingsSegment_EndsAtPresetWhenNoLayer()
     {
         var nav = new TestNav { View = TitleBarViewKind.PresetSettingsModal, PresetSettingsPalettePickerActive = false };
-        var f = new TitleBarBreadcrumbFormatter(
-            CreateUiSettings(),
+        var f = CreateFormatter(
             CreateVisualizerSettings(),
             new StubVisualizer(),
             nav);
@@ -91,8 +106,7 @@ public sealed class TitleBarBreadcrumbFormatterTests
             PresetSettingsLayerOneBased = 2,
             PresetSettingsLayerTypeRaw = "Fill"
         };
-        var f = new TitleBarBreadcrumbFormatter(
-            CreateUiSettings(),
+        var f = CreateFormatter(
             CreateVisualizerSettings(),
             new StubVisualizer(),
             nav);
@@ -113,8 +127,7 @@ public sealed class TitleBarBreadcrumbFormatterTests
             PresetSettingsLayerTypeRaw = "Fill",
             PresetSettingsFocusedSettingId = "Speed"
         };
-        var f = new TitleBarBreadcrumbFormatter(
-            CreateUiSettings(),
+        var f = CreateFormatter(
             CreateVisualizerSettings(),
             new StubVisualizer(),
             nav);
@@ -124,6 +137,49 @@ public sealed class TitleBarBreadcrumbFormatterTests
         Assert.Contains("fIll", line);
         Assert.Contains("sPeed", line);
         Assert.DoesNotContain("sEttings", line);
+    }
+
+    [Fact]
+    public void PresetSettingsModal_PresetRow_FocusedSetting_AppendsWithoutLayerSegment()
+    {
+        var nav = new TestNav
+        {
+            View = TitleBarViewKind.PresetSettingsModal,
+            PresetSettingsPalettePickerActive = false,
+            PresetSettingsLayerOneBased = null,
+            PresetSettingsLayerTypeRaw = null,
+            PresetSettingsFocusedSettingId = "DefaultPalette"
+        };
+        var f = CreateFormatter(
+            CreateVisualizerSettings(),
+            new StubVisualizer(),
+            nav);
+
+        string line = StripAnsi(f.BuildAnsiLine());
+        Assert.Contains("mY_Preset", line);
+        Assert.Contains("dEfaultPalette", line);
+        Assert.DoesNotContain("[1]:", line);
+    }
+
+    [Fact]
+    public void PresetSettingsModal_PresetRow_PalettePicker_AppendsEditorAfterSettingSegment()
+    {
+        var nav = new TestNav
+        {
+            View = TitleBarViewKind.PresetSettingsModal,
+            PresetSettingsPalettePickerActive = true,
+            PresetSettingsLayerOneBased = null,
+            PresetSettingsLayerTypeRaw = null,
+            PresetSettingsFocusedSettingId = "DefaultPalette"
+        };
+        var f = CreateFormatter(
+            CreateVisualizerSettings(),
+            new StubVisualizer(),
+            nav);
+
+        string line = StripAnsi(f.BuildAnsiLine());
+        Assert.Contains("dEfaultPalette", line);
+        Assert.Contains("eDitor", line);
     }
 
     [Fact]
@@ -137,8 +193,7 @@ public sealed class TitleBarBreadcrumbFormatterTests
             PresetSettingsLayerTypeRaw = "Oscilloscope",
             PresetSettingsFocusedSettingId = "Palette"
         };
-        var f = new TitleBarBreadcrumbFormatter(
-            CreateUiSettings(),
+        var f = CreateFormatter(
             CreateVisualizerSettings(),
             new StubVisualizer(),
             nav);
@@ -153,8 +208,7 @@ public sealed class TitleBarBreadcrumbFormatterTests
     public void DeviceAudioInput_UsesAppSettingsTrack()
     {
         var nav = new TestNav { View = TitleBarViewKind.DeviceAudioInputModal };
-        var f = new TitleBarBreadcrumbFormatter(
-            CreateUiSettings(),
+        var f = CreateFormatter(
             CreateVisualizerSettings(),
             new StubVisualizer(),
             nav);
@@ -169,8 +223,7 @@ public sealed class TitleBarBreadcrumbFormatterTests
     public void MainView_SettingsMode_ShowsHubHome()
     {
         var nav = new TestNav { View = TitleBarViewKind.Main };
-        var f = new TitleBarBreadcrumbFormatter(
-            CreateUiSettings(),
+        var f = CreateFormatter(
             CreateVisualizerSettings(ApplicationMode.Settings),
             new StubVisualizer(),
             nav);

@@ -1,6 +1,6 @@
 using AudioAnalyzer.Application.Abstractions;
 
-namespace AudioAnalyzer.Tests;
+namespace AudioAnalyzer.Tests.TestSupport;
 
 /// <summary>IDisplayDimensions that returns fixed values for reproducible tests.</summary>
 public sealed class FixedDisplayDimensions : IDisplayDimensions

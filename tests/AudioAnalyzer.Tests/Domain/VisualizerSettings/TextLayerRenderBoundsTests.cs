@@ -1,7 +1,7 @@
 using AudioAnalyzer.Domain;
 using Xunit;
 
-namespace AudioAnalyzer.Tests;
+namespace AudioAnalyzer.Tests.Domain.VisualizerSettings;
 
 public sealed class TextLayerRenderBoundsTests
 {

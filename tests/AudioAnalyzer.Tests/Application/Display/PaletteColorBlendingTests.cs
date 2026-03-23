@@ -2,7 +2,7 @@ using AudioAnalyzer.Application.Display;
 using AudioAnalyzer.Domain;
 using Xunit;
 
-namespace AudioAnalyzer.Tests;
+namespace AudioAnalyzer.Tests.Application.Display;
 
 /// <summary>Unit tests for <see cref="PaletteColorBlending"/>.</summary>
 public sealed class PaletteColorBlendingTests

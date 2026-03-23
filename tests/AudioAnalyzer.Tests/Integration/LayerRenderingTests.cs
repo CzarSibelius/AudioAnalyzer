@@ -1,9 +1,10 @@
 using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Domain;
+using AudioAnalyzer.Tests.TestSupport;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
-namespace AudioAnalyzer.Tests;
+namespace AudioAnalyzer.Tests.Integration;
 
 /// <summary>Verifies each layer type renders without throwing. Guards against regressions when adding or modifying layers.</summary>
 public sealed class LayerRenderingTests

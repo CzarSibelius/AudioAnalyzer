@@ -4,7 +4,7 @@ using AudioAnalyzer.Application.Display;
 using AudioAnalyzer.Domain;
 using Xunit;
 
-namespace AudioAnalyzer.Tests;
+namespace AudioAnalyzer.Tests.Application.Display;
 
 /// <summary>Tests for ScrollingTextViewport grapheme-cluster and display-width handling (emoji, surrogate pairs).</summary>
 public sealed class ScrollingTextViewportTests

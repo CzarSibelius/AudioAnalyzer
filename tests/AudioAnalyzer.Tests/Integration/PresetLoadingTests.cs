@@ -2,11 +2,12 @@ using System.IO.Abstractions.TestingHelpers;
 using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Domain;
 using AudioAnalyzer.Infrastructure;
+using AudioAnalyzer.Tests.TestSupport;
 using AudioAnalyzer.Visualizers;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
-namespace AudioAnalyzer.Tests;
+namespace AudioAnalyzer.Tests.Integration;
 
 /// <summary>Verifies preset loading, saving, and round-trip. Ensures preset config integrates with the render pipeline.</summary>
 public sealed class PresetLoadingTests

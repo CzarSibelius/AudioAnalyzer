@@ -1,7 +1,7 @@
 using AudioAnalyzer.Visualizers;
 using Xunit;
 
-namespace AudioAnalyzer.Tests;
+namespace AudioAnalyzer.Tests.Visualizers.TextLayers.Fill;
 
 /// <summary>Unit tests for Fill layer gradient parameterization.</summary>
 public sealed class FillLayerGradientTests

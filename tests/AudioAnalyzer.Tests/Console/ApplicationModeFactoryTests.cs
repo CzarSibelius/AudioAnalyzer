@@ -2,7 +2,7 @@ using AudioAnalyzer.Console;
 using AudioAnalyzer.Domain;
 using Xunit;
 
-namespace AudioAnalyzer.Tests;
+namespace AudioAnalyzer.Tests.Console;
 
 public sealed class ApplicationModeFactoryTests
 {

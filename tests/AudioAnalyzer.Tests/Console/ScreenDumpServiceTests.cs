@@ -1,7 +1,7 @@
 using AudioAnalyzer.Console;
 using Xunit;
 
-namespace AudioAnalyzer.Tests;
+namespace AudioAnalyzer.Tests.Console;
 
 /// <summary>Tests for screen dump (ASCII screenshot) functionality.</summary>
 public sealed class ScreenDumpServiceTests
@@ -27,7 +27,14 @@ public sealed class ScreenDumpServiceTests
         {
             if (Directory.Exists(dir))
             {
-                try { Directory.Delete(dir, recursive: true); } catch { /* best effort */ }
+                try
+                {
+                    Directory.Delete(dir, recursive: true);
+                }
+                catch (Exception ex)
+                {
+                    _ = ex; /* best-effort: temp dir cleanup may fail if locked */
+                }
             }
         }
     }

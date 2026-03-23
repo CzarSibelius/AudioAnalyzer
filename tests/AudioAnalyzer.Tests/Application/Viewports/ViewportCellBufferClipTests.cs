@@ -2,7 +2,7 @@ using AudioAnalyzer.Application.Viewports;
 using AudioAnalyzer.Domain;
 using Xunit;
 
-namespace AudioAnalyzer.Tests;
+namespace AudioAnalyzer.Tests.Application.Viewports;
 
 public sealed class ViewportCellBufferClipTests
 {

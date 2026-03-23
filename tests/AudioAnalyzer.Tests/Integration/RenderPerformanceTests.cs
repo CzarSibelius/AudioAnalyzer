@@ -1,10 +1,11 @@
 using System.Diagnostics;
 using AudioAnalyzer.Application;
 using AudioAnalyzer.Application.Abstractions;
+using AudioAnalyzer.Tests.TestSupport;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
-namespace AudioAnalyzer.Tests;
+namespace AudioAnalyzer.Tests.Integration;
 
 public sealed class RenderPerformanceTests
 {
