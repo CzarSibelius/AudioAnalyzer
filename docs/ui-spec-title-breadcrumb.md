@@ -15,8 +15,10 @@ This document describes the **title breadcrumb line** that appears on **row 0** 
 |--------|-----------------------------|
 | Main (Preset editor / Show play) | `aUdioNLZR/pReset/my_Preset[3]:fIll` |
 | S modal (layer list focus) | `aUdioNLZR/pReset/my_Preset[3]:fIll` |
+| S modal (Preset row, settings column — no `[n]:layer`) | `aUdioNLZR/pReset/my_Preset/dEfaultPalette` |
 | S modal (settings column, e.g. Speed) | `aUdioNLZR/pReset/my_Preset[3]:fIll/sPeed` |
 | S modal + palette picker | `aUdioNLZR/pReset/my_Preset[3]:fIll/pAlette/eDitor` |
+| S modal Preset row + palette picker | `aUdioNLZR/pReset/my_Preset/dEfaultPalette/eDitor` |
 | Show edit modal | `aUdioNLZR/sHow/my_Preset/sHowedit` |
 | Help modal | `aUdioNLZR/pReset/my_Preset/hElp` |
 | Device (audio input) | `aUdioNLZR/sEttings/aUdioinput` |

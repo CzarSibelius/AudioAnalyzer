@@ -6,7 +6,7 @@ When adding or changing features:
 
 2. **Visualizer specs**: When adding or changing visualizers, create or update the corresponding spec in `docs/visualizers/` (see `docs/visualizers/README.md` for the index and format).
 
-3. **UI specs**: When changing console layout, header, modals, or any documented screen, read and update the relevant UI spec in `docs/` (see `docs/ui-spec-format.md` and `.cursor/rules/ui-specs.mdc`). Regenerate screenshot and line reference when the number or meaning of lines changes. Use screen dump (Ctrl+Shift+E or `--dump-after N` / `--dump-path`) to capture ASCII output for specs.
+3. **UI specs**: When changing console layout, header, modals, or any documented screen, read and update the relevant UI spec in `docs/` (see `docs/ui-spec-format.md`, `docs/ui-spec-application-modes.md` for top-level modes, and `.cursor/rules/ui-specs.mdc`). Regenerate screenshot and line reference when the number or meaning of lines changes. Use screen dump (Ctrl+Shift+E or `--dump-after N` / `--dump-path`) to capture ASCII output for specs.
 
 4. **Update the README**: When changing behavior, dependencies, or usage, update README.md so these sections stay accurate: Prerequisites, How to Run, Usage, What It Does, Dependencies, Notes.
 

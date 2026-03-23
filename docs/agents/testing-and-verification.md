@@ -1,5 +1,9 @@
 # Testing and verification
 
+## Test project layout
+
+Place new test files under `tests/AudioAnalyzer.Tests/` so folders mirror the production project and path (for example `Application/Display/` for code under `src/AudioAnalyzer.Application/Display/`). Shared helpers belong in `TestSupport/` (or `Common/`); cross-assembly tests with no single primary SUT may use `Integration/`. See [ADR-0064](../adr/0064-test-project-mirrors-production-layout.md).
+
 ## Verification checklist (after making changes)
 
 1. Run `dotnet build .\AudioAnalyzer.sln` — must succeed with 0 warnings.

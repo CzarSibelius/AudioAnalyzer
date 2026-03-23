@@ -10,16 +10,18 @@ Layer settings (common: Enabled, LayerType, ZOrder, SpeedMultiplier, ColorIndex,
 
 1. The **S settings modal** (opened with S) is the **canonical UI** for editing layer settings.
 
-2. When adding or changing editing for layer properties (common or Custom), implement the editing in the S modal.
+2. The same modal includes a **Preset** line in the left column (above the layer list) for **preset-level** fields that are not per-layer: active **preset name** and **default palette** (`TextLayersVisualizerSettings.PaletteId`). Quick keys **V** (cycle default palette) and **R** (rename) remain; the Preset row provides navigable editing alongside layer settings.
 
-3. Quick-access keys (e.g. [ ] for Oscilloscope gain, P for palette) may remain as conveniences when a layer is selected outside the modal; the modal provides full editing.
+3. When adding or changing editing for layer properties (common or Custom), implement the editing in the S modal.
 
-4. The modal shows the selected layer's properties and allows editing them via keyboard (cycle, type, adjust). Layer-specific Custom settings are edited in the same place, branching on LayerType per [ADR-0021](0021-textlayer-settings-common-custom.md).
+4. Quick-access keys (e.g. [ ] for Oscilloscope gain, P for palette) may remain as conveniences when a layer is selected outside the modal; the modal provides full editing.
+
+5. The modal shows the selected layer's properties and allows editing them via keyboard (cycle, type, adjust). Layer-specific Custom settings are edited in the same place, branching on LayerType per [ADR-0021](0021-textlayer-settings-common-custom.md).
 
 ## Consequences
 
 - New layer settings editing goes in `ShowTextLayersSettingsModal` (or shared modal logic), not in `TextLayersVisualizer.HandleKey` or other ad-hoc places.
 - Layer *Settings.cs types and GetCustom/SetCustom remain the source of truth; the modal reads/writes via them.
 - [ADR-0019](0019-preset-textlayers-configuration.md) and [ADR-0021](0021-textlayer-settings-common-custom.md) stay valid; this ADR complements them by specifying *where* editing lives.
-- Visualizer specs and README should note that layer settings are edited in the S modal.
+- Visualizer specs and README should note that layer settings are edited in the S modal; preset name and default palette are edited via the **Preset** row in the same modal (see also [ADR-0019](0019-preset-textlayers-configuration.md)).
 - **References**: [Program.cs ShowTextLayersSettingsModal](../../src/AudioAnalyzer.Console/Program.cs), [ADR-0006](0006-modal-system.md), [ADR-0019](0019-preset-textlayers-configuration.md), [ADR-0021](0021-textlayer-settings-common-custom.md).

@@ -17,4 +17,3 @@ Reduce component-specific renderer interfaces by using `IUiComponentRenderer<TCo
 ## Deferred: Application UI palette in General settings
 
 **General Settings hub** ([ADR-0061](../adr/0061-general-settings-mode.md)): MVP includes audio input and **Application name** (`UiSettings.TitleBarAppName`). **Editing `UiSettings.Palette`** (semantic UI colors in appsettings) from the hub is **not implemented** — add a future task (e.g. theme presets or per-slot editor) when picked up.
-

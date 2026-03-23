@@ -79,6 +79,8 @@ Decisions are numbered and kept under version control so the rationale stays wit
 | [0061](0061-general-settings-mode.md) | General Settings mode — Tab cycle, hub UI, app-wide settings (MVP) | Accepted |
 | [0062](0062-application-mode-classes.md) | Application modes as `IApplicationMode` classes — layout, toolbar, header chrome | Accepted |
 | [0063](0063-uniform-settings-list-and-palette-drawing.md) | Uniform settings list and palette drawing (shared helpers, hub rows via HorizontalRowComponent) | Accepted |
+| [0064](0064-test-project-mirrors-production-layout.md) | Test project folder layout mirrors production (single test project) | Accepted |
+| [0065](0065-ui-theme-from-layer-palettes.md) | UI theme from shared layer palette files — `UiThemePaletteId`, hub + modal, `IUiThemeResolver` | Accepted |
 
 ## Process
 

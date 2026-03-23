@@ -1,6 +1,8 @@
-# UI spec example: Main view (preset mode)
+# UI spec: Preset editor mode
 
-This example follows the [UI spec format](ui-spec-format.md). It documents the main console layout when a preset is active and the visualizer is showing layer content (e.g. ASCII image layer). Layout follows [ADR-0050](adr/0050-ui-alignment-blocks-label-format.md): left-aligned UI, 8-character block sizing, and label format `Label:value` (no space after colon). The title bar is a single line (breadcrumb only). Regenerate the screenshot from a screen dump (Print Screen or `--dump-after N`) to capture the current output.
+**Application mode:** `ApplicationMode.PresetEditor` ([`ApplicationMode`](../src/AudioAnalyzer.Domain/ApplicationMode.cs)). See the mode index: [ui-spec-application-modes.md](ui-spec-application-modes.md).
+
+This spec follows [ui-spec-format.md](ui-spec-format.md). It documents the main console layout when a preset is active and the visualizer is showing layer content (e.g. ASCII image layer). Layout follows [ADR-0050](adr/0050-ui-alignment-blocks-label-format.md): left-aligned UI, 8-character block sizing, and label format `Label:value` (no space after colon). Row 0 is the universal title breadcrumb ([ui-spec-title-breadcrumb.md](ui-spec-title-breadcrumb.md)). Regenerate the screenshot from a screen dump (Ctrl+Shift+E or `--dump-after N` when a console is available) so the dump matches the current build.
 
 ## Screenshot
 
@@ -35,7 +37,7 @@ Layers:123456789 | Palette:Default
 
 ## Line reference
 
-- **1** — Title bar: single-line breadcrumb, left-aligned (app name / mode / preset name [layer index 1–9]: layer type, e.g. `aUdioNLZR/pReset/pReset_2[1]:aScii_image`). Same breadcrumb style appears on row 0 in modals with path suffixes per [ui-spec-title-breadcrumb.md](ui-spec-title-breadcrumb.md). Padding on the right to fill width.
+- **1** — Title bar: single-line breadcrumb, left-aligned (app name / mode / preset name [layer index 1–9]: layer type, e.g. `aUdioNLZR/pReset/pReset_2[1]:aScii_image`). Mode segment is `pReset` (Hackerized “Preset”). Same breadcrumb style appears on row 0 in modals with path suffixes per [ui-spec-title-breadcrumb.md](ui-spec-title-breadcrumb.md). Padding on the right to fill width.
 - **2** — Device line: left-aligned. Device label and value (`Device:value`), then now-playing scrolling viewport (`Now:value`). Label format uses colon with no space before value; cells use 8-char block sizing where applicable.
 - **3** — BPM value, beat position with +/- hint, volume percentage and dB. Left-aligned; labels `BPM:`, `Beat:`, `Volume/dB:` with no space after colon (e.g. `BPM:144  Beat:1,1 (+/-)     Volume/dB:8,3%  -21,7dB`). 8-char block sizing where applicable.
 - **4** — Toolbar: left-aligned. Separate labeled fields: Layers (digits 1–9), optional Gain (when oscilloscope), Palette (palette for the layer selected in the title bar; display name with **each letter colored** from the palette in rotation; phase advances with beat count when BPM is active, otherwise a slow tick-based rotation). When content exceeds width, overflowing cells scroll so all layer numbers remain visible. Label format `Label:value`; key bindings are in the help modal (H). Screen dumps strip ANSI, so the screenshot shows plain name text.
