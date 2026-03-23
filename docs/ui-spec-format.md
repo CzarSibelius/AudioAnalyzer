@@ -56,6 +56,7 @@ Layout follows [ADR-0050](../adr/0050-ui-alignment-blocks-label-format.md):
 ## Where to use this format
 
 - New UI layout specs in `docs/` (e.g. `docs/ui-spec-main-view.md`).
+- **Settings-related surfaces** (shared vocabulary): [ui-spec-settings-surfaces.md](ui-spec-settings-surfaces.md); per-surface: [ui-spec-general-settings-hub.md](ui-spec-general-settings-hub.md), [ui-spec-device-selection-modal.md](ui-spec-device-selection-modal.md), [ui-spec-preset-settings-modal.md](ui-spec-preset-settings-modal.md).
 - When documenting a specific screen or modal for which a screen dump exists.
 - When updating an existing UI spec, regenerate the screenshot and line reference from a fresh dump so they stay in sync.
 

@@ -1,6 +1,6 @@
 # Audio Analyzer
 
-A real-time audio analyzer that captures and analyzes system audio output using NAudio. This application captures the audio playing on your system (loopback capture), from a selected capture device, or uses **Demo Mode** (synthetic BPM stream for testing without audio). It performs FFT analysis with **Layered text** visualization: configurable layers (Geiss plasma background, beat circles, oscilloscope, VU meter, Llama-style spectrum bars, Unknown Pleasures stacked waveforms, mirror, marquee, falling letters, ASCII images, etc.) with beat-reactive behavior.
+A real-time audio analyzer that captures and analyzes system audio output using NAudio. This application captures the audio playing on your system (loopback capture), from a selected capture device, or uses **Demo Mode** (synthetic BPM stream for testing without audio). It performs FFT analysis with **Layered text** visualization: configurable layers (Geiss plasma background, Fill for solid/gradient fills and blend-over dimming, beat circles, oscilloscope, VU meter, Llama-style spectrum bars, Unknown Pleasures stacked waveforms, mirror, marquee, falling letters, ASCII images, etc.) with beat-reactive behavior.
 
 ## Prerequisites
 
@@ -53,8 +53,8 @@ Tests use **System.IO.Abstractions.TestingHelpers** (MockFileSystem) instead of 
 1. On first run (or if no device was saved), choose an audio input: **Demo Mode** (synthetic stream at 90/120/140 BPM for testing without audio), loopback (system output), or a specific capture device (↑/↓ to move, ENTER to select, ESC to cancel).
 2. The analyzer shows real-time volume and frequency analysis. Play audio to see it in action.
 3. **Keyboard controls:**
-   - **H** – Show help (shortcuts for current view; content varies by Preset editor vs Show play)
-   - **Tab** – Switch between Preset editor and Show play (when Shows exist)
+   - **H** – Show help (shortcuts for current view; content varies by Preset editor vs Show play vs General settings)
+   - **Tab** – Cycle **Preset editor → Show play** (when at least one show has entries) **→ General settings → Preset editor**. If no show is eligible, **Show play** is skipped.
    - **V** – Cycle to next preset (Preset editor only; toolbar shows preset name)
    - **P** – Cycle color palette (for palette-aware visualizers; affects only the current visualizer and persists to that visualizer's settings)
    - **+** / **-** – Increase / decrease beat sensitivity
@@ -63,9 +63,9 @@ Tests use **System.IO.Abstractions.TestingHelpers** (MockFileSystem) instead of 
    - **←/→** – Cycle active layer's type (Layered text mode)
    - **Shift+1–9** – Toggle layer enabled/disabled (Layered text mode)
    - **I** – Cycle to next picture (Layered text mode, when an AsciiImage layer is active)
-   - **S** – Open Preset modal (Preset editor) or Show edit modal (Show play), ESC close
+   - **S** – Open Preset modal (Preset editor) or Show edit modal (Show play); **no modal** in **General settings** (same key is ignored there). In the preset modal, **Enter** on **Render region** starts live **layer region** editing (move/resize on the visualizer; Esc cancels).
    - **D** – Change audio input device
-   - **F** – Toggle full screen (visualizer only, no header/toolbar)
+   - **F** – Toggle full screen (visualizer only, no header/toolbar); **no** in General settings
    - **Ctrl+Shift+E** – Dump current screen to a text file (ASCII screenshot) in the `screen-dumps` folder
    - **ESC** – Quit
 
@@ -88,13 +88,14 @@ You can capture the current terminal screen to a plain-text file for bug reports
 - **Volume analysis**: Real-time level and peak display; stereo VU-style meters in VU Meter mode.
 - **FFT analysis**: Fast Fourier Transform with log-spaced frequency bands and peak hold.
 - **Presets**: **V** cycles between named TextLayers configurations (each preset = 9 layers + palette). Current preset shown in title bar.
-- **Shows**: **Tab** switches to Show play — auto-cycles presets with per-entry duration (seconds or beats). Current show and preset shown in title bar. **S** in Show play opens Show edit modal (add/remove presets, set duration).
+- **Shows**: **Tab** switches to Show play (when eligible) — auto-cycles presets with per-entry duration (seconds or beats). Current show and preset shown in title bar; toolbar uses a compact row (Show name, entry index, palette). **S** in Show play opens Show edit modal (add/remove presets, set duration).
+- **General settings**: **Tab** reaches **General settings** (after Show play when eligible). Hub for **audio input** (same as **D**) and **application display name** (title bar / `TitleBarAppName` in appsettings). No layer visualization; **header** is title-only (no Device/Now/BPM rows); toolbar palette name still animates with the beat. See [ADR-0061](docs/adr/0061-general-settings-mode.md), [ADR-0062](docs/adr/0062-application-mode-classes.md), [docs/ui-spec-general-settings-hub.md](docs/ui-spec-general-settings-hub.md).
 - **Layered text**: Multiple independent layers (Geiss plasma background, beat circles, oscilloscope, VU meter, Llama-style spectrum bars, Unknown Pleasures stacked waveforms, mirror (direction, split %, rotation), scrolling colors, marquee, falling letters, ASCII images from a folder, now-playing from system media) with configurable text snippets and beat reactions; each layer has its own palette; press **1–9** to select a layer, **←/→** to change its type, **Shift+1–9** to toggle enabled; **[ / ]** to adjust oscilloscope gain when that layer is selected; oscilloscope can be line-only or filled (S modal); press **P** to cycle the active layer's palette. **S** opens the preset modal (R rename, N new preset).
 - **Colors and palettes**: Palette-aware visualizers (Layered text layers) support **24-bit true color** (RGB) and 16 console colors. Palettes are stored as JSON files in a **palettes** directory (see below). Each layer has its own palette setting; pressing **P** affects only the active layer and saves to that layer's settings.
 - **Beat detection**: Optional beat detection and BPM estimate; sensitivity and beat circles are configurable and persist.
 - **Real-time display**: Updates every 50 ms.
-- **Toolbar**: Shows layer digits and palette. Uses ellipsis truncation for static text (per [ADR-0020](docs/adr/0020-ui-text-components-scrolling-and-ellipsis.md)); scrolling text when it exceeds the terminal width. Key bindings are in the help modal (H).
-- **Header**: Title bar shows a hierarchical breadcrumb `{appName}/{mode}/{preset}/{layer}` (e.g. `aUdioNLZR/pReset/gig_friday/aScii_image`) in cyberpunk colors; mode, preset, and layer use Hackerize styling (first letter lower, second upper, spaces→underscores). Device and now-playing share one line; BPM/Beat and Volume/dB on the next line. Scrolling text in the header animates even when no audio is playing (loopback mode). Display width accounts for emoji and wide characters (2 columns each). See [ADR-0027](docs/adr/0027-now-playing-header.md), [ADR-0036](docs/adr/0036-title-bar-injectable-component.md), [ADR-0038](docs/adr/0038-header-refresh-independent-of-audio.md), [ADR-0039](docs/adr/0039-display-width-terminal-columns.md).
+- **Toolbar**: Shows layer digits and palette **name with each letter colored** from that palette (rotation phase follows beats when BPM is active, otherwise a slow tick). Uses ellipsis truncation for static text (per [ADR-0020](docs/adr/0020-ui-text-components-scrolling-and-ellipsis.md)); scrolling text when it exceeds the terminal width. Key bindings are in the help modal (H). The **S** modal **Palette** row uses the same per-letter coloring and the **same beat/tick phase** as the toolbar (via `GetSnapshotForUi()`); the **Palette:** label can stay selection-highlighted while the name keeps palette colors. **Press Enter** on that row to open a **palette list** (inherit + all palettes); **↑/↓** or **+/-** **preview** the choice on the layer; **Enter** **saves**; **Esc** **discards** the preview. **+/-** on the row (without opening the list) still cycles the palette as before.
+- **Header**: Title bar (row 0) shows a hierarchical breadcrumb `{appName}/{mode}/{preset}[z]:{layer}` in cyberpunk colors; the same breadcrumb style appears on **row 0** in modals. The **S** modal extends that path with the focused setting id (e.g. `/sPeed`) and `/eDitor` when the palette picker is open; device selection uses `…/settings/audioinput`. Mode, preset, and layer use Hackerize styling (first letter lower, second upper, spaces→underscores). Device and now-playing share line 2; BPM/Beat and Volume/dB on line 3. Scrolling text in the header animates even when no audio is playing (loopback mode). Display width accounts for emoji and wide characters (2 columns each). See [ADR-0027](docs/adr/0027-now-playing-header.md), [ADR-0036](docs/adr/0036-title-bar-injectable-component.md), [ADR-0060](docs/adr/0060-universal-title-breadcrumb.md), [ADR-0038](docs/adr/0038-header-refresh-independent-of-audio.md), [ADR-0039](docs/adr/0039-display-width-terminal-columns.md), [docs/ui-spec-title-breadcrumb.md](docs/ui-spec-title-breadcrumb.md).
 - **Settings**: Stored in a local file (e.g. next to the executable). Per-visualizer options live under `VisualizerSettings`; each palette-aware visualizer has its own `PaletteId`. Device, per-visualizer palette, beat sensitivity, and oscilloscope gain are saved automatically when changed.
 
 ## Dependencies
@@ -106,7 +107,7 @@ You can capture the current terminal screen to a plain-text file for bug reports
 
 ## Presets (JSON files)
 
-TextLayers presets are stored as **JSON files** in a **`presets`** directory next to the executable (e.g. `presets/` in the same folder as the .exe). Each file is one preset. Press **V** to cycle presets; **S** to edit (R rename, N new preset). Presets are created automatically on first run.
+TextLayers presets are stored as **JSON files** in a **`presets`** directory next to the executable (e.g. `presets/` in the same folder as the .exe). Each file is one preset. The app ships with **`presets/fill-blendover-demo.json`**, a small example of Fill **BlendOver** over an oscilloscope (see [docs/visualizers/fill.md](docs/visualizers/fill.md) Troubleshooting). Press **V** to cycle presets; **S** to edit (R rename, N new preset). Presets are created automatically on first run.
 
 **Preset JSON format:**
 
@@ -145,7 +146,7 @@ Example (`shows/show-1.json`):
 
 ## Palettes (JSON files)
 
-Color palettes are stored as **JSON files** in a **`palettes`** directory next to the executable (e.g. `palettes/` in the same folder as the .exe). The app ships with `palettes/default.json` and `palettes/oscilloscope.json` (classic waveform gradient: Cyan → Green → Yellow → Red). You can add more `.json` files; each file is one palette. Press **P** to cycle through all available palettes when using a palette-aware visualizer; the change applies only to the current visualizer and is saved to that visualizer's settings.
+Color palettes are stored as **JSON files** in a **`palettes`** directory next to the executable (e.g. `palettes/` in the same folder as the .exe). The app ships with `palettes/default.json`, `palettes/oscilloscope.json` (classic waveform gradient: Cyan → Green → Yellow → Red), `palettes/clear-black.json` (black-first palette useful when the buffer clear color should read as black for Fill **BlendOver**), themed sets such as `pine-forest`, `jungle`, `miami-1984`, and `radioactive`, and others. You can add more `.json` files; each file is one palette. Press **P** to cycle through all available palettes when using a palette-aware visualizer; the change applies only to the current visualizer and is saved to that visualizer's settings.
 
 **Palette JSON format:**
 
@@ -209,7 +210,7 @@ If the settings file is corrupt or incompatible (e.g. invalid JSON), the app bac
 - Requires Windows with WASAPI support.
 - Use loopback to analyze system playback; use a capture device for microphone or other inputs.
 - Ensure audio is playing (or that the selected device is active) to see meaningful analysis. Use **Demo Mode** when you want to test visualizers without playing music.
-- **Modal dialogs** (help screen, device selection, and any future dialogs) use a shared modal system ([ADR-0006](docs/adr/0006-modal-system.md)): they are drawn on top of the main view, capture input until you dismiss them (e.g. any key for help, ENTER/ESC for device menu), then the main view is redrawn automatically.
+- **Modal dialogs** (help screen, device selection, and any future dialogs) use a shared modal system ([ADR-0006](docs/adr/0006-modal-system.md)): they are drawn on top of the main view, capture input until you dismiss them (e.g. any key for help, ENTER/ESC for device menu), then the main view is redrawn automatically. The **S** settings overlay updates the scrolling hint and the **Palette** name on idle ticks (batched, not a full overlay redraw) so animation stays smooth with less flicker.
 
 ## Visualizer bounds (for developers)
 
@@ -217,4 +218,4 @@ The app uses **TextLayersVisualizer** exclusively; all visual content is provide
 
 Visualizers receive a **viewport** (`VisualizerViewport`: start row, max lines, width). They must not write more than `viewport.MaxLines` lines and no line longer than `viewport.Width`. The composite renderer validates dimensions and display start row before calling visualizers; if a visualizer throws, the exception message is shown in the viewport (one line, truncated with ellipsis) and the next frame can recover — see [ADR-0012](docs/adr/0012-visualizer-exception-handling.md). Text overflow: use `IScrollingTextViewport` (from `IScrollingTextViewportFactory.CreateViewport()`) for dynamic text, `StaticTextViewport.TruncateWithEllipsis` for static text — see [ADR-0020](docs/adr/0020-ui-text-components-scrolling-and-ellipsis.md), [ADR-0037](docs/adr/0037-scrolling-text-viewport-injectable-service.md). This keeps resizes and bad data from corrupting the console UI.
 
-Per-layer specs (behavior, settings, viewport constraints) are in [docs/visualizers/](docs/visualizers/README.md). A full list of console UI components (header, modals, viewports, key handlers) is in [docs/ui-components.md](docs/ui-components.md). UI layout specs that use a screen-dump screenshot plus a line-numbered description for each row are defined in [docs/ui-spec-format.md](docs/ui-spec-format.md); see [docs/ui-spec-main-view-example.md](docs/ui-spec-main-view-example.md) for an example. C# coding standards (including no empty try-catch, non-empty XML summaries, one file per class) are in `.cursor/rules/csharp-standards.mdc`, `.cursor/rules/no-empty-catch.mdc`, and [ADR-0016](docs/adr/0016-csharp-documentation-and-file-organization.md).
+Per-layer specs (behavior, settings, viewport constraints) are in [docs/visualizers/](docs/visualizers/README.md). A full list of console UI components (header, modals, viewports, key handlers) is in [docs/ui-components.md](docs/ui-components.md). UI layout specs that use a screen-dump screenshot plus a line-numbered description for each row are defined in [docs/ui-spec-format.md](docs/ui-spec-format.md); see [docs/ui-spec-main-view-example.md](docs/ui-spec-main-view-example.md) for an example. Settings-related screens (General hub, device selection, S modal) are indexed in [docs/ui-spec-settings-surfaces.md](docs/ui-spec-settings-surfaces.md). C# coding standards (including no empty try-catch, non-empty XML summaries, one file per class) are in `.cursor/rules/csharp-standards.mdc`, `.cursor/rules/no-empty-catch.mdc`, and [ADR-0016](docs/adr/0016-csharp-documentation-and-file-organization.md).

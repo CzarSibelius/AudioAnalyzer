@@ -16,7 +16,7 @@ Previously, `TextLayerSettings` had a common `BeatReaction` property (type `Text
 
 4. **Layers without beat reaction**: Layer types that do not use beat reaction have no BeatReaction property and no beat-reaction enum. The S modal does not show a BeatReaction row for those layers.
 
-5. **Defaults**: Default and padded layers that support beat reaction get appropriate Custom set (e.g. `SetCustom(new MarqueeSettings { BeatReaction = MarqueeBeatReaction.None })`) in FileSettingsRepository. Infrastructure references Visualizers for this.
+5. **Defaults**: Default and padded layers that support beat reaction get appropriate Custom set (e.g. `SetCustom(new MarqueeSettings { BeatReaction = MarqueeBeatReaction.None })`) via `IDefaultTextLayersSettingsFactory`, implemented in Visualizers as `DefaultTextLayersSettingsFactory` and injected into `FileSettingsRepository`. Infrastructure does not reference the Visualizers project.
 
 ## Consequences
 

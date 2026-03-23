@@ -73,6 +73,12 @@ Decisions are numbered and kept under version control so the rationale stays wit
 | [0055](0055-layer-specific-beat-reaction.md) | Layer-specific beat reaction (no common BeatReaction) | Accepted |
 | [0056](0056-scrolling-text-as-uicomponent.md) | Scrolling text as IUiComponent with state (ScrollingTextComponent, HorizontalRowComponent) | Accepted |
 | [0057](0057-horizontal-row-unified-single-line-rows.md) | HorizontalRowComponent for all single-line viewport rows; LabeledRowComponent/ILabeledRowRenderer removed | Accepted |
+| [0058](0058-layer-render-bounds.md) | Per-layer render bounds (normalized rect), clip-on-Set, Mirror in-region, visual bounds editor | Accepted |
+| [0059](0059-fill-blendover-space-as-black.md) | Fill BlendOver — optional treat space cells as black for blending | Accepted |
+| [0060](0060-universal-title-breadcrumb.md) | Universal title breadcrumb — all surfaces, navigation context, two tracks | Accepted |
+| [0061](0061-general-settings-mode.md) | General Settings mode — Tab cycle, hub UI, app-wide settings (MVP) | Accepted |
+| [0062](0062-application-mode-classes.md) | Application modes as `IApplicationMode` classes — layout, toolbar, header chrome | Accepted |
+| [0063](0063-uniform-settings-list-and-palette-drawing.md) | Uniform settings list and palette drawing (shared helpers, hub rows via HorizontalRowComponent) | Accepted |
 
 ## Process
 

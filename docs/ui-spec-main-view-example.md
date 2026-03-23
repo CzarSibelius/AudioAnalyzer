@@ -8,7 +8,7 @@ This example follows the [UI spec format](ui-spec-format.md). It documents the m
          aUdioNLZR/pReset/pReset_2[1]:aScii_image         
 Device:DIA High DefNow:Svampyr - xtalzkullz 145bpm         
 BPM: 144  Beat: 1,1 (+/-)     Volume/dB:  8,3%  -21,7dB     
-Layers:123456789 | Palette(L1):Default                     
+Layers:123456789 | Palette:Default                         
       ..       .:.        -#=+-+=+:        .:.       ..     
        :.      ::          -=*.*+-          ::      .:       
        :       .:           :: -.           ::       .       
@@ -35,10 +35,10 @@ Layers:123456789 | Palette(L1):Default
 
 ## Line reference
 
-- **1** — Title bar: single-line breadcrumb, left-aligned (app name / mode / preset name [layer index 1–9]: layer type, e.g. `aUdioNLZR/pReset/pReset_2[1]:aScii_image`). Padding on the right to fill width.
+- **1** — Title bar: single-line breadcrumb, left-aligned (app name / mode / preset name [layer index 1–9]: layer type, e.g. `aUdioNLZR/pReset/pReset_2[1]:aScii_image`). Same breadcrumb style appears on row 0 in modals with path suffixes per [ui-spec-title-breadcrumb.md](ui-spec-title-breadcrumb.md). Padding on the right to fill width.
 - **2** — Device line: left-aligned. Device label and value (`Device:value`), then now-playing scrolling viewport (`Now:value`). Label format uses colon with no space before value; cells use 8-char block sizing where applicable.
 - **3** — BPM value, beat position with +/- hint, volume percentage and dB. Left-aligned; labels `BPM:`, `Beat:`, `Volume/dB:` with no space after colon (e.g. `BPM:144  Beat:1,1 (+/-)     Volume/dB:8,3%  -21,7dB`). 8-char block sizing where applicable.
-- **4** — Toolbar: left-aligned. Separate labeled fields: Layers (digits 1–9), optional Gain (when oscilloscope), Palette(Ln) (palette name). When content exceeds width, overflowing cells scroll so all layer numbers remain visible. Label format `Label:value`; key bindings are in the help modal (H).
+- **4** — Toolbar: left-aligned. Separate labeled fields: Layers (digits 1–9), optional Gain (when oscilloscope), Palette (palette for the layer selected in the title bar; display name with **each letter colored** from the palette in rotation; phase advances with beat count when BPM is active, otherwise a slow tick-based rotation). When content exceeds width, overflowing cells scroll so all layer numbers remain visible. Label format `Label:value`; key bindings are in the help modal (H). Screen dumps strip ANSI, so the screenshot shows plain name text.
 - **5** — First row of visualizer viewport (layer content; here ASCII art).
 - **6** — Visualizer content.
 - **7** — Visualizer content.

@@ -16,8 +16,8 @@ Users need to chain presets for live performance with timed transitions. The cur
 
 3. **Application modes**:
    - **Preset editor**: Current behavior — manual V cycling, S opens Settings modal (preset/layer editing). Toolbar: "Preset: {name} (V)".
-   - **Show play**: Auto-advance through active Show's presets based on per-entry duration. S opens Show edit modal. Toolbar: "Show: {showName} | Preset: {presetName}". Tab switches back to Preset editor.
-   - Mode switch: **Tab** cycles between Preset editor and Show play (only when at least one Show exists and has entries).
+   - **Show play**: Auto-advance through active Show's presets based on per-entry duration. S opens Show edit modal. Toolbar: "Show: {showName} | Preset: {presetName}". Tab switches toward General settings (see [ADR-0061](0061-general-settings-mode.md)).
+   - Mode switch: **Tab** cycles **Preset editor → Show play** (when at least one Show exists and has entries) **→ General settings → Preset editor**. If no show is eligible, Show play is skipped.
 
 4. **Settings persistence**: `VisualizerSettings` gains `ApplicationMode`, `ActiveShowId`, `ActiveShowName`. Persisted in appsettings.json. Per [ADR-0029](0029-no-settings-migration.md), no migration for old files — defaults apply.
 

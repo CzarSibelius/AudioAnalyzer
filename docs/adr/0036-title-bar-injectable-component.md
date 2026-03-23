@@ -20,8 +20,10 @@ The header title was a centered static string from `UiSettings.Title`. Users wan
 
 6. **Header integration**: The header (IHeaderContainer) builds a composite whose first child is a row component for the title (one viewport, preformatted; as of ADR-0057, HorizontalRowComponent). The title bar is a **single line** (breadcrumb only; no frame or box).
 
+7. **Universal breadcrumb**: The same path-style breadcrumb is **not** limited to the main header. Modals and future full-screen surfaces draw it on **row 0** (preset-scoped vs app-settings tracks, suffixes for sub-views). See [ADR-0060](0060-universal-title-breadcrumb.md).
+
 ## Consequences
 
 - Title bar content is pluggable via ITitleBarContentProvider; alternative implementations can be registered via ServiceConfigurationOptions.
 - Consistent with ADR-0035 (modal DI), ADR-0033 (UI settings), and ADR-0052 (generic row component for all lines).
-- References: [ITitleBarContentProvider](../../src/AudioAnalyzer.Console/Abstractions/ITitleBarContentProvider.cs), [TitleBarContentProvider](../../src/AudioAnalyzer.Console/Console/TitleBarContentProvider.cs), [TextHelpers](../../src/AudioAnalyzer.Application/Display/TextHelpers.cs), [HeaderContainer](../../src/AudioAnalyzer.Console/Console/HeaderContainer.cs), [UiSettings](../../src/AudioAnalyzer.Domain/UiSettings.cs), [TitleBarPalette](../../src/AudioAnalyzer.Domain/TitleBarPalette.cs).
+- References: [ITitleBarContentProvider](../../src/AudioAnalyzer.Console/Abstractions/ITitleBarContentProvider.cs), [TitleBarContentProvider](../../src/AudioAnalyzer.Console/Console/TitleBarContentProvider.cs), [TextHelpers](../../src/AudioAnalyzer.Application/Display/TextHelpers.cs), [HeaderContainer](../../src/AudioAnalyzer.Console/Console/HeaderContainer.cs), [UiSettings](../../src/AudioAnalyzer.Domain/UiSettings.cs), [TitleBarPalette](../../src/AudioAnalyzer.Domain/TitleBarPalette.cs), [ADR-0060](0060-universal-title-breadcrumb.md).

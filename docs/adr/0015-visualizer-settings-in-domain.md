@@ -12,11 +12,11 @@ Infrastructure previously depended on Visualizers because `FileSettingsRepositor
 
 2. **IVisualizerSettingsRepository in Application**: The interface is moved to `Application.Abstractions`. It uses `Domain.VisualizerSettings` as its return/parameter type.
 
-3. **Infrastructure no longer references Visualizers**: `FileSettingsRepository` now uses Domain types exclusively. Infrastructure depends only on Application and Domain.
+3. **Infrastructure does not reference Visualizers**: `FileSettingsRepository` uses Domain types for persistence. Typed defaults for layers (Custom + layer-specific `*Settings`) are supplied by `IDefaultTextLayersSettingsFactory` (defined in Application); the implementation `DefaultTextLayersSettingsFactory` lives in Visualizers and is constructed by the Console host (or tests) when creating `FileSettingsRepository`. Infrastructure depends only on Application and Domain.
 
 ## Consequences
 
-- **Cleaner layering**: Infrastructure → Application → Domain; no Infrastructure → Visualizers.
+- **Cleaner layering**: Infrastructure → Application → Domain; no Infrastructure → Visualizers project reference.
 - **Domain** holds all configuration models; Application defines repository contracts.
 - **Visualizers** reference Domain and use the settings types from there.
 - **JSON schema** in `appsettings.json` is unchanged; backward compatibility preserved.

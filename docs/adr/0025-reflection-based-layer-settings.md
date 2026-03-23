@@ -18,7 +18,7 @@ The S settings modal (per [ADR-0023](0023-settings-modal-layer-editing.md)) disp
 
 3. **Attributes for overrides**: Use `[SettingChoices("A","B")]` for string properties with fixed choices (e.g. ColorScheme, PeakMarkerStyle); `[SettingRange(min, max, step)]` for numeric bounds; `[Setting(id, label)]` for display name overrides.
 
-4. **Explicit handling for special cases**: Palette (cycles through IPaletteRepository), LayerType (uses TextLayerSettings.CycleTypeForward/Backward), and Snippets (List&lt;string&gt; with custom display/edit) remain explicitly handled; they require external context or non-standard behavior that reflection cannot infer.
+4. **Explicit handling for special cases**: Palette uses **`PalettePicker`**: `+/-` cycles through `IPaletteRepository` like `Cycle`; **Enter** opens a scrollable palette list (inherit + all palettes). In the list, navigation **previews** the palette on the layer; **Enter** **persists** (SaveSettings); **Esc** **restores** the pre-open `PaletteId` without persisting. LayerType (uses TextLayerSettings.CycleTypeForward/Backward), and Snippets (List&lt;string&gt; with custom display/edit) remain explicitly handled; they require external context or non-standard behavior that reflection cannot infer.
 
 5. **SettingDescriptor**: A single descriptor abstraction holds Id, Label, EditMode, GetDisplayValue, ApplyEdit, and Cycle. ApplySettingEdit and CycleSetting delegate to descriptor lookup by Id.
 
