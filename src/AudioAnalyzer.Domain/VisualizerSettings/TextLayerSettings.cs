@@ -26,6 +26,9 @@ public class TextLayerSettings
     /// <summary>Id of the color palette for this layer (e.g. "default"). Falls back to TextLayers.PaletteId when null/empty.</summary>
     public string? PaletteId { get; set; }
 
+    /// <summary>When set, the layer draws only inside this normalized rectangle; outside, lower layers show through. Null means use the full viewport.</summary>
+    public TextLayerRenderBounds? RenderBounds { get; set; }
+
     /// <summary>Layer-specific settings as JSON object. Only the owning layer deserializes this. Persisted as "Custom" in JSON.</summary>
     [System.Text.Json.Serialization.JsonPropertyName("Custom")]
     public JsonElement? Custom { get; set; }
@@ -104,6 +107,7 @@ public class TextLayerSettings
             SpeedMultiplier = SpeedMultiplier,
             ColorIndex = ColorIndex,
             PaletteId = PaletteId,
+            RenderBounds = RenderBounds?.DeepCopy(),
             Custom = Custom
         };
     }

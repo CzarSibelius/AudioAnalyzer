@@ -9,5 +9,9 @@ public enum ApplicationMode
     PresetEditor,
 
     /// <summary>Auto-cycle through a Show's presets; S opens Show edit.</summary>
-    ShowPlay
+    ShowPlay,
+
+    /// <summary>Future: full-screen settings hub (audio input, palette editor, etc.). Breadcrumb: app/settings/… per ADR-0060.</summary>
+    Settings
 }
+
