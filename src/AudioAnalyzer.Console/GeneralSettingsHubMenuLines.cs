@@ -1,5 +1,8 @@
+using System.Collections.Generic;
 using System.Text;
+using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Application.Display;
+using AudioAnalyzer.Application.Palette;
 using AudioAnalyzer.Domain;
 
 namespace AudioAnalyzer.Console;
@@ -7,23 +10,139 @@ namespace AudioAnalyzer.Console;
 /// <summary>Builds ANSI menu lines for the General Settings hub (label:value rows).</summary>
 internal static class GeneralSettingsHubMenuLines
 {
+    /// <summary>
+    /// Layer palette colors for the current UI theme when <see cref="UiSettings.UiThemePaletteId"/> is set;
+    /// otherwise semantic <see cref="UiPalette"/> slots for beat/tick phase animation (Custom theme).
+    /// </summary>
+    public static IReadOnlyList<PaletteColor> ResolveHubBeatPaletteColors(
+        UiSettings uiSettings,
+        IPaletteRepository paletteRepo,
+        UiPalette effectivePalette)
+    {
+        string? id = uiSettings.UiThemePaletteId;
+        if (!string.IsNullOrWhiteSpace(id))
+        {
+            var def = paletteRepo.GetById(id.Trim());
+            var colors = ColorPaletteParser.Parse(def);
+            if (colors is { Count: > 0 })
+            {
+                return colors;
+            }
+        }
+
+        return PaletteColorsFromUiPalette(effectivePalette);
+    }
+
     /// <summary>Formats the audio input row for preformatted horizontal-row rendering.</summary>
-    public static string FormatAudioLine(GeneralSettingsHubState state, UiPalette palette, string? deviceNameRaw)
+    public static string FormatAudioLine(
+        GeneralSettingsHubState state,
+        UiPalette palette,
+        AnalysisSnapshot snapshot,
+        IReadOnlyList<PaletteColor> beatColors,
+        string? deviceNameRaw)
     {
         string deviceDisplay = FormatSettingValue(deviceNameRaw);
         string prefix = state.SelectedIndex == 0 ? "> " : "  ";
         var sb = new StringBuilder();
-        AppendMenuLine(sb, palette, prefix, state.SelectedIndex == 0, "Audio input devices (D)", deviceDisplay);
+        AppendMenuLine(
+            sb,
+            palette,
+            snapshot,
+            beatColors,
+            prefix,
+            state.SelectedIndex == 0,
+            "Audio input devices (D)",
+            deviceDisplay);
         return sb.ToString();
     }
 
     /// <summary>Formats the application name row for preformatted horizontal-row rendering.</summary>
-    public static string FormatApplicationNameLine(GeneralSettingsHubState state, UiPalette palette, string appDisplay)
+    public static string FormatApplicationNameLine(
+        GeneralSettingsHubState state,
+        UiPalette palette,
+        AnalysisSnapshot snapshot,
+        IReadOnlyList<PaletteColor> beatColors,
+        string appDisplay)
     {
         string prefix = state.SelectedIndex == 1 ? "> " : "  ";
         var sb = new StringBuilder();
-        AppendMenuLine(sb, palette, prefix, state.SelectedIndex == 1, "Application name", appDisplay);
+        AppendMenuLine(
+            sb,
+            palette,
+            snapshot,
+            beatColors,
+            prefix,
+            state.SelectedIndex == 1,
+            "Application name",
+            appDisplay);
         return sb.ToString();
+    }
+
+    /// <summary>Formats the UI theme row (layer palette id or custom).</summary>
+    public static string FormatUiThemeLine(
+        GeneralSettingsHubState state,
+        UiPalette palette,
+        AnalysisSnapshot snapshot,
+        IReadOnlyList<PaletteColor> beatColors,
+        string themeDisplay)
+    {
+        string prefix = state.SelectedIndex == 2 ? "> " : "  ";
+        var sb = new StringBuilder();
+        AppendMenuLine(
+            sb,
+            palette,
+            snapshot,
+            beatColors,
+            prefix,
+            state.SelectedIndex == 2,
+            "UI theme (T)",
+            themeDisplay);
+        return sb.ToString();
+    }
+
+    /// <summary>Resolves display text for the current <see cref="UiSettings.UiThemePaletteId"/>.</summary>
+    public static string ResolveUiThemeDisplaySummary(UiSettings uiSettings, IPaletteRepository paletteRepo)
+    {
+        string? id = uiSettings.UiThemePaletteId;
+        if (string.IsNullOrWhiteSpace(id))
+        {
+            return "(Custom)";
+        }
+
+        string trimmed = id.Trim();
+        var def = paletteRepo.GetById(trimmed);
+        var fromFile = def?.Name?.Trim();
+        if (!string.IsNullOrEmpty(fromFile))
+        {
+            return fromFile;
+        }
+
+        foreach (var p in paletteRepo.GetAll())
+        {
+            if (string.Equals(p.Id, trimmed, StringComparison.OrdinalIgnoreCase))
+            {
+                return !string.IsNullOrWhiteSpace(p.Name?.Trim()) ? p.Name!.Trim() : p.Id;
+            }
+        }
+
+        return trimmed;
+    }
+
+    private static List<PaletteColor> PaletteColorsFromUiPalette(UiPalette effectivePalette)
+    {
+        var list = new List<PaletteColor>
+        {
+            effectivePalette.Normal,
+            effectivePalette.Highlighted,
+            effectivePalette.Dimmed,
+            effectivePalette.Label
+        };
+        if (effectivePalette.Background is { } bg)
+        {
+            list.Add(bg);
+        }
+
+        return list;
     }
 
     private static string FormatSettingValue(string? raw) =>
@@ -32,16 +151,27 @@ internal static class GeneralSettingsHubMenuLines
     private static void AppendMenuLine(
         StringBuilder sb,
         UiPalette palette,
+        AnalysisSnapshot snapshot,
+        IReadOnlyList<PaletteColor> beatColors,
         string prefix,
         bool selected,
         string labelBeforeColon,
         string valueText)
     {
         var labelColor = selected ? palette.Highlighted : palette.Normal;
-        var valueColor = selected ? palette.Highlighted : palette.Dimmed;
         AnsiConsole.AppendColored(sb, prefix, palette.Label);
         AnsiConsole.AppendColored(sb, labelBeforeColon, labelColor);
         AnsiConsole.AppendColored(sb, ":", labelColor);
-        AnsiConsole.AppendColored(sb, valueText, valueColor);
+
+        if (beatColors is { Count: > 0 })
+        {
+            int phase = PaletteSwatchFormatter.ComputeToolbarPhaseOffset(snapshot, beatColors.Count);
+            sb.Append(PaletteSwatchFormatter.FormatPaletteColoredName(valueText, beatColors, phase));
+        }
+        else
+        {
+            var valueColor = selected ? palette.Highlighted : palette.Dimmed;
+            AnsiConsole.AppendColored(sb, valueText, valueColor);
+        }
     }
 }

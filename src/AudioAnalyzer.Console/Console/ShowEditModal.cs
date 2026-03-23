@@ -21,6 +21,7 @@ internal sealed class ShowEditModal : IShowEditModal
     private readonly IPresetRepository _presetRepo;
     private readonly IKeyHandler<ShowEditModalKeyContext> _keyHandler;
     private readonly UiSettings _uiSettings;
+    private readonly IUiThemeResolver _uiThemeResolver;
     private readonly IConsoleDimensions _consoleDimensions;
     private readonly ITitleBarNavigationContext _navigation;
     private readonly ITitleBarBreadcrumbFormatter _breadcrumbFormatter;
@@ -32,6 +33,7 @@ internal sealed class ShowEditModal : IShowEditModal
         IPresetRepository presetRepo,
         IKeyHandler<ShowEditModalKeyContext> keyHandler,
         UiSettings uiSettings,
+        IUiThemeResolver uiThemeResolver,
         IConsoleDimensions consoleDimensions,
         ITitleBarNavigationContext navigation,
         ITitleBarBreadcrumbFormatter breadcrumbFormatter)
@@ -42,6 +44,7 @@ internal sealed class ShowEditModal : IShowEditModal
         _presetRepo = presetRepo ?? throw new ArgumentNullException(nameof(presetRepo));
         _keyHandler = keyHandler ?? throw new ArgumentNullException(nameof(keyHandler));
         _uiSettings = uiSettings ?? throw new ArgumentNullException(nameof(uiSettings));
+        _uiThemeResolver = uiThemeResolver ?? throw new ArgumentNullException(nameof(uiThemeResolver));
         _consoleDimensions = consoleDimensions ?? throw new ArgumentNullException(nameof(consoleDimensions));
         _navigation = navigation ?? throw new ArgumentNullException(nameof(navigation));
         _breadcrumbFormatter = breadcrumbFormatter ?? throw new ArgumentNullException(nameof(breadcrumbFormatter));
@@ -81,7 +84,7 @@ internal sealed class ShowEditModal : IShowEditModal
         int width = _consoleDimensions.GetConsoleWidth();
         int rightColWidth = Math.Max(10, width - LeftColWidth - 1);
 
-        var palette = (_uiSettings ?? new UiSettings()).Palette ?? new UiPalette();
+        var palette = _uiThemeResolver.GetEffectiveUiPalette();
         var selBg = palette.Background ?? PaletteColor.FromConsoleColor(ConsoleColor.DarkBlue);
         var selFg = palette.Highlighted;
 

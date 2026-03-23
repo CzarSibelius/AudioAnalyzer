@@ -13,20 +13,43 @@ internal static class ModalSystem
     /// <param name="handleKey">Handles key input. Returns true to close the modal.</param>
     /// <param name="onClose">Called when the modal closes.</param>
     /// <param name="onEnter">Called when the modal opens (e.g. to set render guard).</param>
-    public static void RunModal(Action drawContent, Func<ConsoleKeyInfo, bool> handleKey, Action? onClose = null, Action? onEnter = null)
+    /// <param name="onIdleTick">When set, polled every ~50ms when no key is available (e.g. palette name animation).</param>
+    public static void RunModal(Action drawContent, Func<ConsoleKeyInfo, bool> handleKey, Action? onClose = null, Action? onEnter = null, Action? onIdleTick = null)
     {
         System.Console.CursorVisible = false;
         onEnter?.Invoke();
+        System.Console.Clear();
+        drawContent();
         while (true)
         {
-            System.Console.Clear();
-            drawContent();
-            var key = System.Console.ReadKey(true);
-            if (handleKey(key))
+            if (System.Console.KeyAvailable)
             {
-                break;
+                var keys = new List<ConsoleKeyInfo> { System.Console.ReadKey(true) };
+                while (System.Console.KeyAvailable)
+                {
+                    keys.Add(System.Console.ReadKey(true));
+                }
+
+                foreach (var k in keys)
+                {
+                    if (handleKey(k))
+                    {
+                        goto closed;
+                    }
+                }
+
+                System.Console.Clear();
+                drawContent();
             }
+            else if (onIdleTick != null)
+            {
+                onIdleTick();
+            }
+
+            Thread.Sleep(50);
         }
+
+    closed:
         onClose?.Invoke();
     }
 

@@ -11,7 +11,8 @@ internal sealed class GeneralSettingsHubKeyHandlerConfig : IKeyHandlerConfig<Gen
 
     private const int MenuAudio = 0;
     private const int MenuAppName = 1;
-    private const int MenuCount = 2;
+    private const int MenuTheme = 2;
+    private const int MenuCount = 3;
 
     private static IReadOnlyList<KeyHandling.KeyBindingEntry<GeneralSettingsHubKeyContext>> GetEntries() =>
     [
@@ -34,6 +35,13 @@ internal sealed class GeneralSettingsHubKeyHandlerConfig : IKeyHandlerConfig<Gen
             Action: static (_, ctx) => OnEnter(ctx),
             Key: "Enter",
             Description: "Open selected item or confirm application name",
+            Section,
+            ApplicableMode: ApplicationMode.Settings),
+        new KeyHandling.KeyBindingEntry<GeneralSettingsHubKeyContext>(
+            Matches: static k => k.Key == ConsoleKey.T,
+            Action: static (_, ctx) => OnThemeHotkey(ctx),
+            Key: "T",
+            Description: "Open UI theme palette list (when UI theme row selected)",
             Section,
             ApplicableMode: ApplicationMode.Settings),
     ];
@@ -66,8 +74,24 @@ internal sealed class GeneralSettingsHubKeyHandlerConfig : IKeyHandlerConfig<Gen
         {
             MenuAudio => OpenDevicePicker(ctx),
             MenuAppName => StartRename(ctx),
+            MenuTheme => OpenThemePicker(ctx),
             _ => false
         };
+    }
+
+    private static bool OnThemeHotkey(GeneralSettingsHubKeyContext ctx)
+    {
+        if (ctx.State.IsEditingAppName)
+        {
+            return false;
+        }
+
+        if (ctx.State.SelectedIndex != MenuTheme)
+        {
+            return false;
+        }
+
+        return OpenThemePicker(ctx);
     }
 
     private static bool StartRename(GeneralSettingsHubKeyContext ctx)
@@ -88,6 +112,21 @@ internal sealed class GeneralSettingsHubKeyHandlerConfig : IKeyHandlerConfig<Gen
         else
         {
             ctx.RestartCapture();
+        }
+
+        return true;
+    }
+
+    private static bool OpenThemePicker(GeneralSettingsHubKeyContext ctx)
+    {
+        ctx.UiThemeSelectionModal.Show(ctx.SetModalOpen, ctx.GetAnalysisSnapshot, ctx.SaveSettings);
+        if (!ctx.DisplayState.FullScreen)
+        {
+            ctx.Orchestrator.RedrawWithFullHeader();
+        }
+        else
+        {
+            ctx.Orchestrator.Redraw();
         }
 
         return true;

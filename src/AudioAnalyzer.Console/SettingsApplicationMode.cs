@@ -44,7 +44,7 @@ internal sealed class SettingsApplicationMode : IApplicationMode
         (IReadOnlyList<LabeledValueDescriptor> descriptors, IReadOnlyList<int> widths) =
             MainContentToolbarLayout.BuildGeneralSettingsToolbarRowData(
                 args.Context,
-                args.UiSettings,
+                args.EffectiveUiPalette,
                 args.Visualizer,
                 args.PaletteForSwatch,
                 args.PaletteDisplayName,

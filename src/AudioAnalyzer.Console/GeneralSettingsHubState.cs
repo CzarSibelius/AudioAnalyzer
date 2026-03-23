@@ -3,7 +3,7 @@ namespace AudioAnalyzer.Console;
 /// <summary>Mutable UI state for the General Settings hub (menu selection and application name edit).</summary>
 internal sealed class GeneralSettingsHubState
 {
-    /// <summary>Selected menu row index (0 = audio input, 1 = application name).</summary>
+    /// <summary>Selected menu row index (0 = audio input, 1 = application name, 2 = UI theme).</summary>
     public int SelectedIndex { get; set; }
 
     /// <summary>When true, keys edit <see cref="RenameBuffer"/> instead of navigating the menu.</summary>

@@ -34,6 +34,7 @@ internal sealed class ApplicationShell
     private readonly IKeyHandler<MainLoopKeyContext> _keyHandler;
     private readonly IAppSettingsPersistence _settingsPersistence;
     private readonly IDeviceSelectionModal _deviceSelectionModal;
+    private readonly IUiThemeSelectionModal _uiThemeSelectionModal;
     private readonly IHelpModal _helpModal;
     private readonly ISettingsModal _settingsModal;
     private readonly IShowEditModal _showEditModal;
@@ -62,6 +63,7 @@ internal sealed class ApplicationShell
         IKeyHandler<MainLoopKeyContext> keyHandler,
         IAppSettingsPersistence settingsPersistence,
         IDeviceSelectionModal deviceSelectionModal,
+        IUiThemeSelectionModal uiThemeSelectionModal,
         IHelpModal helpModal,
         ISettingsModal settingsModal,
         IShowEditModal showEditModal,
@@ -86,6 +88,7 @@ internal sealed class ApplicationShell
         _keyHandler = keyHandler ?? throw new ArgumentNullException(nameof(keyHandler));
         _settingsPersistence = settingsPersistence ?? throw new ArgumentNullException(nameof(settingsPersistence));
         _deviceSelectionModal = deviceSelectionModal ?? throw new ArgumentNullException(nameof(deviceSelectionModal));
+        _uiThemeSelectionModal = uiThemeSelectionModal ?? throw new ArgumentNullException(nameof(uiThemeSelectionModal));
         _helpModal = helpModal ?? throw new ArgumentNullException(nameof(helpModal));
         _settingsModal = settingsModal ?? throw new ArgumentNullException(nameof(settingsModal));
         _showEditModal = showEditModal ?? throw new ArgumentNullException(nameof(showEditModal));
@@ -255,6 +258,8 @@ internal sealed class ApplicationShell
             StartCapture = _deviceController.StartCapture,
             RestartCapture = _deviceController.RestartCapture,
             DeviceSelectionModal = _deviceSelectionModal,
+            UiThemeSelectionModal = _uiThemeSelectionModal,
+            GetAnalysisSnapshot = () => _engine.GetSnapshot(),
             UiSettings = _uiSettings,
             State = _generalSettingsHubState,
             DisplayState = _displayState,

@@ -12,6 +12,7 @@ internal sealed class DeviceSelectionModal : IDeviceSelectionModal
     private readonly ISettingsRepository _settingsRepo;
     private readonly AppSettings _settings;
     private readonly UiSettings _uiSettings;
+    private readonly IUiThemeResolver _uiThemeResolver;
     private readonly IConsoleDimensions _consoleDimensions;
     private readonly ITitleBarNavigationContext _navigation;
     private readonly ITitleBarBreadcrumbFormatter _breadcrumbFormatter;
@@ -22,6 +23,7 @@ internal sealed class DeviceSelectionModal : IDeviceSelectionModal
         ISettingsRepository settingsRepo,
         AppSettings settings,
         UiSettings uiSettings,
+        IUiThemeResolver uiThemeResolver,
         IConsoleDimensions consoleDimensions,
         ITitleBarNavigationContext navigation,
         ITitleBarBreadcrumbFormatter breadcrumbFormatter)
@@ -31,6 +33,7 @@ internal sealed class DeviceSelectionModal : IDeviceSelectionModal
         _settingsRepo = settingsRepo ?? throw new ArgumentNullException(nameof(settingsRepo));
         _settings = settings ?? throw new ArgumentNullException(nameof(settings));
         _uiSettings = uiSettings ?? throw new ArgumentNullException(nameof(uiSettings));
+        _uiThemeResolver = uiThemeResolver ?? throw new ArgumentNullException(nameof(uiThemeResolver));
         _consoleDimensions = consoleDimensions ?? throw new ArgumentNullException(nameof(consoleDimensions));
         _navigation = navigation ?? throw new ArgumentNullException(nameof(navigation));
         _breadcrumbFormatter = breadcrumbFormatter ?? throw new ArgumentNullException(nameof(breadcrumbFormatter));
@@ -78,7 +81,7 @@ internal sealed class DeviceSelectionModal : IDeviceSelectionModal
             SettingsRepo = _settingsRepo
         };
 
-        var palette = (_uiSettings ?? new UiSettings()).Palette ?? new UiPalette();
+        var palette = _uiThemeResolver.GetEffectiveUiPalette();
         var selBg = palette.Background ?? PaletteColor.FromConsoleColor(ConsoleColor.DarkBlue);
         var selFg = palette.Highlighted;
         var currentColor = palette.Highlighted;

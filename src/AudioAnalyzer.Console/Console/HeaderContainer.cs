@@ -14,6 +14,7 @@ internal sealed class HeaderContainer : IHeaderContainer, IUiComponent
     private readonly INowPlayingProvider _nowPlayingProvider;
     private readonly AnalysisEngine _engine;
     private readonly UiSettings _uiSettings;
+    private readonly IUiThemeResolver _uiThemeResolver;
     private readonly ITitleBarContentProvider _titleBarContentProvider;
     private readonly IApplicationModeFactory _applicationModeFactory;
 
@@ -37,6 +38,7 @@ internal sealed class HeaderContainer : IHeaderContainer, IUiComponent
         INowPlayingProvider nowPlayingProvider,
         AnalysisEngine engine,
         UiSettings uiSettings,
+        IUiThemeResolver uiThemeResolver,
         ITitleBarContentProvider titleBarContentProvider,
         IApplicationModeFactory applicationModeFactory)
     {
@@ -46,6 +48,7 @@ internal sealed class HeaderContainer : IHeaderContainer, IUiComponent
         _nowPlayingProvider = nowPlayingProvider ?? throw new ArgumentNullException(nameof(nowPlayingProvider));
         _engine = engine ?? throw new ArgumentNullException(nameof(engine));
         _uiSettings = uiSettings ?? throw new ArgumentNullException(nameof(uiSettings));
+        _uiThemeResolver = uiThemeResolver ?? throw new ArgumentNullException(nameof(uiThemeResolver));
         _titleBarContentProvider = titleBarContentProvider ?? throw new ArgumentNullException(nameof(titleBarContentProvider));
         _applicationModeFactory = applicationModeFactory ?? throw new ArgumentNullException(nameof(applicationModeFactory));
 
@@ -123,7 +126,7 @@ internal sealed class HeaderContainer : IHeaderContainer, IUiComponent
     private RenderContext BuildContext(string deviceName, bool invalidateCache)
     {
         int width = Math.Max(10, _displayDimensions.Width);
-        var palette = _uiSettings.Palette ?? new UiPalette();
+        UiPalette palette = _uiThemeResolver.GetEffectiveUiPalette();
         int headerLines = _applicationModeFactory.GetActiveApplicationMode().HeaderLineCount;
         return new RenderContext
         {
@@ -139,7 +142,7 @@ internal sealed class HeaderContainer : IHeaderContainer, IUiComponent
 
     private IReadOnlyList<LabeledValueDescriptor> BuildRow2Viewports()
     {
-        var palette = _uiSettings.Palette ?? new UiPalette();
+        var palette = _uiThemeResolver.GetEffectiveUiPalette();
         var nowTextColor = !string.IsNullOrEmpty(_nowPlayingText) ? palette.Highlighted : (PaletteColor?)null;
         return
         [

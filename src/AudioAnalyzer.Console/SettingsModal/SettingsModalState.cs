@@ -6,6 +6,12 @@ internal sealed class SettingsModalState
     /// <summary>Index of the selected layer in the sorted list.</summary>
     public int SelectedLayerIndex { get; set; }
 
+    /// <summary>When true, the left panel highlights the Preset row (above layer 1); when false, <see cref="SelectedLayerIndex"/> selects a layer.</summary>
+    public bool LeftPanelPresetSelected { get; set; }
+
+    /// <summary>When <see cref="SettingsModalFocus.PickingPalette"/> is active, true means the picker edits preset <c>TextLayers.PaletteId</c> (no inherit row); false means layer palette.</summary>
+    public bool PalettePickerForPresetDefault { get; set; }
+
     /// <summary>True when renaming the preset.</summary>
     public bool Renaming { get; set; }
 
@@ -21,10 +27,10 @@ internal sealed class SettingsModalState
     /// <summary>Buffer for text-edit setting input.</summary>
     public string EditingBuffer { get; set; } = "";
 
-    /// <summary>Selected row in the palette picker: 0 = inherit, 1..N = index in the repository palette list + 1.</summary>
+    /// <summary>Selected row in the palette picker: layer mode — 0 = inherit, 1..N = repo index + 1; preset-default mode — 0..N-1 = repo palette index.</summary>
     public int PalettePickerSelectedIndex { get; set; }
 
-    /// <summary>Layer palette id when the picker opened; Esc restores it (Enter saves the previewed choice).</summary>
+    /// <summary>Palette id when the picker opened; Esc restores it (Enter saves the previewed choice). Used for layer or preset default palette.</summary>
     public string? PalettePickerOriginalPaletteId { get; set; }
 
     /// <summary>Last navigation key for rate limiting.</summary>

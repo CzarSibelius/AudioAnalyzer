@@ -79,4 +79,95 @@ internal static class SettingsSurfacesListDrawing
             _ = ex;
         }
     }
+
+    /// <summary>Scrollable UI theme list: row 0 is (Custom), then repository palettes with colored names.</summary>
+    public static void DrawUiThemePaletteList(
+        int startRow,
+        int width,
+        IPaletteRepository paletteRepo,
+        IReadOnlyList<PaletteInfo> palettes,
+        int selectedIndex,
+        int scrollOffset,
+        int visibleRows,
+        string? currentThemePaletteId,
+        PaletteColor selBg,
+        PaletteColor selFg,
+        PaletteColor currentHighlightColor,
+        AnalysisSnapshot analysisSnapshot)
+    {
+        int total = 1 + palettes.Count;
+        int rightCol = Math.Max(8, width - 4);
+        for (int vi = 0; vi < visibleRows; vi++)
+        {
+            int globalIndex = scrollOffset + vi;
+            if (globalIndex >= total)
+            {
+                try
+                {
+                    System.Console.SetCursorPosition(0, startRow + vi);
+                    System.Console.Write(new string(' ', Math.Max(0, width - 1)));
+                }
+                catch (Exception ex)
+                {
+                    _ = ex;
+                }
+
+                continue;
+            }
+
+            string prefix = globalIndex == selectedIndex ? " ► " : "   ";
+            string lineToWrite;
+            if (globalIndex == 0)
+            {
+                bool customCurrent = string.IsNullOrWhiteSpace(currentThemePaletteId);
+                string core = "(Custom)" + (customCurrent ? " (current)" : "");
+                if (globalIndex == selectedIndex)
+                {
+                    lineToWrite = AnsiConsole.BackgroundCode(selBg) + AnsiConsole.ColorCode(selFg) + prefix + core + AnsiConsole.ResetCode;
+                }
+                else if (customCurrent)
+                {
+                    lineToWrite = AnsiConsole.ColorCode(currentHighlightColor) + prefix + core + AnsiConsole.ResetCode;
+                }
+                else
+                {
+                    lineToWrite = prefix + core;
+                }
+            }
+            else
+            {
+                PaletteInfo p = palettes[globalIndex - 1];
+                string displayName = !string.IsNullOrWhiteSpace(p.Name?.Trim()) ? p.Name!.Trim() : p.Id;
+                bool isCurrent = !string.IsNullOrWhiteSpace(currentThemePaletteId)
+                    && string.Equals(p.Id, currentThemePaletteId.Trim(), StringComparison.OrdinalIgnoreCase);
+                string row = SettingsSurfacesPaletteDrawing.FormatPickerPaletteRow(
+                    paletteRepo,
+                    p.Id,
+                    displayName + (isCurrent ? " (current)" : ""),
+                    rightCol,
+                    globalIndex == selectedIndex,
+                    selBg,
+                    selFg,
+                    analysisSnapshot);
+                lineToWrite = prefix + row;
+            }
+
+            try
+            {
+                System.Console.SetCursorPosition(0, startRow + vi);
+                if (AnsiConsole.GetDisplayWidth(lineToWrite) > width - 1)
+                {
+                    System.Console.Write(StaticTextViewport.TruncateToWidth(new AnsiText(lineToWrite), width - 1));
+                }
+                else
+                {
+                    System.Console.Write(lineToWrite);
+                }
+            }
+            catch (Exception ex)
+            {
+                _ = ex;
+            }
+        }
+    }
 }

@@ -9,7 +9,7 @@ internal sealed class HelpModal : IHelpModal
 {
     private const int KeyColumnWidth = 14;
 
-    private readonly UiSettings _uiSettings;
+    private readonly IUiThemeResolver _uiThemeResolver;
     private readonly IHelpContentProvider _helpContentProvider;
     private readonly IConsoleDimensions _consoleDimensions;
     private readonly ITitleBarNavigationContext _navigation;
@@ -17,13 +17,13 @@ internal sealed class HelpModal : IHelpModal
     private ApplicationMode _currentMode = ApplicationMode.PresetEditor;
 
     public HelpModal(
-        UiSettings uiSettings,
+        IUiThemeResolver uiThemeResolver,
         IHelpContentProvider helpContentProvider,
         IConsoleDimensions consoleDimensions,
         ITitleBarNavigationContext navigation,
         ITitleBarBreadcrumbFormatter breadcrumbFormatter)
     {
-        _uiSettings = uiSettings ?? throw new ArgumentNullException(nameof(uiSettings));
+        _uiThemeResolver = uiThemeResolver ?? throw new ArgumentNullException(nameof(uiThemeResolver));
         _helpContentProvider = helpContentProvider ?? throw new ArgumentNullException(nameof(helpContentProvider));
         _consoleDimensions = consoleDimensions ?? throw new ArgumentNullException(nameof(consoleDimensions));
         _navigation = navigation ?? throw new ArgumentNullException(nameof(navigation));
@@ -52,7 +52,7 @@ internal sealed class HelpModal : IHelpModal
     /// <summary>Draws help content only; does not clear or read input. Used by RunModal. Uses palette colors per ADR-0033.</summary>
     private void DrawContent()
     {
-        var palette = (_uiSettings ?? new UiSettings()).Palette ?? new UiPalette();
+        var palette = _uiThemeResolver.GetEffectiveUiPalette();
         string labelCode = AnsiConsole.ColorCode(palette.Label);
         string dimmedCode = AnsiConsole.ColorCode(palette.Dimmed);
         string reset = AnsiConsole.ResetCode;

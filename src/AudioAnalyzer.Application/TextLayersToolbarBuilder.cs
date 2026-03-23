@@ -9,6 +9,14 @@ namespace AudioAnalyzer.Application;
 /// <summary>Builds the TextLayers toolbar suffix: layer digits 1–<see cref="TextLayersLimits.MaxLayerCount"/>, oscilloscope gain (when applicable), palette name.</summary>
 public sealed class TextLayersToolbarBuilder : ITextLayersToolbarBuilder
 {
+    private readonly IUiThemeResolver _uiThemeResolver;
+
+    /// <summary>Initializes a new instance of the <see cref="TextLayersToolbarBuilder"/> class.</summary>
+    public TextLayersToolbarBuilder(IUiThemeResolver uiThemeResolver)
+    {
+        _uiThemeResolver = uiThemeResolver ?? throw new ArgumentNullException(nameof(uiThemeResolver));
+    }
+
     /// <inheritdoc />
     public string? BuildSuffix(TextLayersToolbarContext context)
     {
@@ -20,7 +28,7 @@ public sealed class TextLayersToolbarBuilder : ITextLayersToolbarBuilder
         var sortedLayers = context.SortedLayers;
         if (sortedLayers is not { Count: > 0 })
         {
-            var emptyPalette = context.UiSettings.Palette ?? new UiPalette();
+            var emptyPalette = _uiThemeResolver.GetEffectiveUiPalette();
             string layersLabel = LabelFormatting.FormatLabel("Layers", null);
             return AnsiConsole.ColorCode(emptyPalette.Label) + layersLabel + AnsiConsole.ResetCode + AnsiConsole.ColorCode(emptyPalette.Dimmed) + "(config in settings)" + AnsiConsole.ResetCode;
         }
@@ -36,7 +44,7 @@ public sealed class TextLayersToolbarBuilder : ITextLayersToolbarBuilder
             paletteName = "Default";
         }
 
-        var palette = context.UiSettings.Palette ?? new UiPalette();
+        var palette = _uiThemeResolver.GetEffectiveUiPalette();
         var sb = new StringBuilder();
         AnsiConsole.AppendColored(sb, LabelFormatting.FormatLabel("Layers", null), palette.Label);
         for (int i = 0; i < TextLayersLimits.MaxLayerCount; i++)
@@ -72,7 +80,7 @@ public sealed class TextLayersToolbarBuilder : ITextLayersToolbarBuilder
         return sb.ToString();
     }
 
-    private static string BuildShowPlaySuffix(TextLayersToolbarContext context)
+    private string BuildShowPlaySuffix(TextLayersToolbarContext context)
     {
         string show = string.IsNullOrWhiteSpace(context.ActiveShowName) ? "—" : context.ActiveShowName.Trim();
         int count = context.ShowEntryCount;
@@ -92,7 +100,7 @@ public sealed class TextLayersToolbarBuilder : ITextLayersToolbarBuilder
         }
 
         var sb = new StringBuilder();
-        var palette = context.UiSettings.Palette ?? new UiPalette();
+        var palette = _uiThemeResolver.GetEffectiveUiPalette();
         AnsiConsole.AppendColored(sb, LabelFormatting.FormatLabel("Show", null), palette.Label);
         sb.Append(show);
         sb.Append(" | ");
@@ -113,7 +121,7 @@ public sealed class TextLayersToolbarBuilder : ITextLayersToolbarBuilder
         }
 
         var sortedLayers = context.SortedLayers;
-        var palette = context.UiSettings.Palette ?? new UiPalette();
+        var palette = _uiThemeResolver.GetEffectiveUiPalette();
         var list = new List<LabeledValueDescriptor>();
 
         if (sortedLayers is not { Count: > 0 })
@@ -177,9 +185,9 @@ public sealed class TextLayersToolbarBuilder : ITextLayersToolbarBuilder
     }
 
     /// <summary>Show play: compact toolbar (show name, entry index, palette) without per-layer digit row.</summary>
-    private static List<LabeledValueDescriptor> BuildShowPlayViewports(TextLayersToolbarContext context)
+    private List<LabeledValueDescriptor> BuildShowPlayViewports(TextLayersToolbarContext context)
     {
-        var paletteUi = context.UiSettings.Palette ?? new UiPalette();
+        var paletteUi = _uiThemeResolver.GetEffectiveUiPalette();
         var list = new List<LabeledValueDescriptor>();
         int termW = context.Snapshot?.TerminalWidth > 0 ? context.Snapshot.TerminalWidth : 80;
         int maxShow = Math.Max(12, termW / 4);

@@ -23,6 +23,9 @@ internal sealed class MainContentRenderArgs
     /// <summary>App UI settings.</summary>
     public required UiSettings UiSettings { get; init; }
 
+    /// <summary>Resolved UI chrome palette (theme or inline <see cref="UiSettings.Palette"/>).</summary>
+    public required UiPalette EffectiveUiPalette { get; init; }
+
     /// <summary>Palette colors for P-key swatch in toolbar when applicable.</summary>
     public IReadOnlyList<PaletteColor>? PaletteForSwatch { get; init; }
 

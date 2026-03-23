@@ -50,6 +50,31 @@ public static class PaletteSwatchFormatter
     }
 
     /// <summary>
+    /// Current tick bucket for palette name animation when BPM is below the beat threshold; matches <see cref="ComputeToolbarPhaseOffset"/> tick path.
+    /// </summary>
+    public static long GetPaletteAnimationTickBucket() => Environment.TickCount64 / TickMsForPhaseStep;
+
+    /// <summary>
+    /// Whether the palette name animation should advance a frame: on beat count when BPM is plausible, else on tick bucket change (same 200ms step as <see cref="ComputeToolbarPhaseOffset"/>).
+    /// </summary>
+    public static bool PaletteAnimationFrameAdvanced(
+        AnalysisSnapshot snapshot,
+        int lastBeatCount,
+        long lastTickBucket,
+        out int beatCount,
+        out long tickBucket)
+    {
+        beatCount = snapshot.BeatCount;
+        tickBucket = GetPaletteAnimationTickBucket();
+        if (snapshot.CurrentBpm >= 1.0)
+        {
+            return beatCount != lastBeatCount;
+        }
+
+        return tickBucket != lastTickBucket;
+    }
+
+    /// <summary>
     /// Toolbar / main view: beat-driven phase when BPM is plausible; otherwise tick-based rotation.
     /// </summary>
     public static int ComputeToolbarPhaseOffset(AnalysisSnapshot snapshot, int colorCount)

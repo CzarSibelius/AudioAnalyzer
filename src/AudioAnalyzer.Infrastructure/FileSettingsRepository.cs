@@ -222,7 +222,8 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
         {
             Title = file.Title ?? "AUDIO ANALYZER - Real-time Frequency Spectrum",
             DefaultScrollingSpeed = file.DefaultScrollingSpeed,
-            Palette = palette
+            Palette = palette,
+            UiThemePaletteId = string.IsNullOrWhiteSpace(file.UiThemePaletteId) ? null : file.UiThemePaletteId.Trim()
         };
     }
 
@@ -238,6 +239,7 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
         {
             Title = settings.Title,
             DefaultScrollingSpeed = settings.DefaultScrollingSpeed,
+            UiThemePaletteId = string.IsNullOrWhiteSpace(settings.UiThemePaletteId) ? null : settings.UiThemePaletteId.Trim(),
             Palette = new UiPaletteFile
             {
                 Normal = ColorPaletteParser.ToEntry(palette.Normal),
@@ -312,6 +314,7 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
     {
         public string? Title { get; set; }
         public double DefaultScrollingSpeed { get; set; } = 0.25;
+        public string? UiThemePaletteId { get; set; }
         public UiPaletteFile? Palette { get; set; }
     }
 

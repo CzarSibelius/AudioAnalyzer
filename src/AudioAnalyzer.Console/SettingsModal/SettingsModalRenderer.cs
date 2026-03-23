@@ -18,6 +18,7 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
 
     private readonly VisualizerSettings _visualizerSettings;
     private readonly UiSettings _uiSettings;
+    private readonly IUiThemeResolver _uiThemeResolver;
     private readonly IPaletteRepository _paletteRepo;
     private readonly IUiComponentRenderer<IUiComponent> _componentRenderer;
     private readonly ITitleBarNavigationContext _navigation;
@@ -25,11 +26,11 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
     private readonly HorizontalRowComponent _hintRow;
     private readonly CompositeComponent _hintRoot;
 
-    /// <summary>Last palette color phase drawn; used to skip redundant palette cell repaints.</summary>
+    /// <summary>Last palette color phase drawn for layer Palette row; used to skip redundant palette cell repaints.</summary>
     private int _lastIdlePalettePhase = int.MinValue;
 
-    /// <summary>Matches <see cref="PaletteSwatchFormatter.ComputeToolbarPhaseOffset"/> tick path; used to detect picker animation frame changes.</summary>
-    private const long PaletteAnimationTickBucketMs = 200;
+    /// <summary>Last phase for preset default palette row idle animation.</summary>
+    private int _lastIdlePresetDefaultPalettePhase = int.MinValue;
 
     private int _lastPickerIdleBeatCount = -1;
     private long _lastPickerIdleTickBucket = -1;
@@ -40,6 +41,7 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
     public SettingsModalRenderer(
         VisualizerSettings visualizerSettings,
         UiSettings uiSettings,
+        IUiThemeResolver uiThemeResolver,
         IPaletteRepository paletteRepo,
         IUiComponentRenderer<IUiComponent> componentRenderer,
         ITitleBarNavigationContext navigation,
@@ -47,6 +49,7 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
     {
         _visualizerSettings = visualizerSettings ?? throw new ArgumentNullException(nameof(visualizerSettings));
         _uiSettings = uiSettings ?? throw new ArgumentNullException(nameof(uiSettings));
+        _uiThemeResolver = uiThemeResolver ?? throw new ArgumentNullException(nameof(uiThemeResolver));
         _paletteRepo = paletteRepo ?? throw new ArgumentNullException(nameof(paletteRepo));
         _componentRenderer = componentRenderer ?? throw new ArgumentNullException(nameof(componentRenderer));
         _navigation = navigation ?? throw new ArgumentNullException(nameof(navigation));
@@ -64,7 +67,7 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
         }
 
         int rightColWidth = Math.Max(10, width - LeftColWidth - 1);
-        var palette = (_uiSettings ?? new UiSettings()).Palette ?? new UiPalette();
+        var palette = _uiThemeResolver.GetEffectiveUiPalette();
         var selBg = palette.Background ?? PaletteColor.FromConsoleColor(ConsoleColor.DarkBlue);
         var selFg = palette.Highlighted;
         double scrollSpeed = _uiSettings?.DefaultScrollingSpeed ?? 0.25;
@@ -73,10 +76,16 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
         {
             _navigation.View = TitleBarViewKind.PresetSettingsModal;
             _navigation.PresetSettingsPalettePickerActive = state.Focus == SettingsModalFocus.PickingPalette;
-            var selectedLayer = sortedLayers.Count > 0 && state.SelectedLayerIndex < sortedLayers.Count
+            var textLayers = _visualizerSettings.TextLayers ?? new TextLayersVisualizerSettings();
+            var selectedLayer = !state.LeftPanelPresetSelected && sortedLayers.Count > 0 && state.SelectedLayerIndex < sortedLayers.Count
                 ? sortedLayers[state.SelectedLayerIndex]
                 : null;
-            if (selectedLayer != null)
+            if (state.LeftPanelPresetSelected)
+            {
+                _navigation.PresetSettingsLayerOneBased = null;
+                _navigation.PresetSettingsLayerTypeRaw = null;
+            }
+            else if (selectedLayer != null)
             {
                 _navigation.PresetSettingsLayerOneBased = state.SelectedLayerIndex + 1;
                 _navigation.PresetSettingsLayerTypeRaw = selectedLayer.LayerType.ToString();
@@ -87,7 +96,7 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
                 _navigation.PresetSettingsLayerTypeRaw = null;
             }
 
-            _navigation.PresetSettingsFocusedSettingId = TryGetFocusedSettingId(state, selectedLayer);
+            _navigation.PresetSettingsFocusedSettingId = TryGetFocusedSettingId(state, selectedLayer, textLayers);
 
             TitleBarBreadcrumbRow.Write(0, width, _breadcrumbFormatter);
 
@@ -101,22 +110,34 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
                 System.Console.Write(new string(' ', rightColWidth));
             }
 
+            int presetRow = FirstLayerRow;
+            string presetPrefix = state.LeftPanelPresetSelected ? " ► " : "   ";
+            string presetLeft = $"{presetPrefix}Preset";
+            presetLeft = StaticTextViewport.TruncateWithEllipsis(new PlainText(presetLeft), LeftColWidth).PadRight(LeftColWidth);
+            System.Console.SetCursorPosition(0, presetRow);
+            string presetLeftWrite = state.LeftPanelPresetSelected && state.Focus == SettingsModalFocus.LayerList && !state.Renaming
+                ? AnsiConsole.BackgroundCode(selBg) + AnsiConsole.ColorCode(selFg) + presetLeft + AnsiConsole.ResetCode
+                : presetLeft;
+            System.Console.Write(presetLeftWrite);
+            System.Console.Write(" ");
+            System.Console.Write(new string(' ', rightColWidth));
+
             for (int i = 0; i < sortedLayers.Count && i < TextLayersLimits.MaxLayerCount; i++)
             {
-                int row = FirstLayerRow + i;
+                int row = FirstLayerRow + 1 + i;
                 if (row >= OverlayRowCount)
                 {
                     break;
                 }
 
                 var layer = sortedLayers[i];
-                string prefix = i == state.SelectedLayerIndex ? " ► " : "   ";
+                string prefix = !state.LeftPanelPresetSelected && i == state.SelectedLayerIndex ? " ► " : "   ";
                 string enabledMark = layer.Enabled ? "●" : "○";
                 string leftLine = $"{prefix}{enabledMark} {i + 1}. {layer.LayerType}";
                 leftLine = StaticTextViewport.TruncateWithEllipsis(new PlainText(leftLine), LeftColWidth).PadRight(LeftColWidth);
 
                 System.Console.SetCursorPosition(0, row);
-                string leftLineToWrite = (i == state.SelectedLayerIndex && state.Focus == SettingsModalFocus.LayerList && !state.Renaming)
+                string leftLineToWrite = !state.LeftPanelPresetSelected && i == state.SelectedLayerIndex && state.Focus == SettingsModalFocus.LayerList && !state.Renaming
                     ? AnsiConsole.BackgroundCode(selBg) + AnsiConsole.ColorCode(selFg) + leftLine + AnsiConsole.ResetCode
                     : leftLine;
                 System.Console.Write(leftLineToWrite);
@@ -124,77 +145,120 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
                 System.Console.Write(new string(' ', rightColWidth));
             }
 
-            if (selectedLayer != null)
-            {
-                if (state.Focus == SettingsModalFocus.PickingPalette)
-                {
-                    SettingsSurfacesPaletteDrawing.DrawPicker(
-                        _paletteRepo,
-                        state,
-                        LeftColWidth,
-                        FirstLayerRow,
-                        SettingsVisibleRows,
-                        rightColWidth,
-                        selBg,
-                        selFg,
-                        analysisSnapshot);
-                }
-                else
-                {
-                    var settingsRows = GetSettingsRows(selectedLayer);
-                    int settingsScrollOffset = settingsRows.Count <= SettingsVisibleRows
-                        ? 0
-                        : Math.Clamp(state.SelectedSettingIndex - (SettingsVisibleRows - 1), 0, settingsRows.Count - SettingsVisibleRows);
-                    for (int vi = 0; vi < SettingsVisibleRows; vi++)
-                    {
-                        int i = settingsScrollOffset + vi;
-                        if (i >= settingsRows.Count) { break; }
-                        var row = settingsRows[i];
-                        bool showBuffer = state.Focus == SettingsModalFocus.EditingSetting && i == state.SelectedSettingIndex && row.EditMode == SettingEditMode.TextEdit;
-                        bool selected = i == state.SelectedSettingIndex && (state.Focus == SettingsModalFocus.SettingsList || state.Focus == SettingsModalFocus.EditingSetting);
-                        System.Console.SetCursorPosition(LeftColWidth + 1, FirstLayerRow + vi);
-                        if (row.Id == "Palette" && !showBuffer)
-                        {
-                            System.Console.Write(SettingsSurfacesPaletteDrawing.FormatPaletteSettingRow(
-                                _paletteRepo,
-                                _visualizerSettings,
-                                selectedLayer,
-                                rightColWidth,
-                                selected,
-                                selBg,
-                                selFg,
-                                analysisSnapshot));
-                            continue;
-                        }
+            bool showPresetPanel = state.LeftPanelPresetSelected;
+            bool showLayerPanel = !state.LeftPanelPresetSelected && selectedLayer != null;
 
-                        string labelWithColon = string.IsNullOrEmpty(row.Label) ? "" : row.Label + ":";
-                        string lineText = $"{labelWithColon}{(showBuffer ? state.EditingBuffer + "_" : row.DisplayValue)}";
-                        string line = StaticTextViewport.TruncateWithEllipsis(new PlainText(lineText), rightColWidth);
-                        string linePadded = line.PadRight(rightColWidth);
-                        string lineToWrite = selected
-                            ? AnsiConsole.BackgroundCode(selBg) + AnsiConsole.ColorCode(selFg) + linePadded + AnsiConsole.ResetCode
-                            : linePadded;
-                        System.Console.Write(lineToWrite);
+            if (state.Focus == SettingsModalFocus.PickingPalette)
+            {
+                SettingsSurfacesPaletteDrawing.DrawPicker(
+                    _paletteRepo,
+                    state,
+                    LeftColWidth,
+                    FirstLayerRow,
+                    SettingsVisibleRows,
+                    rightColWidth,
+                    selBg,
+                    selFg,
+                    analysisSnapshot,
+                    includeInheritFirst: !state.PalettePickerForPresetDefault);
+            }
+            else if (showPresetPanel)
+            {
+                var presetSettingsRows = PresetSettingsModalRows.Build(_visualizerSettings, textLayers, _paletteRepo);
+                for (int vi = 0; vi < SettingsVisibleRows; vi++)
+                {
+                    if (vi >= presetSettingsRows.Count) { break; }
+                    var row = presetSettingsRows[vi];
+                    bool showBuffer = state.Focus == SettingsModalFocus.EditingSetting && vi == state.SelectedSettingIndex && row.EditMode == SettingEditMode.TextEdit;
+                    bool selected = vi == state.SelectedSettingIndex && (state.Focus == SettingsModalFocus.SettingsList || state.Focus == SettingsModalFocus.EditingSetting);
+                    System.Console.SetCursorPosition(LeftColWidth + 1, FirstLayerRow + vi);
+                    if (row.Id == PresetSettingsModalRows.DefaultPaletteId && !showBuffer)
+                    {
+                        System.Console.Write(SettingsSurfacesPaletteDrawing.FormatPresetDefaultPaletteSettingRow(
+                            _paletteRepo,
+                            textLayers,
+                            rightColWidth,
+                            selected,
+                            selBg,
+                            selFg,
+                            analysisSnapshot));
+                        continue;
                     }
+
+                    string labelWithColon = string.IsNullOrEmpty(row.Label) ? "" : row.Label + ":";
+                    string lineText = $"{labelWithColon}{(showBuffer ? state.EditingBuffer + "_" : row.DisplayValue)}";
+                    string line = StaticTextViewport.TruncateWithEllipsis(new PlainText(lineText), rightColWidth);
+                    string linePadded = line.PadRight(rightColWidth);
+                    string lineToWrite = selected
+                        ? AnsiConsole.BackgroundCode(selBg) + AnsiConsole.ColorCode(selFg) + linePadded + AnsiConsole.ResetCode
+                        : linePadded;
+                    System.Console.Write(lineToWrite);
+                }
+            }
+            else if (showLayerPanel)
+            {
+                var settingsRows = GetSettingsRows(selectedLayer);
+                int settingsScrollOffset = settingsRows.Count <= SettingsVisibleRows
+                    ? 0
+                    : Math.Clamp(state.SelectedSettingIndex - (SettingsVisibleRows - 1), 0, settingsRows.Count - SettingsVisibleRows);
+                for (int vi = 0; vi < SettingsVisibleRows; vi++)
+                {
+                    int i = settingsScrollOffset + vi;
+                    if (i >= settingsRows.Count) { break; }
+                    var row = settingsRows[i];
+                    bool showBuffer = state.Focus == SettingsModalFocus.EditingSetting && i == state.SelectedSettingIndex && row.EditMode == SettingEditMode.TextEdit;
+                    bool rowSelected = i == state.SelectedSettingIndex && (state.Focus == SettingsModalFocus.SettingsList || state.Focus == SettingsModalFocus.EditingSetting);
+                    System.Console.SetCursorPosition(LeftColWidth + 1, FirstLayerRow + vi);
+                    if (row.Id == "Palette" && !showBuffer)
+                    {
+                        System.Console.Write(SettingsSurfacesPaletteDrawing.FormatPaletteSettingRow(
+                            _paletteRepo,
+                            _visualizerSettings,
+                            selectedLayer!,
+                            rightColWidth,
+                            rowSelected,
+                            selBg,
+                            selFg,
+                            analysisSnapshot));
+                        continue;
+                    }
+
+                    string labelWithColon = string.IsNullOrEmpty(row.Label) ? "" : row.Label + ":";
+                    string lineText = $"{labelWithColon}{(showBuffer ? state.EditingBuffer + "_" : row.DisplayValue)}";
+                    string line = StaticTextViewport.TruncateWithEllipsis(new PlainText(lineText), rightColWidth);
+                    string linePadded = line.PadRight(rightColWidth);
+                    string lineToWrite = rowSelected
+                        ? AnsiConsole.BackgroundCode(selBg) + AnsiConsole.ColorCode(selFg) + linePadded + AnsiConsole.ResetCode
+                        : linePadded;
+                    System.Console.Write(lineToWrite);
                 }
             }
 
-            for (int row = FirstLayerRow + sortedLayers.Count; row < OverlayRowCount; row++)
+            for (int row = FirstLayerRow + 1 + sortedLayers.Count; row < OverlayRowCount; row++)
             {
                 System.Console.SetCursorPosition(0, row);
                 System.Console.Write(new string(' ', LeftColWidth + 1));
             }
 
-            if (selectedLayer != null && state.Focus != SettingsModalFocus.PickingPalette)
+            if (showPresetPanel && state.Focus != SettingsModalFocus.PickingPalette)
             {
-                _lastIdlePalettePhase = GetPalettePhaseForLayer(selectedLayer, analysisSnapshot);
+                _lastIdlePresetDefaultPalettePhase = GetPalettePhaseForPresetDefault(textLayers, analysisSnapshot);
             }
-            else if (selectedLayer == null)
+            else
+            {
+                _lastIdlePresetDefaultPalettePhase = int.MinValue;
+            }
+
+            if (showLayerPanel && state.Focus != SettingsModalFocus.PickingPalette)
+            {
+                _lastIdlePalettePhase = GetPalettePhaseForLayer(selectedLayer!, analysisSnapshot);
+            }
+            else if (!showLayerPanel)
             {
                 _lastIdlePalettePhase = int.MinValue;
             }
 
-            if (state.Focus == SettingsModalFocus.PickingPalette && selectedLayer != null)
+            if (state.Focus == SettingsModalFocus.PickingPalette)
             {
                 SyncPickerIdleTracking(analysisSnapshot);
             }
@@ -216,7 +280,7 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
         }
 
         double scrollSpeed = _uiSettings?.DefaultScrollingSpeed ?? 0.25;
-        var palette = _uiSettings?.Palette ?? new UiPalette();
+        var palette = _uiThemeResolver.GetEffectiveUiPalette();
         try
         {
             System.Console.Write(SyncOutputBegin);
@@ -237,11 +301,71 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
 
         if (state.Focus == SettingsModalFocus.PickingPalette)
         {
-            TryRedrawPalettePickerForIdle(state, sortedLayers, width, analysisSnapshot);
+            TryRedrawPalettePickerForIdle(state, width, analysisSnapshot);
             return;
         }
 
-        var selectedLayer = sortedLayers.Count > 0 && state.SelectedLayerIndex < sortedLayers.Count
+        var textLayers = _visualizerSettings.TextLayers ?? new TextLayersVisualizerSettings();
+        if (state.LeftPanelPresetSelected)
+        {
+            int phase = GetPalettePhaseForPresetDefault(textLayers, analysisSnapshot);
+            if (phase == _lastIdlePresetDefaultPalettePhase)
+            {
+                return;
+            }
+
+            int rightColWidth = Math.Max(10, width - LeftColWidth - 1);
+            var presetRows = PresetSettingsModalRows.Build(_visualizerSettings, textLayers, _paletteRepo);
+            int paletteRowIndex = -1;
+            for (int i = 0; i < presetRows.Count; i++)
+            {
+                if (presetRows[i].Id == PresetSettingsModalRows.DefaultPaletteId)
+                {
+                    paletteRowIndex = i;
+                    break;
+                }
+            }
+
+            if (paletteRowIndex < 0)
+            {
+                _lastIdlePresetDefaultPalettePhase = phase;
+                return;
+            }
+
+            int vi = paletteRowIndex;
+            var uiPalette = _uiThemeResolver.GetEffectiveUiPalette();
+            var selBg = uiPalette.Background ?? PaletteColor.FromConsoleColor(ConsoleColor.DarkBlue);
+            var selFg = uiPalette.Highlighted;
+            var row = presetRows[paletteRowIndex];
+            bool showBuffer = state.Focus == SettingsModalFocus.EditingSetting && paletteRowIndex == state.SelectedSettingIndex && row.EditMode == SettingEditMode.TextEdit;
+            if (showBuffer)
+            {
+                _lastIdlePresetDefaultPalettePhase = phase;
+                return;
+            }
+
+            bool selected = paletteRowIndex == state.SelectedSettingIndex && (state.Focus == SettingsModalFocus.SettingsList || state.Focus == SettingsModalFocus.EditingSetting);
+            string line = SettingsSurfacesPaletteDrawing.FormatPresetDefaultPaletteSettingRow(
+                _paletteRepo,
+                textLayers,
+                rightColWidth,
+                selected,
+                selBg,
+                selFg,
+                analysisSnapshot);
+
+            try
+            {
+                System.Console.SetCursorPosition(LeftColWidth + 1, FirstLayerRow + vi);
+                System.Console.Write(line);
+                _lastIdlePresetDefaultPalettePhase = phase;
+            }
+            catch (Exception ex) { _ = ex; /* Preset palette idle redraw failed */ }
+
+            return;
+        }
+
+        var selectedLayer = !state.LeftPanelPresetSelected && sortedLayers.Count > 0 && state.SelectedLayerIndex < sortedLayers.Count
             ? sortedLayers[state.SelectedLayerIndex]
             : null;
         if (selectedLayer == null)
@@ -249,67 +373,67 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
             return;
         }
 
-        int phase = GetPalettePhaseForLayer(selectedLayer, analysisSnapshot);
-        if (phase == _lastIdlePalettePhase)
+        int layerPhase = GetPalettePhaseForLayer(selectedLayer, analysisSnapshot);
+        if (layerPhase == _lastIdlePalettePhase)
         {
             return;
         }
 
-        int rightColWidth = Math.Max(10, width - LeftColWidth - 1);
+        int rightColW = Math.Max(10, width - LeftColWidth - 1);
         var settingsRows = GetSettingsRows(selectedLayer);
-        int paletteRowIndex = -1;
+        int paletteRowIndexLayer = -1;
         for (int i = 0; i < settingsRows.Count; i++)
         {
             if (settingsRows[i].Id == "Palette")
             {
-                paletteRowIndex = i;
+                paletteRowIndexLayer = i;
                 break;
             }
         }
 
-        if (paletteRowIndex < 0)
+        if (paletteRowIndexLayer < 0)
         {
-            _lastIdlePalettePhase = phase;
+            _lastIdlePalettePhase = layerPhase;
             return;
         }
 
         int settingsScrollOffset = settingsRows.Count <= SettingsVisibleRows
             ? 0
             : Math.Clamp(state.SelectedSettingIndex - (SettingsVisibleRows - 1), 0, settingsRows.Count - SettingsVisibleRows);
-        int vi = paletteRowIndex - settingsScrollOffset;
-        if (vi < 0 || vi >= SettingsVisibleRows)
+        int viLayer = paletteRowIndexLayer - settingsScrollOffset;
+        if (viLayer < 0 || viLayer >= SettingsVisibleRows)
         {
-            _lastIdlePalettePhase = phase;
+            _lastIdlePalettePhase = layerPhase;
             return;
         }
 
-        var uiPalette = (_uiSettings ?? new UiSettings()).Palette ?? new UiPalette();
-        var selBg = uiPalette.Background ?? PaletteColor.FromConsoleColor(ConsoleColor.DarkBlue);
-        var selFg = uiPalette.Highlighted;
-        var row = settingsRows[paletteRowIndex];
-        bool showBuffer = state.Focus == SettingsModalFocus.EditingSetting && paletteRowIndex == state.SelectedSettingIndex && row.EditMode == SettingEditMode.TextEdit;
-        if (row.Id != "Palette" || showBuffer)
+        var uiPal = _uiThemeResolver.GetEffectiveUiPalette();
+        var selBgL = uiPal.Background ?? PaletteColor.FromConsoleColor(ConsoleColor.DarkBlue);
+        var selFgL = uiPal.Highlighted;
+        var rowL = settingsRows[paletteRowIndexLayer];
+        bool showBufferL = state.Focus == SettingsModalFocus.EditingSetting && paletteRowIndexLayer == state.SelectedSettingIndex && rowL.EditMode == SettingEditMode.TextEdit;
+        if (rowL.Id != "Palette" || showBufferL)
         {
-            _lastIdlePalettePhase = phase;
+            _lastIdlePalettePhase = layerPhase;
             return;
         }
 
-        bool selected = paletteRowIndex == state.SelectedSettingIndex && (state.Focus == SettingsModalFocus.SettingsList || state.Focus == SettingsModalFocus.EditingSetting);
-        string line = SettingsSurfacesPaletteDrawing.FormatPaletteSettingRow(
+        bool selectedL = paletteRowIndexLayer == state.SelectedSettingIndex && (state.Focus == SettingsModalFocus.SettingsList || state.Focus == SettingsModalFocus.EditingSetting);
+        string lineL = SettingsSurfacesPaletteDrawing.FormatPaletteSettingRow(
             _paletteRepo,
             _visualizerSettings,
             selectedLayer,
-            rightColWidth,
-            selected,
-            selBg,
-            selFg,
+            rightColW,
+            selectedL,
+            selBgL,
+            selFgL,
             analysisSnapshot);
 
         try
         {
-            System.Console.SetCursorPosition(LeftColWidth + 1, FirstLayerRow + vi);
-            System.Console.Write(line);
-            _lastIdlePalettePhase = phase;
+            System.Console.SetCursorPosition(LeftColWidth + 1, FirstLayerRow + viLayer);
+            System.Console.Write(lineL);
+            _lastIdlePalettePhase = layerPhase;
         }
         catch (Exception ex) { _ = ex; /* Palette idle redraw failed */ }
     }
@@ -317,26 +441,18 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
     private void SyncPickerIdleTracking(AnalysisSnapshot analysisSnapshot)
     {
         _lastPickerIdleBeatCount = analysisSnapshot.BeatCount;
-        _lastPickerIdleTickBucket = Environment.TickCount64 / PaletteAnimationTickBucketMs;
+        _lastPickerIdleTickBucket = PaletteSwatchFormatter.GetPaletteAnimationTickBucket();
     }
 
-    private void TryRedrawPalettePickerForIdle(SettingsModalState state, IReadOnlyList<TextLayerSettings> sortedLayers, int width, AnalysisSnapshot analysisSnapshot)
+    private void TryRedrawPalettePickerForIdle(SettingsModalState state, int width, AnalysisSnapshot analysisSnapshot)
     {
-        var selectedLayer = sortedLayers.Count > 0 && state.SelectedLayerIndex < sortedLayers.Count
-            ? sortedLayers[state.SelectedLayerIndex]
-            : null;
-        if (selectedLayer == null)
-        {
-            return;
-        }
-
-        if (!PaletteAnimationFrameAdvanced(analysisSnapshot, _lastPickerIdleBeatCount, _lastPickerIdleTickBucket, out int beatCount, out long tickBucket))
+        if (!PaletteSwatchFormatter.PaletteAnimationFrameAdvanced(analysisSnapshot, _lastPickerIdleBeatCount, _lastPickerIdleTickBucket, out int beatCount, out long tickBucket))
         {
             return;
         }
 
         int rightColWidth = Math.Max(10, width - LeftColWidth - 1);
-        var uiPalette = (_uiSettings ?? new UiSettings()).Palette ?? new UiPalette();
+        var uiPalette = _uiThemeResolver.GetEffectiveUiPalette();
         var selBg = uiPalette.Background ?? PaletteColor.FromConsoleColor(ConsoleColor.DarkBlue);
         var selFg = uiPalette.Highlighted;
         try
@@ -350,28 +466,12 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
                 rightColWidth,
                 selBg,
                 selFg,
-                analysisSnapshot);
+                analysisSnapshot,
+                includeInheritFirst: !state.PalettePickerForPresetDefault);
             _lastPickerIdleBeatCount = beatCount;
             _lastPickerIdleTickBucket = tickBucket;
         }
         catch (Exception ex) { _ = ex; /* Palette picker idle redraw failed */ }
-    }
-
-    private static bool PaletteAnimationFrameAdvanced(
-        AnalysisSnapshot snapshot,
-        int lastBeatCount,
-        long lastTickBucket,
-        out int beatCount,
-        out long tickBucket)
-    {
-        beatCount = snapshot.BeatCount;
-        tickBucket = Environment.TickCount64 / PaletteAnimationTickBucketMs;
-        if (snapshot.CurrentBpm >= 1.0)
-        {
-            return beatCount != lastBeatCount;
-        }
-
-        return tickBucket != lastTickBucket;
     }
 
     private int GetPalettePhaseForLayer(TextLayerSettings layer, AnalysisSnapshot analysisSnapshot)
@@ -379,6 +479,19 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
         string effectiveId = string.IsNullOrWhiteSpace(layer.PaletteId)
             ? (_visualizerSettings.TextLayers?.PaletteId ?? "")
             : layer.PaletteId!;
+        if (string.IsNullOrWhiteSpace(effectiveId))
+        {
+            effectiveId = "default";
+        }
+
+        var def = _paletteRepo.GetById(effectiveId);
+        var colors = ColorPaletteParser.Parse(def);
+        return PaletteSwatchFormatter.ComputeToolbarPhaseOffset(analysisSnapshot, colors?.Count ?? 0);
+    }
+
+    private int GetPalettePhaseForPresetDefault(TextLayersVisualizerSettings textLayers, AnalysisSnapshot analysisSnapshot)
+    {
+        string effectiveId = textLayers.PaletteId ?? "";
         if (string.IsNullOrWhiteSpace(effectiveId))
         {
             effectiveId = "default";
@@ -411,7 +524,7 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
             : state.Focus == SettingsModalFocus.EditingSetting ? "  Type value, Enter or \u2191\u2193 confirm, Esc cancel"
             : state.Focus == SettingsModalFocus.PickingPalette ? "  \u2191\u2193 or +/- preview, Enter save, Esc discard"
             : state.Focus == SettingsModalFocus.SettingsList ? "  \u2191\u2193 select, Enter or +/- cycle (Enter = palette list on Palette), Enter edit strings, \u2190 or Esc back"
-            : "  1-9 select, \u2190\u2192 type, Ctrl+\u2191\u2193 move, Enter settings, Shift+1-9 toggle, R rename, N preset, Esc close";
+            : "  1-9 layer, \u2191\u2192 Preset or layers, \u2190\u2192 type, Ctrl+\u2191\u2193 move, Enter settings, Shift+1-9 toggle, R rename, N preset, Esc close";
     }
 
     private List<(string Id, string Label, string DisplayValue, SettingEditMode EditMode)> GetSettingsRows(TextLayerSettings? layer)
@@ -421,13 +534,8 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
         return descriptors.Select(d => (d.Id, d.Label, d.GetDisplayValue(layer), d.EditMode)).ToList();
     }
 
-    private string? TryGetFocusedSettingId(SettingsModalState state, TextLayerSettings? selectedLayer)
+    private string? TryGetFocusedSettingId(SettingsModalState state, TextLayerSettings? selectedLayer, TextLayersVisualizerSettings textLayers)
     {
-        if (selectedLayer == null)
-        {
-            return null;
-        }
-
         if (state.Focus != SettingsModalFocus.SettingsList
             && state.Focus != SettingsModalFocus.EditingSetting
             && state.Focus != SettingsModalFocus.PickingPalette)
@@ -435,13 +543,29 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
             return null;
         }
 
-        var rows = GetSettingsRows(selectedLayer);
-        if (state.SelectedSettingIndex < 0 || state.SelectedSettingIndex >= rows.Count)
+        if (state.LeftPanelPresetSelected)
+        {
+            var rows = PresetSettingsModalRows.Build(_visualizerSettings, textLayers, _paletteRepo);
+            if (state.SelectedSettingIndex < 0 || state.SelectedSettingIndex >= rows.Count)
+            {
+                return null;
+            }
+
+            return rows[state.SelectedSettingIndex].Id;
+        }
+
+        if (selectedLayer == null)
         {
             return null;
         }
 
-        return rows[state.SelectedSettingIndex].Id;
+        var layerRows = GetSettingsRows(selectedLayer);
+        if (state.SelectedSettingIndex < 0 || state.SelectedSettingIndex >= layerRows.Count)
+        {
+            return null;
+        }
+
+        return layerRows[state.SelectedSettingIndex].Id;
     }
 
 }

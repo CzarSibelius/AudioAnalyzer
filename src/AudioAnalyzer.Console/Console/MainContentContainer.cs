@@ -14,6 +14,7 @@ internal sealed class MainContentContainer : IVisualizationRenderer
     private readonly IVisualizer _visualizer;
     private readonly IDisplayState _displayState;
     private readonly UiSettings _uiSettings;
+    private readonly IUiThemeResolver _uiThemeResolver;
     private readonly IUiComponentRenderer<IUiComponent> _componentRenderer;
     private readonly IUiStateUpdater<IUiComponent> _stateUpdater;
     private readonly HorizontalRowComponent _toolbarRow;
@@ -29,6 +30,7 @@ internal sealed class MainContentContainer : IVisualizationRenderer
         IVisualizer visualizer,
         IDisplayState displayState,
         UiSettings uiSettings,
+        IUiThemeResolver uiThemeResolver,
         ITextLayerBoundsEditSession boundsEditSession,
         IApplicationModeFactory applicationModeFactory,
         Lazy<IDeviceCaptureController> deviceCapture)
@@ -38,6 +40,7 @@ internal sealed class MainContentContainer : IVisualizationRenderer
         _visualizer = visualizer ?? throw new ArgumentNullException(nameof(visualizer));
         _displayState = displayState ?? throw new ArgumentNullException(nameof(displayState));
         _uiSettings = uiSettings ?? new UiSettings();
+        _uiThemeResolver = uiThemeResolver ?? throw new ArgumentNullException(nameof(uiThemeResolver));
         _boundsEditSession = boundsEditSession ?? throw new ArgumentNullException(nameof(boundsEditSession));
         _applicationModeFactory = applicationModeFactory ?? throw new ArgumentNullException(nameof(applicationModeFactory));
         _deviceCapture = deviceCapture ?? throw new ArgumentNullException(nameof(deviceCapture));
@@ -106,7 +109,7 @@ internal sealed class MainContentContainer : IVisualizationRenderer
                 ? Math.Max(1, snapshot.TerminalHeight - 1)
                 : Math.Max(1, snapshot.TerminalHeight - startRow - ToolbarLineCount - 1);
 
-            var palette = _uiSettings.Palette ?? new UiPalette();
+            UiPalette palette = _uiThemeResolver.GetEffectiveUiPalette();
             var context = new RenderContext
             {
                 Width = termWidth,
@@ -126,6 +129,7 @@ internal sealed class MainContentContainer : IVisualizationRenderer
                 DisplayState = _displayState,
                 Visualizer = _visualizer,
                 UiSettings = _uiSettings,
+                EffectiveUiPalette = palette,
                 PaletteForSwatch = _palette.Palette,
                 PaletteDisplayName = _palette.DisplayName
             }));

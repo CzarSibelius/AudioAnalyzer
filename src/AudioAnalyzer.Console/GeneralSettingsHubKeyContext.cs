@@ -27,6 +27,12 @@ internal sealed class GeneralSettingsHubKeyContext : IKeyHandlerContext
     /// <summary>Device selection modal.</summary>
     public required IDeviceSelectionModal DeviceSelectionModal { get; init; }
 
+    /// <summary>UI theme palette selection modal.</summary>
+    public required IUiThemeSelectionModal UiThemeSelectionModal { get; init; }
+
+    /// <summary>Current analysis snapshot for theme list coloring.</summary>
+    public required Func<AnalysisSnapshot> GetAnalysisSnapshot { get; init; }
+
     /// <summary>UI settings (title bar app name).</summary>
     public required UiSettings UiSettings { get; init; }
 

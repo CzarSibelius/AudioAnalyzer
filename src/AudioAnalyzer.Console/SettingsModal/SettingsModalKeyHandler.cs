@@ -33,12 +33,20 @@ internal sealed class SettingsModalKeyHandlerConfig : IKeyHandlerConfig<Settings
                 {
                     var state = context.State;
                     var sortedLayers = context.SortedLayers;
+                    if (state.LeftPanelPresetSelected)
+                    {
+                        state.Focus = SettingsModalFocus.SettingsList;
+                        state.SelectedSettingIndex = 0;
+                        return false;
+                    }
+
                     var selectedLayer = sortedLayers.Count > 0 && state.SelectedLayerIndex < sortedLayers.Count ? sortedLayers[state.SelectedLayerIndex] : null;
                     if (selectedLayer != null)
                     {
                         state.Focus = SettingsModalFocus.SettingsList;
                         state.SelectedSettingIndex = 0;
                     }
+
                     return false;
                 },
                 Key: "Enter",
@@ -49,11 +57,17 @@ internal sealed class SettingsModalKeyHandlerConfig : IKeyHandlerConfig<Settings
                 Action: (key, context) =>
                 {
                     var state = context.State;
+                    if (state.LeftPanelPresetSelected)
+                    {
+                        return false;
+                    }
+
                     var sortedLayers = context.SortedLayers;
                     if (sortedLayers.Count == 0)
                     {
                         return false;
                     }
+
                     if (key.Key == ConsoleKey.UpArrow && state.SelectedLayerIndex > 0)
                     {
                         var a = sortedLayers[state.SelectedLayerIndex];
@@ -64,6 +78,7 @@ internal sealed class SettingsModalKeyHandlerConfig : IKeyHandlerConfig<Settings
                         context.SaveSettings();
                         return false;
                     }
+
                     if (key.Key == ConsoleKey.DownArrow && state.SelectedLayerIndex < sortedLayers.Count - 1)
                     {
                         var a = sortedLayers[state.SelectedLayerIndex];
@@ -74,6 +89,7 @@ internal sealed class SettingsModalKeyHandlerConfig : IKeyHandlerConfig<Settings
                         context.SaveSettings();
                         return false;
                     }
+
                     return false;
                 },
                 Key: "Ctrl+↑/↓",
@@ -85,18 +101,56 @@ internal sealed class SettingsModalKeyHandlerConfig : IKeyHandlerConfig<Settings
                 {
                     var state = context.State;
                     var sortedLayers = context.SortedLayers;
+                    int n = sortedLayers.Count;
                     if (key.Key == ConsoleKey.UpArrow)
                     {
-                        state.SelectedLayerIndex = sortedLayers.Count > 0 ? (state.SelectedLayerIndex - 1 + sortedLayers.Count) % sortedLayers.Count : 0;
+                        if (n == 0)
+                        {
+                            state.LeftPanelPresetSelected = true;
+                            return false;
+                        }
+
+                        if (state.LeftPanelPresetSelected)
+                        {
+                            state.LeftPanelPresetSelected = false;
+                            state.SelectedLayerIndex = n - 1;
+                        }
+                        else if (state.SelectedLayerIndex <= 0)
+                        {
+                            state.LeftPanelPresetSelected = true;
+                        }
+                        else
+                        {
+                            state.SelectedLayerIndex--;
+                        }
                     }
                     else
                     {
-                        state.SelectedLayerIndex = sortedLayers.Count > 0 ? (state.SelectedLayerIndex + 1) % sortedLayers.Count : 0;
+                        if (n == 0)
+                        {
+                            state.LeftPanelPresetSelected = true;
+                            return false;
+                        }
+
+                        if (state.LeftPanelPresetSelected)
+                        {
+                            state.LeftPanelPresetSelected = false;
+                            state.SelectedLayerIndex = 0;
+                        }
+                        else if (state.SelectedLayerIndex >= n - 1)
+                        {
+                            state.LeftPanelPresetSelected = true;
+                        }
+                        else
+                        {
+                            state.SelectedLayerIndex++;
+                        }
                     }
+
                     return false;
                 },
                 Key: "↑/↓",
-                Description: "Select layer or setting",
+                Description: "Select Preset row or layer",
                 Section),
             new KeyHandling.KeyBindingEntry<SettingsModalKeyContext>(
                 Matches: k => k.Key == ConsoleKey.Spacebar,
@@ -104,6 +158,11 @@ internal sealed class SettingsModalKeyHandlerConfig : IKeyHandlerConfig<Settings
                 {
                     var sortedLayers = context.SortedLayers;
                     var state = context.State;
+                    if (state.LeftPanelPresetSelected)
+                    {
+                        return false;
+                    }
+
                     var selectedLayer = sortedLayers.Count > 0 && state.SelectedLayerIndex < sortedLayers.Count ? sortedLayers[state.SelectedLayerIndex] : null;
                     if (selectedLayer != null) { selectedLayer.Enabled = !selectedLayer.Enabled; context.SaveSettings(); }
                     return false;
@@ -117,6 +176,11 @@ internal sealed class SettingsModalKeyHandlerConfig : IKeyHandlerConfig<Settings
                 {
                     var sortedLayers = context.SortedLayers;
                     var state = context.State;
+                    if (state.LeftPanelPresetSelected)
+                    {
+                        return false;
+                    }
+
                     var selectedLayer = sortedLayers.Count > 0 && state.SelectedLayerIndex < sortedLayers.Count ? sortedLayers[state.SelectedLayerIndex] : null;
                     if (selectedLayer != null)
                     {
@@ -175,6 +239,7 @@ internal sealed class SettingsModalKeyHandlerConfig : IKeyHandlerConfig<Settings
                     int layerIdx = DigitFromKey(key.Key) - 1;
                     if (layerIdx < sortedLayers.Count)
                     {
+                        state.LeftPanelPresetSelected = false;
                         state.SelectedLayerIndex = layerIdx;
                     }
                     return false;
@@ -237,8 +302,12 @@ internal sealed class SettingsModalKeyHandlerConfig : IKeyHandlerConfig<Settings
             state.LastNavKey = null;
         }
 
-        var selectedLayer = sortedLayers.Count > 0 && state.SelectedLayerIndex < sortedLayers.Count ? sortedLayers[state.SelectedLayerIndex] : null;
-        var settingsRows = selectedLayer != null ? GetSettingsRows(selectedLayer) : [];
+        var selectedLayer = !state.LeftPanelPresetSelected && sortedLayers.Count > 0 && state.SelectedLayerIndex < sortedLayers.Count
+            ? sortedLayers[state.SelectedLayerIndex]
+            : null;
+        var presetRows = PresetSettingsModalRows.Build(vs, textLayers, _paletteRepo);
+        var layerSettingsRows = selectedLayer != null ? GetSettingsRows(selectedLayer) : [];
+        var settingsRows = state.LeftPanelPresetSelected ? presetRows : layerSettingsRows;
 
         if (state.Focus == SettingsModalFocus.Renaming)
         {
@@ -267,9 +336,59 @@ internal sealed class SettingsModalKeyHandlerConfig : IKeyHandlerConfig<Settings
             if (key.KeyChar is >= ' ' and <= '~' && key.KeyChar >= ' ') { state.RenameBuffer += key.KeyChar; return false; }
         }
 
+        if (state.Focus == SettingsModalFocus.PickingPalette && state.PalettePickerForPresetDefault)
+        {
+            int count = GetPalettePickerEntryCount(includeInheritFirst: false);
+            if (count <= 0)
+            {
+                state.PalettePickerForPresetDefault = false;
+                state.Focus = SettingsModalFocus.SettingsList;
+                return false;
+            }
+
+            if (key.Key == ConsoleKey.Escape)
+            {
+                textLayers.PaletteId = state.PalettePickerOriginalPaletteId;
+                state.PalettePickerOriginalPaletteId = null;
+                state.PalettePickerForPresetDefault = false;
+                state.Focus = SettingsModalFocus.SettingsList;
+                return false;
+            }
+
+            if (key.Key == ConsoleKey.Enter)
+            {
+                context.SaveSettings();
+                state.PalettePickerOriginalPaletteId = null;
+                state.PalettePickerForPresetDefault = false;
+                state.Focus = SettingsModalFocus.SettingsList;
+                return false;
+            }
+
+            bool moveUp = key.Key == ConsoleKey.UpArrow || key.Key == ConsoleKey.Subtract || key.Key == ConsoleKey.OemMinus;
+            bool moveDown = key.Key == ConsoleKey.DownArrow || key.Key == ConsoleKey.Add || key.Key == ConsoleKey.OemPlus;
+            if (moveUp || moveDown)
+            {
+                int idx = state.PalettePickerSelectedIndex;
+                if (moveUp)
+                {
+                    idx = Math.Max(0, idx - 1);
+                }
+                else
+                {
+                    idx = Math.Min(count - 1, idx + 1);
+                }
+
+                state.PalettePickerSelectedIndex = idx;
+                ApplyPalettePickerSelectionPreset(textLayers, idx);
+                return false;
+            }
+
+            return false;
+        }
+
         if (state.Focus == SettingsModalFocus.PickingPalette && selectedLayer != null)
         {
-            int count = GetPalettePickerEntryCount();
+            int count = GetPalettePickerEntryCount(includeInheritFirst: true);
             if (key.Key == ConsoleKey.Escape)
             {
                 selectedLayer.PaletteId = state.PalettePickerOriginalPaletteId;
@@ -308,6 +427,23 @@ internal sealed class SettingsModalKeyHandlerConfig : IKeyHandlerConfig<Settings
             return false;
         }
 
+        if (state.Focus == SettingsModalFocus.EditingSetting && state.LeftPanelPresetSelected && state.SelectedSettingIndex < settingsRows.Count)
+        {
+            var row = settingsRows[state.SelectedSettingIndex];
+            if (key.Key == ConsoleKey.Escape) { state.Focus = SettingsModalFocus.SettingsList; return false; }
+            if (row.Id == PresetSettingsModalRows.PresetNameId && row.EditMode == SettingEditMode.TextEdit &&
+                (key.Key == ConsoleKey.Enter || key.Key == ConsoleKey.UpArrow || key.Key == ConsoleKey.DownArrow))
+            {
+                ApplyPresetNameFromBuffer(vs, context.PresetRepository, state.EditingBuffer, context.SaveSettings);
+                state.Focus = SettingsModalFocus.SettingsList;
+                return false;
+            }
+
+            if (row.EditMode == SettingEditMode.TextEdit && key.Key == ConsoleKey.Backspace) { if (state.EditingBuffer.Length > 0) { state.EditingBuffer = state.EditingBuffer[..^1]; } return false; }
+            if (row.EditMode == SettingEditMode.TextEdit && key.KeyChar is >= ' ' and <= '~') { state.EditingBuffer += key.KeyChar; return false; }
+            return false;
+        }
+
         if (state.Focus == SettingsModalFocus.EditingSetting && selectedLayer != null && state.SelectedSettingIndex < settingsRows.Count)
         {
             var row = settingsRows[state.SelectedSettingIndex];
@@ -336,12 +472,17 @@ internal sealed class SettingsModalKeyHandlerConfig : IKeyHandlerConfig<Settings
         if (state.Focus == SettingsModalFocus.SettingsList)
         {
             if (key.Key == ConsoleKey.LeftArrow || key.Key == ConsoleKey.Escape) { state.Focus = SettingsModalFocus.LayerList; return false; }
+            if (settingsRows.Count == 0)
+            {
+                return false;
+            }
+
             if (key.Key == ConsoleKey.UpArrow) { state.SelectedSettingIndex = Math.Max(0, state.SelectedSettingIndex - 1); return false; }
             if (key.Key == ConsoleKey.DownArrow) { state.SelectedSettingIndex = Math.Min(settingsRows.Count - 1, state.SelectedSettingIndex + 1); return false; }
-            if (selectedLayer != null && state.SelectedSettingIndex < settingsRows.Count)
+            if (state.SelectedSettingIndex < settingsRows.Count)
             {
                 var row = settingsRows[state.SelectedSettingIndex];
-                if (key.Key == ConsoleKey.Enter && row.EditMode == SettingEditMode.BoundVisualEdit)
+                if (!state.LeftPanelPresetSelected && selectedLayer != null && key.Key == ConsoleKey.Enter && row.EditMode == SettingEditMode.BoundVisualEdit)
                 {
                     context.RequestVisualBoundsEdit?.Invoke(state.SelectedLayerIndex);
                     return true;
@@ -350,7 +491,26 @@ internal sealed class SettingsModalKeyHandlerConfig : IKeyHandlerConfig<Settings
                 bool cycleForward = key.Key == ConsoleKey.Enter || key.Key == ConsoleKey.Add || key.Key == ConsoleKey.OemPlus;
                 bool cycleBackward = key.Key == ConsoleKey.Subtract || key.Key == ConsoleKey.OemMinus;
 
-                if (row.EditMode == SettingEditMode.PalettePicker)
+                if (state.LeftPanelPresetSelected && row.Id == PresetSettingsModalRows.DefaultPaletteId && row.EditMode == SettingEditMode.PalettePicker)
+                {
+                    if (key.Key == ConsoleKey.Enter)
+                    {
+                        state.PalettePickerOriginalPaletteId = textLayers.PaletteId;
+                        state.PalettePickerSelectedIndex = ComputeInitialPalettePickerIndexPreset(textLayers);
+                        state.PalettePickerForPresetDefault = true;
+                        ApplyPalettePickerSelectionPreset(textLayers, state.PalettePickerSelectedIndex);
+                        state.Focus = SettingsModalFocus.PickingPalette;
+                        return false;
+                    }
+
+                    if (cycleForward || cycleBackward)
+                    {
+                        CyclePresetPalette(textLayers, cycleForward);
+                        context.SaveSettings();
+                        return false;
+                    }
+                }
+                else if (!state.LeftPanelPresetSelected && selectedLayer != null && row.EditMode == SettingEditMode.PalettePicker)
                 {
                     if (key.Key == ConsoleKey.Enter)
                     {
@@ -368,13 +528,21 @@ internal sealed class SettingsModalKeyHandlerConfig : IKeyHandlerConfig<Settings
                         return false;
                     }
                 }
-                else if (row.EditMode == SettingEditMode.Cycle && (cycleForward || cycleBackward))
+                else if (!state.LeftPanelPresetSelected && selectedLayer != null && row.EditMode == SettingEditMode.Cycle && (cycleForward || cycleBackward))
                 {
                     CycleSetting(selectedLayer, row.Id, cycleForward);
                     context.SaveSettings();
                     return false;
                 }
-                if (key.Key == ConsoleKey.Enter && row.EditMode == SettingEditMode.TextEdit)
+
+                if (state.LeftPanelPresetSelected && row.Id == PresetSettingsModalRows.PresetNameId && key.Key == ConsoleKey.Enter && row.EditMode == SettingEditMode.TextEdit)
+                {
+                    state.EditingBuffer = row.DisplayValue;
+                    state.Focus = SettingsModalFocus.EditingSetting;
+                    return false;
+                }
+
+                if (!state.LeftPanelPresetSelected && selectedLayer != null && key.Key == ConsoleKey.Enter && row.EditMode == SettingEditMode.TextEdit)
                 {
                     state.EditingBuffer = row.Id == "Snippets"
                         ? (selectedLayer.TextSnippets is { Count: > 0 } ? string.Join(", ", selectedLayer.TextSnippets) : "")
@@ -401,6 +569,61 @@ internal sealed class SettingsModalKeyHandlerConfig : IKeyHandlerConfig<Settings
         return false;
     }
 
+    private static void ApplyPresetNameFromBuffer(VisualizerSettings vs, IPresetRepository presetRepository, string buffer, Action saveSettings)
+    {
+        var activeId = vs.ActivePresetId;
+        if (string.IsNullOrWhiteSpace(activeId) || string.IsNullOrWhiteSpace(buffer))
+        {
+            return;
+        }
+
+        var preset = presetRepository.GetById(activeId);
+        if (preset == null)
+        {
+            return;
+        }
+
+        preset.Name = buffer.Trim();
+        preset.Config = (vs.TextLayers ?? new TextLayersVisualizerSettings()).DeepCopy();
+        presetRepository.Save(activeId, preset);
+        var p = vs.Presets?.FirstOrDefault(x => string.Equals(x.Id, activeId, StringComparison.OrdinalIgnoreCase));
+        if (p != null)
+        {
+            p.Name = buffer.Trim();
+        }
+
+        saveSettings();
+    }
+
+    private void CyclePresetPalette(TextLayersVisualizerSettings textLayers, bool forward)
+    {
+        var all = _paletteRepo.GetAll();
+        if (all.Count == 0)
+        {
+            return;
+        }
+
+        string? currentId = textLayers.PaletteId ?? "";
+        int index = 0;
+        bool found = false;
+        for (int i = 0; i < all.Count; i++)
+        {
+            if (string.Equals(all[i].Id, currentId, StringComparison.OrdinalIgnoreCase))
+            {
+                index = forward ? (i + 1) % all.Count : (i - 1 + all.Count) % all.Count;
+                found = true;
+                break;
+            }
+        }
+
+        if (!found)
+        {
+            index = forward ? 0 : all.Count - 1;
+        }
+
+        textLayers.PaletteId = all[index].Id;
+    }
+
     private List<(string Id, string Label, string DisplayValue, SettingEditMode EditMode)> GetSettingsRows(TextLayerSettings layer)
     {
         var descriptors = SettingDescriptor.BuildAll(layer, _paletteRepo);
@@ -421,7 +644,8 @@ internal sealed class SettingsModalKeyHandlerConfig : IKeyHandlerConfig<Settings
         d?.Cycle(layer, forward);
     }
 
-    private int GetPalettePickerEntryCount() => 1 + _paletteRepo.GetAll().Count;
+    private int GetPalettePickerEntryCount(bool includeInheritFirst) =>
+        includeInheritFirst ? 1 + _paletteRepo.GetAll().Count : _paletteRepo.GetAll().Count;
 
     private int ComputeInitialPalettePickerIndex(TextLayerSettings layer)
     {
@@ -442,6 +666,31 @@ internal sealed class SettingsModalKeyHandlerConfig : IKeyHandlerConfig<Settings
         return 0;
     }
 
+    private int ComputeInitialPalettePickerIndexPreset(TextLayersVisualizerSettings textLayers)
+    {
+        var palettes = _paletteRepo.GetAll();
+        if (palettes.Count == 0)
+        {
+            return 0;
+        }
+
+        string? cur = textLayers.PaletteId ?? "";
+        if (string.IsNullOrWhiteSpace(cur))
+        {
+            return 0;
+        }
+
+        for (int i = 0; i < palettes.Count; i++)
+        {
+            if (string.Equals(palettes[i].Id, cur, StringComparison.OrdinalIgnoreCase))
+            {
+                return i;
+            }
+        }
+
+        return 0;
+    }
+
     private void ApplyPalettePickerSelection(TextLayerSettings layer, int index)
     {
         if (index <= 0)
@@ -456,6 +705,17 @@ internal sealed class SettingsModalKeyHandlerConfig : IKeyHandlerConfig<Settings
         {
             layer.PaletteId = palettes[pi].Id;
         }
+    }
+
+    private void ApplyPalettePickerSelectionPreset(TextLayersVisualizerSettings textLayers, int index)
+    {
+        var palettes = _paletteRepo.GetAll();
+        if (index < 0 || index >= palettes.Count)
+        {
+            return;
+        }
+
+        textLayers.PaletteId = palettes[index].Id;
     }
 
     private static int DigitFromKey(ConsoleKey key)

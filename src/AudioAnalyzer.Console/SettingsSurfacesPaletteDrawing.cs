@@ -21,8 +21,35 @@ internal static class SettingsSurfacesPaletteDrawing
         PaletteColor selFg,
         AnalysisSnapshot analysisSnapshot)
     {
+        DrawPicker(paletteRepo, state, leftColWidth, firstLayerRow, visibleRows, rightColWidth, selBg, selFg, analysisSnapshot, includeInheritFirst: true);
+    }
+
+    /// <summary>Draws the palette picker: either <paramref name="includeInheritFirst"/> (inherit + repo) or preset-default mode (repo palettes only).</summary>
+    public static void DrawPicker(
+        IPaletteRepository paletteRepo,
+        SettingsModalState state,
+        int leftColWidth,
+        int firstLayerRow,
+        int visibleRows,
+        int rightColWidth,
+        PaletteColor selBg,
+        PaletteColor selFg,
+        AnalysisSnapshot analysisSnapshot,
+        bool includeInheritFirst)
+    {
         var palettes = paletteRepo.GetAll();
-        int count = 1 + palettes.Count;
+        int count = includeInheritFirst ? 1 + palettes.Count : palettes.Count;
+        if (count == 0)
+        {
+            for (int vi = 0; vi < visibleRows; vi++)
+            {
+                System.Console.SetCursorPosition(leftColWidth + 1, firstLayerRow + vi);
+                System.Console.Write(new string(' ', rightColWidth));
+            }
+
+            return;
+        }
+
         int scrollOffset = SettingsSurfacesListDrawing.ComputeListScrollOffset(state.PalettePickerSelectedIndex, count, visibleRows);
 
         for (int vi = 0; vi < visibleRows; vi++)
@@ -36,7 +63,7 @@ internal static class SettingsSurfacesPaletteDrawing
             }
 
             bool selected = i == state.PalettePickerSelectedIndex;
-            if (i == 0)
+            if (includeInheritFirst && i == 0)
             {
                 string plain = StaticTextViewport.TruncateWithEllipsis(new PlainText("(inherit)"), rightColWidth);
                 string core = selected
@@ -46,7 +73,8 @@ internal static class SettingsSurfacesPaletteDrawing
             }
             else
             {
-                var p = palettes[i - 1];
+                int pi = includeInheritFirst ? i - 1 : i;
+                var p = palettes[pi];
                 string displayName = !string.IsNullOrWhiteSpace(p.Name?.Trim()) ? p.Name!.Trim() : p.Id;
                 string row = FormatPickerPaletteRow(
                     paletteRepo,
@@ -120,6 +148,71 @@ internal static class SettingsSurfacesPaletteDrawing
             : labelText + coloredName;
 
         return AnsiConsole.PadToDisplayWidth(core, rightColWidth);
+    }
+
+    /// <summary>Preset default palette row: <c>TextLayers.PaletteId</c> (falls back to <c>default</c> when empty).</summary>
+    public static string FormatPresetDefaultPaletteSettingRow(
+        IPaletteRepository paletteRepo,
+        TextLayersVisualizerSettings textLayers,
+        int rightColWidth,
+        bool selected,
+        PaletteColor selBg,
+        PaletteColor selFg,
+        AnalysisSnapshot analysisSnapshot)
+    {
+        const string labelText = "Default palette:";
+        string effectiveId = textLayers.PaletteId ?? "";
+        if (string.IsNullOrWhiteSpace(effectiveId))
+        {
+            effectiveId = "default";
+        }
+
+        string namePart = ResolvePresetDefaultPaletteDisplayName(paletteRepo, textLayers);
+        var def = paletteRepo.GetById(effectiveId);
+        var colors = ColorPaletteParser.Parse(def);
+        int labelCols = DisplayWidth.GetDisplayWidth(labelText);
+        int nameMaxCols = Math.Max(0, rightColWidth - labelCols);
+        string truncatedName = nameMaxCols > 0
+            ? StaticTextViewport.TruncateWithEllipsis(new PlainText(namePart), nameMaxCols)
+            : "";
+        int phase = PaletteSwatchFormatter.ComputeToolbarPhaseOffset(analysisSnapshot, colors?.Count ?? 0);
+        string coloredName = PaletteSwatchFormatter.FormatPaletteColoredName(truncatedName, colors, phase);
+
+        string core = selected
+            ? AnsiConsole.BackgroundCode(selBg) + AnsiConsole.ColorCode(selFg) + labelText + AnsiConsole.ResetCode + coloredName
+            : labelText + coloredName;
+
+        return AnsiConsole.PadToDisplayWidth(core, rightColWidth);
+    }
+
+    /// <summary>Plain summary for preset default palette list rows (matches <see cref="FormatPresetDefaultPaletteSettingRow"/>).</summary>
+    public static string GetPresetDefaultPaletteDisplaySummary(IPaletteRepository paletteRepo, TextLayersVisualizerSettings textLayers)
+        => ResolvePresetDefaultPaletteDisplayName(paletteRepo, textLayers);
+
+    private static string ResolvePresetDefaultPaletteDisplayName(IPaletteRepository paletteRepo, TextLayersVisualizerSettings textLayers)
+    {
+        string? id = textLayers.PaletteId;
+        if (string.IsNullOrWhiteSpace(id))
+        {
+            return "(default)";
+        }
+
+        var def = paletteRepo.GetById(id);
+        var fromFile = def?.Name?.Trim();
+        if (!string.IsNullOrEmpty(fromFile))
+        {
+            return fromFile;
+        }
+
+        foreach (var p in paletteRepo.GetAll())
+        {
+            if (string.Equals(p.Id, id, StringComparison.OrdinalIgnoreCase))
+            {
+                return !string.IsNullOrWhiteSpace(p.Name?.Trim()) ? p.Name!.Trim() : p.Id;
+            }
+        }
+
+        return id;
     }
 
     private static string ResolvePaletteDisplayName(IPaletteRepository paletteRepo, TextLayerSettings layer)

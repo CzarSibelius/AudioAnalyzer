@@ -10,18 +10,22 @@ internal sealed class GeneralSettingsHubAreaRenderer : IUiComponentRenderer<Gene
 {
     private readonly GeneralSettingsHubState _state;
     private readonly UiSettings _uiSettings;
+    private readonly IPaletteRepository _paletteRepo;
     private readonly IUiComponentRenderer<HorizontalRowComponent> _horizontalRowRenderer;
     private readonly HorizontalRowComponent _audioMenuRow = new();
     private readonly HorizontalRowComponent _appNameMenuRow = new();
+    private readonly HorizontalRowComponent _themeMenuRow = new();
     private bool _regionCleared;
 
     public GeneralSettingsHubAreaRenderer(
         GeneralSettingsHubState state,
         UiSettings uiSettings,
+        IPaletteRepository paletteRepo,
         IUiComponentRenderer<HorizontalRowComponent> horizontalRowRenderer)
     {
         _state = state ?? throw new ArgumentNullException(nameof(state));
         _uiSettings = uiSettings ?? throw new ArgumentNullException(nameof(uiSettings));
+        _paletteRepo = paletteRepo ?? throw new ArgumentNullException(nameof(paletteRepo));
         _horizontalRowRenderer = horizontalRowRenderer ?? throw new ArgumentNullException(nameof(horizontalRowRenderer));
     }
 
@@ -48,18 +52,28 @@ internal sealed class GeneralSettingsHubAreaRenderer : IUiComponentRenderer<Gene
         }
 
         var palette = context.Palette;
+        var snapshot = context.Snapshot;
+        IReadOnlyList<PaletteColor> beatColors =
+            GeneralSettingsHubMenuLines.ResolveHubBeatPaletteColors(_uiSettings, _paletteRepo, palette);
         string appDisplay = EffectiveAppName.FromUiSettings(_uiSettings);
+        string themeDisplay = GeneralSettingsHubMenuLines.ResolveUiThemeDisplaySummary(_uiSettings, _paletteRepo);
 
         WriteRaw(0, startRow, width, sb =>
         {
-            AnsiConsole.AppendColored(sb, "General settings", palette.Normal);
+            int phase = PaletteSwatchFormatter.ComputeToolbarPhaseOffset(snapshot, beatColors.Count);
+            sb.Append(PaletteSwatchFormatter.FormatPaletteColoredName("General settings", beatColors, phase));
         });
 
         _audioMenuRow.SetRowData(
             [
                 new LabeledValueDescriptor(
                     "",
-                    () => new AnsiText(GeneralSettingsHubMenuLines.FormatAudioLine(_state, palette, context.DeviceName)),
+                    () => new AnsiText(GeneralSettingsHubMenuLines.FormatAudioLine(
+                        _state,
+                        palette,
+                        snapshot,
+                        beatColors,
+                        context.DeviceName)),
                     preformattedAnsi: true)
             ],
             [width]);
@@ -67,7 +81,25 @@ internal sealed class GeneralSettingsHubAreaRenderer : IUiComponentRenderer<Gene
             [
                 new LabeledValueDescriptor(
                     "",
-                    () => new AnsiText(GeneralSettingsHubMenuLines.FormatApplicationNameLine(_state, palette, appDisplay)),
+                    () => new AnsiText(GeneralSettingsHubMenuLines.FormatApplicationNameLine(
+                        _state,
+                        palette,
+                        snapshot,
+                        beatColors,
+                        appDisplay)),
+                    preformattedAnsi: true)
+            ],
+            [width]);
+        _themeMenuRow.SetRowData(
+            [
+                new LabeledValueDescriptor(
+                    "",
+                    () => new AnsiText(GeneralSettingsHubMenuLines.FormatUiThemeLine(
+                        _state,
+                        palette,
+                        snapshot,
+                        beatColors,
+                        themeDisplay)),
                     preformattedAnsi: true)
             ],
             [width]);
@@ -87,10 +119,12 @@ internal sealed class GeneralSettingsHubAreaRenderer : IUiComponentRenderer<Gene
         _horizontalRowRenderer.Render(_audioMenuRow, rowContext);
         rowContext.StartRow = startRow + 3;
         _horizontalRowRenderer.Render(_appNameMenuRow, rowContext);
+        rowContext.StartRow = startRow + 4;
+        _horizontalRowRenderer.Render(_themeMenuRow, rowContext);
 
         if (_state.IsEditingAppName)
         {
-            WriteRaw(4, startRow, width, sb =>
+            WriteRaw(5, startRow, width, sb =>
             {
                 AnsiConsole.AppendColored(sb, "  Edit: ", palette.Label);
                 AnsiConsole.AppendColored(sb, _state.RenameBuffer, palette.Highlighted);

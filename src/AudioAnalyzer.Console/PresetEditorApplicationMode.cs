@@ -52,7 +52,7 @@ internal sealed class PresetEditorApplicationMode : IApplicationMode
         (IReadOnlyList<LabeledValueDescriptor> descriptors, IReadOnlyList<int> widths) =
             MainContentToolbarLayout.BuildVisualizerToolbarRowData(
                 args.Context,
-                args.UiSettings,
+                args.EffectiveUiPalette,
                 args.Visualizer,
                 args.PaletteForSwatch,
                 args.PaletteDisplayName,

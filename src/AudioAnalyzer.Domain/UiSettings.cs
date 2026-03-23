@@ -17,6 +17,12 @@ public class UiSettings
     /// <summary>Optional palette for title bar. When null, built-in cyberpunk defaults are used.</summary>
     public TitleBarPalette? TitleBarPalette { get; set; }
 
+    /// <summary>
+    /// When set, UI and title bar colors are derived from this palette file (same ids as layer palettes).
+    /// When null/empty, <see cref="Palette"/> and <see cref="TitleBarPalette"/> from appsettings are used.
+    /// </summary>
+    public string? UiThemePaletteId { get; set; }
+
     /// <summary>Default scrolling speed (characters per frame) for ScrollingTextViewport. Default: 0.25.</summary>
     public double DefaultScrollingSpeed { get; set; } = 0.25;
 }

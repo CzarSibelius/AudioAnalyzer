@@ -32,6 +32,7 @@ internal static class ServiceConfiguration
         services.AddSingleton<ISettingsRepository>(_ => settingsRepo);
         services.AddSingleton<IVisualizerSettingsRepository>(_ => settingsRepo);
         services.AddSingleton<IPaletteRepository>(_ => options?.PaletteRepository ?? new FilePaletteRepository());
+        services.AddSingleton<IUiThemeResolver, UiThemeResolver>();
         services.AddSingleton<IPresetRepository>(presetRepo);
         services.AddSingleton<IFileSystem>(_ => options?.FileSystem ?? new FileSystem());
         services.AddSingleton<IShowRepository>(sp =>
@@ -111,6 +112,7 @@ internal static class ServiceConfiguration
                 sp.GetRequiredService<INowPlayingProvider>(),
                 sp.GetRequiredService<AnalysisEngine>(),
                 sp.GetRequiredService<UiSettings>(),
+                sp.GetRequiredService<IUiThemeResolver>(),
                 sp.GetRequiredService<ITitleBarContentProvider>(),
                 sp.GetRequiredService<IApplicationModeFactory>()));
         services.AddSingleton<Lazy<IDeviceCaptureController>>(sp =>
@@ -122,6 +124,7 @@ internal static class ServiceConfiguration
                 sp.GetRequiredService<IVisualizer>(),
                 sp.GetRequiredService<IDisplayState>(),
                 sp.GetRequiredService<UiSettings>(),
+                sp.GetRequiredService<IUiThemeResolver>(),
                 sp.GetRequiredService<ITextLayerBoundsEditSession>(),
                 sp.GetRequiredService<IApplicationModeFactory>(),
                 sp.GetRequiredService<Lazy<IDeviceCaptureController>>()));
@@ -138,6 +141,9 @@ internal static class ServiceConfiguration
         services.AddSingleton<IUiComponentRenderer<GeneralSettingsHubAreaComponent>, GeneralSettingsHubAreaRenderer>();
         services.AddSingleton<IKeyHandlerConfig<GeneralSettingsHubKeyContext>, GeneralSettingsHubKeyHandlerConfig>();
         services.AddSingleton<IKeyHandler<GeneralSettingsHubKeyContext>, GenericKeyHandler<GeneralSettingsHubKeyContext>>();
+        services.AddSingleton<IKeyHandlerConfig<UiThemeSelectionKeyContext>, UiThemeSelectionKeyHandlerConfig>();
+        services.AddSingleton<IKeyHandler<UiThemeSelectionKeyContext>, GenericKeyHandler<UiThemeSelectionKeyContext>>();
+        services.AddSingleton<IUiThemeSelectionModal, UiThemeSelectionModal>();
         services.AddSingleton<IKeyHandlerConfig<DeviceSelectionKeyContext>, DeviceSelectionKeyHandlerConfig>();
         services.AddSingleton<IDeviceSelectionModal, DeviceSelectionModal>();
         services.AddSingleton<IHelpContentProvider, HelpContentProvider>();

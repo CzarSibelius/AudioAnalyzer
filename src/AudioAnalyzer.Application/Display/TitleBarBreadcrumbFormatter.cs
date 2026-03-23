@@ -8,20 +8,21 @@ namespace AudioAnalyzer.Application.Display;
 /// <summary>Builds the universal title breadcrumb (ANSI) per ADR-0036 and ADR-0060.</summary>
 public sealed class TitleBarBreadcrumbFormatter : ITitleBarBreadcrumbFormatter
 {
-    private static readonly TitleBarPalette s_defaultPalette = new();
-
     private readonly UiSettings _uiSettings;
+    private readonly IUiThemeResolver _uiThemeResolver;
     private readonly VisualizerSettings _visualizerSettings;
     private readonly IVisualizer _visualizer;
     private readonly ITitleBarNavigationContext _navigation;
 
     public TitleBarBreadcrumbFormatter(
         UiSettings uiSettings,
+        IUiThemeResolver uiThemeResolver,
         VisualizerSettings visualizerSettings,
         IVisualizer visualizer,
         ITitleBarNavigationContext navigation)
     {
         _uiSettings = uiSettings ?? throw new ArgumentNullException(nameof(uiSettings));
+        _uiThemeResolver = uiThemeResolver ?? throw new ArgumentNullException(nameof(uiThemeResolver));
         _visualizerSettings = visualizerSettings ?? throw new ArgumentNullException(nameof(visualizerSettings));
         _visualizer = visualizer ?? throw new ArgumentNullException(nameof(visualizer));
         _navigation = navigation ?? throw new ArgumentNullException(nameof(navigation));
@@ -30,7 +31,7 @@ public sealed class TitleBarBreadcrumbFormatter : ITitleBarBreadcrumbFormatter
     /// <inheritdoc />
     public string BuildAnsiLine()
     {
-        var palette = _uiSettings.TitleBarPalette ?? s_defaultPalette;
+        var palette = _uiThemeResolver.GetEffectiveTitleBarPalette();
         return _navigation.View switch
         {
             TitleBarViewKind.Main => BuildMainView(palette),
