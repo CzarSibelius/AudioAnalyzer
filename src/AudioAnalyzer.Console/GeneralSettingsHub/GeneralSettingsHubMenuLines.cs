@@ -86,6 +86,31 @@ internal static class GeneralSettingsHubMenuLines
         IReadOnlyList<PaletteColor> beatColors,
         string themeDisplay)
     {
+        string prefix = state.SelectedIndex == 3 ? "> " : "  ";
+        var sb = new StringBuilder();
+        AppendMenuLine(
+            sb,
+            palette,
+            snapshot,
+            beatColors,
+            prefix,
+            state.SelectedIndex == 3,
+            "UI theme (T)",
+            themeDisplay);
+        return sb.ToString();
+    }
+
+    /// <summary>Formats the default asset folder row for preformatted horizontal-row rendering.</summary>
+    public static string FormatDefaultAssetFolderLine(
+        GeneralSettingsHubState state,
+        UiPalette palette,
+        AnalysisSnapshot snapshot,
+        IReadOnlyList<PaletteColor> beatColors,
+        UiSettings uiSettings)
+    {
+        string valueDisplay = string.IsNullOrWhiteSpace(uiSettings.DefaultAssetFolderPath)
+            ? "(App base)"
+            : FormatSettingValue(uiSettings.DefaultAssetFolderPath);
         string prefix = state.SelectedIndex == 2 ? "> " : "  ";
         var sb = new StringBuilder();
         AppendMenuLine(
@@ -95,8 +120,8 @@ internal static class GeneralSettingsHubMenuLines
             beatColors,
             prefix,
             state.SelectedIndex == 2,
-            "UI theme (T)",
-            themeDisplay);
+            "Default asset folder",
+            valueDisplay);
         return sb.ToString();
     }
 

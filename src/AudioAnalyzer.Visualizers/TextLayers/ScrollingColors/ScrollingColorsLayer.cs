@@ -12,8 +12,8 @@ public sealed class ScrollingColorsLayer : TextLayerRendererBase, ITextLayerRend
         ref (double Offset, int SnippetIndex) state,
         TextLayerDrawContext ctx)
     {
-        int w = ctx.Buffer.Width;
-        int h = ctx.Buffer.Height;
+        int w = ctx.Width;
+        int h = ctx.Height;
         var s = layer.GetCustom<ScrollingColorsSettings>() ?? new ScrollingColorsSettings();
         double speed = layer.SpeedMultiplier * ctx.SpeedBurst * 0.5;
         if (s.BeatReaction == ScrollingColorsBeatReaction.SpeedBurst && ctx.Snapshot.BeatFlashActive)
@@ -39,7 +39,7 @@ public sealed class ScrollingColorsLayer : TextLayerRendererBase, ITextLayerRend
                     idx = (idx % paletteCount + paletteCount) % paletteCount;
                 }
                 var color = ctx.Palette[idx % paletteCount];
-                ctx.Buffer.Set(x, y, '░', color);
+                ctx.SetLocal(x, y, '░', color);
             }
         }
 

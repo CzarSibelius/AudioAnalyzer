@@ -33,7 +33,7 @@ internal sealed class GeneralSettingsHubKeyContext : IKeyHandlerContext
     /// <summary>Current analysis snapshot for theme list coloring.</summary>
     public required Func<AnalysisSnapshot> GetAnalysisSnapshot { get; init; }
 
-    /// <summary>UI settings (title bar app name).</summary>
+    /// <summary>UI settings (hub-edited fields include title bar name and default asset folder).</summary>
     public required UiSettings UiSettings { get; init; }
 
     /// <summary>Hub state.</summary>

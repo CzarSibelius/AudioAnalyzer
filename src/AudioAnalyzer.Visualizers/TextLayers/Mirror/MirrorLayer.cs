@@ -53,13 +53,10 @@ public sealed class MirrorLayer : TextLayerRendererBase, ITextLayerRenderer<NoLa
         ref (double Offset, int SnippetIndex) state,
         TextLayerDrawContext ctx)
     {
-        int w = ctx.Width;
-        int h = ctx.Height;
-
         var buffer = ctx.Buffer;
         var settings = layer.GetCustom<MirrorSettings>() ?? new MirrorSettings();
 
-        var (rx, ry, rw, rh) = TextLayerRenderBounds.ToPixelRect(layer.RenderBounds, w, h);
+        var (rx, ry, rw, rh) = TextLayerRenderBounds.ToPixelRect(layer.RenderBounds, ctx.ViewportWidth, ctx.ViewportHeight);
 
         if (settings.Direction == MirrorDirection.LeftToRight || settings.Direction == MirrorDirection.RightToLeft)
         {

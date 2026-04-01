@@ -13,6 +13,10 @@ public sealed class AsciiImageSettings
     [Setting("ImagePath", "Image path")]
     public string? ImageFolderPath { get; set; }
 
+    /// <summary>File name (not full path) of the image to show within <see cref="ImageFolderPath"/>; null uses the first file in sorted order.</summary>
+    [ExcludeFromSettingsModal]
+    public string? SelectedImageFileName { get; set; }
+
     /// <summary>Movement mode. Default Scroll.</summary>
     [Setting("AsciiMovement", "Movement")]
     public AsciiImageMovement Movement { get; set; } = AsciiImageMovement.Scroll;

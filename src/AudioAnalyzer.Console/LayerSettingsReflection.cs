@@ -163,6 +163,7 @@ internal sealed class SettingDescriptor
     private static readonly Dictionary<TextLayerType, Type?> s_customSettingsRegistry = new()
     {
         [TextLayerType.AsciiImage] = typeof(AsciiImageSettings),
+        [TextLayerType.AsciiModel] = typeof(AsciiModelSettings),
         [TextLayerType.Oscilloscope] = typeof(OscilloscopeSettings),
         [TextLayerType.LlamaStyle] = typeof(LlamaStyleSettings),
         [TextLayerType.NowPlaying] = typeof(NowPlayingSettings),
@@ -173,6 +174,7 @@ internal sealed class SettingDescriptor
         [TextLayerType.MatrixRain] = typeof(MatrixRainSettings),
         [TextLayerType.WaveText] = typeof(WaveTextSettings),
         [TextLayerType.GeissBackground] = typeof(GeissBackgroundSettings),
+        [TextLayerType.FractalZoom] = typeof(FractalZoomSettings),
         [TextLayerType.Marquee] = typeof(MarqueeSettings),
         [TextLayerType.StaticText] = typeof(StaticTextSettings),
         [TextLayerType.FallingLetters] = typeof(FallingLettersSettings),
@@ -181,7 +183,8 @@ internal sealed class SettingDescriptor
     private static void AddCustomDescriptors(List<SettingDescriptor> list, TextLayerSettings layer, Type customType)
     {
         var props = customType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-            .Where(p => p.CanRead && p.CanWrite && p.GetIndexParameters().Length == 0)
+            .Where(p => p.CanRead && p.CanWrite && p.GetIndexParameters().Length == 0
+                && p.GetCustomAttribute<ExcludeFromSettingsModalAttribute>() == null)
             .ToList();
 
         foreach (var prop in props)

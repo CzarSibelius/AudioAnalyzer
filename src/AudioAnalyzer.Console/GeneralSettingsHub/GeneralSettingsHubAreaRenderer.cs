@@ -5,7 +5,7 @@ using AudioAnalyzer.Domain;
 
 namespace AudioAnalyzer.Console;
 
-/// <summary>Renders the General Settings hub menu and application name edit line.</summary>
+/// <summary>Renders the General Settings hub menu and optional inline text edit line.</summary>
 internal sealed class GeneralSettingsHubAreaRenderer : IUiComponentRenderer<GeneralSettingsHubAreaComponent>
 {
     private readonly GeneralSettingsHubState _state;
@@ -14,6 +14,7 @@ internal sealed class GeneralSettingsHubAreaRenderer : IUiComponentRenderer<Gene
     private readonly IUiComponentRenderer<HorizontalRowComponent> _horizontalRowRenderer;
     private readonly HorizontalRowComponent _audioMenuRow = new();
     private readonly HorizontalRowComponent _appNameMenuRow = new();
+    private readonly HorizontalRowComponent _defaultAssetMenuRow = new();
     private readonly HorizontalRowComponent _themeMenuRow = new();
     private bool _regionCleared;
 
@@ -90,6 +91,19 @@ internal sealed class GeneralSettingsHubAreaRenderer : IUiComponentRenderer<Gene
                     preformattedAnsi: true)
             ],
             [width]);
+        _defaultAssetMenuRow.SetRowData(
+            [
+                new LabeledValueDescriptor(
+                    "",
+                    () => new AnsiText(GeneralSettingsHubMenuLines.FormatDefaultAssetFolderLine(
+                        _state,
+                        palette,
+                        snapshot,
+                        beatColors,
+                        _uiSettings)),
+                    preformattedAnsi: true)
+            ],
+            [width]);
         _themeMenuRow.SetRowData(
             [
                 new LabeledValueDescriptor(
@@ -120,11 +134,13 @@ internal sealed class GeneralSettingsHubAreaRenderer : IUiComponentRenderer<Gene
         rowContext.StartRow = startRow + 3;
         _horizontalRowRenderer.Render(_appNameMenuRow, rowContext);
         rowContext.StartRow = startRow + 4;
+        _horizontalRowRenderer.Render(_defaultAssetMenuRow, rowContext);
+        rowContext.StartRow = startRow + 5;
         _horizontalRowRenderer.Render(_themeMenuRow, rowContext);
 
-        if (_state.IsEditingAppName)
+        if (_state.EditMode != GeneralSettingsHubEditMode.None)
         {
-            WriteRaw(5, startRow, width, sb =>
+            WriteRaw(6, startRow, width, sb =>
             {
                 AnsiConsole.AppendColored(sb, "  Edit: ", palette.Label);
                 AnsiConsole.AppendColored(sb, _state.RenameBuffer, palette.Highlighted);

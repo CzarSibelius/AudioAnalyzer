@@ -77,7 +77,7 @@ public sealed class BeatCirclesLayer : TextLayerRendererBase, ITextLayerRenderer
                         {
                             color = PaletteColor.FromConsoleColor(BeatCircleColors[circle.ColorIndex % BeatCircleColors.Length]);
                         }
-                        ctx.Buffer.Set(x, y, '○', color);
+                        ctx.SetLocal(x, y, '○', color);
                         break;
                     }
                 }

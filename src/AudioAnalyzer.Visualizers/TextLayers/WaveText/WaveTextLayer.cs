@@ -45,7 +45,7 @@ public sealed class WaveTextLayer : TextLayerRendererBase, ITextLayerRenderer<No
             if (y >= 0 && y < h)
             {
                 var color = ctx.Palette[(layer.ColorIndex + i) % paletteCount];
-                ctx.Buffer.Set(x, y, text[i], color);
+                ctx.SetLocal(x, y, text[i], color);
             }
         }
         return state;

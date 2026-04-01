@@ -5,9 +5,11 @@ public sealed class TextLayerStateStore
     : ITextLayerStateStore<FallingLettersLayerState>,
       ITextLayerStateStore<AsciiImageState>,
       ITextLayerStateStore<GeissBackgroundState>,
+      ITextLayerStateStore<FractalZoomState>,
       ITextLayerStateStore<BeatCirclesState>,
       ITextLayerStateStore<UnknownPleasuresState>,
-      ITextLayerStateStore<MaschineState>
+      ITextLayerStateStore<MaschineState>,
+      ITextLayerStateStore<AsciiModelState>
 {
     private readonly List<object?> _stateByLayer = new();
 
@@ -36,6 +38,9 @@ public sealed class TextLayerStateStore
     GeissBackgroundState ITextLayerStateStore<GeissBackgroundState>.GetState(int layerIndex) => GetOrCreate<GeissBackgroundState>(layerIndex);
     void ITextLayerStateStore<GeissBackgroundState>.SetState(int layerIndex, GeissBackgroundState state) => Set(layerIndex, state);
 
+    FractalZoomState ITextLayerStateStore<FractalZoomState>.GetState(int layerIndex) => GetOrCreate<FractalZoomState>(layerIndex);
+    void ITextLayerStateStore<FractalZoomState>.SetState(int layerIndex, FractalZoomState state) => Set(layerIndex, state);
+
     BeatCirclesState ITextLayerStateStore<BeatCirclesState>.GetState(int layerIndex) => GetOrCreate<BeatCirclesState>(layerIndex);
     void ITextLayerStateStore<BeatCirclesState>.SetState(int layerIndex, BeatCirclesState state) => Set(layerIndex, state);
 
@@ -44,6 +49,9 @@ public sealed class TextLayerStateStore
 
     MaschineState ITextLayerStateStore<MaschineState>.GetState(int layerIndex) => GetOrCreate<MaschineState>(layerIndex);
     void ITextLayerStateStore<MaschineState>.SetState(int layerIndex, MaschineState state) => Set(layerIndex, state);
+
+    AsciiModelState ITextLayerStateStore<AsciiModelState>.GetState(int layerIndex) => GetOrCreate<AsciiModelState>(layerIndex);
+    void ITextLayerStateStore<AsciiModelState>.SetState(int layerIndex, AsciiModelState state) => Set(layerIndex, state);
 
     private T GetOrCreate<T>(int layerIndex) where T : new()
     {

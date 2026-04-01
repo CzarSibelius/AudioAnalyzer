@@ -41,7 +41,7 @@ public sealed class OscilloscopeLayer : TextLayerRendererBase, ITextLayerRendere
             for (int lineY = minY; lineY <= maxY; lineY++)
             {
                 var color = GetColorFromPalette(lineY, centerY, h, ctx.Palette);
-                ctx.Buffer.Set(x, lineY, '█', color);
+                ctx.SetLocal(x, lineY, '█', color);
             }
             prevY = y;
         }

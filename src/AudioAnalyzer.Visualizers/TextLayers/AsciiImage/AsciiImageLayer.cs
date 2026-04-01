@@ -5,12 +5,13 @@ namespace AudioAnalyzer.Visualizers;
 /// <summary>Renders an ASCII art layer from images in a configured folder, with optional scroll and zoom.</summary>
 public sealed class AsciiImageLayer : TextLayerRendererBase, ITextLayerRenderer<AsciiImageState>
 {
-    private static readonly string[] s_imageExtensions = [".bmp", ".gif", ".jpg", ".jpeg", ".png", ".webp"];
     private readonly ITextLayerStateStore<AsciiImageState> _stateStore;
+    private readonly UiSettings _uiSettings;
 
-    public AsciiImageLayer(ITextLayerStateStore<AsciiImageState> stateStore)
+    public AsciiImageLayer(ITextLayerStateStore<AsciiImageState> stateStore, UiSettings uiSettings)
     {
         _stateStore = stateStore ?? throw new ArgumentNullException(nameof(stateStore));
+        _uiSettings = uiSettings ?? throw new ArgumentNullException(nameof(uiSettings));
     }
 
     public override TextLayerType LayerType => TextLayerType.AsciiImage;
@@ -24,14 +25,14 @@ public sealed class AsciiImageLayer : TextLayerRendererBase, ITextLayerRenderer<
         int h = ctx.Height;
 
         var s = layer.GetCustom<AsciiImageSettings>() ?? new AsciiImageSettings();
-        var imagePaths = GetImagePaths(s.ImageFolderPath);
+        var imagePaths = FileBasedLayerAssetPaths.GetSortedImagePaths(s.ImageFolderPath, _uiSettings);
         if (imagePaths.Count == 0)
         {
             RenderPlaceholder(ctx, "No images");
             return state;
         }
 
-        int imageIndex = state.SnippetIndex % Math.Max(1, imagePaths.Count);
+        int imageIndex = FileBasedLayerAssetPaths.ResolveIndexByFileName(imagePaths, s.SelectedImageFileName);
         string imagePath = imagePaths[imageIndex];
 
         var asciiState = _stateStore.GetState(ctx.LayerIndex);
@@ -81,7 +82,12 @@ public sealed class AsciiImageLayer : TextLayerRendererBase, ITextLayerRenderer<
 
         if (s.BeatReaction == AsciiImageBeatReaction.Flash && ctx.Snapshot.BeatFlashActive)
         {
-            state.SnippetIndex = (state.SnippetIndex + 1) % Math.Max(1, imagePaths.Count);
+            var nextName = FileBasedLayerAssetPaths.NextFileNameAfter(imagePaths, s.SelectedImageFileName);
+            if (nextName != null)
+            {
+                s.SelectedImageFileName = nextName;
+                layer.SetCustom(s);
+            }
         }
 
         double zoomPhase = asciiState.ZoomPhase;
@@ -126,7 +132,7 @@ public sealed class AsciiImageLayer : TextLayerRendererBase, ITextLayerRenderer<
                     var color = useImageColors && frame.R != null && frame.G != null && frame.B != null
                         ? PaletteColor.FromRgb(frame.R[ix, iy], frame.G[ix, iy], frame.B[ix, iy])
                         : ctx.Palette[(colorBase + (frame.Brightness[ix, iy] * paletteCount) / 256) % paletteCount];
-                    ctx.Buffer.Set(vx, vy, c, color);
+                    ctx.SetLocal(vx, vy, c, color);
                 }
             }
         }
@@ -149,34 +155,6 @@ public sealed class AsciiImageLayer : TextLayerRendererBase, ITextLayerRenderer<
         return min + range * t;
     }
 
-    private static List<string> GetImagePaths(string? folderPath)
-    {
-        var result = new List<string>();
-        if (string.IsNullOrWhiteSpace(folderPath) || !Directory.Exists(folderPath))
-        {
-            return result;
-        }
-
-        try
-        {
-            foreach (var path in Directory.EnumerateFiles(folderPath))
-            {
-                var ext = Path.GetExtension(path).ToLowerInvariant();
-                if (s_imageExtensions.Contains(ext))
-                {
-                    result.Add(path);
-                }
-            }
-            result.Sort(StringComparer.OrdinalIgnoreCase);
-        }
-        catch (Exception ex)
-        {
-            Console.Error.WriteLine($"AsciiImage: failed to enumerate {folderPath}: {ex.Message}");
-        }
-
-        return result;
-    }
-
     private static void RenderPlaceholder(TextLayerDrawContext ctx, string text)
     {
         int w = ctx.Width;
@@ -189,7 +167,7 @@ public sealed class AsciiImageLayer : TextLayerRendererBase, ITextLayerRenderer<
             int x = startX + i;
             if (x >= 0 && x < w)
             {
-                ctx.Buffer.Set(x, centerY, text[i], color);
+                ctx.SetLocal(x, centerY, text[i], color);
             }
         }
     }

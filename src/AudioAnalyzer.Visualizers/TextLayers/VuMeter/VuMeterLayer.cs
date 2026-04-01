@@ -1,6 +1,5 @@
 using System.Globalization;
 using AudioAnalyzer.Application.Abstractions;
-using AudioAnalyzer.Application.Viewports;
 using AudioAnalyzer.Domain;
 
 namespace AudioAnalyzer.Visualizers;
@@ -31,7 +30,7 @@ public sealed class VuMeterLayer : TextLayerRendererBase, ITextLayerRenderer<NoL
         {
             for (int i = 0; i < s.Length && x + i < w; i++)
             {
-                ctx.Buffer.Set(x + i, y, s[i], color);
+                ctx.SetLocal(x + i, y, s[i], color);
             }
         }
 
@@ -43,13 +42,13 @@ public sealed class VuMeterLayer : TextLayerRendererBase, ITextLayerRenderer<NoL
 
         if (row < h)
         {
-            DrawVuMeterChannel(ctx.Buffer, 0, row, w, "  L ", snapshot.LeftChannel, snapshot.LeftPeakHold, meterWidth);
+            DrawVuMeterChannel(ctx, 0, row, w, "  L ", snapshot.LeftChannel, snapshot.LeftPeakHold, meterWidth);
             row++;
         }
         if (row < h) { row++; } // blank
         if (row < h)
         {
-            DrawVuMeterChannel(ctx.Buffer, 0, row, w, "  R ", snapshot.RightChannel, snapshot.RightPeakHold, meterWidth);
+            DrawVuMeterChannel(ctx, 0, row, w, "  R ", snapshot.RightChannel, snapshot.RightPeakHold, meterWidth);
             row++;
         }
         if (row < h) { row++; } // blank
@@ -89,16 +88,16 @@ public sealed class VuMeterLayer : TextLayerRendererBase, ITextLayerRenderer<NoL
             int x = 6;
             for (int i = 0; i < balancePos && x < w; i++, x++)
             {
-                ctx.Buffer.Set(x, row, '\u2500', darkGray);
+                ctx.SetLocal(x, row, '\u2500', darkGray);
             }
             if (x < w)
             {
-                ctx.Buffer.Set(x, row, '\u25CF', white);
+                ctx.SetLocal(x, row, '\u25CF', white);
                 x++;
             }
             for (int i = balancePos + 1; i < meterWidth && x < w; i++, x++)
             {
-                ctx.Buffer.Set(x, row, '\u2500', darkGray);
+                ctx.SetLocal(x, row, '\u2500', darkGray);
             }
             row++;
         }
@@ -119,7 +118,7 @@ public sealed class VuMeterLayer : TextLayerRendererBase, ITextLayerRenderer<NoL
         return state;
     }
 
-    private static void DrawVuMeterChannel(ViewportCellBuffer buffer, int startX, int y, int maxWidth, string label, float level, float peakHold, int width)
+    private static void DrawVuMeterChannel(TextLayerDrawContext ctx, int startX, int y, int maxWidth, string label, float level, float peakHold, int width)
     {
         int x = startX;
         var darkGray = PaletteColor.FromConsoleColor(ConsoleColor.DarkGray);
@@ -127,9 +126,9 @@ public sealed class VuMeterLayer : TextLayerRendererBase, ITextLayerRenderer<NoL
 
         foreach (char c in label)
         {
-            if (x < maxWidth) { buffer.Set(x, y, c, white); x++; }
+            if (x < maxWidth) { ctx.SetLocal(x, y, c, white); x++; }
         }
-        if (x < maxWidth) { buffer.Set(x, y, '[', white); x++; }
+        if (x < maxWidth) { ctx.SetLocal(x, y, '[', white); x++; }
 
         int barLength = (int)(level * width);
         int peakPos = (int)(peakHold * width);
@@ -138,27 +137,27 @@ public sealed class VuMeterLayer : TextLayerRendererBase, ITextLayerRenderer<NoL
         {
             if (i == peakPos && peakPos > 0)
             {
-                buffer.Set(x, y, '│', white);
+                ctx.SetLocal(x, y, '│', white);
             }
             else if (i < barLength)
             {
                 var color = GetVuColor((double)i / width);
-                buffer.Set(x, y, '█', color);
+                ctx.SetLocal(x, y, '█', color);
             }
             else
             {
-                buffer.Set(x, y, '░', darkGray);
+                ctx.SetLocal(x, y, '░', darkGray);
             }
         }
 
-        if (x < maxWidth) { buffer.Set(x, y, ']', white); x++; }
+        if (x < maxWidth) { ctx.SetLocal(x, y, ']', white); x++; }
         if (x < maxWidth) { x++; } // space
 
         double db = 20 * Math.Log10(Math.Max(level, 0.00001));
         var dbStr = $" {db:F1} dB";
         foreach (char c in dbStr)
         {
-            if (x < maxWidth) { buffer.Set(x, y, c, white); x++; }
+            if (x < maxWidth) { ctx.SetLocal(x, y, c, white); x++; }
         }
     }
 

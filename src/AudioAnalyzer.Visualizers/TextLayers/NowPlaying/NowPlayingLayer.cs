@@ -74,7 +74,7 @@ public sealed class NowPlayingLayer : TextLayerRendererBase, ITextLayerRenderer<
                     {
                         c = char.IsLower(c) ? char.ToUpperInvariant(c) : (c == ' ' ? ' ' : '█');
                     }
-                    ctx.Buffer.Set(x, drawY, c, color);
+                    ctx.SetLocal(x, drawY, c, color);
                 }
             }
         }
@@ -97,7 +97,7 @@ public sealed class NowPlayingLayer : TextLayerRendererBase, ITextLayerRenderer<
                         c = char.IsLower(c) ? char.ToUpperInvariant(c) : (c == ' ' ? ' ' : '█');
                     }
                 }
-                ctx.Buffer.Set(x, drawY, c, color);
+                ctx.SetLocal(x, drawY, c, color);
             }
         }
 

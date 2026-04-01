@@ -3,7 +3,7 @@ using AudioAnalyzer.Console;
 using AudioAnalyzer.Domain;
 using Xunit;
 
-namespace AudioAnalyzer.Tests.Console;
+namespace AudioAnalyzer.Tests.Console.SettingsModal;
 
 /// <summary>Tests for <see cref="PresetSettingsModalRows"/>.</summary>
 public sealed class PresetSettingsModalRowsTests

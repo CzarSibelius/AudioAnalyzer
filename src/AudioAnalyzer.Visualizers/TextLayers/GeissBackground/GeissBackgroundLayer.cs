@@ -95,7 +95,7 @@ public sealed class GeissBackgroundLayer : TextLayerRendererBase, ITextLayerRend
                     color = PaletteColor.FromConsoleColor(GetGeissColor(hue, plasma));
                 }
 
-                ctx.Buffer.Set(x, y, ch, color);
+                ctx.SetLocal(x, y, ch, color);
             }
         }
 

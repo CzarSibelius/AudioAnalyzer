@@ -67,7 +67,7 @@ public sealed class FallingLettersLayer : TextLayerRendererBase, ITextLayerRende
             if (row >= 0 && row < h && p.Col >= 0 && p.Col < w)
             {
                 var color = ctx.Palette[(layer.ColorIndex + i) % paletteCount];
-                ctx.Buffer.Set(p.Col, row, p.Character, color);
+                ctx.SetLocal(p.Col, row, p.Character, color);
             }
             if (row >= h)
             {

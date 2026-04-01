@@ -41,8 +41,12 @@ public sealed class FillLayerBlendOverTests
             Snapshot = new AnalysisSnapshot(),
             Palette = palette,
             SpeedBurst = 1.0,
+            ViewportWidth = 10,
+            ViewportHeight = 10,
             Width = 10,
-            Height = 10,
+            Height = 5,
+            BufferOriginX = 0,
+            BufferOriginY = 5,
             LayerIndex = 2
         };
 
@@ -82,6 +86,8 @@ public sealed class FillLayerBlendOverTests
             Snapshot = new AnalysisSnapshot(),
             Palette = palette,
             SpeedBurst = 1.0,
+            ViewportWidth = 10,
+            ViewportHeight = 10,
             Width = 10,
             Height = 10,
             LayerIndex = 0
@@ -125,6 +131,8 @@ public sealed class FillLayerBlendOverTests
             Snapshot = new AnalysisSnapshot(),
             Palette = palette,
             SpeedBurst = 1.0,
+            ViewportWidth = 10,
+            ViewportHeight = 10,
             Width = 10,
             Height = 10,
             LayerIndex = 0

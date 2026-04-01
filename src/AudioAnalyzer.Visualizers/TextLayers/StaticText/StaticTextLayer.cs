@@ -40,7 +40,7 @@ public sealed class StaticTextLayer : TextLayerRendererBase, ITextLayerRenderer<
             int x = startX + i;
             if (x >= 0 && x < w)
             {
-                ctx.Buffer.Set(x, centerY, text[i], color);
+                ctx.SetLocal(x, centerY, text[i], color);
             }
         }
         return state;

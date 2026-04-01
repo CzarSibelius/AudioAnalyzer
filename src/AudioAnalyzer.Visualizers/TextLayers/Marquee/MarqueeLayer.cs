@@ -62,7 +62,7 @@ public sealed class MarqueeLayer : TextLayerRendererBase, ITextLayerRenderer<NoL
                     c = char.IsLower(c) ? char.ToUpperInvariant(c) : (c == ' ' ? ' ' : '█');
                 }
             }
-            ctx.Buffer.Set(x, centerY, c, color);
+            ctx.SetLocal(x, centerY, c, color);
         }
 
         return state;

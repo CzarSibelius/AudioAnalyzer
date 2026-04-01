@@ -47,23 +47,14 @@ public sealed class FillLayer : TextLayerRendererBase, ITextLayerRenderer<NoLaye
         bool blendOver = settings.FillCompositeMode == FillCompositeMode.BlendOver;
         double blendStrength = settings.BlendStrength;
 
-        var (clipL, clipT, clipW, clipH) = TextLayerRenderBounds.ToPixelRect(layer.RenderBounds, w, h);
-        if (clipW < 1 || clipH < 1)
+        for (int ly = 0; ly < h; ly++)
         {
-            return state;
-        }
-
-        var buffer = ctx.Buffer;
-        int clipR = clipL + clipW;
-        int clipB = clipT + clipH;
-        for (int y = clipT; y < clipB; y++)
-        {
-            for (int x = clipL; x < clipR; x++)
+            for (int lx = 0; lx < w; lx++)
             {
                 (byte R, byte G, byte B) fillRgb;
                 if (useGradient)
                 {
-                    double t = ComputeGradientT(x - clipL, y - clipT, clipW, clipH, settings.FillGradientDirection);
+                    double t = ComputeGradientT(lx, ly, w, h, settings.FillGradientDirection);
                     fillRgb = PaletteColorBlending.LerpRgb(rgbStart, rgbEnd, t);
                 }
                 else
@@ -80,7 +71,7 @@ public sealed class FillLayer : TextLayerRendererBase, ITextLayerRenderer<NoLaye
                         continue;
                     }
 
-                    var (c, under) = buffer.Get(x, y);
+                    var (c, under) = ctx.GetLocal(lx, ly);
                     if (settings.BlendSpaceAsBlack && c == ' ')
                     {
                         under = PaletteColor.FromRgb(0, 0, 0);
@@ -89,11 +80,11 @@ public sealed class FillLayer : TextLayerRendererBase, ITextLayerRenderer<NoLaye
                     PaletteColor outColor = blendStrength >= 1.0
                         ? fillColor
                         : PaletteColorBlending.BlendOver(under, fillColor, blendStrength);
-                    buffer.Set(x, y, fillChar, outColor);
+                    ctx.SetLocal(lx, ly, fillChar, outColor);
                 }
                 else
                 {
-                    buffer.Set(x, y, fillChar, fillColor);
+                    ctx.SetLocal(lx, ly, fillChar, fillColor);
                 }
             }
         }

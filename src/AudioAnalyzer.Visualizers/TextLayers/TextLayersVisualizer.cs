@@ -117,14 +117,19 @@ public sealed class TextLayersVisualizer : IVisualizer
             _buffer.PushClip(clipL, clipT, clipW, clipH);
             try
             {
+                bool hasBounds = layer.RenderBounds != null;
                 var ctx = new TextLayerDrawContext
                 {
                     Buffer = _buffer,
                     Snapshot = snapshot,
                     Palette = layerColors,
                     SpeedBurst = speedBurst,
-                    Width = w,
-                    Height = h,
+                    ViewportWidth = w,
+                    ViewportHeight = h,
+                    Width = hasBounds ? clipW : w,
+                    Height = hasBounds ? clipH : h,
+                    BufferOriginX = hasBounds ? clipL : 0,
+                    BufferOriginY = hasBounds ? clipT : 0,
                     LayerIndex = i
                 };
                 state = renderer.Draw(layer, ref state, ctx);
@@ -268,6 +273,11 @@ public sealed class TextLayersVisualizer : IVisualizer
             entryIndex = _showPlayToolbarInfo.CurrentEntryIndex;
         }
 
+        int snippetIndex = list.Count > 0 && idx < _layerStates.Count ? _layerStates[idx].SnippetIndex : 0;
+        IReadOnlyList<LayerToolbarContextualRow> contextualRows = layer != null
+            ? LayerToolbarContextualRows.Resolve(layer, snippetIndex, _uiSettings)
+            : [];
+
         return new TextLayersToolbarContext
         {
             Snapshot = snapshot,
@@ -276,7 +286,7 @@ public sealed class TextLayersVisualizer : IVisualizer
             PaletteCycleLayerIndex = _paletteCycleLayerIndex,
             PaletteRepo = _paletteRepo,
             UiSettings = _uiSettings,
-            OscilloscopeGain = layer?.LayerType == TextLayerType.Oscilloscope ? (layer.GetCustom<OscilloscopeSettings>()?.Gain ?? 2.5) : null,
+            ActiveLayerContextualRows = contextualRows,
             ApplicationMode = _visualizerSettings.ApplicationMode,
             ActiveShowName = _visualizerSettings.ActiveShowName,
             ShowEntryIndex = entryIndex,
@@ -347,7 +357,7 @@ public sealed class TextLayersVisualizer : IVisualizer
 
     /// <summary>
     /// Handles keys 1–<see cref="TextLayersLimits.MaxLayerCount"/> to select the active layer; Left/Right to cycle the active layer's type;
-    /// Shift+1–<see cref="TextLayersLimits.MaxLayerCount"/> to toggle layer enabled/disabled; I to cycle to the next picture in AsciiImage layers.
+    /// Shift+1–<see cref="TextLayersLimits.MaxLayerCount"/> to toggle layer enabled/disabled; I to cycle to the next asset in AsciiImage / AsciiModel layers.
     /// 1 = layer 1 (back), 9 = layer 9 (front). Returns true if the key was handled.
     /// </summary>
     public bool HandleKey(ConsoleKeyInfo key)
@@ -364,6 +374,7 @@ public sealed class TextLayersVisualizer : IVisualizer
             Settings = _settings,
             PaletteCycleLayerIndex = _paletteCycleLayerIndex,
             PaletteRepo = _paletteRepo,
+            UiSettings = _uiSettings,
             AdvanceSnippetIndex = AdvanceSnippetIndexAt,
             ClearLayerState = ClearLayerStateWhenSwitching
         };

@@ -57,7 +57,9 @@ internal static class ServiceConfiguration
         services.AddSingleton<ITextLayerStateStore>(sp => sp.GetRequiredService<TextLayerStateStore>());
         services.AddSingleton<ITextLayerStateStore<FallingLettersLayerState>>(sp => sp.GetRequiredService<TextLayerStateStore>());
         services.AddSingleton<ITextLayerStateStore<AsciiImageState>>(sp => sp.GetRequiredService<TextLayerStateStore>());
+        services.AddSingleton<ITextLayerStateStore<AsciiModelState>>(sp => sp.GetRequiredService<TextLayerStateStore>());
         services.AddSingleton<ITextLayerStateStore<GeissBackgroundState>>(sp => sp.GetRequiredService<TextLayerStateStore>());
+        services.AddSingleton<ITextLayerStateStore<FractalZoomState>>(sp => sp.GetRequiredService<TextLayerStateStore>());
         services.AddSingleton<ITextLayerStateStore<BeatCirclesState>>(sp => sp.GetRequiredService<TextLayerStateStore>());
         services.AddSingleton<ITextLayerStateStore<UnknownPleasuresState>>(sp => sp.GetRequiredService<TextLayerStateStore>());
         services.AddSingleton<ITextLayerStateStore<MaschineState>>(sp => sp.GetRequiredService<TextLayerStateStore>());

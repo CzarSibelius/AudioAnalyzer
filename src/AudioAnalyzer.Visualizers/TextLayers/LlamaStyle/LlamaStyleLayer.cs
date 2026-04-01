@@ -46,7 +46,7 @@ public sealed class LlamaStyleLayer : TextLayerRendererBase, ITextLayerRenderer<
         {
             for (int i = 0; i < s.Length && x + i < w; i++)
             {
-                ctx.Buffer.Set(x + i, y, s[i], color);
+                ctx.SetLocal(x + i, y, s[i], color);
             }
         }
 
@@ -58,20 +58,20 @@ public sealed class LlamaStyleLayer : TextLayerRendererBase, ITextLayerRenderer<
             int availableWidth = Math.Max(20, w - 10);
             int volBarLength = (int)(snapshot.Volume * availableWidth);
             int x = 0;
-            if (x < w) { ctx.Buffer.Set(x, row, '[', white); x++; }
+            if (x < w) { ctx.SetLocal(x, row, '[', white); x++; }
             for (int i = 0; i < availableWidth && x < w; i++, x++)
             {
                 if (i < volBarLength)
                 {
                     var color = spectrumColors ? GetSpectrumVolumeColor((double)i / availableWidth) : GetWinampVolumeColor((double)i / availableWidth);
-                    ctx.Buffer.Set(x, row, '█', color);
+                    ctx.SetLocal(x, row, '█', color);
                 }
                 else
                 {
-                    ctx.Buffer.Set(x, row, ' ', darkGray);
+                    ctx.SetLocal(x, row, ' ', darkGray);
                 }
             }
-            if (x < w) { ctx.Buffer.Set(x, row, ']', white); }
+            if (x < w) { ctx.SetLocal(x, row, ']', white); }
             row++;
         }
         if (showVolumeBar && row < h)
@@ -117,7 +117,7 @@ public sealed class LlamaStyleLayer : TextLayerRendererBase, ITextLayerRenderer<
                 {
                     for (int c = 0; c < (barWidth == 2 ? 2 : 2) && x < w; c++, x++)
                     {
-                        ctx.Buffer.Set(x, row, peakChars[c], white);
+                        ctx.SetLocal(x, row, peakChars[c], white);
                     }
                 }
                 else if (height >= barRow)
@@ -125,20 +125,20 @@ public sealed class LlamaStyleLayer : TextLayerRendererBase, ITextLayerRenderer<
                     var color = spectrumColors ? GetSpectrumBarColor(barRow, barHeight) : GetWinampBarColor(barRow, barHeight);
                     for (int c = 0; c < (barWidth == 2 ? 2 : 2) && x < w; c++, x++)
                     {
-                        ctx.Buffer.Set(x, row, barChars[c], color);
+                        ctx.SetLocal(x, row, barChars[c], color);
                     }
                 }
                 else
                 {
                     for (int c = 0; c < (barWidth == 2 ? 2 : 2) && x < w; c++, x++)
                     {
-                        ctx.Buffer.Set(x, row, ' ', darkGray);
+                        ctx.SetLocal(x, row, ' ', darkGray);
                     }
                 }
 
                 if (barWidth == 3 && x < w)
                 {
-                    ctx.Buffer.Set(x, row, ' ', darkGray);
+                    ctx.SetLocal(x, row, ' ', darkGray);
                     x++;
                 }
             }
@@ -151,14 +151,14 @@ public sealed class LlamaStyleLayer : TextLayerRendererBase, ITextLayerRenderer<
             {
                 if (barWidth == 3)
                 {
-                    if (x < w) { ctx.Buffer.Set(x, row, '═', darkGray); x++; }
-                    if (x < w) { ctx.Buffer.Set(x, row, '═', darkGray); x++; }
-                    if (x < w) { ctx.Buffer.Set(x, row, ' ', darkGray); x++; }
+                    if (x < w) { ctx.SetLocal(x, row, '═', darkGray); x++; }
+                    if (x < w) { ctx.SetLocal(x, row, '═', darkGray); x++; }
+                    if (x < w) { ctx.SetLocal(x, row, ' ', darkGray); x++; }
                 }
                 else
                 {
-                    if (x < w) { ctx.Buffer.Set(x, row, '─', darkGray); x++; }
-                    if (x < w) { ctx.Buffer.Set(x, row, '─', darkGray); x++; }
+                    if (x < w) { ctx.SetLocal(x, row, '─', darkGray); x++; }
+                    if (x < w) { ctx.SetLocal(x, row, '─', darkGray); x++; }
                 }
             }
             row++;
@@ -181,14 +181,14 @@ public sealed class LlamaStyleLayer : TextLayerRendererBase, ITextLayerRenderer<
                     string toShow = (label.Length >= 2 ? label[..2] : label).PadRight(Math.Min(charsPerBand, 2));
                     for (int c = 0; c < charsPerBand && x < w; c++, x++)
                     {
-                        ctx.Buffer.Set(x, row, c < toShow.Length ? toShow[c] : ' ', darkGray);
+                        ctx.SetLocal(x, row, c < toShow.Length ? toShow[c] : ' ', darkGray);
                     }
                 }
                 else
                 {
                     for (int c = 0; c < charsPerBand && x < w; c++, x++)
                     {
-                        ctx.Buffer.Set(x, row, ' ', darkGray);
+                        ctx.SetLocal(x, row, ' ', darkGray);
                     }
                 }
             }

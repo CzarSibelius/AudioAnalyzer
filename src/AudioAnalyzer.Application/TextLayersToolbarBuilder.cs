@@ -6,7 +6,7 @@ using AudioAnalyzer.Domain;
 
 namespace AudioAnalyzer.Application;
 
-/// <summary>Builds the TextLayers toolbar suffix: layer digits 1–<see cref="TextLayersLimits.MaxLayerCount"/>, oscilloscope gain (when applicable), palette name.</summary>
+/// <summary>Builds the TextLayers toolbar suffix: layer digits 1–<see cref="TextLayersLimits.MaxLayerCount"/>, optional contextual rows (gain, file names), palette name.</summary>
 public sealed class TextLayersToolbarBuilder : ITextLayersToolbarBuilder
 {
     private readonly IUiThemeResolver _uiThemeResolver;
@@ -67,13 +67,7 @@ public sealed class TextLayersToolbarBuilder : ITextLayersToolbarBuilder
                 }
             }
         }
-        if (layer.LayerType == TextLayerType.Oscilloscope)
-        {
-            double gain = context.OscilloscopeGain ?? 2.5;
-            sb.Append(" | ");
-            sb.Append(LabelFormatting.FormatLabel("Gain", null));
-            sb.Append(gain.ToString("F1", System.Globalization.CultureInfo.InvariantCulture));
-        }
+        AppendContextualRowsPlainSuffix(sb, context);
         sb.Append(" | ");
         sb.Append(LabelFormatting.FormatLabel("Palette", null));
         AppendPaletteColoredName(sb, context, paletteDef, paletteName);
@@ -106,6 +100,7 @@ public sealed class TextLayersToolbarBuilder : ITextLayersToolbarBuilder
         sb.Append(" | ");
         AnsiConsole.AppendColored(sb, LabelFormatting.FormatLabel("Entry", null), palette.Label);
         sb.Append(entry);
+        AppendContextualRowsPlainSuffix(sb, context);
         sb.Append(" | ");
         AnsiConsole.AppendColored(sb, LabelFormatting.FormatLabel("Palette", null), palette.Label);
         AppendPaletteColoredName(sb, context, paletteDef, paletteName);
@@ -166,12 +161,7 @@ public sealed class TextLayersToolbarBuilder : ITextLayersToolbarBuilder
         string layersAnsi = layersSb.ToString();
         list.Add(new LabeledValueDescriptor("Layers", () => new AnsiText(layersAnsi), preformattedAnsi: true));
 
-        if (layer.LayerType == TextLayerType.Oscilloscope)
-        {
-            double gain = context.OscilloscopeGain ?? 2.5;
-            string gainStr = gain.ToString("F1", System.Globalization.CultureInfo.InvariantCulture);
-            list.Add(new LabeledValueDescriptor("Gain", () => new PlainText(gainStr), labelColor: palette.Label, textColor: palette.Normal));
-        }
+        AddContextualRowViewports(list, context, palette.Label, palette.Normal);
 
         const string paletteLabel = "Palette";
         var paletteColors = ColorPaletteParser.Parse(paletteDef);
@@ -200,6 +190,8 @@ public sealed class TextLayersToolbarBuilder : ITextLayersToolbarBuilder
         int idx = count > 0 ? Math.Clamp(context.ShowEntryIndex, 0, count - 1) : 0;
         string entryText = count > 0 ? $"{idx + 1}/{count}" : "—";
         list.Add(new LabeledValueDescriptor("Entry", () => new PlainText(entryText), labelColor: paletteUi.Label, textColor: paletteUi.Normal));
+
+        AddContextualRowViewports(list, context, paletteUi.Label, paletteUi.Normal);
 
         TextLayerSettings? layer;
         TextLayersVisualizerSettings? config = context.Settings;
@@ -237,5 +229,42 @@ public sealed class TextLayersToolbarBuilder : ITextLayersToolbarBuilder
         var colors = ColorPaletteParser.Parse(paletteDef);
         int phase = PaletteSwatchFormatter.ComputeToolbarPhaseOffset(context.Snapshot!, colors?.Count ?? 0);
         sb.Append(PaletteSwatchFormatter.FormatPaletteColoredName(paletteName, colors, phase));
+    }
+
+    private static void AppendContextualRowsPlainSuffix(StringBuilder sb, TextLayersToolbarContext context)
+    {
+        int maxW = GetContextualToolbarValueMaxWidth(context);
+        foreach (var row in context.ActiveLayerContextualRows)
+        {
+            string v = new PlainText(row.Value).TruncateWithEllipsis(maxW);
+            sb.Append(" | ");
+            sb.Append(LabelFormatting.FormatLabel(row.Label, null));
+            sb.Append(v);
+        }
+    }
+
+    private static void AddContextualRowViewports(
+        List<LabeledValueDescriptor> list,
+        TextLayersToolbarContext context,
+        PaletteColor labelColor,
+        PaletteColor textColor)
+    {
+        int maxW = GetContextualToolbarValueMaxWidth(context);
+        foreach (var row in context.ActiveLayerContextualRows)
+        {
+            string lbl = row.Label;
+            string val = row.Value;
+            list.Add(new LabeledValueDescriptor(
+                lbl,
+                () => new PlainText(new PlainText(val).TruncateWithEllipsis(maxW)),
+                labelColor: labelColor,
+                textColor: textColor));
+        }
+    }
+
+    private static int GetContextualToolbarValueMaxWidth(TextLayersToolbarContext context)
+    {
+        int tw = context.Snapshot?.TerminalWidth > 0 ? context.Snapshot.TerminalWidth : 80;
+        return Math.Clamp(Math.Max(16, tw / 4), 16, 40);
     }
 }

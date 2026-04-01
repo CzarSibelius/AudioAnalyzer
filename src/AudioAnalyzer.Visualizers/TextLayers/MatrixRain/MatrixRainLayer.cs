@@ -47,7 +47,7 @@ public sealed class MatrixRainLayer : TextLayerRendererBase, ITextLayerRenderer<
                 var color = ctx.Palette[colorIdx];
                 if (y >= 0)
                 {
-                    ctx.Buffer.Set(x, y, c, color);
+                    ctx.SetLocal(x, y, c, color);
                 }
             }
         }

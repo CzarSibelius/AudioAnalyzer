@@ -548,6 +548,8 @@ internal sealed class SettingsModalKeyHandlerConfig : IKeyHandlerConfig<Settings
                         ? (selectedLayer.TextSnippets is { Count: > 0 } ? string.Join(", ", selectedLayer.TextSnippets) : "")
                         : row.Id == "ImagePath"
                             ? ((selectedLayer.GetCustom<AsciiImageSettings>() ?? new AsciiImageSettings()).ImageFolderPath ?? "")
+                        : row.Id == "ModelPath"
+                            ? ((selectedLayer.GetCustom<AsciiModelSettings>() ?? new AsciiModelSettings()).ModelFolderPath ?? "")
                             : row.DisplayValue;
                     state.Focus = SettingsModalFocus.EditingSetting;
                     return false;

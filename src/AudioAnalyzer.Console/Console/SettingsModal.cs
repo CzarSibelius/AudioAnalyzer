@@ -1,6 +1,5 @@
 using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Domain;
-using AudioAnalyzer.Visualizers;
 
 namespace AudioAnalyzer.Console;
 
@@ -17,6 +16,7 @@ internal sealed class SettingsModal : ISettingsModal
     private readonly IConsoleDimensions _consoleDimensions;
     private readonly ITextLayerBoundsEditSession _boundsEditSession;
     private readonly ITitleBarNavigationContext _navigation;
+    private readonly IVisualizer _visualizer;
 
     public SettingsModal(
         IVisualizationOrchestrator orchestrator,
@@ -26,7 +26,8 @@ internal sealed class SettingsModal : ISettingsModal
         IKeyHandler<SettingsModalKeyContext> keyHandler,
         IConsoleDimensions consoleDimensions,
         ITextLayerBoundsEditSession boundsEditSession,
-        ITitleBarNavigationContext navigation)
+        ITitleBarNavigationContext navigation,
+        IVisualizer visualizer)
     {
         _orchestrator = orchestrator ?? throw new ArgumentNullException(nameof(orchestrator));
         _visualizerSettings = visualizerSettings ?? throw new ArgumentNullException(nameof(visualizerSettings));
@@ -36,6 +37,7 @@ internal sealed class SettingsModal : ISettingsModal
         _consoleDimensions = consoleDimensions ?? throw new ArgumentNullException(nameof(consoleDimensions));
         _boundsEditSession = boundsEditSession ?? throw new ArgumentNullException(nameof(boundsEditSession));
         _navigation = navigation ?? throw new ArgumentNullException(nameof(navigation));
+        _visualizer = visualizer ?? throw new ArgumentNullException(nameof(visualizer));
     }
 
     /// <inheritdoc />
@@ -48,6 +50,12 @@ internal sealed class SettingsModal : ISettingsModal
         if (sortedLayers.Count == 0)
         {
             sortedLayers = new List<TextLayerSettings>();
+        }
+
+        int activeSorted = _visualizer.GetActiveLayerZIndex();
+        if (activeSorted >= 0 && sortedLayers.Count > 0)
+        {
+            state.SelectedLayerIndex = Math.Clamp(activeSorted, 0, sortedLayers.Count - 1);
         }
 
         var context = new SettingsModalKeyContext

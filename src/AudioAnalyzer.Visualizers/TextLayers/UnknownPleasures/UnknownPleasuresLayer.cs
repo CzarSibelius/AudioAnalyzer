@@ -107,7 +107,7 @@ public sealed class UnknownPleasuresLayer : TextLayerRendererBase, ITextLayerRen
 
                     double mag = pulse[src];
                     char ch = GetCharForMagnitude(mag, line);
-                    ctx.Buffer.Set(c, rowIndex, ch, color);
+                    ctx.SetLocal(c, rowIndex, ch, color);
                 }
                 rowIndex++;
             }

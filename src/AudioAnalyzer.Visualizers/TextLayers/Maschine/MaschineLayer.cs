@@ -104,7 +104,7 @@ public sealed class MaschineLayer : TextLayerRendererBase, ITextLayerRenderer<Ma
                 {
                     char c = elemLen > 0 ? text[i] : ' ';
                     var color = (x == accentColumn) ? accentColor : normalColor;
-                    ctx.Buffer.Set(x, y, c, color);
+                    ctx.SetLocal(x, y, c, color);
                 }
 
                 colOffset += gw;

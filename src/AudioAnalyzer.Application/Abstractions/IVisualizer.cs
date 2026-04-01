@@ -11,10 +11,10 @@ public interface IVisualizer
 
     void Render(AnalysisSnapshot snapshot, VisualizerViewport viewport);
 
-    /// <summary>Optional toolbar as separate labeled viewports (e.g. Layers, Gain, Palette). When non-null and non-empty, used instead of <see cref="GetToolbarSuffix"/>.</summary>
+    /// <summary>Optional toolbar as separate labeled viewports (e.g. Layers, contextual fields, Palette). When non-null and non-empty, used instead of <see cref="GetToolbarSuffix"/>.</summary>
     IReadOnlyList<LabeledValueDescriptor>? GetToolbarViewports(AnalysisSnapshot snapshot) => null;
 
-    /// <summary>Optional toolbar suffix (e.g. "Gain: 2.5 ([ ])"). Return null to use default toolbar only. Ignored when <see cref="GetToolbarViewports"/> returns a non-empty list.</summary>
+    /// <summary>Optional toolbar suffix (legacy single-string form). Return null to use default toolbar only. Ignored when <see cref="GetToolbarViewports"/> returns a non-empty list.</summary>
     string? GetToolbarSuffix(AnalysisSnapshot snapshot) => null;
 
     /// <summary>Optional: display name of the active/selected layer for title bar (e.g. "ascii_image"). Return null if not applicable.</summary>

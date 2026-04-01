@@ -4,15 +4,16 @@ using KeyHandling = AudioAnalyzer.Console.KeyHandling;
 
 namespace AudioAnalyzer.Console;
 
-/// <summary>Keyboard handling for the General Settings hub: menu navigation, device picker, application name edit.</summary>
+/// <summary>Keyboard handling for the General Settings hub: menu navigation, device picker, application name and default asset folder edits.</summary>
 internal sealed class GeneralSettingsHubKeyHandlerConfig : IKeyHandlerConfig<GeneralSettingsHubKeyContext>
 {
     private const string Section = "General settings hub";
 
     private const int MenuAudio = 0;
     private const int MenuAppName = 1;
-    private const int MenuTheme = 2;
-    private const int MenuCount = 3;
+    private const int MenuDefaultAssetFolder = 2;
+    private const int MenuTheme = 3;
+    private const int MenuCount = 4;
 
     private static IReadOnlyList<KeyHandling.KeyBindingEntry<GeneralSettingsHubKeyContext>> GetEntries() =>
     [
@@ -34,7 +35,7 @@ internal sealed class GeneralSettingsHubKeyHandlerConfig : IKeyHandlerConfig<Gen
             Matches: static k => k.Key == ConsoleKey.Enter,
             Action: static (_, ctx) => OnEnter(ctx),
             Key: "Enter",
-            Description: "Open selected item or confirm application name",
+            Description: "Open selected item or confirm text edit",
             Section,
             ApplicableMode: ApplicationMode.Settings),
         new KeyHandling.KeyBindingEntry<GeneralSettingsHubKeyContext>(
@@ -48,7 +49,7 @@ internal sealed class GeneralSettingsHubKeyHandlerConfig : IKeyHandlerConfig<Gen
 
     private static bool MoveSelection(GeneralSettingsHubKeyContext ctx, int delta)
     {
-        if (ctx.State.IsEditingAppName)
+        if (ctx.State.EditMode != GeneralSettingsHubEditMode.None)
         {
             return false;
         }
@@ -59,21 +60,11 @@ internal sealed class GeneralSettingsHubKeyHandlerConfig : IKeyHandlerConfig<Gen
 
     private static bool OnEnter(GeneralSettingsHubKeyContext ctx)
     {
-        if (ctx.State.IsEditingAppName)
-        {
-            ctx.UiSettings.TitleBarAppName = string.IsNullOrWhiteSpace(ctx.State.RenameBuffer)
-                ? null
-                : ctx.State.RenameBuffer.Trim();
-            ctx.State.IsEditingAppName = false;
-            ctx.State.RenameBuffer = "";
-            ctx.SaveSettings();
-            return true;
-        }
-
         return ctx.State.SelectedIndex switch
         {
             MenuAudio => OpenDevicePicker(ctx),
-            MenuAppName => StartRename(ctx),
+            MenuAppName => StartApplicationNameEdit(ctx),
+            MenuDefaultAssetFolder => StartDefaultAssetFolderEdit(ctx),
             MenuTheme => OpenThemePicker(ctx),
             _ => false
         };
@@ -81,7 +72,7 @@ internal sealed class GeneralSettingsHubKeyHandlerConfig : IKeyHandlerConfig<Gen
 
     private static bool OnThemeHotkey(GeneralSettingsHubKeyContext ctx)
     {
-        if (ctx.State.IsEditingAppName)
+        if (ctx.State.EditMode != GeneralSettingsHubEditMode.None)
         {
             return false;
         }
@@ -94,10 +85,17 @@ internal sealed class GeneralSettingsHubKeyHandlerConfig : IKeyHandlerConfig<Gen
         return OpenThemePicker(ctx);
     }
 
-    private static bool StartRename(GeneralSettingsHubKeyContext ctx)
+    private static bool StartApplicationNameEdit(GeneralSettingsHubKeyContext ctx)
     {
-        ctx.State.IsEditingAppName = true;
+        ctx.State.EditMode = GeneralSettingsHubEditMode.ApplicationName;
         ctx.State.RenameBuffer = ctx.UiSettings.TitleBarAppName?.Trim() ?? "";
+        return true;
+    }
+
+    private static bool StartDefaultAssetFolderEdit(GeneralSettingsHubKeyContext ctx)
+    {
+        ctx.State.EditMode = GeneralSettingsHubEditMode.DefaultAssetFolder;
+        ctx.State.RenameBuffer = ctx.UiSettings.DefaultAssetFolderPath?.Trim() ?? "";
         return true;
     }
 
@@ -142,9 +140,9 @@ internal sealed class GeneralSettingsHubKeyHandlerConfig : IKeyHandlerConfig<Gen
     /// <inheritdoc />
     public bool Handle(ConsoleKeyInfo key, GeneralSettingsHubKeyContext ctx)
     {
-        if (ctx.State.IsEditingAppName)
+        if (ctx.State.EditMode != GeneralSettingsHubEditMode.None)
         {
-            return HandleRenameKey(key, ctx);
+            return HandleTextEditKey(key, ctx);
         }
 
         foreach (var entry in s_entries.Value)
@@ -158,14 +156,27 @@ internal sealed class GeneralSettingsHubKeyHandlerConfig : IKeyHandlerConfig<Gen
         return false;
     }
 
-    private static bool HandleRenameKey(ConsoleKeyInfo key, GeneralSettingsHubKeyContext ctx)
+    private static bool HandleTextEditKey(ConsoleKeyInfo key, GeneralSettingsHubKeyContext ctx)
     {
         if (key.Key == ConsoleKey.Enter)
         {
-            ctx.UiSettings.TitleBarAppName = string.IsNullOrWhiteSpace(ctx.State.RenameBuffer)
-                ? null
-                : ctx.State.RenameBuffer.Trim();
-            ctx.State.IsEditingAppName = false;
+            switch (ctx.State.EditMode)
+            {
+                case GeneralSettingsHubEditMode.ApplicationName:
+                    ctx.UiSettings.TitleBarAppName = string.IsNullOrWhiteSpace(ctx.State.RenameBuffer)
+                        ? null
+                        : ctx.State.RenameBuffer.Trim();
+                    break;
+                case GeneralSettingsHubEditMode.DefaultAssetFolder:
+                    ctx.UiSettings.DefaultAssetFolderPath = string.IsNullOrWhiteSpace(ctx.State.RenameBuffer)
+                        ? null
+                        : ctx.State.RenameBuffer.Trim();
+                    break;
+                default:
+                    return false;
+            }
+
+            ctx.State.EditMode = GeneralSettingsHubEditMode.None;
             ctx.State.RenameBuffer = "";
             ctx.SaveSettings();
             return true;
@@ -173,7 +184,7 @@ internal sealed class GeneralSettingsHubKeyHandlerConfig : IKeyHandlerConfig<Gen
 
         if (key.Key == ConsoleKey.Escape)
         {
-            ctx.State.IsEditingAppName = false;
+            ctx.State.EditMode = GeneralSettingsHubEditMode.None;
             ctx.State.RenameBuffer = "";
             return true;
         }

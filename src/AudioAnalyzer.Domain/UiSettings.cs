@@ -25,4 +25,10 @@ public class UiSettings
 
     /// <summary>Default scrolling speed (characters per frame) for ScrollingTextViewport. Default: 0.25.</summary>
     public double DefaultScrollingSpeed { get; set; } = 0.25;
+
+    /// <summary>
+    /// Optional default folder for layer asset directories (AsciiImage, AsciiModel). When null/empty,
+    /// the process content root (<c>AppContext.BaseDirectory</c>) is used as the global base; relative layer paths combine with that base.
+    /// </summary>
+    public string? DefaultAssetFolderPath { get; set; }
 }

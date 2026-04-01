@@ -18,7 +18,10 @@ public sealed class TextLayersKeyContext : IKeyHandlerContext
     /// <summary>Palette repository for P-key cycling.</summary>
     public IPaletteRepository PaletteRepo { get; init; } = null!;
 
-    /// <summary>Called when I key advances AsciiImage snippet index for a layer.</summary>
+    /// <summary>Resolves default asset folder for AsciiImage / AsciiModel path cycling.</summary>
+    public UiSettings UiSettings { get; init; } = null!;
+
+    /// <summary>Called when I key advances snippet index for AsciiImage / AsciiModel layers.</summary>
     public Action<int> AdvanceSnippetIndex { get; init; } = _ => { };
 
     /// <summary>Called when Left/Right changes layer type so type-specific state can be cleared.</summary>

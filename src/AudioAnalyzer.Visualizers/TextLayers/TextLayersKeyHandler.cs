@@ -3,7 +3,7 @@ using AudioAnalyzer.Domain;
 
 namespace AudioAnalyzer.Visualizers;
 
-/// <summary>Config for TextLayers visualizer keys: 1–<see cref="TextLayersLimits.MaxLayerCount"/> select/toggle, P palette, [ ] gain, I next image, Left/Right cycle type.</summary>
+/// <summary>Config for TextLayers visualizer keys: 1–<see cref="TextLayersLimits.MaxLayerCount"/> select/toggle, P palette, [ ] gain, I next image/model, Left/Right cycle type.</summary>
 public sealed class TextLayersKeyHandlerConfig : IKeyHandlerConfig<TextLayersKeyContext>
 {
     private const string Section = "Layered text";
@@ -80,17 +80,15 @@ public sealed class TextLayersKeyHandlerConfig : IKeyHandlerConfig<TextLayersKey
                     bool anyAdvanced = false;
                     for (int i = 0; i < sortedLayers.Count; i++)
                     {
-                        if (sortedLayers[i].LayerType != TextLayerType.AsciiImage)
+                        if (FileBasedLayerAssetPaths.TryAdvanceDirectoryAssetSelection(sortedLayers[i], context.UiSettings))
                         {
-                            continue;
+                            anyAdvanced = true;
                         }
-                        context.AdvanceSnippetIndex(i);
-                        anyAdvanced = true;
                     }
                     return anyAdvanced;
                 },
                 Key: "I",
-                Description: "Next image (AsciiImage layers)",
+                Description: "Next image/model (AsciiImage / AsciiModel)",
                 Section),
             new BindingEntry(
                 Matches: k => k.Key is ConsoleKey.LeftArrow or ConsoleKey.RightArrow,
