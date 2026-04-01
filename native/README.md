@@ -37,4 +37,4 @@ The managed app loads **`link_shim.dll`** from the executable directory to use *
 
 3. Copy **`build/Release/link_shim.dll`** next to `AudioAnalyzer.Console.exe`, or run `dotnet build` on the solution — [AudioAnalyzer.Console.csproj](../src/AudioAnalyzer.Console/AudioAnalyzer.Console.csproj) copies the DLL to output **if** `native\link-shim\build\Release\link_shim.dll` already exists.
 
-**License:** Ableton Link and this shim are under **GPL-2.0+**. Distribution requires compliance with the GPL (source offer, etc.).
+**License:** Ableton Link and this shim are under **GPL-2.0+**. Distribution requires compliance with the GPL (source offer, etc.). The rest of the Audio Analyzer repository is **GPL-3.0-only** — see the root `LICENSE`.

@@ -61,7 +61,7 @@ Use **PowerShell** on Windows per [AGENTS.md](../../AGENTS.md).
 
 ## License
 
-Ableton Link and the shim are **GPL-2.0+**. Distribution of binaries must comply with the GPL (source offer, etc.).
+Ableton Link and the shim are **GPL-2.0+**. Distribution of binaries must comply with the GPL (source offer, etc.). The rest of the Audio Analyzer repository is **GPL-3.0-only** — see the root `LICENSE` and `NOTICE` (official releases omit `link_shim.dll`).
 
 ## See also
 

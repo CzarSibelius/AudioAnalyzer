@@ -14,7 +14,7 @@ Users want tempo and beat alignment from **Ableton Link** (e.g. Rekordbox on the
 4. **Native**: `native/link-shim` builds `link_shim.dll` against a vendored clone of [Ableton/link](https://github.com/Ableton/link) at `native/third_party/link`. **`LinkSessionNative`** in Infrastructure loads the DLL from the app base directory; if missing, Link mode shows a clear header hint and tempo stays 0.
 5. **Visual tick**: `AnalysisEngine.PulseBeatVisualIfDue()` debounces ~50 ms and is invoked from audio processing and **`VisualizationOrchestrator.RefreshHeaderIfNeeded`** so Demo/Link advance even when the header refresh path runs without a matching audio tick.
 6. **UI**: General Settings hub row **BPM source (Enter)** cycles the enum. **+/-** beat sensitivity applies only when `BpmSource` is `AudioAnalysis`.
-7. **Licensing**: Distributing binaries that link Ableton Link triggers **GPL-2.0+** obligations; document in README and offer source (Link + shim). Verify compliance for your distribution model.
+7. **Licensing**: The **Audio Analyzer** source tree (managed code and shared docs) is under **GNU GPL v3.0 only** (`GPL-3.0-only`); see root `LICENSE`. **Ableton Link** and **`native/link-shim`** remain **GPL-2.0+** when built or distributed; cloning Link into `native/third_party/link` is subject to upstream terms. Distributing binaries that include `link_shim.dll` triggers **GPL-2.0+** obligations for that artifact (source offer, etc.). **Maintainer releases omit** `link_shim.dll`; users who want Link build the shim locally. See `NOTICE` and README.
 
 ## Consequences
 

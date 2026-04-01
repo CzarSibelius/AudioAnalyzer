@@ -126,6 +126,6 @@ cmake -B build -A x64
 cmake --build build --config Release
 ```
 
-Copy **`link_shim.dll`** next to `AudioAnalyzer.Console.exe`. The app runs without it; **Ableton Link** BPM mode then shows a “no native DLL” hint until the DLL is present. Link peers must be on the **same LAN**; see [Ableton Link documentation](https://ableton.github.io/link/). **GPL-2.0+** applies to Link and the shim — see [ADR-0066](adr/0066-bpm-source-and-ableton-link.md).
+Copy **`link_shim.dll`** next to `AudioAnalyzer.Console.exe`. The app runs without it; **Ableton Link** BPM mode then shows a “no native DLL” hint until the DLL is present. Link peers must be on the **same LAN**; see [Ableton Link documentation](https://ableton.github.io/link/). **GPL-2.0+** applies to Link and the shim when you build or ship that DLL; the project as a whole is **GPL-3.0-only** — see root `LICENSE`, `NOTICE`, and [ADR-0066](adr/0066-bpm-source-and-ableton-link.md). Official releases from this repository do not ship `link_shim.dll`.
 
 **Agents and CI:** toolchain prerequisites (CMake + MSVC Build Tools, Developer PowerShell for VS), verification, and a checklist are in [docs/agents/native-link-shim-build.md](agents/native-link-shim-build.md).

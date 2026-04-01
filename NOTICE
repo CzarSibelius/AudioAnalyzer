@@ -1,0 +1,19 @@
+Third-party components and licensing
+======================================
+
+Ableton Link (optional native dependency)
+-----------------------------------------
+To build `link_shim.dll`, you clone [Ableton/link](https://github.com/Ableton/link)
+into `native/third_party/link`. Ableton Link and the `native/link-shim` wrapper are
+under **GNU GPL version 2 or later (GPL-2.0+)**. Building or redistributing
+binaries that include `link_shim.dll` must comply with that license (including
+source-offer requirements where applicable).
+
+Link’s build may pull **Asio** via Git submodule; see the Link repository for
+Asio’s license terms.
+
+Official release policy (this repository)
+-----------------------------------------
+Published release artifacts from this project are intended **not** to ship
+`link_shim.dll`. End users who want Ableton Link BPM mode build the shim locally;
+see `docs/agents/native-link-shim-build.md`.
