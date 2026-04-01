@@ -23,6 +23,7 @@ Never complete a task without confirming successful compilation. **The build mus
 4. **New tests**: place files under `tests/AudioAnalyzer.Tests/` mirroring production project folders (see ADR-0064 in docs/adr/); shared helpers in `TestSupport/`, cross-assembly tests in `Integration/` when appropriate.
 5. Optionally run `dotnet format .\AudioAnalyzer.sln --verify-no-changes` to verify formatting.
 6. If modifying UI/display: manually test with Demo Mode (D → select Demo) at 80x24 and 200x50. When debugging visual problems, use **screen dump** (Ctrl+Shift+E in-app, or `--dump-after N` to run then dump) to capture the terminal state as text.
+7. **Optional `link_shim.dll` (Ableton Link BPM)**: Building the C++ shim is **not** required for `dotnet build` / `dotnet test`. When you need it, follow **`docs/agents/native-link-shim-build.md`** — CMake on PATH, **MSVC Build Tools** (Desktop C++), and **Developer PowerShell for VS** (or x64 Native Tools prompt) so the compiler is available.
 
 ### Static analysis
 After making code changes, check linter diagnostics for the modified files and fix any reported errors; fix warnings unless the rule is explicitly disabled for that line. Do not introduce new build warnings. Optionally run `dotnet format --verify-no-changes` to verify formatting (or `dotnet format` to fix); this uses .editorconfig.

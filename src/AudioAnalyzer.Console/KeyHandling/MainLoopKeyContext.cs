@@ -74,4 +74,7 @@ internal sealed class MainLoopKeyContext : IKeyHandlerContext
 
     /// <summary>Dumps the current screen to a file. Returns the file path or null on failure.</summary>
     public required Func<string?> DumpScreen { get; init; }
+
+    /// <summary>Persisted app settings (BPM source for +/- beat sensitivity guard).</summary>
+    public required AppSettings AppSettings { get; init; }
 }

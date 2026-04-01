@@ -1,5 +1,4 @@
 using AudioAnalyzer.Application.Abstractions;
-using AudioAnalyzer.Application.BeatDetection;
 using AudioAnalyzer.Application.Fft;
 using AudioAnalyzer.Application.VolumeAnalysis;
 
@@ -24,34 +23,35 @@ public sealed class AnalysisEngine
     private int _displayWaveformPosition;
 
     private DateTime _lastUpdate = DateTime.Now;
+    private DateTime _lastBeatVisualPulse = DateTime.MinValue;
     private int _numBands = 8;
 
-    private readonly IBeatDetector _beatDetector;
+    private readonly IBeatTimingSource _beatTiming;
     private readonly IVolumeAnalyzer _volumeAnalyzer;
     private readonly IFftBandProcessor _fftBandProcessor;
     private readonly AnalysisSnapshot _snapshot = new();
 
-    public AnalysisEngine(IBeatDetector beatDetector, IVolumeAnalyzer volumeAnalyzer, IFftBandProcessor fftBandProcessor)
+    public AnalysisEngine(IBeatTimingSource beatTiming, IVolumeAnalyzer volumeAnalyzer, IFftBandProcessor fftBandProcessor)
     {
-        _beatDetector = beatDetector ?? throw new ArgumentNullException(nameof(beatDetector));
+        _beatTiming = beatTiming ?? throw new ArgumentNullException(nameof(beatTiming));
         _volumeAnalyzer = volumeAnalyzer ?? throw new ArgumentNullException(nameof(volumeAnalyzer));
         _fftBandProcessor = fftBandProcessor ?? throw new ArgumentNullException(nameof(fftBandProcessor));
     }
 
-    /// <summary>Beat detection sensitivity (0.5–3.0). Delegates to IBeatDetector.</summary>
-    public double BeatSensitivity { get => _beatDetector.BeatSensitivity; set => _beatDetector.BeatSensitivity = value; }
+    /// <summary>Beat detection sensitivity (0.5–3.0) when using audio-derived timing.</summary>
+    public double BeatSensitivity { get => _beatTiming.BeatSensitivity; set => _beatTiming.BeatSensitivity = value; }
 
-    /// <summary>Current detected BPM from beat detection. 0 when no detection yet.</summary>
-    public double CurrentBpm => _beatDetector.CurrentBpm;
+    /// <summary>Current BPM from the active beat timing source.</summary>
+    public double CurrentBpm => _beatTiming.CurrentBpm;
 
     /// <summary>True when a beat was recently detected (used for visual flash effects).</summary>
-    public bool BeatFlashActive => _beatDetector.BeatFlashActive;
+    public bool BeatFlashActive => _beatTiming.BeatFlashActive;
 
     /// <summary>Latest volume from audio processing (0–1). Used for header display.</summary>
     public float Volume => _volumeAnalyzer.Volume;
 
     /// <summary>Incremented each time a beat is detected. Used for Show playback with beats duration.</summary>
-    public int BeatCount => _beatDetector.BeatCount;
+    public int BeatCount => _beatTiming.BeatCount;
 
     /// <summary>
     /// Sets the number of FFT bands to compute. Call from the orchestrator when display dimensions change.
@@ -59,6 +59,22 @@ public sealed class AnalysisEngine
     public void SetNumBands(int numBands)
     {
         _numBands = Math.Max(8, Math.Min(60, numBands));
+    }
+
+    /// <summary>
+    /// Advances beat flash decay and external clocks (Demo/Link) at most once per ~50 ms.
+    /// Called from audio processing and header refresh so Link advances without duplicating pulses.
+    /// </summary>
+    public void PulseBeatVisualIfDue()
+    {
+        DateTime now = DateTime.Now;
+        if ((now - _lastBeatVisualPulse).TotalMilliseconds < UpdateIntervalMs)
+        {
+            return;
+        }
+
+        _lastBeatVisualPulse = now;
+        _beatTiming.OnVisualTick();
     }
 
     /// <summary>
@@ -132,24 +148,24 @@ public sealed class AnalysisEngine
         }
 
         double avgEnergy = framesRecorded > 0 ? Math.Sqrt(instantEnergy / framesRecorded) : 0;
-        _beatDetector.ProcessFrame(avgEnergy);
+        _beatTiming.OnAudioFrame(avgEnergy);
 
         if ((DateTime.Now - _lastUpdate).TotalMilliseconds >= UpdateIntervalMs)
         {
             Array.Copy(_waveformBuffer, _displayWaveform, WaveformSize);
             _displayWaveformPosition = _waveformPosition;
             _lastUpdate = DateTime.Now;
-            _beatDetector.DecayFlashFrame();
+            PulseBeatVisualIfDue();
         }
     }
 
     private void FillSnapshot()
     {
         _snapshot.Volume = _volumeAnalyzer.Volume;
-        _snapshot.CurrentBpm = _beatDetector.CurrentBpm;
-        _snapshot.BeatSensitivity = _beatDetector.BeatSensitivity;
-        _snapshot.BeatFlashActive = _beatDetector.BeatFlashActive;
-        _snapshot.BeatCount = _beatDetector.BeatCount;
+        _snapshot.CurrentBpm = _beatTiming.CurrentBpm;
+        _snapshot.BeatSensitivity = _beatTiming.BeatSensitivity;
+        _snapshot.BeatFlashActive = _beatTiming.BeatFlashActive;
+        _snapshot.BeatCount = _beatTiming.BeatCount;
         _snapshot.NumBands = _fftBandProcessor.NumBands;
         _snapshot.SmoothedMagnitudes = _fftBandProcessor.SmoothedMagnitudes;
         _snapshot.PeakHold = _fftBandProcessor.PeakHold;

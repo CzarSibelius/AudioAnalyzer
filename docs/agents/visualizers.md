@@ -12,6 +12,10 @@ When adding or changing visualizers:
 
 This prevents visualizers from scrolling the console or wrapping lines and corrupting the rest of the UI.
 
+## BPM source vs spectrum
+
+`AnalysisSnapshot` carries FFT bands, waveform, and volume from **audio processing** regardless of **BpmSource** (General settings hub). Beat fields (`CurrentBpm`, `BeatCount`, `BeatFlashActive`) may come from energy detection, Demo timing, or Ableton Link. Layers that only use magnitudes or waveform need no changes; beat-synced layers follow the shared beat fields. See [ADR-0066](../adr/0066-bpm-source-and-ableton-link.md).
+
 ## IVisualizer and composite renderer
 
 The app uses **TextLayersVisualizer** exclusively; all visual content is provided by layers. The single **`IVisualizer`** implementation exposes **`SupportsPaletteCycling`**, optional **`GetToolbarViewports(snapshot)`** / **`GetToolbarSuffix(snapshot)`** for toolbar segments (layer digits, contextual fields, palette), and optional **`GetActiveLayerDisplayName()`** / **`GetActiveLayerZIndex()`** for the title bar. The composite renderer depends only on this interface and the shared snapshot; it does not reference concrete visualizer types. See [ADR-0004](../adr/0004-visualizer-encapsulation.md).

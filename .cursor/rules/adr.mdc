@@ -102,3 +102,5 @@ alwaysApply: true
 48. **Test project folder layout**: Under `tests/AudioAnalyzer.Tests/`, mirror each production project’s folder structure (`Domain/`, `Application/`, `Console/`, etc.); shared test utilities in `TestSupport/` (or `Common/`); cross-cutting tests in `Integration/`. See [ADR-0064](docs/adr/0064-test-project-mirrors-production-layout.md).
 
 49. **UI theme**: Optional `UiSettings.UiThemePaletteId` references the same `palettes/` files as TextLayers; `IUiThemeResolver` maps colors to UI + title bar. General Settings hub row + `IUiThemeSelectionModal`. See [ADR-0065](docs/adr/0065-ui-theme-from-layer-palettes.md).
+
+50. **BPM source and Ableton Link**: `AppSettings.BpmSource` selects **audio energy detection**, **Demo** timing, or **Ableton Link** (`IBeatTimingSource` / `BeatTimingRouter`). FFT/spectrum stay on the audio path; optional native `link_shim.dll`. See [ADR-0066](docs/adr/0066-bpm-source-and-ableton-link.md).

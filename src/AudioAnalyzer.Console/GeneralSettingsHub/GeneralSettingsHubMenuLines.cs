@@ -56,14 +56,21 @@ internal static class GeneralSettingsHubMenuLines
         return sb.ToString();
     }
 
-    /// <summary>Formats the application name row for preformatted horizontal-row rendering.</summary>
-    public static string FormatApplicationNameLine(
+    /// <summary>Formats the BPM source row (Audio / Demo / Ableton Link).</summary>
+    public static string FormatBpmSourceLine(
         GeneralSettingsHubState state,
         UiPalette palette,
         AnalysisSnapshot snapshot,
         IReadOnlyList<PaletteColor> beatColors,
-        string appDisplay)
+        BpmSource source)
     {
+        string value = source switch
+        {
+            BpmSource.AudioAnalysis => "Audio (beat detect)",
+            BpmSource.DemoDevice => "Demo (time + demo device BPM)",
+            BpmSource.AbletonLink => "Ableton Link",
+            _ => source.ToString()
+        };
         string prefix = state.SelectedIndex == 1 ? "> " : "  ";
         var sb = new StringBuilder();
         AppendMenuLine(
@@ -73,6 +80,28 @@ internal static class GeneralSettingsHubMenuLines
             beatColors,
             prefix,
             state.SelectedIndex == 1,
+            "BPM source (Enter)",
+            value);
+        return sb.ToString();
+    }
+
+    /// <summary>Formats the application name row for preformatted horizontal-row rendering.</summary>
+    public static string FormatApplicationNameLine(
+        GeneralSettingsHubState state,
+        UiPalette palette,
+        AnalysisSnapshot snapshot,
+        IReadOnlyList<PaletteColor> beatColors,
+        string appDisplay)
+    {
+        string prefix = state.SelectedIndex == 2 ? "> " : "  ";
+        var sb = new StringBuilder();
+        AppendMenuLine(
+            sb,
+            palette,
+            snapshot,
+            beatColors,
+            prefix,
+            state.SelectedIndex == 2,
             "Application name",
             appDisplay);
         return sb.ToString();
@@ -86,7 +115,7 @@ internal static class GeneralSettingsHubMenuLines
         IReadOnlyList<PaletteColor> beatColors,
         string themeDisplay)
     {
-        string prefix = state.SelectedIndex == 3 ? "> " : "  ";
+        string prefix = state.SelectedIndex == 4 ? "> " : "  ";
         var sb = new StringBuilder();
         AppendMenuLine(
             sb,
@@ -94,7 +123,7 @@ internal static class GeneralSettingsHubMenuLines
             snapshot,
             beatColors,
             prefix,
-            state.SelectedIndex == 3,
+            state.SelectedIndex == 4,
             "UI theme (T)",
             themeDisplay);
         return sb.ToString();
@@ -111,7 +140,7 @@ internal static class GeneralSettingsHubMenuLines
         string valueDisplay = string.IsNullOrWhiteSpace(uiSettings.DefaultAssetFolderPath)
             ? "(App base)"
             : FormatSettingValue(uiSettings.DefaultAssetFolderPath);
-        string prefix = state.SelectedIndex == 2 ? "> " : "  ";
+        string prefix = state.SelectedIndex == 3 ? "> " : "  ";
         var sb = new StringBuilder();
         AppendMenuLine(
             sb,
@@ -119,7 +148,7 @@ internal static class GeneralSettingsHubMenuLines
             snapshot,
             beatColors,
             prefix,
-            state.SelectedIndex == 2,
+            state.SelectedIndex == 3,
             "Default asset folder",
             valueDisplay);
         return sb.ToString();

@@ -100,6 +100,7 @@ internal sealed class VisualizationOrchestrator : IVisualizationOrchestrator
 
         void DoRefreshHeader()
         {
+            _engine.PulseBeatVisualIfDue();
             _onRefreshHeader?.Invoke();
         }
 

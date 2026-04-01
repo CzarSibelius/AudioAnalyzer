@@ -12,6 +12,7 @@ This folder holds agent instructions grouped by topic. The root [AGENTS.md](../.
 | [git-workflow.md](git-workflow.md) | Commit timing and messages |
 | [architecture-overview.md](architecture-overview.md) | Reference: components, data flow, colors, debugging tips |
 | [project-structure/README.md](project-structure/README.md) | **Where to put files** — per-project folder layout (agents must follow) |
+| [native-link-shim-build.md](native-link-shim-build.md) | **Ableton Link** — CMake + MSVC Build Tools, Developer shell, clone `third_party/link`, build `link_shim.dll` |
 
 **Configuration file reference** (presets, shows, palettes, `appsettings.json`, NuGet versions): [configuration-reference.md](../configuration-reference.md).
 

@@ -182,6 +182,7 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
         {
             InputMode = file.InputMode ?? "loopback",
             DeviceName = file.DeviceName,
+            BpmSource = file.BpmSource,
             BeatSensitivity = file.BeatSensitivity,
             BeatCircles = file.BeatCircles,
             OscilloscopeGain = file.OscilloscopeGain,
@@ -195,6 +196,7 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
         file.InputMode = settings.InputMode;
         file.DeviceName = settings.DeviceName;
         file.VisualizationMode = "textlayers";
+        file.BpmSource = settings.BpmSource;
         file.BeatSensitivity = settings.BeatSensitivity;
         file.BeatCircles = settings.BeatCircles;
         file.OscilloscopeGain = settings.OscilloscopeGain;
@@ -303,6 +305,7 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
         public string InputMode { get; set; } = "loopback";
         public string? DeviceName { get; set; }
         public string VisualizationMode { get; set; } = "textlayers";
+        public BpmSource BpmSource { get; set; } = BpmSource.AudioAnalysis;
         public double BeatSensitivity { get; set; } = 1.3;
         public bool BeatCircles { get; set; } = true;
         public double OscilloscopeGain { get; set; } = 2.5;

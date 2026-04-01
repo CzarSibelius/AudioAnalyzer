@@ -3,6 +3,7 @@ using AudioAnalyzer.Application;
 using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Application.Display;
 using AudioAnalyzer.Application.BeatDetection;
+using AudioAnalyzer.Infrastructure.Link;
 using AudioAnalyzer.Application.Fft;
 using AudioAnalyzer.Application.VolumeAnalysis;
 using AudioAnalyzer.Domain;
@@ -131,6 +132,14 @@ internal static class ServiceConfiguration
                 sp.GetRequiredService<IApplicationModeFactory>(),
                 sp.GetRequiredService<Lazy<IDeviceCaptureController>>()));
         services.AddSingleton<IBeatDetector, BeatDetector>();
+        services.AddSingleton(sp => new AudioDerivedBeatTimingSource(sp.GetRequiredService<IBeatDetector>()));
+        services.AddSingleton<DemoBeatTimingSource>();
+        services.AddSingleton<LinkSessionNative>();
+        services.AddSingleton<ILinkSession>(sp => sp.GetRequiredService<LinkSessionNative>());
+        services.AddSingleton<LinkBeatTimingSource>();
+        services.AddSingleton<BeatTimingRouter>();
+        services.AddSingleton<IBeatTimingSource>(sp => sp.GetRequiredService<BeatTimingRouter>());
+        services.AddSingleton<IBeatTimingConfigurator>(sp => sp.GetRequiredService<BeatTimingRouter>());
         services.AddSingleton<IVolumeAnalyzer, VolumeAnalyzer>();
         services.AddSingleton<IFftBandProcessor, FftBandProcessor>();
         services.AddSingleton<AnalysisEngine>();
@@ -140,7 +149,13 @@ internal static class ServiceConfiguration
         services.AddSingleton<IScrollingTextViewportFactory, ScrollingTextViewportFactory>();
         services.AddSingleton<IUiComponentRenderer<VisualizerAreaComponent>, VisualizerAreaRenderer>();
         services.AddSingleton<GeneralSettingsHubState>();
-        services.AddSingleton<IUiComponentRenderer<GeneralSettingsHubAreaComponent>, GeneralSettingsHubAreaRenderer>();
+        services.AddSingleton<IUiComponentRenderer<GeneralSettingsHubAreaComponent>>(sp =>
+            new GeneralSettingsHubAreaRenderer(
+                sp.GetRequiredService<GeneralSettingsHubState>(),
+                sp.GetRequiredService<UiSettings>(),
+                sp.GetRequiredService<AppSettings>(),
+                sp.GetRequiredService<IPaletteRepository>(),
+                sp.GetRequiredService<IUiComponentRenderer<HorizontalRowComponent>>()));
         services.AddSingleton<IKeyHandlerConfig<GeneralSettingsHubKeyContext>, GeneralSettingsHubKeyHandlerConfig>();
         services.AddSingleton<IKeyHandler<GeneralSettingsHubKeyContext>, GenericKeyHandler<GeneralSettingsHubKeyContext>>();
         services.AddSingleton<IKeyHandlerConfig<UiThemeSelectionKeyContext>, UiThemeSelectionKeyHandlerConfig>();

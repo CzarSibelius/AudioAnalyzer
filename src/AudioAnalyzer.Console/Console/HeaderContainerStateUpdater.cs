@@ -12,15 +12,21 @@ internal sealed class HeaderContainerStateUpdater : IUiStateUpdater<HeaderContai
     private readonly INowPlayingProvider _nowPlayingProvider;
     private readonly AnalysisEngine _engine;
     private readonly UiSettings _uiSettings;
+    private readonly AppSettings _appSettings;
+    private readonly ILinkSession _linkSession;
 
     public HeaderContainerStateUpdater(
         INowPlayingProvider nowPlayingProvider,
         AnalysisEngine engine,
-        UiSettings uiSettings)
+        UiSettings uiSettings,
+        AppSettings appSettings,
+        ILinkSession linkSession)
     {
         _nowPlayingProvider = nowPlayingProvider ?? throw new ArgumentNullException(nameof(nowPlayingProvider));
         _engine = engine ?? throw new ArgumentNullException(nameof(engine));
         _uiSettings = uiSettings ?? throw new ArgumentNullException(nameof(uiSettings));
+        _appSettings = appSettings ?? throw new ArgumentNullException(nameof(appSettings));
+        _linkSession = linkSession ?? throw new ArgumentNullException(nameof(linkSession));
     }
 
     /// <inheritdoc />
@@ -34,9 +40,17 @@ internal sealed class HeaderContainerStateUpdater : IUiStateUpdater<HeaderContai
         float volume = _engine.Volume;
 
         string suffix = beatFlashActive ? " *BEAT*" : "";
-        string bpmBeatValue = currentBpm > 0
-            ? $"{currentBpm:F0}  Beat: {beatSensitivity:F1} (+/-){suffix}"
-            : $"{beatSensitivity:F1} (+/-){suffix}";
+        string bpmBeatValue = _appSettings.BpmSource switch
+        {
+            BpmSource.AudioAnalysis => currentBpm > 0
+                ? $"{currentBpm:F0}  Beat: {beatSensitivity:F1} (+/-){suffix}"
+                : $"{beatSensitivity:F1} (+/-){suffix}",
+            BpmSource.DemoDevice => currentBpm > 0
+                ? $"{currentBpm:F0} (Demo){suffix}"
+                : $"— (Demo){suffix}",
+            BpmSource.AbletonLink => FormatLinkBpmLine(currentBpm, suffix),
+            _ => $"{currentBpm:F0}{suffix}"
+        };
 
         string volumeText;
         if (volume >= 0)
@@ -60,5 +74,27 @@ internal sealed class HeaderContainerStateUpdater : IUiStateUpdater<HeaderContai
             BpmBeatValue = bpmBeatValue,
             VolumeText = volumeText
         });
+    }
+
+    private string FormatLinkBpmLine(double currentBpm, string suffix)
+    {
+        if (!_linkSession.IsAvailable)
+        {
+            return $"Link (no native DLL){suffix}";
+        }
+
+        int peers = 0;
+        if (_linkSession.IsEnabled)
+        {
+            _linkSession.Capture(out _, out peers, out _, 4.0);
+        }
+
+        string peerPart = $" peers:{peers}";
+        if (currentBpm >= 1.0)
+        {
+            return $"{currentBpm:F0} Link{peerPart}{suffix}";
+        }
+
+        return $"— Link{peerPart}{suffix}";
     }
 }

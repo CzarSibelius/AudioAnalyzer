@@ -44,4 +44,10 @@ internal sealed class GeneralSettingsHubKeyContext : IKeyHandlerContext
 
     /// <summary>Orchestrator for redraw.</summary>
     public required IVisualizationOrchestrator Orchestrator { get; init; }
+
+    /// <summary>Persisted app settings (BPM source, etc.).</summary>
+    public required AppSettings AppSettings { get; init; }
+
+    /// <summary>Re-applies beat timing after <see cref="AppSettings.BpmSource"/> changes.</summary>
+    public required Action ApplyBeatTimingFromSettings { get; init; }
 }

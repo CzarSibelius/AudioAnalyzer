@@ -81,6 +81,7 @@ Decisions are numbered and kept under version control so the rationale stays wit
 | [0063](0063-uniform-settings-list-and-palette-drawing.md) | Uniform settings list and palette drawing (shared helpers, hub rows via HorizontalRowComponent) | Accepted |
 | [0064](0064-test-project-mirrors-production-layout.md) | Test project folder layout mirrors production (single test project) | Accepted |
 | [0065](0065-ui-theme-from-layer-palettes.md) | UI theme from shared layer palette files — `UiThemePaletteId`, hub + modal, `IUiThemeResolver` | Accepted |
+| [0066](0066-bpm-source-and-ableton-link.md) | BPM source (audio / demo / Ableton Link), `IBeatTimingSource`, native `link_shim` | Accepted |
 
 ## Process
 

@@ -21,7 +21,7 @@ internal static class MainContentToolbarLayout
         (int cell1Width, int cell2Width) = GetToolbarCellWidths(width);
         var descriptors = new List<LabeledValueDescriptor>
         {
-            new LabeledValueDescriptor("", () => new PlainText("General settings — Tab: mode  Up/Down: menu  Enter: open")),
+            new LabeledValueDescriptor("", () => new PlainText("General settings — Tab: mode  Up/Down: menu  Enter: open  BPM: cycle source")),
             visualizer.SupportsPaletteCycling && !string.IsNullOrEmpty(paletteDisplayName)
                 ? new LabeledValueDescriptor("Palette", () =>
                 {

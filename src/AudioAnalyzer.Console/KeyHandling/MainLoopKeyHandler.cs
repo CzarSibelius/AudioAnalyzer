@@ -165,6 +165,11 @@ internal sealed class MainLoopKeyHandlerConfig : IKeyHandlerConfig<MainLoopKeyCo
                 Matches: k => k.Key is ConsoleKey.OemPlus or ConsoleKey.Add or ConsoleKey.OemMinus or ConsoleKey.Subtract,
                 Action: (key, ctx) =>
                 {
+                    if (ctx.AppSettings.BpmSource != BpmSource.AudioAnalysis)
+                    {
+                        return true;
+                    }
+
                     if (key.Key is ConsoleKey.OemPlus or ConsoleKey.Add)
                     {
                         ctx.Engine.BeatSensitivity += 0.1;
@@ -177,7 +182,7 @@ internal sealed class MainLoopKeyHandlerConfig : IKeyHandlerConfig<MainLoopKeyCo
                     return true;
                 },
                 Key: "+/-",
-                Description: "Adjust beat sensitivity",
+                Description: "Adjust beat sensitivity (audio BPM source only)",
                 Section),
             new KeyHandling.KeyBindingEntry<MainLoopKeyContext>(
                 Matches: k => k.Key == ConsoleKey.P,

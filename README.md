@@ -1,6 +1,6 @@
 # Audio Analyzer
 
-**Audio Analyzer** is a Windows console app that listens to audio—what is playing on the PC (loopback), a chosen capture device, or a built-in **Demo Mode** when you want visuals without real audio—and shows real-time level and spectrum analysis. It uses FFT and optional beat/BPM detection.
+**Audio Analyzer** is a Windows console app that listens to audio—what is playing on the PC (loopback), a chosen capture device, or a built-in **Demo Mode** when you want visuals without real audio—and shows real-time level and spectrum analysis. It uses FFT and beat/BPM from your choice of **source**: energy detection on the audio stream, fixed tempo for Demo mode, or **[Ableton Link](https://ableton.github.io/link/)** when you build and drop **`link_shim.dll`** next to the executable (same LAN as Rekordbox or other Link apps; GPL — see [docs/adr/0066-bpm-source-and-ableton-link.md](docs/adr/0066-bpm-source-and-ableton-link.md)). Spectrum and levels always follow the **audio input**; only tempo/beat counters follow Link or Demo when you select that in **General settings**.
 
 The picture is drawn as **stacked text layers** in the terminal: oscilloscope, spectrum-style bars, fractal zoom, plasma-style backgrounds, fill and blend effects, marquee text, ASCII images and 3D OBJ models, and more. You switch **presets** (layer stacks and palettes) from the keyboard and can chain presets into **shows** for timed or beat-based playback.
 
@@ -43,7 +43,7 @@ For bug reports or sharing what you see: press **Ctrl+Shift+E** to write a plain
 - **Audio**: Loopback, device capture, or Demo Mode; settings are saved when you change them.
 - **Layers & presets**: Up to nine layers per preset; edit layers and options in the **S** settings flow when in Preset editor.
 - **Shows**: Optional auto-cycling through presets (see **Tab** in the app help).
-- **Files next to the app**: `presets/`, `shows/`, `palettes/`, and `appsettings.json` are documented in [docs/configuration-reference.md](docs/configuration-reference.md).
+- **Files next to the app**: `presets/`, `shows/`, `palettes/`, optional **`link_shim.dll`** for Ableton Link, and `appsettings.json` are documented in [docs/configuration-reference.md](docs/configuration-reference.md).
 
 ## More documentation
 

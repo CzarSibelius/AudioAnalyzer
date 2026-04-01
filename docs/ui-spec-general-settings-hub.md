@@ -10,9 +10,10 @@ Shared vocabulary and feature matrix: [ui-spec-settings-surfaces.md](ui-spec-set
 
 ```text
 aUdioNLZR/sEttings
-General settings — Tab: mode  Up/Down: menu  Enter: open    Palette:jungle
+General settings — Tab: mode  Up/Down: menu  Enter: open  BPM: cycle source    Palette:jungle
 General settings
   Audio input devices (D):Speakers (Realtek Audio)
+  BPM source (Enter):Audio (beat detect)
   Application name:aUdioNLZR
   Default asset folder:(App base)
   UI theme (T):(Custom)
@@ -23,13 +24,14 @@ General settings
 ## Line reference
 
 - **1** — Title breadcrumb (row 0): `appName/settings` per [ADR-0060](adr/0060-universal-title-breadcrumb.md).
-- **2** — Toolbar: hint text (left) and palette name with beat-reactive coloring (right), same palette phase as Preset/Show.
+- **2** — Toolbar: hint text (left) and palette name with beat-reactive coloring (right), same palette phase as Preset/Show. Hint includes **BPM: cycle source** for the BPM source row.
 - **3** — Hub section title: "General settings", with beat/tick-driven per-grapheme colors (same phase as line 2 palette swatch; see below).
 - **4** — Blank line.
-- **5** — Menu: **Audio input devices (D):**current device display name (prefix `>` when selected). Value uses the same palette phase as the toolbar palette cell: colors from the current `UiThemePaletteId` layer palette when set; when **(Custom)** (no theme id), colors cycle through the effective semantic `UiPalette` slots (Normal, Highlighted, Dimmed, Label, optional Background). Mirrors **D** / device modal flow. If no device name is available, the value shows an em dash (—). Long values scroll or truncate per the horizontal row viewport.
-- **6** — Menu: **Application name:**effective short name (same rules as the title bar: `TitleBarAppName` when set, otherwise derived from `Title`). Value coloring matches line **5**. Prefix `>` when selected. **Enter** opens rename; printable keys edit; **Enter** confirms; **Esc** cancels.
-- **7** — Menu: **Default asset folder:**when `UiSettings.DefaultAssetFolderPath` is unset, the value shows **`(App base)`** (layers with empty image/model folder use `AppContext.BaseDirectory` as the global base); when set, the configured path (trimmed). Value coloring matches line **5**. Prefix `>` when selected. **Enter** opens path edit; printable keys and **Backspace** edit; **Enter** confirms (empty buffer clears the setting); **Esc** cancels.
-- **8** — Menu: **UI theme (T):**palette display name, **`(Custom)`** when `UiThemePaletteId` is unset (inline `UiSettings.Palette` / `TitleBarPalette` in appsettings). Value coloring matches line **5**. Prefix `>` when selected. **Enter** or **T** opens the theme list (**(Custom)** clears the theme id; otherwise sets `UiThemePaletteId` to the chosen layer palette id). **Esc** cancels the modal without changing the theme. In the theme list modal, palette names use the same beat/tick-driven per-letter colors as the S-modal palette picker; the list idle-redraws when the palette name animation frame advances (`PaletteSwatchFormatter.PaletteAnimationFrameAdvanced`).
+- **5** — Menu: **Audio input devices (D):** current device display name (prefix `>` when selected). Value uses the same palette phase as the toolbar palette cell: colors from the current `UiThemePaletteId` layer palette when set; when **(Custom)** (no theme id), colors cycle through the effective semantic `UiPalette` slots (Normal, Highlighted, Dimmed, Label, optional Background). Mirrors **D** / device modal flow. If no device name is available, the value shows an em dash (—). Long values scroll or truncate per the horizontal row viewport.
+- **6** — Menu: **BPM source (Enter):** one of **Audio (beat detect)**, **Demo (time + demo device BPM)**, or **Ableton Link** ([ADR-0066](adr/0066-bpm-source-and-ableton-link.md)). Prefix `>` when selected. **Enter** cycles the source; beat timing updates immediately; settings persist on save.
+- **7** — Menu: **Application name:** effective short name (same rules as the title bar: `TitleBarAppName` when set, otherwise derived from `Title`). Value coloring matches line **5**. Prefix `>` when selected. **Enter** opens rename; printable keys edit; **Enter** confirms; **Esc** cancels.
+- **8** — Menu: **Default asset folder:** when `UiSettings.DefaultAssetFolderPath` is unset, the value shows **`(App base)`** (layers with empty image/model folder use `AppContext.BaseDirectory` as the global base); when set, the configured path (trimmed). Value coloring matches line **5**. Prefix `>` when selected. **Enter** opens path edit; printable keys and **Backspace** edit; **Enter** confirms (empty buffer clears the setting); **Esc** cancels.
+- **9** — Menu: **UI theme (T):** palette display name, **`(Custom)`** when `UiThemePaletteId` is unset (inline `UiSettings.Palette` / `TitleBarPalette` in appsettings). Value coloring matches line **5**. Prefix `>` when selected. **Enter** or **T** opens the theme list (**(Custom)** clears the theme id; otherwise sets `UiThemePaletteId` to the chosen layer palette id). **Esc** cancels the modal without changing the theme. In the theme list modal, palette names use the same beat/tick-driven per-letter colors as the S-modal palette picker; the list idle-redraws when the palette name animation frame advances (`PaletteSwatchFormatter.PaletteAnimationFrameAdvanced`).
 
 When **Application name** or **Default asset folder** is being edited, an additional line **Edit:** appears below the menu with the current buffer (implementation may truncate).
 

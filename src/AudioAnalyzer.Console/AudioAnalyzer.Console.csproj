@@ -25,6 +25,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="..\..\native\link-shim\build\Release\link_shim.dll" Link="link_shim.dll" CopyToOutputDirectory="PreserveNewest" Condition="Exists('..\..\native\link-shim\build\Release\link_shim.dll')" />
     <None Update="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

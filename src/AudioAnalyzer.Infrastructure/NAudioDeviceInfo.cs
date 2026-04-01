@@ -1,4 +1,5 @@
 using AudioAnalyzer.Application.Abstractions;
+using AudioAnalyzer.Domain;
 using NAudio.CoreAudioApi;
 using NAudio.Wave;
 
@@ -8,16 +9,15 @@ public sealed class NAudioDeviceInfo : IAudioDeviceInfo
 {
     private const string LoopbackPrefix = "loopback:";
     private const string CapturePrefix = "capture:";
-    private const string DemoPrefix = "demo:";
 
     public IReadOnlyList<AudioDeviceEntry> GetDevices()
     {
         var list = new List<AudioDeviceEntry>();
 
         // Demo mode options (synthetic BPM stream for testing without audio)
-        list.Add(new AudioDeviceEntry { Name = "Demo Mode (90 BPM)", Id = DemoPrefix + "90" });
-        list.Add(new AudioDeviceEntry { Name = "Demo Mode (120 BPM)", Id = DemoPrefix + "120" });
-        list.Add(new AudioDeviceEntry { Name = "Demo Mode (140 BPM)", Id = DemoPrefix + "140" });
+        list.Add(new AudioDeviceEntry { Name = "Demo Mode (90 BPM)", Id = DemoAudioDevice.Prefix + "90" });
+        list.Add(new AudioDeviceEntry { Name = "Demo Mode (120 BPM)", Id = DemoAudioDevice.Prefix + "120" });
+        list.Add(new AudioDeviceEntry { Name = "Demo Mode (140 BPM)", Id = DemoAudioDevice.Prefix + "140" });
 
         try
         {
@@ -54,11 +54,11 @@ public sealed class NAudioDeviceInfo : IAudioDeviceInfo
             return new NAudioAudioInput(loopback);
         }
 
-        if (deviceId.StartsWith(DemoPrefix, StringComparison.Ordinal))
+        if (deviceId.StartsWith(DemoAudioDevice.Prefix, StringComparison.Ordinal))
         {
             int bpm = 120;
-            if (deviceId.Length > DemoPrefix.Length &&
-                int.TryParse(deviceId.AsSpan(DemoPrefix.Length), out var parsed))
+            if (deviceId.Length > DemoAudioDevice.Prefix.Length &&
+                int.TryParse(deviceId.AsSpan(DemoAudioDevice.Prefix.Length), out var parsed))
             {
                 bpm = Math.Clamp(parsed, 60, 180);
             }

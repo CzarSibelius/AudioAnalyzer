@@ -23,6 +23,7 @@ Detailed agent instructions are split by topic:
 | Git workflow | [docs/agents/git-workflow.md](docs/agents/git-workflow.md) |
 | Architecture overview (reference) | [docs/agents/architecture-overview.md](docs/agents/architecture-overview.md) |
 | **Project file structure** | [docs/agents/project-structure/README.md](docs/agents/project-structure/README.md) |
+| **Native Link shim** (`link_shim.dll`, CMake + MSVC) | [docs/agents/native-link-shim-build.md](docs/agents/native-link-shim-build.md) |
 
 For ADR summaries applied in this repo (e.g. DI, presets, screen dump), see **.cursor/rules/adr.mdc**. For rules that apply only to specific file globs, see the other files under **.cursor/rules/**.
 

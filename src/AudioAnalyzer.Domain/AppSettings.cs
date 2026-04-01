@@ -17,8 +17,14 @@ public class AppSettings
 
     /// <summary>
     /// Beat detection sensitivity (0.5 = very sensitive, 2.0 = less sensitive). Default is 1.3.
+    /// Used when <see cref="BpmSource"/> is <see cref="Domain.BpmSource.AudioAnalysis"/>.
     /// </summary>
     public double BeatSensitivity { get; set; } = 1.3;
+
+    /// <summary>
+    /// Source for BPM, beat count, and beat flash. Default: energy detection on audio.
+    /// </summary>
+    public BpmSource BpmSource { get; set; } = BpmSource.AudioAnalysis;
 
     /// <summary>
     /// Show expanding circles on beat in Geiss mode.

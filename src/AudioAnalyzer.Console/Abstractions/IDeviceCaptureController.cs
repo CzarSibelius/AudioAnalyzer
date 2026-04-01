@@ -6,6 +6,9 @@ internal interface IDeviceCaptureController
     /// <summary>Current device display name for header.</summary>
     string CurrentDeviceName { get; }
 
+    /// <summary>Current device id passed to <see cref="StartCapture"/> (e.g. <c>demo:120</c>), or null for default loopback.</summary>
+    string? CurrentDeviceId { get; }
+
     /// <summary>Starts or replaces capture with the given device.</summary>
     /// <param name="deviceId">Device id (or null for loopback).</param>
     /// <param name="name">Display name of the device.</param>

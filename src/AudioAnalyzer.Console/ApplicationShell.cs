@@ -44,6 +44,8 @@ internal sealed class ApplicationShell
     private readonly UiSettings _uiSettings;
     private readonly IModeTransitionService _modeTransitionService;
     private readonly IApplicationModeFactory _applicationModeFactory;
+    private readonly AppSettings _appSettings;
+    private readonly IBeatTimingConfigurator _beatTiming;
 
     private CancellationTokenSource? _headerRefreshCts;
     private volatile bool _quitAfterDump;
@@ -72,7 +74,9 @@ internal sealed class ApplicationShell
         GeneralSettingsHubState generalSettingsHubState,
         UiSettings uiSettings,
         IModeTransitionService modeTransitionService,
-        IApplicationModeFactory applicationModeFactory)
+        IApplicationModeFactory applicationModeFactory,
+        AppSettings appSettings,
+        IBeatTimingConfigurator beatTiming)
     {
         _deviceController = deviceController ?? throw new ArgumentNullException(nameof(deviceController));
         _visualizerSettingsRepo = visualizerSettingsRepo;
@@ -98,6 +102,8 @@ internal sealed class ApplicationShell
         _uiSettings = uiSettings ?? throw new ArgumentNullException(nameof(uiSettings));
         _modeTransitionService = modeTransitionService ?? throw new ArgumentNullException(nameof(modeTransitionService));
         _applicationModeFactory = applicationModeFactory ?? throw new ArgumentNullException(nameof(applicationModeFactory));
+        _appSettings = appSettings ?? throw new ArgumentNullException(nameof(appSettings));
+        _beatTiming = beatTiming ?? throw new ArgumentNullException(nameof(beatTiming));
     }
 
     /// <summary>Runs the main loop. Does not return until the user quits.</summary>
@@ -243,7 +249,8 @@ internal sealed class ApplicationShell
             HelpModal = _helpModal,
             GetApplicationMode = () => _visualizerSettings.ApplicationMode,
             OnPaletteCycle = CyclePalette,
-            DumpScreen = () => _screenDumpService.DumpToFile()
+            DumpScreen = () => _screenDumpService.DumpToFile(),
+            AppSettings = _appSettings
         };
     }
 
@@ -263,7 +270,10 @@ internal sealed class ApplicationShell
             UiSettings = _uiSettings,
             State = _generalSettingsHubState,
             DisplayState = _displayState,
-            Orchestrator = _orchestrator
+            Orchestrator = _orchestrator,
+            AppSettings = _appSettings,
+            ApplyBeatTimingFromSettings = () =>
+                _beatTiming.ApplyFromSettings(_appSettings.BpmSource, _deviceController.CurrentDeviceId)
         };
     }
 

@@ -10,9 +10,11 @@ internal sealed class GeneralSettingsHubAreaRenderer : IUiComponentRenderer<Gene
 {
     private readonly GeneralSettingsHubState _state;
     private readonly UiSettings _uiSettings;
+    private readonly AppSettings _appSettings;
     private readonly IPaletteRepository _paletteRepo;
     private readonly IUiComponentRenderer<HorizontalRowComponent> _horizontalRowRenderer;
     private readonly HorizontalRowComponent _audioMenuRow = new();
+    private readonly HorizontalRowComponent _bpmSourceMenuRow = new();
     private readonly HorizontalRowComponent _appNameMenuRow = new();
     private readonly HorizontalRowComponent _defaultAssetMenuRow = new();
     private readonly HorizontalRowComponent _themeMenuRow = new();
@@ -21,11 +23,13 @@ internal sealed class GeneralSettingsHubAreaRenderer : IUiComponentRenderer<Gene
     public GeneralSettingsHubAreaRenderer(
         GeneralSettingsHubState state,
         UiSettings uiSettings,
+        AppSettings appSettings,
         IPaletteRepository paletteRepo,
         IUiComponentRenderer<HorizontalRowComponent> horizontalRowRenderer)
     {
         _state = state ?? throw new ArgumentNullException(nameof(state));
         _uiSettings = uiSettings ?? throw new ArgumentNullException(nameof(uiSettings));
+        _appSettings = appSettings ?? throw new ArgumentNullException(nameof(appSettings));
         _paletteRepo = paletteRepo ?? throw new ArgumentNullException(nameof(paletteRepo));
         _horizontalRowRenderer = horizontalRowRenderer ?? throw new ArgumentNullException(nameof(horizontalRowRenderer));
     }
@@ -75,6 +79,19 @@ internal sealed class GeneralSettingsHubAreaRenderer : IUiComponentRenderer<Gene
                         snapshot,
                         beatColors,
                         context.DeviceName)),
+                    preformattedAnsi: true)
+            ],
+            [width]);
+        _bpmSourceMenuRow.SetRowData(
+            [
+                new LabeledValueDescriptor(
+                    "",
+                    () => new AnsiText(GeneralSettingsHubMenuLines.FormatBpmSourceLine(
+                        _state,
+                        palette,
+                        snapshot,
+                        beatColors,
+                        _appSettings.BpmSource)),
                     preformattedAnsi: true)
             ],
             [width]);
@@ -132,15 +149,17 @@ internal sealed class GeneralSettingsHubAreaRenderer : IUiComponentRenderer<Gene
         };
         _horizontalRowRenderer.Render(_audioMenuRow, rowContext);
         rowContext.StartRow = startRow + 3;
-        _horizontalRowRenderer.Render(_appNameMenuRow, rowContext);
+        _horizontalRowRenderer.Render(_bpmSourceMenuRow, rowContext);
         rowContext.StartRow = startRow + 4;
-        _horizontalRowRenderer.Render(_defaultAssetMenuRow, rowContext);
+        _horizontalRowRenderer.Render(_appNameMenuRow, rowContext);
         rowContext.StartRow = startRow + 5;
+        _horizontalRowRenderer.Render(_defaultAssetMenuRow, rowContext);
+        rowContext.StartRow = startRow + 6;
         _horizontalRowRenderer.Render(_themeMenuRow, rowContext);
 
         if (_state.EditMode != GeneralSettingsHubEditMode.None)
         {
-            WriteRaw(6, startRow, width, sb =>
+            WriteRaw(8, startRow, width, sb =>
             {
                 AnsiConsole.AppendColored(sb, "  Edit: ", palette.Label);
                 AnsiConsole.AppendColored(sb, _state.RenameBuffer, palette.Highlighted);

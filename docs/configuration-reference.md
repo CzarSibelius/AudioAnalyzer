@@ -29,7 +29,7 @@ Example (`presets/preset-1.json`):
 
 ## Shows (JSON files)
 
-Shows are stored as **JSON files** in a **`shows`** directory next to the executable. A Show is an ordered collection of presets with per-entry duration. Press **Tab** to switch to Show play; **S** in Show play to edit (add/remove entries, set duration). Duration can be in **Seconds** (wall-clock) or **Beats** (at current detected BPM).
+Shows are stored as **JSON files** in a **`shows`** directory next to the executable. A Show is an ordered collection of presets with per-entry duration. Press **Tab** to switch to Show play; **S** in Show play to edit (add/remove entries, set duration). Duration can be in **Seconds** (wall-clock) or **Beats** (at the current BPM from the active **BPM source** — audio, demo, or Link).
 
 **Show JSON format:**
 
@@ -83,6 +83,8 @@ The **AsciiModel** text layer loads **Wavefront OBJ** files from a folder. The a
 
 ## Settings structure (`appsettings.json`)
 
+- **BPM source** (`BpmSource`, per [ADR-0066](adr/0066-bpm-source-and-ableton-link.md)): Where tempo and the beat counter come from. Values: `AudioAnalysis` (default, energy detection on the audio stream), `DemoDevice` (BPM from the active `demo:NNN` synthetic device + time-based beats), `AbletonLink` (Ableton Link session via native `link_shim.dll`). Editable from General settings hub (**BPM source** row, **Enter** to cycle). FFT/spectrum/waveform always follow the **audio input**, not Link.
+
 - **UI settings** (`UiSettings`, per [ADR-0033](adr/0033-ui-principles-and-configurable-settings.md), [ADR-0065](adr/0065-ui-theme-from-layer-palettes.md)): App title, optional `TitleBarAppName` (short name for title bar, e.g. "aUdioNLZR"), optional `DefaultAssetFolderPath` (default base directory for AsciiImage / AsciiModel when the layer’s folder setting is empty; omit to use the app content root), optional `UiThemePaletteId` (palette filename without extension — when set, UI and title bar colors are derived from that layer palette file; omit or use General settings **(Custom)** for inline colors), optional `TitleBarPalette` (used when no theme id), UI palette (Normal, Highlighted, Dimmed, Label, optional Background), and default scrolling speed. Stored in `appsettings.json`. Colors support 24-bit RGB (`R`, `G`, `B`) or console color names (`Value`).
 
 - **Visualizer-specific options** live under `VisualizerSettings` in the settings file (e.g. `appsettings.json`):
@@ -93,6 +95,7 @@ Example `appsettings.json`:
 
 ```json
 {
+  "BpmSource": "AudioAnalysis",
   "UiSettings": {
     "Title": "AUDIO ANALYZER - Real-time Frequency Spectrum",
     "DefaultScrollingSpeed": 0.25,
@@ -113,3 +116,16 @@ Example `appsettings.json`:
 ```
 
 If the settings file is corrupt or incompatible (e.g. invalid JSON), the app backs it up to `appsettings.{timestamp}.bak` (UTC, e.g. `appsettings.2025-02-17T14-30-00.123.bak`) and creates new defaults. You can recover values from the `.bak` file manually if needed — see [ADR-0029](adr/0029-no-settings-migration.md).
+
+## Ableton Link native build (`link_shim.dll`)
+
+Optional. Clone [Ableton/link](https://github.com/Ableton/link) into **`native/third_party/link`** (or set `LINK_ROOT` when configuring CMake). From **`native/link-shim`**:
+
+```bash
+cmake -B build -A x64
+cmake --build build --config Release
+```
+
+Copy **`link_shim.dll`** next to `AudioAnalyzer.Console.exe`. The app runs without it; **Ableton Link** BPM mode then shows a “no native DLL” hint until the DLL is present. Link peers must be on the **same LAN**; see [Ableton Link documentation](https://ableton.github.io/link/). **GPL-2.0+** applies to Link and the shim — see [ADR-0066](adr/0066-bpm-source-and-ableton-link.md).
+
+**Agents and CI:** toolchain prerequisites (CMake + MSVC Build Tools, Developer PowerShell for VS), verification, and a checklist are in [docs/agents/native-link-shim-build.md](agents/native-link-shim-build.md).

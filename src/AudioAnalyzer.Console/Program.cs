@@ -39,7 +39,7 @@ if (initialName == "")
 {
     if (dumpAfterSeconds != null)
     {
-        var demo = devices.FirstOrDefault(d => d.Id?.StartsWith("demo:", StringComparison.Ordinal) == true);
+        var demo = devices.FirstOrDefault(d => d.Id?.StartsWith(DemoAudioDevice.Prefix, StringComparison.Ordinal) == true);
         if (demo != null)
         {
             initialDeviceId = demo.Id;

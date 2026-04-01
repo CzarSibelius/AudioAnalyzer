@@ -4,16 +4,17 @@ using KeyHandling = AudioAnalyzer.Console.KeyHandling;
 
 namespace AudioAnalyzer.Console;
 
-/// <summary>Keyboard handling for the General Settings hub: menu navigation, device picker, application name and default asset folder edits.</summary>
+/// <summary>Keyboard handling for the General Settings hub: menu navigation, device picker, BPM source, application name and default asset folder edits.</summary>
 internal sealed class GeneralSettingsHubKeyHandlerConfig : IKeyHandlerConfig<GeneralSettingsHubKeyContext>
 {
     private const string Section = "General settings hub";
 
     private const int MenuAudio = 0;
-    private const int MenuAppName = 1;
-    private const int MenuDefaultAssetFolder = 2;
-    private const int MenuTheme = 3;
-    private const int MenuCount = 4;
+    private const int MenuBpmSource = 1;
+    private const int MenuAppName = 2;
+    private const int MenuDefaultAssetFolder = 3;
+    private const int MenuTheme = 4;
+    private const int MenuCount = 5;
 
     private static IReadOnlyList<KeyHandling.KeyBindingEntry<GeneralSettingsHubKeyContext>> GetEntries() =>
     [
@@ -63,11 +64,20 @@ internal sealed class GeneralSettingsHubKeyHandlerConfig : IKeyHandlerConfig<Gen
         return ctx.State.SelectedIndex switch
         {
             MenuAudio => OpenDevicePicker(ctx),
+            MenuBpmSource => CycleBpmSource(ctx),
             MenuAppName => StartApplicationNameEdit(ctx),
             MenuDefaultAssetFolder => StartDefaultAssetFolderEdit(ctx),
             MenuTheme => OpenThemePicker(ctx),
             _ => false
         };
+    }
+
+    private static bool CycleBpmSource(GeneralSettingsHubKeyContext ctx)
+    {
+        int next = ((int)ctx.AppSettings.BpmSource + 1) % Enum.GetValues<BpmSource>().Length;
+        ctx.AppSettings.BpmSource = (BpmSource)next;
+        ctx.ApplyBeatTimingFromSettings();
+        return true;
     }
 
     private static bool OnThemeHotkey(GeneralSettingsHubKeyContext ctx)

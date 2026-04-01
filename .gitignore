@@ -119,3 +119,7 @@ StyleCopReport.xml
 
 # macOS
 .DS_Store
+
+# Ableton Link vendored source (clone per native/README.md) and shim build output
+native/third_party/link/
+native/link-shim/build/
