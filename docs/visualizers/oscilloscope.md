@@ -21,7 +21,7 @@ Time-domain waveform display showing audio amplitude over time. This layer type 
 
 - **[** — Decrease oscilloscope gain (when Oscilloscope layer is selected in Layered text)
 - **]** — Increase oscilloscope gain
-- Toolbar suffix (when Oscilloscope layer selected): "Gain: X.X ([ ])"
+- Toolbar (when Oscilloscope is the palette-cycled layer): contextual **Gain** value; bracket keys **[ ]** adjust gain while that layer is selected
 
 ## Viewport constraints
 

@@ -14,6 +14,7 @@ General settings — Tab: mode  Up/Down: menu  Enter: open    Palette:jungle
 General settings
   Audio input devices (D):Speakers (Realtek Audio)
   Application name:aUdioNLZR
+  Default asset folder:(App base)
   UI theme (T):(Custom)
 ```
 
@@ -27,8 +28,9 @@ General settings
 - **4** — Blank line.
 - **5** — Menu: **Audio input devices (D):**current device display name (prefix `>` when selected). Value uses the same palette phase as the toolbar palette cell: colors from the current `UiThemePaletteId` layer palette when set; when **(Custom)** (no theme id), colors cycle through the effective semantic `UiPalette` slots (Normal, Highlighted, Dimmed, Label, optional Background). Mirrors **D** / device modal flow. If no device name is available, the value shows an em dash (—). Long values scroll or truncate per the horizontal row viewport.
 - **6** — Menu: **Application name:**effective short name (same rules as the title bar: `TitleBarAppName` when set, otherwise derived from `Title`). Value coloring matches line **5**. Prefix `>` when selected. **Enter** opens rename; printable keys edit; **Enter** confirms; **Esc** cancels.
-- **7** — Menu: **UI theme (T):**palette display name, **`(Custom)`** when `UiThemePaletteId` is unset (inline `UiSettings.Palette` / `TitleBarPalette` in appsettings). Value coloring matches line **5**. Prefix `>` when selected. **Enter** or **T** opens the theme list (**(Custom)** clears the theme id; otherwise sets `UiThemePaletteId` to the chosen layer palette id). **Esc** cancels the modal without changing the theme. In the theme list modal, palette names use the same beat/tick-driven per-letter colors as the S-modal palette picker; the list idle-redraws when the palette name animation frame advances (`PaletteSwatchFormatter.PaletteAnimationFrameAdvanced`).
+- **7** — Menu: **Default asset folder:**when `UiSettings.DefaultAssetFolderPath` is unset, the value shows **`(App base)`** (layers with empty image/model folder use `AppContext.BaseDirectory` as the global base); when set, the configured path (trimmed). Value coloring matches line **5**. Prefix `>` when selected. **Enter** opens path edit; printable keys and **Backspace** edit; **Enter** confirms (empty buffer clears the setting); **Esc** cancels.
+- **8** — Menu: **UI theme (T):**palette display name, **`(Custom)`** when `UiThemePaletteId` is unset (inline `UiSettings.Palette` / `TitleBarPalette` in appsettings). Value coloring matches line **5**. Prefix `>` when selected. **Enter** or **T** opens the theme list (**(Custom)** clears the theme id; otherwise sets `UiThemePaletteId` to the chosen layer palette id). **Esc** cancels the modal without changing the theme. In the theme list modal, palette names use the same beat/tick-driven per-letter colors as the S-modal palette picker; the list idle-redraws when the palette name animation frame advances (`PaletteSwatchFormatter.PaletteAnimationFrameAdvanced`).
 
-When **Application name** is being edited, an additional line **Edit:** appears below the menu with the current buffer (implementation may truncate).
+When **Application name** or **Default asset folder** is being edited, an additional line **Edit:** appears below the menu with the current buffer (implementation may truncate).
 
 **Note:** Full screen (**F**) is disabled in General settings (fullscreen is cleared when entering General settings). The toolbar and hub remain visible when the window is wide enough.

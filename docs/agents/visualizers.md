@@ -12,6 +12,12 @@ When adding or changing visualizers:
 
 This prevents visualizers from scrolling the console or wrapping lines and corrupting the rest of the UI.
 
+## IVisualizer and composite renderer
+
+The app uses **TextLayersVisualizer** exclusively; all visual content is provided by layers. The single **`IVisualizer`** implementation exposes **`SupportsPaletteCycling`**, optional **`GetToolbarViewports(snapshot)`** / **`GetToolbarSuffix(snapshot)`** for toolbar segments (layer digits, contextual fields, palette), and optional **`GetActiveLayerDisplayName()`** / **`GetActiveLayerZIndex()`** for the title bar. The composite renderer depends only on this interface and the shared snapshot; it does not reference concrete visualizer types. See [ADR-0004](../adr/0004-visualizer-encapsulation.md).
+
+If `IVisualizer.Render` throws, the composite renderer shows the exception message in the viewport (one line, truncated with ellipsis) and the next frame can recover. See [ADR-0012](../adr/0012-visualizer-exception-handling.md).
+
 ## New visualizer content
 
 Create new visualizer content as **text layer renderers** in TextLayersVisualizer: inherit **TextLayerRendererBase**, implement **ITextLayerRenderer&lt;TState&gt;** (stateless layers use **NoLayerState**). Do not create new standalone **IVisualizer** modes. See ADR-0014, ADR-0044.
@@ -30,3 +36,12 @@ When adding or changing a visualizer:
 3. Follow the viewport rule above and ADRs (e.g. encapsulation, TextLayers cell buffer) as applicable.
 
 Keep the spec in sync with the implementation.
+
+## Further reading
+
+- Per-layer specs (behavior, settings, viewport constraints): [visualizers/README.md](../visualizers/README.md)
+- Console UI components (header, modals, viewports, key handlers): [ui-components.md](../ui-components.md)
+- UI layout specs (screen dump + line references): [ui-spec-format.md](../ui-spec-format.md)
+- Application modes (Preset editor, Show play, General settings): [ui-spec-application-modes.md](../ui-spec-application-modes.md)
+- Settings-related screens: [ui-spec-settings-surfaces.md](../ui-spec-settings-surfaces.md)
+- C# documentation and file organization: [ADR-0016](../adr/0016-csharp-documentation-and-file-organization.md); see also `.cursor/rules/csharp-standards.mdc` and `.cursor/rules/no-empty-catch.mdc`

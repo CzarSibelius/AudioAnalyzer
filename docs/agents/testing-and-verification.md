@@ -10,6 +10,23 @@ Place new test files under `tests/AudioAnalyzer.Tests/` so folders mirror the pr
 2. Run `dotnet test tests\AudioAnalyzer.Tests\AudioAnalyzer.Tests.csproj` — all tests must pass.
 3. Optionally run `dotnet format .\AudioAnalyzer.sln --verify-no-changes` to verify formatting.
 
+## Test suite overview
+
+Run all tests:
+
+```bash
+dotnet test tests/AudioAnalyzer.Tests/AudioAnalyzer.Tests.csproj
+```
+
+Coverage includes:
+
+- **Render performance**: Single-frame render completes within 10 ms (guards against regressions; target is 50 ms for 20 FPS per [ADR-0030](../adr/0030-performance-priority.md)).
+- **Layer rendering**: Each layer type (GeissBackground, Marquee, Oscilloscope, etc.) renders without throwing.
+- **Preset loading**: Preset load/save round-trip and render-with-preset.
+- **Smoke**: Multiple frames render without exception.
+
+Tests use **System.IO.Abstractions.TestingHelpers** (MockFileSystem) instead of the real file system: no temp directories, no disk I/O, fully isolated and deterministic.
+
 ## When modifying UI/display
 
 - Manually test with Demo Mode (D → select Demo) at 80x24 and 200x50.

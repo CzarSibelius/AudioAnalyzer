@@ -14,15 +14,15 @@ Users need a dedicated place to change **application-wide** settings (audio inpu
 
 3. **No layer visualization**: The main area shows a **keyboard-driven hub** (`GeneralSettingsHubAreaComponent` + `GeneralSettingsHubKeyHandlerConfig`) instead of `VisualizerAreaComponent`. **S** does not open the preset or Show modal in this mode. **F** does not toggle fullscreen (fullscreen is cleared when entering General settings). The **header** shows **only the title breadcrumb row** (no Device/Now/BPM volume rows) to maximize space for the hub; the **toolbar** row below still shows the hub hint and optional palette swatch. See [ADR-0062](0062-application-mode-classes.md).
 
-4. **MVP settings**: **Audio input devices** (reuse `IDeviceSelectionModal` / same flow as **D**) and **Application name** (`UiSettings.TitleBarAppName`, persisted via `IAppSettingsPersistence`). **Application UI palette** (`UiSettings.Palette` semantic slots) is **deferred** — tracked in [refactoring README](../refactoring/README.md).
+4. **MVP settings**: **Audio input devices** (reuse `IDeviceSelectionModal` / same flow as **D**), **Application name** (`UiSettings.TitleBarAppName`, persisted via `IAppSettingsPersistence`), **Default asset folder** (`UiSettings.DefaultAssetFolderPath` — optional global base for AsciiImage / AsciiModel directory settings; when unset, layers use `AppContext.BaseDirectory`), and **UI theme** (`UiSettings.UiThemePaletteId`). **Application UI palette** (`UiSettings.Palette` semantic slots) when no theme id remains configurable via appsettings.
 
-5. **Key routing**: `ApplicationShell` invokes `IKeyHandler<GeneralSettingsHubKeyContext>` when `ApplicationMode == Settings` **before** `IVisualizationRenderer.HandleKey` and the main-loop handler. **Escape** in the hub menu (not editing) falls through to the main loop (**quit**). **Escape** while editing the application name **cancels** the edit in the hub handler.
+5. **Key routing**: `ApplicationShell` invokes `IKeyHandler<GeneralSettingsHubKeyContext>` when `ApplicationMode == Settings` **before** `IVisualizationRenderer.HandleKey` and the main-loop handler. **Escape** in the hub menu (not editing) falls through to the main loop (**quit**). **Escape** while editing inline text (application name or default asset folder) **cancels** the edit in the hub handler.
 
 6. **Help**: Dynamic help ([ADR-0049](0049-dynamic-help-screen.md)) includes a **General settings hub** section when mode is Settings; **Layered text** shortcuts are omitted in that mode.
 
 ## Consequences
 
-- New types: `GeneralSettingsHubState`, `GeneralSettingsHubKeyContext`, `GeneralSettingsHubKeyHandlerConfig`, `GeneralSettingsHubAreaComponent`, `GeneralSettingsHubAreaRenderer`; main layout is owned by **`SettingsApplicationMode`** ([ADR-0062](0062-application-mode-classes.md)).
+- New types: `GeneralSettingsHubState`, `GeneralSettingsHubEditMode`, `GeneralSettingsHubKeyContext`, `GeneralSettingsHubKeyHandlerConfig`, `GeneralSettingsHubAreaComponent`, `GeneralSettingsHubAreaRenderer`; main layout is owned by **`SettingsApplicationMode`** ([ADR-0062](0062-application-mode-classes.md)).
 - README and UI spec document Tab and hub behavior.
 - Supplements [ADR-0031](0031-show-preset-collection.md) (Tab previously only Preset ↔ Show) and [ADR-0060](0060-universal-title-breadcrumb.md) (hub home path).
 

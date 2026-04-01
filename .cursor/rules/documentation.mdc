@@ -7,19 +7,15 @@ alwaysApply: true
 
 When adding or changing features:
 
-1. **Update feature documentation**: Update the README and any other feature docs (e.g. `docs/` or a dedicated feature file). Document new capabilities, options, and behavior in the appropriate place.
+1. **Update feature documentation**: Keep the root README accurate for what the app is, prerequisites, how to run, and short user tips. Put preset/show/palette JSON, `appsettings.json` structure, and NuGet dependency versions in `docs/configuration-reference.md` when those change. Document new capabilities in the appropriate `docs/` file (visualizer specs, UI specs, ADRs).
+
+1b. **New source files**: Place new or moved `.cs` (and project content) under the correct folder per `docs/agents/project-structure/` for the target project; tests mirror production per ADR-0064.
 
 2. **Visualizer specs**: When adding or changing visualizers, create or update the corresponding spec in `docs/visualizers/` (see `docs/visualizers/README.md` for the index and format).
 
 3. **UI specs**: When changing console layout, header, modals, or any documented screen, read and update the relevant UI spec in `docs/` (see `docs/ui-spec-format.md` and `.cursor/rules/ui-specs.mdc`). Regenerate screenshot and line reference when the number or meaning of lines changes.
 
-4. **Update the README**: When changing behavior, dependencies, or usage, update README.md so these sections stay accurate:
-   - Prerequisites
-   - How to Run
-   - Usage
-   - What It Does
-   - Dependencies
-   - Notes
+4. **README vs. deep docs**: When user-facing behavior or run requirements change, update README.md. When configuration formats, JSON examples, or pinned dependency versions change, update `docs/configuration-reference.md`. Build, test, format, and architecture notes belong in `docs/agents/` per topic—do not move that detail back into the root README.
 
 5. **Document deferred work**: Every "will do later" task must be documented. When deferring work (e.g. "will do later", "leave for later", "out of scope for now"), add it to an appropriate place: a task list in `docs/refactoring/`, a new or existing ADR, the refactoring README, or a dedicated TODO/backlog file. Do not leave deferred work only in code comments or conversation; it must be written down where it can be found and tracked.
 

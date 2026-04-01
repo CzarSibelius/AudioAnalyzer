@@ -2,6 +2,8 @@
 
 Overlay for editing **preset-level** settings (name, default palette), **preset** shortcuts (rename **R**, new **N**), and **text layer** settings. Open with **S** in Preset editor or Show play ([ADR-0023](adr/0023-settings-modal-layer-editing.md)). Not available in General settings ([ADR-0061](adr/0061-general-settings-mode.md)). See [ui-spec-settings-surfaces.md](ui-spec-settings-surfaces.md) for shared patterns.
 
+**Initial layer selection:** When the modal opens, the left-column **layer** highlight matches the active layer in the main Preset editor (the same target as **1–9** and the toolbar), not always the first layer.
+
 ## Overlay geometry
 
 - **Overlay row count:** 16 rows (`OverlayRowCount` in `SettingsModal`).

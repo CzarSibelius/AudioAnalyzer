@@ -19,9 +19,10 @@ Never complete a task without confirming successful compilation. **The build mus
 ### Verification checklist (after making changes)
 1. Run `dotnet build .\AudioAnalyzer.sln` — must succeed with 0 warnings.
 2. Run `dotnet test tests\AudioAnalyzer.Tests\AudioAnalyzer.Tests.csproj` — all tests must pass.
-3. **New tests**: place files under `tests/AudioAnalyzer.Tests/` mirroring production project folders (see ADR-0064 in docs/adr/); shared helpers in `TestSupport/`, cross-assembly tests in `Integration/` when appropriate.
-4. Optionally run `dotnet format .\AudioAnalyzer.sln --verify-no-changes` to verify formatting.
-5. If modifying UI/display: manually test with Demo Mode (D → select Demo) at 80x24 and 200x50. When debugging visual problems, use **screen dump** (Ctrl+Shift+E in-app, or `--dump-after N` to run then dump) to capture the terminal state as text.
+3. **New or moved production code**: follow per-project folder layout in `docs/agents/project-structure/` (see README there).
+4. **New tests**: place files under `tests/AudioAnalyzer.Tests/` mirroring production project folders (see ADR-0064 in docs/adr/); shared helpers in `TestSupport/`, cross-assembly tests in `Integration/` when appropriate.
+5. Optionally run `dotnet format .\AudioAnalyzer.sln --verify-no-changes` to verify formatting.
+6. If modifying UI/display: manually test with Demo Mode (D → select Demo) at 80x24 and 200x50. When debugging visual problems, use **screen dump** (Ctrl+Shift+E in-app, or `--dump-after N` to run then dump) to capture the terminal state as text.
 
 ### Static analysis
 After making code changes, check linter diagnostics for the modified files and fix any reported errors; fix warnings unless the rule is explicitly disabled for that line. Do not introduce new build warnings. Optionally run `dotnet format --verify-no-changes` to verify formatting (or `dotnet format` to fix); this uses .editorconfig.
@@ -70,8 +71,8 @@ After making code changes, check linter diagnostics for the modified files and f
 - Reuse arrays; only reallocate when terminal size changes
 
 ### Documentation
-- **Keep feature documentation updated**: When adding or changing features, update any project feature documentation (README, and if present, `docs/` or a dedicated feature doc). Document new capabilities, options, and behavior in the appropriate place.
-- **Keep the README updated**: When changing behavior, dependencies, or usage, update README.md: prerequisites, run instructions, "What It Does", usage steps, dependencies, and notes so they stay accurate.
+- **Keep feature documentation updated**: When adding or changing features, update the appropriate doc: root README for product description, prerequisites, and how to run; `docs/configuration-reference.md` for preset/show/palette JSON, `appsettings.json`, and NuGet version lists; `docs/visualizers/`, UI specs, and ADRs as applicable.
+- **Keep the README human-focused**: When changing behavior or run requirements, update README.md (short intro, prerequisites, run, first-run, tips). Do not restore long JSON blocks or contributor-only build/format detail there—use `docs/configuration-reference.md` and `docs/agents/`.
 
 ## Architecture
 

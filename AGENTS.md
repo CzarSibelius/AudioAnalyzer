@@ -9,6 +9,8 @@
 
 Before changing architecture, persistence, or user-facing behavior, read the relevant ADRs and align implementation with them: **[docs/adr/README.md](docs/adr/README.md)**.
 
+When adding or moving **source files**, place them per **[docs/agents/project-structure/README.md](docs/agents/project-structure/README.md)** for the target project (tests still mirror production per ADR-0064).
+
 Detailed agent instructions are split by topic:
 
 | Topic | File |
@@ -20,6 +22,7 @@ Detailed agent instructions are split by topic:
 | Testing and verification | [docs/agents/testing-and-verification.md](docs/agents/testing-and-verification.md) |
 | Git workflow | [docs/agents/git-workflow.md](docs/agents/git-workflow.md) |
 | Architecture overview (reference) | [docs/agents/architecture-overview.md](docs/agents/architecture-overview.md) |
+| **Project file structure** | [docs/agents/project-structure/README.md](docs/agents/project-structure/README.md) |
 
 For ADR summaries applied in this repo (e.g. DI, presets, screen dump), see **.cursor/rules/adr.mdc**. For rules that apply only to specific file globs, see the other files under **.cursor/rules/**.
 

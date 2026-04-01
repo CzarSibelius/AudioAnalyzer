@@ -13,7 +13,8 @@ Renders images from a configured folder as ASCII art. Converts each image to a c
 
 - **Schema**: `TextLayerSettings` when `LayerType == AsciiImage`; custom settings in `AsciiImageSettings`
 - **BeatReaction** (enum, default: None): How a beat affects the layer. **None**, **SpeedBurst** (faster movement), **Flash** (cycle to next image), **Pulse** (color step on beat). Edited in S modal.
-- **ImageFolderPath** (string, optional): Path to folder containing images (BMP, GIF, JPEG, PNG, WebP). Sorted alphabetically.
+- **ImageFolderPath** (string, optional): Path to folder containing images (BMP, GIF, JPEG, PNG, WebP). Sorted alphabetically. When empty, the effective folder is the **global default asset base** from General settings (`UiSettings.DefaultAssetFolderPath` in `appsettings.json`), or **`AppContext.BaseDirectory`** when that setting is unset. Relative paths are resolved under that global base; absolute paths ignore the global base.
+- **SelectedImageFileName** (string, optional, persisted in preset `Custom`): File name (not full path) of the image to show within `ImageFolderPath`. When null or missing, the first file in sorted order is used. **I** and **Flash** beat reaction advance this value; it is saved with the preset when another handled key triggers save (same as other layer custom fields). Not shown in the S modal.
 - **Movement** (enum, default: Scroll): None, Scroll, Zoom, or Both
 - **PaletteSource** (enum, default: LayerPalette): LayerPalette (map brightness to layer's palette) or ImageColors (use per-pixel RGB from image)
 - **ZoomMin** (double, default: 0.85): Minimum zoom scale (0.5–1.0)
@@ -25,7 +26,7 @@ Renders images from a configured folder as ASCII art. Converts each image to a c
 
 ## Key bindings
 
-- **I** — Cycle to next picture (when at least one AsciiImage layer exists)
+- **I** — Cycle to next picture (when at least one AsciiImage or AsciiModel layer exists); updates persisted selection in the preset
 - **S** — Open preset modal to edit all layer settings including AsciiImage options
 
 ## Viewport constraints

@@ -38,7 +38,8 @@ Nothing was **deleted** from the repo in this pass; redundant content was **cons
 ```
 docs/
   adr/                    # Existing ADR index and numbered ADRs
-  agents/                 # New: agent instructions by topic
+  configuration-reference.md  # Preset/show/palette JSON, appsettings, dependency versions
+  agents/                 # Agent instructions by topic
     README.md             # Index of agent docs
     csharp-and-static-analysis.md
     documentation.md
@@ -54,4 +55,4 @@ docs/
   ui-components.md         # Existing (if present)
 ```
 
-Root: **AGENTS.md** with one-sentence description, build/test/format commands, link to docs/adr/README.md, and table of links to docs/agents/*.
+Root: **README.md** (human-focused: what the app is, how to run). **AGENTS.md**: build/test/format, link to docs/adr/README.md, and table of links to docs/agents/*.

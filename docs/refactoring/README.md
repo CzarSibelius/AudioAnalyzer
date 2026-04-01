@@ -14,6 +14,10 @@ Reduce component-specific renderer interfaces by using `IUiComponentRenderer<TCo
 
 **[renderer-interfaces-migration.md](renderer-interfaces-migration.md)** — Phase 0 (result type), Phase 1 (title bar), Phase 2 (labeled row), Phase 3 optional (toolbar + visualizer area).
 
+## Ableton Link and external BPM
+
+**[ableton-link/README.md](ableton-link/README.md)** — Phased tasks: (1) external beat sources without Link, (2) native Link wrapper, (3) app integration + UI.
+
 ## Deferred: Application UI palette in General settings
 
-**General Settings hub** ([ADR-0061](../adr/0061-general-settings-mode.md)): MVP includes audio input and **Application name** (`UiSettings.TitleBarAppName`). **Editing `UiSettings.Palette`** (semantic UI colors in appsettings) from the hub is **not implemented** — add a future task (e.g. theme presets or per-slot editor) when picked up.
+**General Settings hub** ([ADR-0061](../adr/0061-general-settings-mode.md)): Hub includes audio input, **Application name**, **Default asset folder** (`UiSettings.DefaultAssetFolderPath`), and **UI theme** (`UiThemePaletteId`). **Editing `UiSettings.Palette`** (semantic UI colors in appsettings) from the hub is **not implemented** — add a future task (e.g. theme presets or per-slot editor) when picked up.
