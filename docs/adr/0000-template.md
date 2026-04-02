@@ -1,6 +1,6 @@
 # ADR-NNNN: Title (short, imperative)
 
-**Status**: Proposed | Accepted | Deprecated | Superseded by [NNNN](NNNN-title.md)
+**Status**: Proposed | Accepted | Deprecated | Superseded by [NNNN](NNNN-title.md) | Superseded (with **Canonical:** links to existing ADRs when there is no single replacement)
 
 ## Context
 

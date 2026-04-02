@@ -20,3 +20,4 @@ The renderer, console, and application layer need to drive multiple visualizers 
 - **Application/Domain**: Snapshot and interfaces may gain capability-based or generic properties so that visualizer-specific options (e.g. "show beat circles", palette, gain) are supplied in a uniform way rather than via visualizer-specific APIs.
 - **Visualizers**: Remain the single place that implement mode-specific behavior; they read from the snapshot and viewport and do not require callers to know their internals.
 - **Documentation**: When adding or changing visualizers, agents and developers should prefer extending the shared contract and keeping logic inside the visualizer.
+- **Compliance audit** (not an ADR): [visualizer-encapsulation-compliance-audit.md](audits/visualizer-encapsulation-compliance-audit.md) records historical alignment checks against this ADR.

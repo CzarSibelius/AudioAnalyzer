@@ -49,7 +49,7 @@ Decisions are numbered and kept under version control so the rationale stays wit
 | [0031](0031-show-preset-collection.md) | Show — preset collection for performance auto-cycling | Accepted |
 | [0032](0032-typed-display-text.md) | Typed display text (PlainText vs AnsiText) | Accepted |
 | [0033](0033-ui-principles-and-configurable-settings.md) | UI principles and configurable settings | Accepted |
-| [0034](0034-viewport-label-hotkey-hints.md) | Viewport label hotkey hints (superseded; no label hotkey API) | Superseded |
+| [0034](0034-viewport-label-hotkey-hints.md) | Viewport label hotkey hints — historical; canonical [0033](0033-ui-principles-and-configurable-settings.md), [0049](0049-dynamic-help-screen.md) | Superseded |
 | [0035](0035-modal-dependency-injection.md) | Modal dependency injection | Accepted |
 | [0036](0036-title-bar-injectable-component.md) | Title bar as injectable component | Accepted |
 | [0037](0037-scrolling-text-viewport-injectable-service.md) | Scrolling text viewport as injectable service with data/render split | Accepted |
@@ -89,7 +89,7 @@ Decisions are numbered and kept under version control so the rationale stays wit
 1. **Creating a new ADR**: Copy [0000-template.md](0000-template.md) to a new file `docs/adr/NNNN-short-title.md` (next number in sequence). Fill in Title, Status, Context, Decision, and Consequences. One decision per ADR.
 2. **Updating this index**: Add the new ADR to the table above with a link and status.
 3. **Agent instructions**: If the decision affects how agents should implement features, ensure `.cursor/rules/adr.mdc` and `.github/copilot-instructions.md` are updated so agents follow the ADR.
-4. **Superseding or deprecating**: To replace an ADR, add a new ADR that supersedes it and set the old one’s status to "Superseded by [NNNN](NNNN-title.md)".
+4. **Superseding or deprecating**: When a **single** new ADR replaces an old one, set the old ADR’s status to **Superseded by [NNNN](NNNN-title.md)** and link forward from the old file. When behavior moves into **several** existing ADRs (no one replacement), set status to **Superseded** and name **canonical** ADRs in the old file’s header and in this index (see ADR-0034).
 
 ## For agents
 
@@ -98,7 +98,15 @@ When changing architecture, persistence, or user-facing behavior:
 - Read the relevant ADRs in `docs/adr/` and align your implementation with them.
 - When making a new architectural decision, add a new ADR and update this index.
 
+**Superseded and partially superseded ADRs**
+
+- Check **Status** in the table above and the ADR’s header before treating a document as authoritative.
+- If status is **Superseded**: do **not** implement **historical** Decision sections. Follow, in order: any **Update (current)** / **Consequences (current)** in that file, then any **Superseded by** link, then **canonical** ADRs named in the superseded doc or index.
+- If status is **Accepted** but the ADR says a **specific detail** is superseded, follow the newer cross-referenced ADR for that detail.
+- Prefer citing **Accepted** canonical ADRs over opening **Superseded** files unless you need historical rationale.
+
 ## Related documentation
 
+- **ADR audits** ([audits/](audits/)): Non-ADR notes (e.g. compliance checks) kept under `docs/adr/audits/` so they are not mistaken for numbered ADRs.
 - **UI components** ([ui-components.md](../ui-components.md)): Inventory of console UI components (shell, header, modals, viewport primitives, key handlers). Use when navigating or extending the console UI.
 - **Visualizer specs** ([../visualizers/README.md](../visualizers/README.md)): Per-layer and TextLayers reference (behavior, settings, viewport constraints). Use when adding or changing layers; ADRs describe decisions, specs describe what each layer does.

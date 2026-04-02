@@ -2,7 +2,7 @@
 
 When adding or changing features:
 
-1. **Update feature documentation**: Keep the root [README.md](../../README.md) accurate for **what the app is**, **prerequisites**, **how to run**, and short user-facing tips. Put **preset/show/palette JSON**, **`appsettings.json` structure**, and **NuGet dependency versions** in [docs/configuration-reference.md](../configuration-reference.md) when those change. Use other `docs/` files (visualizer specs, UI specs, ADRs) as today. **New source paths**: follow [project-structure/README.md](project-structure/README.md) for the target project.
+1. **Update feature documentation**: Keep the root [README.md](../../README.md) accurate for **what the app is**, **prerequisites**, **how to run**, and short user-facing tips. Put **preset/show/palette JSON**, **`appsettings.json` structure**, and **NuGet dependency versions** in [docs/configuration-reference.md](../configuration-reference.md) when those change. Use other `docs/` files (visualizer specs, UI specs, ADRs) as today. For ADR status and **superseded** handling, follow [docs/adr/README.md](../adr/README.md) (“For agents”); non-ADR audit notes live under [docs/adr/audits/](../adr/audits/). **New source paths**: follow [project-structure/README.md](project-structure/README.md) for the target project.
 
 2. **Visualizer specs**: When adding or changing visualizers, create or update the corresponding spec in `docs/visualizers/` (see `docs/visualizers/README.md` for the index and format).
 

@@ -1,6 +1,6 @@
 # ADR-0004 compliance audit
 
-This document records how the codebase aligns with [ADR-0004: Visualizer encapsulation](0004-visualizer-encapsulation.md).
+This document records how the codebase aligns with [ADR-0004: Visualizer encapsulation](../0004-visualizer-encapsulation.md).
 
 ## Post-refactor summary (current state)
 
@@ -44,7 +44,7 @@ The following sections described the state **before** the refactor. They are kep
 
 **ADR**: "The renderer … must not reference concrete visualizer types (e.g. `GeissVisualizer`) for behavior that could be expressed via the shared interface or via the snapshot."
 
-**Current code** ([VisualizationPaneLayout.cs](../../src/AudioAnalyzer.Infrastructure/VisualizationPaneLayout.cs)):
+**Current code** ([VisualizationPaneLayout.cs](../../../src/AudioAnalyzer.Infrastructure/VisualizationPaneLayout.cs)):
 
 - Holds `private readonly GeissVisualizer _geissVisualizer` and uses it in the mode dictionary and for `SetShowBeatCircles` / `GetShowBeatCircles`.
 - Those methods directly get/set `_geissVisualizer.ShowBeatCircles`.
@@ -82,7 +82,7 @@ if (mode == VisualizationMode.Oscilloscope)
 
 **ADR**: "Other code must not depend on visualizer internals"; data should flow via "snapshot or viewport" and "shared contract."
 
-**Current code** ([Program.cs](../../src/AudioAnalyzer.Console/Program.cs)):
+**Current code** ([Program.cs](../../../src/AudioAnalyzer.Console/Program.cs)):
 
 - Resolves `VisualizationPaneLayout` and calls `SetShowBeatCircles`, `GetShowBeatCircles`, `SetUnknownPleasuresPalette`.
 - On load/save: reads/writes `settings.VisualizerSettings.Geiss.BeatCircles`, `settings.VisualizerSettings.Oscilloscope.Gain` and pushes them into the renderer/engine via these methods.
@@ -94,7 +94,7 @@ if (mode == VisualizationMode.Oscilloscope)
 
 ## 5. Application (AnalysisEngine): Oscilloscope-specific property
 
-**Current code** ([AnalysisEngine.cs](../../src/AudioAnalyzer.Application/AnalysisEngine.cs)):
+**Current code** ([AnalysisEngine.cs](../../../src/AudioAnalyzer.Application/AnalysisEngine.cs)):
 
 - Public property `OscilloscopeGain` and `_snapshot.OscilloscopeGain` in the build step.
 
@@ -104,7 +104,7 @@ if (mode == VisualizationMode.Oscilloscope)
 
 ## 6. Snapshot: visualizer-specific property names
 
-**Current code** ([AnalysisSnapshot.cs](../../src/AudioAnalyzer.Application/Abstractions/AnalysisSnapshot.cs)):
+**Current code** ([AnalysisSnapshot.cs](../../../src/AudioAnalyzer.Application/Abstractions/AnalysisSnapshot.cs)):
 
 - `OscilloscopeGain` – named after one visualizer.
 - `UnknownPleasuresPalette` – named after one visualizer (though used for any palette-cycling visualizer).
