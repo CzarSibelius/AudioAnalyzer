@@ -40,7 +40,8 @@ docs/
   adr/                    # Existing ADR index and numbered ADRs
   configuration-reference.md  # Preset/show/palette JSON, appsettings, dependency versions
   agents/                 # Agent instructions by topic
-    README.md             # Index of agent docs
+    AGENTS.md             # Index of agent docs (topic table)
+    README.md             # Stub: points to AGENTS.md for folder landing
     csharp-and-static-analysis.md
     documentation.md
     ui-and-console.md
@@ -55,4 +56,4 @@ docs/
   ui-components.md         # Existing (if present)
 ```
 
-Root: **README.md** (human-focused: what the app is, how to run). **AGENTS.md**: build/test/format, link to docs/adr/README.md, and table of links to docs/agents/*.
+Root: **README.md** (human-focused: what the app is, how to run). Root **AGENTS.md**: build/test/format, link to docs/adr/README.md, and table of links to docs/agents/*. **docs/agents/AGENTS.md**: same topic index inside the agents folder (with **docs/agents/README.md** stub for folder landing).

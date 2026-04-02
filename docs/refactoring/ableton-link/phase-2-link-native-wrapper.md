@@ -19,7 +19,7 @@
 
 ## Managed interop
 
-- [x] P/Invoke declarations in a small type (Infrastructure or dedicated folder per [project-structure](../../agents/project-structure/README.md)).
+- [x] P/Invoke declarations in a small type (Infrastructure or dedicated folder per [project-structure](../../agents/project-structure/AGENTS.md)).
 - [x] Thin managed wrapper class `ILinkSession` / `LinkSessionNative` implementing IDisposable, safe handle pattern, no empty catch blocks.
 - [x] **CI / dev without DLL:** `#if` or runtime probe — managed tests use **mock** or skip native tests when DLL missing (document).
 

@@ -54,7 +54,7 @@ For bug reports or sharing what you see: press **Ctrl+Shift+E** to write a plain
 
 ## More documentation
 
-- **Developing or automating the repo**: [AGENTS.md](AGENTS.md) and [docs/agents/README.md](docs/agents/README.md)
+- **Developing or automating the repo**: [AGENTS.md](AGENTS.md) and [docs/agents/AGENTS.md](docs/agents/AGENTS.md)
 - **JSON formats and settings**: [docs/configuration-reference.md](docs/configuration-reference.md)
 - **Architecture decisions**: [docs/adr/README.md](docs/adr/README.md)
 

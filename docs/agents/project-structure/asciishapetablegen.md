@@ -11,4 +11,4 @@
 ## Rules
 
 - Prefer `net10.0` to match the solution unless the tool requires otherwise.
-- New build-time tools: add under `tools/<ToolName>/` and reference this pattern in `docs/agents/project-structure/README.md` if they become permanent.
+- New build-time tools: add under `tools/<ToolName>/` and reference this pattern in `docs/agents/project-structure/AGENTS.md` if they become permanent.
