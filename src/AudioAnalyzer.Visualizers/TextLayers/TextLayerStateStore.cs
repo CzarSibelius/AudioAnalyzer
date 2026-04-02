@@ -29,6 +29,17 @@ public sealed class TextLayerStateStore
         _stateByLayer[layerIndex] = null;
     }
 
+    /// <inheritdoc />
+    public void RemoveSlotAt(int sortedLayerIndex)
+    {
+        if (sortedLayerIndex < 0 || sortedLayerIndex >= _stateByLayer.Count)
+        {
+            return;
+        }
+
+        _stateByLayer.RemoveAt(sortedLayerIndex);
+    }
+
     FallingLettersLayerState ITextLayerStateStore<FallingLettersLayerState>.GetState(int layerIndex) => GetOrCreate<FallingLettersLayerState>(layerIndex);
     void ITextLayerStateStore<FallingLettersLayerState>.SetState(int layerIndex, FallingLettersLayerState state) => Set(layerIndex, state);
 

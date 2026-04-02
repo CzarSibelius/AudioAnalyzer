@@ -6,7 +6,7 @@ using AudioAnalyzer.Domain;
 
 namespace AudioAnalyzer.Application;
 
-/// <summary>Builds the TextLayers toolbar suffix: layer digits 1–<see cref="TextLayersLimits.MaxLayerCount"/>, optional contextual rows (gain, file names), palette name.</summary>
+/// <summary>Builds the TextLayers toolbar suffix: one digit per existing layer (1-based order), selected layer highlighted, disabled layers dimmed; optional contextual rows; palette name.</summary>
 public sealed class TextLayersToolbarBuilder : ITextLayersToolbarBuilder
 {
     private readonly IUiThemeResolver _uiThemeResolver;
@@ -47,26 +47,7 @@ public sealed class TextLayersToolbarBuilder : ITextLayersToolbarBuilder
         var palette = _uiThemeResolver.GetEffectiveUiPalette();
         var sb = new StringBuilder();
         AnsiConsole.AppendColored(sb, LabelFormatting.FormatLabel("Layers"), palette.Label);
-        for (int i = 0; i < TextLayersLimits.MaxLayerCount; i++)
-        {
-            char digit = (char)('1' + i);
-            if (i >= sortedLayers.Count)
-            {
-                AnsiConsole.AppendColored(sb, digit, palette.Dimmed);
-            }
-            else
-            {
-                var l = sortedLayers[i];
-                if (!l.Enabled)
-                {
-                    AnsiConsole.AppendColored(sb, digit, palette.Dimmed);
-                }
-                else
-                {
-                    AnsiConsole.AppendColored(sb, digit, palette.Normal);
-                }
-            }
-        }
+        AppendPresetEditorLayerDigits(sb, sortedLayers, idx, palette);
         AppendContextualRowsPlainSuffix(sb, context);
         sb.Append(" | ");
         sb.Append(LabelFormatting.FormatLabel("Palette"));
@@ -138,26 +119,7 @@ public sealed class TextLayersToolbarBuilder : ITextLayersToolbarBuilder
 
         var layersSb = new StringBuilder();
         AnsiConsole.AppendColored(layersSb, LabelFormatting.FormatLabel("Layers"), palette.Label);
-        for (int i = 0; i < TextLayersLimits.MaxLayerCount; i++)
-        {
-            char digit = (char)('1' + i);
-            if (i >= sortedLayers.Count)
-            {
-                AnsiConsole.AppendColored(layersSb, digit, palette.Dimmed);
-            }
-            else
-            {
-                var l = sortedLayers[i];
-                if (!l.Enabled)
-                {
-                    AnsiConsole.AppendColored(layersSb, digit, palette.Dimmed);
-                }
-                else
-                {
-                    AnsiConsole.AppendColored(layersSb, digit, palette.Normal);
-                }
-            }
-        }
+        AppendPresetEditorLayerDigits(layersSb, sortedLayers, idx, palette);
         string layersAnsi = layersSb.ToString();
         list.Add(new LabeledValueDescriptor("Layers", () => new AnsiText(layersAnsi), preformattedAnsi: true));
 
@@ -222,6 +184,23 @@ public sealed class TextLayersToolbarBuilder : ITextLayersToolbarBuilder
         paletteSb.Append(PaletteSwatchFormatter.FormatPaletteColoredName(paletteName, paletteColors, phase));
         list.Add(new LabeledValueDescriptor(paletteLabel, () => new AnsiText(paletteSb.ToString()), preformattedAnsi: true));
         return list;
+    }
+
+    private static void AppendPresetEditorLayerDigits(
+        StringBuilder sb,
+        IReadOnlyList<TextLayerSettings> sortedLayers,
+        int selectedLayerIndex,
+        UiPalette palette)
+    {
+        for (int i = 0; i < sortedLayers.Count; i++)
+        {
+            char digit = (char)('1' + i);
+            var layer = sortedLayers[i];
+            PaletteColor color = i == selectedLayerIndex
+                ? palette.Highlighted
+                : (!layer.Enabled ? palette.Dimmed : palette.Normal);
+            AnsiConsole.AppendColored(sb, digit, color);
+        }
     }
 
     private static void AppendPaletteColoredName(StringBuilder sb, TextLayersToolbarContext context, PaletteDefinition? paletteDef, string paletteName)

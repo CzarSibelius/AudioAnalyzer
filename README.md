@@ -43,7 +43,7 @@ For bug reports or sharing what you see: press **Ctrl+Shift+E** to write a plain
 ## At a glance
 
 - **Audio**: Loopback, device capture, or Demo Mode; settings are saved when you change them.
-- **Layers & presets**: Up to nine layers per preset; edit layers and options in the **S** settings flow when in Preset editor.
+- **Layers & presets**: Up to nine layers per preset (fewer if you remove layers); add or remove layers with **Insert** / **Delete** in the **S** modal layer list; edit layer options there when in Preset editor.
 - **Shows**: Optional auto-cycling through presets (see **Tab** in the app help).
 - **Files next to the app**: `presets/`, `shows/`, `palettes/`, optional **`link_shim.dll`** for Ableton Link, and `appsettings.json` are documented in [docs/configuration-reference.md](docs/configuration-reference.md).
 

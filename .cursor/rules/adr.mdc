@@ -23,7 +23,7 @@ alwaysApply: true
 
 9. **Presets**: TextLayers configurations are stored as Presets in `presets/*.json` (one file per preset). V cycles presets; S modal: R rename, N new preset. See [ADR-0019](docs/adr/0019-preset-textlayers-configuration.md), [ADR-0022](docs/adr/0022-presets-in-own-files.md).
 
-10. **Layer settings editing**: The S settings modal is the canonical UI for editing layer settings (common properties and Custom). When adding layer-editing capabilities, implement them in the S modal, not in HandleKey or other ad-hoc places. See [ADR-0023](docs/adr/0023-settings-modal-layer-editing.md).
+10. **Layer settings editing**: The S settings modal is the canonical UI for editing layer settings (common properties and Custom). **Add and remove layers** (layer count 0..`TextLayersLimits.MaxLayerCount`) is also done in the S modal, not outside it. When adding layer-editing or layer-list capabilities, implement them in the S modal, not in HandleKey or other ad-hoc places. See [ADR-0023](docs/adr/0023-settings-modal-layer-editing.md), [ADR-0070](docs/adr/0070-settings-modal-add-remove-layers.md).
 
 11. **Layer settings discovery**: Layer settings are discovered via reflection. New settings: add *Settings.cs with properties; use [SettingRange], [SettingChoices], [Setting] where needed; register in LayerSettingsReflection.s_customSettingsRegistry. See [ADR-0021](docs/adr/0021-textlayer-settings-common-custom.md), [ADR-0025](docs/adr/0025-reflection-based-layer-settings.md).
 
@@ -65,7 +65,7 @@ alwaysApply: true
 
 30. **Layer renderer state type**: Every text layer renderer inherits TextLayerRendererBase and implements `ITextLayerRenderer<TState>` (marker) so the per-layer state type is part of the contract. Stateful layers implement `ITextLayerRenderer<TheirStateType>`; stateless layers implement `ITextLayerRenderer<NoLayerState>`. See [ADR-0044](docs/adr/0044-textlayer-renderer-generic-state-type.md).
 
-31. **Max text layers**: The global maximum number of text layers is 9, defined by `TextLayersLimits.MaxLayerCount` (Domain). Use this constant for layer count limits, padding, defaults, and key bindings 1–9; do not hardcode 9. The value is not user-editable (not in appsettings or settings UI). See [ADR-0045](docs/adr/0045-max-text-layers-constant.md).
+31. **Max text layers**: The global maximum number of text layers is 9, defined by `TextLayersLimits.MaxLayerCount` (Domain). Use this constant for the upper cap, defaults, and key bindings 1–9; do not hardcode 9. Add/remove layers in the S modal (0..max) per [ADR-0070](docs/adr/0070-settings-modal-add-remove-layers.md). The max is not user-editable (not in appsettings or settings UI). See [ADR-0045](docs/adr/0045-max-text-layers-constant.md).
 
 32. **Screen dump**: Screen capture (ASCII screenshot) is provided by `IScreenDumpService`; default output is plain ASCII (ANSI stripped). Use the service for any new dump behavior; hotkey is Ctrl+Shift+E, CLI options are `--dump-after N` and `--dump-path`. See [ADR-0046](docs/adr/0046-screen-dump-ascii-screenshot.md).
 

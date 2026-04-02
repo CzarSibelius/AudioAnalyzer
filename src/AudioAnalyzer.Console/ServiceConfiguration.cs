@@ -54,6 +54,7 @@ internal static class ServiceConfiguration
             return new NullNowPlayingProvider();
         });
 
+        services.AddSingleton<IDefaultTextLayersSettingsFactory>(_ => new DefaultTextLayersSettingsFactory());
         services.AddSingleton<TextLayerStateStore>();
         services.AddSingleton<ITextLayerStateStore>(sp => sp.GetRequiredService<TextLayerStateStore>());
         services.AddSingleton<ITextLayerStateStore<FallingLettersLayerState>>(sp => sp.GetRequiredService<TextLayerStateStore>());

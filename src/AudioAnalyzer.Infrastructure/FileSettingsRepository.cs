@@ -113,6 +113,7 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
             vs.ActivePresetId = activeId ?? active.Id;
             vs.TextLayers ??= new TextLayersVisualizerSettings();
             vs.TextLayers.CopyFrom(active.Config);
+            TextLayersPersistenceNormalization.NormalizeLayerList(vs.TextLayers);
         }
     }
 
@@ -257,13 +258,13 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
         };
     }
 
-    /// <summary>Ensures VisualizerSettings exists and TextLayers has at least <see cref="TextLayersLimits.MaxLayerCount"/> layers when present. Per ADR-0029, no migration of legacy formats.</summary>
-    private void EnsureVisualizerSettingsStructure(SettingsFile file)
+    /// <summary>Ensures VisualizerSettings exists and normalizes embedded TextLayers layer list when present (cap only; per ADR-0070 no padding).</summary>
+    private static void EnsureVisualizerSettingsStructure(SettingsFile file)
     {
         file.VisualizerSettings ??= new VisualizerSettings();
         if (file.VisualizerSettings.TextLayers is not null)
         {
-            EnsureTextLayersHasNineLayers(file.VisualizerSettings.TextLayers);
+            TextLayersPersistenceNormalization.NormalizeLayerList(file.VisualizerSettings.TextLayers);
         }
     }
 
@@ -283,22 +284,6 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
             TextLayers = defaultConfig
         };
         return s;
-    }
-
-    /// <summary>Ensures TextLayers has at least <see cref="TextLayersLimits.MaxLayerCount"/> layers so keys 1–9 always map to a layer. Pads with default layers if fewer; caps to MaxLayerCount if more (e.g. legacy config).</summary>
-    private void EnsureTextLayersHasNineLayers(TextLayersVisualizerSettings textLayers)
-    {
-        textLayers.Layers ??= new List<TextLayerSettings>();
-        if (textLayers.Layers.Count > TextLayersLimits.MaxLayerCount)
-        {
-            textLayers.Layers = textLayers.Layers.OrderBy(l => l.ZOrder).Take(TextLayersLimits.MaxLayerCount).ToList();
-        }
-        int maxZ = textLayers.Layers.Count > 0 ? textLayers.Layers.Max(l => l.ZOrder) : -1;
-        while (textLayers.Layers.Count < TextLayersLimits.MaxLayerCount)
-        {
-            maxZ++;
-            textLayers.Layers.Add(_defaultTextLayersFactory.CreatePaddingMarqueeLayer(maxZ, textLayers.Layers.Count + 1));
-        }
     }
 
     /// <summary>Internal DTO for JSON serialization. Holds both app-level and visualizer settings.</summary>

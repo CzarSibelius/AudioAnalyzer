@@ -92,6 +92,12 @@ public sealed class TextLayersVisualizer : IVisualizer
         {
             _layerStates.Add((0, 0));
         }
+
+        while (_layerStates.Count > sortedLayers.Count)
+        {
+            _layerStates.RemoveAt(_layerStates.Count - 1);
+        }
+
         _stateStore.EnsureCapacity(sortedLayers.Count);
 
         if (snapshot.BeatCount != _lastBeatCount)
@@ -320,6 +326,18 @@ public sealed class TextLayersVisualizer : IVisualizer
             return -1;
         }
         return Math.Clamp(_paletteCycleLayerIndex, 0, sortedLayers.Count - 1);
+    }
+
+    /// <inheritdoc />
+    public void OnTextLayersStructureChanged()
+    {
+        var sortedLayers = TryGetSortedLayersSnapshot(_settings);
+        int n = sortedLayers?.Count ?? 0;
+        _paletteCycleLayerIndex = n == 0 ? 0 : Math.Clamp(_paletteCycleLayerIndex, 0, n - 1);
+        while (_layerStates.Count > n)
+        {
+            _layerStates.RemoveAt(_layerStates.Count - 1);
+        }
     }
 
     /// <summary>Gets a snapshot of layers sorted by ZOrder, or null if config is empty or the collection was modified during copy (e.g. during show-mode switch or shutdown).</summary>

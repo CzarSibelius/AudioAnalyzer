@@ -8,4 +8,7 @@ public interface ITextLayerStateStore
 
     /// <summary>Clears the state at the given layer index so the next draw will create state for the layer type at that slot.</summary>
     void ClearState(int layerIndex);
+
+    /// <summary>Removes the slot at <paramref name="sortedLayerIndex"/> and shifts higher indices down (after a layer is removed from the sorted list).</summary>
+    void RemoveSlotAt(int sortedLayerIndex);
 }

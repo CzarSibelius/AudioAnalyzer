@@ -263,6 +263,73 @@ internal sealed class SettingsModalKeyHandlerConfig : IKeyHandlerConfig<Settings
                 Key: "Shift+1-9",
                 Description: "Toggle layer enabled/disabled by slot",
                 Section),
+            new KeyHandling.KeyBindingEntry<SettingsModalKeyContext>(
+                Matches: k => k.Key == ConsoleKey.Insert,
+                Action: (_, context) =>
+                {
+                    var textLayers = context.TextLayers;
+                    var layers = textLayers.Layers ??= new List<TextLayerSettings>();
+                    if (layers.Count >= TextLayersLimits.MaxLayerCount)
+                    {
+                        return false;
+                    }
+
+                    int maxZ = layers.Count > 0 ? layers.Max(l => l.ZOrder) : -1;
+                    int displayNum = layers.Count + 1;
+                    var newLayer = context.DefaultTextLayersFactory.CreatePaddingMarqueeLayer(maxZ + 1, displayNum);
+                    layers.Add(newLayer);
+                    context.SortedLayers = layers.OrderBy(l => l.ZOrder).ToList();
+                    var state = context.State;
+                    state.LeftPanelPresetSelected = false;
+                    state.SelectedLayerIndex = context.SortedLayers.Count - 1;
+                    context.NotifyLayersStructureChanged();
+                    return false;
+                },
+                Key: "Insert",
+                Description: "Add text layer (up to max)",
+                Section),
+            new KeyHandling.KeyBindingEntry<SettingsModalKeyContext>(
+                Matches: k => k.Key == ConsoleKey.Delete,
+                Action: (_, context) =>
+                {
+                    var state = context.State;
+                    if (state.LeftPanelPresetSelected)
+                    {
+                        return false;
+                    }
+
+                    var sorted = context.SortedLayers;
+                    if (sorted.Count == 0)
+                    {
+                        return false;
+                    }
+
+                    int idx = state.SelectedLayerIndex;
+                    if (idx < 0 || idx >= sorted.Count)
+                    {
+                        return false;
+                    }
+
+                    var toRemove = sorted[idx];
+                    context.TextLayers.Layers?.Remove(toRemove);
+                    context.LayerStateStore.RemoveSlotAt(idx);
+                    context.SortedLayers = (context.TextLayers.Layers ?? []).OrderBy(l => l.ZOrder).ToList();
+                    if (context.SortedLayers.Count == 0)
+                    {
+                        state.LeftPanelPresetSelected = true;
+                        state.SelectedLayerIndex = 0;
+                    }
+                    else
+                    {
+                        state.SelectedLayerIndex = Math.Min(idx, context.SortedLayers.Count - 1);
+                    }
+
+                    context.NotifyLayersStructureChanged();
+                    return false;
+                },
+                Key: "Delete",
+                Description: "Remove selected text layer",
+                Section),
         ];
     }
 

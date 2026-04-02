@@ -1,5 +1,6 @@
 using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Domain;
+using AudioAnalyzer.Visualizers;
 
 namespace AudioAnalyzer.Console;
 
@@ -17,6 +18,8 @@ internal sealed class SettingsModal : ISettingsModal
     private readonly ITextLayerBoundsEditSession _boundsEditSession;
     private readonly ITitleBarNavigationContext _navigation;
     private readonly IVisualizer _visualizer;
+    private readonly IDefaultTextLayersSettingsFactory _defaultTextLayersFactory;
+    private readonly ITextLayerStateStore _layerStateStore;
 
     public SettingsModal(
         IVisualizationOrchestrator orchestrator,
@@ -27,7 +30,9 @@ internal sealed class SettingsModal : ISettingsModal
         IConsoleDimensions consoleDimensions,
         ITextLayerBoundsEditSession boundsEditSession,
         ITitleBarNavigationContext navigation,
-        IVisualizer visualizer)
+        IVisualizer visualizer,
+        IDefaultTextLayersSettingsFactory defaultTextLayersFactory,
+        ITextLayerStateStore layerStateStore)
     {
         _orchestrator = orchestrator ?? throw new ArgumentNullException(nameof(orchestrator));
         _visualizerSettings = visualizerSettings ?? throw new ArgumentNullException(nameof(visualizerSettings));
@@ -38,6 +43,8 @@ internal sealed class SettingsModal : ISettingsModal
         _boundsEditSession = boundsEditSession ?? throw new ArgumentNullException(nameof(boundsEditSession));
         _navigation = navigation ?? throw new ArgumentNullException(nameof(navigation));
         _visualizer = visualizer ?? throw new ArgumentNullException(nameof(visualizer));
+        _defaultTextLayersFactory = defaultTextLayersFactory ?? throw new ArgumentNullException(nameof(defaultTextLayersFactory));
+        _layerStateStore = layerStateStore ?? throw new ArgumentNullException(nameof(layerStateStore));
     }
 
     /// <inheritdoc />
@@ -58,7 +65,8 @@ internal sealed class SettingsModal : ISettingsModal
             state.SelectedLayerIndex = Math.Clamp(activeSorted, 0, sortedLayers.Count - 1);
         }
 
-        var context = new SettingsModalKeyContext
+        SettingsModalKeyContext context = null!;
+        context = new SettingsModalKeyContext
         {
             State = state,
             SortedLayers = sortedLayers,
@@ -66,6 +74,15 @@ internal sealed class SettingsModal : ISettingsModal
             VisualizerSettings = _visualizerSettings,
             PresetRepository = _presetRepository,
             SaveSettings = saveSettings,
+            DefaultTextLayersFactory = _defaultTextLayersFactory,
+            LayerStateStore = _layerStateStore,
+            NotifyLayersStructureChanged = () =>
+            {
+                textLayers.Layers ??= new List<TextLayerSettings>();
+                context.SortedLayers = textLayers.Layers.OrderBy(l => l.ZOrder).ToList();
+                _visualizer.OnTextLayersStructureChanged();
+                saveSettings();
+            },
             RequestVisualBoundsEdit = idx => _boundsEditSession.BeginEdit(idx, textLayers)
         };
 

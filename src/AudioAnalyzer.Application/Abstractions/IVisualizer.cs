@@ -23,6 +23,9 @@ public interface IVisualizer
     /// <summary>Optional: 0-based z-order index of the active layer for title bar (e.g. 0 for back, 8 for front). Return -1 if not applicable.</summary>
     int GetActiveLayerZIndex() => -1;
 
+    /// <summary>Called when the text layer list length may have changed (e.g. add/remove in the S modal). Implementations should clamp internal selection indices.</summary>
+    void OnTextLayersStructureChanged() { }
+
     /// <summary>Handles visualizer-specific key bindings (e.g. 1–9 for TextLayers). Returns true if the key was consumed.</summary>
     bool HandleKey(ConsoleKeyInfo key) => false;
 }

@@ -4,7 +4,7 @@ Top-level **`ApplicationMode`** values ([`ApplicationMode`](../src/AudioAnalyzer
 
 | Mode | Enum | Spec | Header rows | Main area |
 |------|------|------|-------------|-----------|
-| **Preset editor** | `PresetEditor` | [ui-spec-preset-editor-mode.md](ui-spec-preset-editor-mode.md) | 3 (title + device/now + BPM/volume) | Full **TextLayers** toolbar (layer digits 1–9, optional contextual fields, Palette) + visualizer |
+| **Preset editor** | `PresetEditor` | [ui-spec-preset-editor-mode.md](ui-spec-preset-editor-mode.md) | 3 (title + device/now + BPM/volume) | Full **TextLayers** toolbar (one digit per layer, optional contextual fields, Palette) + visualizer |
 | **Show play** | `ShowPlay` | [ui-spec-show-play-mode.md](ui-spec-show-play-mode.md) | 3 (same as preset) | Compact toolbar (**Show**, **Entry**, optional contextual fields, **Palette**) + visualizer; presets auto-cycle per Show ([ADR-0031](adr/0031-show-preset-collection.md)) |
 | **General settings** | `Settings` | [ui-spec-general-settings-hub.md](ui-spec-general-settings-hub.md) | 1 (title breadcrumb only) | Hub menu (**HorizontalRowComponent**); no visualizer ([ADR-0061](adr/0061-general-settings-mode.md), [ADR-0062](adr/0062-application-mode-classes.md)) |
 

@@ -85,6 +85,7 @@ Decisions are numbered and kept under version control so the rationale stays wit
 | [0067](0067-60fps-target-and-render-fps-overlay.md) | 60 FPS target for main redraw, `MeasuredMainRenderFps`, optional toolbar FPS overlay | Accepted |
 | [0068](0068-agents-md-vs-readme.md) | AGENTS.md vs README — agent instructions vs human documentation | Accepted |
 | [0069](0069-unified-menu-selection-affordance.md) | Unified menu selection affordance — arrow + theme background/foreground | Accepted |
+| [0070](0070-settings-modal-add-remove-layers.md) | Settings modal — add/remove text layers (0..MaxLayerCount) | Accepted |
 
 ## Process
 

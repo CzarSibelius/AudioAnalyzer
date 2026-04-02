@@ -79,7 +79,7 @@ A **Show** is an ordered collection of presets with per-entry duration. In **Sho
 - **Shift+1–9** — Toggle the corresponding layer enabled/disabled. Disabled layers are not rendered. Changes persist to the active preset file.
 - **I** — Cycle to the next picture (AsciiImage) or next `.obj` file (AsciiModel) when at least one such layer exists.
 - **[ / ]** — Adjust gain (1.0–10.0) when the selected layer is Oscilloscope.
-- Toolbar: shows layers as "123456789" (active in highlight, disabled dimmed); key hints (1–9 select, ←→ type, Shift+1–9 toggle); optional contextual fields for the **palette-cycled** layer (e.g. `Gain` for Oscilloscope, `Image` / `Model` file name for AsciiImage / AsciiModel, matching the asset chosen by **I** / snippet index); `Palette` for the active layer; dynamic help lists **I** when AsciiImage or AsciiModel layers exist
+- Toolbar: shows **one digit per layer** in stack order (`1`…`n`, up to max layers); **palette-cycled** layer digit uses highlight color, disabled layers use dimmed, other enabled layers use normal; no digits for slots that do not exist. Key hints (1–9 select, ←→ type, Shift+1–9 toggle); optional contextual fields for the palette-cycled layer (e.g. `Gain` for Oscilloscope, `Image` / `Model` file name for AsciiImage / AsciiModel, matching the asset chosen by **I** / snippet index); `Palette` for the active layer; dynamic help lists **I** when AsciiImage or AsciiModel layers exist
 
 ## Viewport constraints
 

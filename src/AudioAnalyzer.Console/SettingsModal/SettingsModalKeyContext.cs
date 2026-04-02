@@ -25,6 +25,15 @@ internal sealed class SettingsModalKeyContext : IKeyHandlerContext
     /// <summary>Called when settings should be persisted.</summary>
     public Action SaveSettings { get; init; } = () => { };
 
+    /// <summary>Factory for default layer rows when adding a layer (ADR-0070).</summary>
+    public required IDefaultTextLayersSettingsFactory DefaultTextLayersFactory { get; init; }
+
+    /// <summary>Shared per-layer animation slots; <see cref="ITextLayerStateStore.RemoveSlotAt"/> when a layer is removed.</summary>
+    public required ITextLayerStateStore LayerStateStore { get; init; }
+
+    /// <summary>After mutating <see cref="TextLayers.Layers"/>, refreshes sorted list reference, clamps the visualizer, and persists.</summary>
+    public Action NotifyLayersStructureChanged { get; init; } = () => { };
+
     /// <summary>When set, Enter on the "Render region" row starts live visual bounds editing and closes the modal.</summary>
     public Action<int>? RequestVisualBoundsEdit { get; init; }
 }

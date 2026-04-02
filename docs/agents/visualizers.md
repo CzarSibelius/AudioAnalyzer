@@ -29,7 +29,7 @@ Create new visualizer content as **text layer renderers** in TextLayersVisualize
 - **Layer settings**: TextLayerSettings has common props plus Custom (JSON). Layer-specific settings go in *Settings.cs next to the layer; use `GetCustom<TSettings>()` in Draw. New settings: add *Settings.cs, use [SettingRange]/[SettingChoices]/[Setting], register in LayerSettingsReflection.s_customSettingsRegistry. See ADR-0021, ADR-0025.
 - **Layer state**: Stateful layers use **ITextLayerStateStore&lt;TState&gt;**; call `GetState(ctx.LayerIndex)` in Draw. Do not add new required properties to TextLayerDrawContext. See ADR-0043.
 - **Layer settings editing**: The S settings modal is the canonical UI for editing layer settings. Implement layer-editing in the S modal, not in HandleKey or other ad-hoc places. See ADR-0023.
-- **Max layers**: Use **TextLayersLimits.MaxLayerCount** (9) for layer count limits, padding, defaults, and key bindings 1–9; do not hardcode 9. See ADR-0045.
+- **Max layers**: Use **TextLayersLimits.MaxLayerCount** (9) for the upper cap, defaults, and key bindings 1–9; do not hardcode 9. Presets may persist fewer layers (no load-time padding); add/remove in the S modal per ADR-0070. See ADR-0045.
 
 ## Visualizer specs
 

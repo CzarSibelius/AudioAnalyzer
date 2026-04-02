@@ -143,11 +143,13 @@ public sealed class FilePresetRepository : IPresetRepository
             {
                 return null;
             }
+            var config = dto.Config ?? new TextLayersVisualizerSettings();
+            TextLayersPersistenceNormalization.NormalizeLayerList(config);
             return new Preset
             {
                 Id = id,
                 Name = dto.Name ?? id,
-                Config = dto.Config ?? new TextLayersVisualizerSettings()
+                Config = config
             };
         }
         catch
