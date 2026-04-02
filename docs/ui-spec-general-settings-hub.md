@@ -17,6 +17,7 @@ General settings
   Application name:aUdioNLZR
   Default asset folder:(App base)
   UI theme (T):(Custom)
+  Show render FPS (Enter):Off
 ```
 
 (Plain-text mockup; on screen the hub title and menu **values** use per-grapheme palette colors with the same beat/tick phase as the toolbar palette swatch.)
@@ -32,6 +33,7 @@ General settings
 - **7** — Menu: **Application name:** effective short name (same rules as the title bar: `TitleBarAppName` when set, otherwise derived from `Title`). Value coloring matches line **5**. Prefix `>` when selected. **Enter** opens rename; printable keys edit; **Enter** confirms; **Esc** cancels.
 - **8** — Menu: **Default asset folder:** when `UiSettings.DefaultAssetFolderPath` is unset, the value shows **`(App base)`** (layers with empty image/model folder use `AppContext.BaseDirectory` as the global base); when set, the configured path (trimmed). Value coloring matches line **5**. Prefix `>` when selected. **Enter** opens path edit; printable keys and **Backspace** edit; **Enter** confirms (empty buffer clears the setting); **Esc** cancels.
 - **9** — Menu: **UI theme (T):** palette display name, **`(Custom)`** when `UiThemePaletteId` is unset (inline `UiSettings.Palette` / `TitleBarPalette` in appsettings). Value coloring matches line **5**. Prefix `>` when selected. **Enter** or **T** opens the theme list (**(Custom)** clears the theme id; otherwise sets `UiThemePaletteId` to the chosen layer palette id). **Esc** cancels the modal without changing the theme. In the theme list modal, palette names use the same beat/tick-driven per-letter colors as the S-modal palette picker; the list idle-redraws when the palette name animation frame advances (`PaletteSwatchFormatter.PaletteAnimationFrameAdvanced`).
+- **10** — Menu: **Show render FPS (Enter):** **`On`** or **`Off`** for `UiSettings.ShowRenderFps` ([ADR-0067](adr/0067-60fps-target-and-render-fps-overlay.md)). When on, the main toolbar shows a smoothed **FPS** value for full visualization redraws. Prefix `>` when selected. **Enter** toggles and persists settings.
 
 When **Application name** or **Default asset folder** is being edited, an additional line **Edit:** appears below the menu with the current buffer (implementation may truncate).
 

@@ -226,7 +226,8 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
             DefaultScrollingSpeed = file.DefaultScrollingSpeed,
             Palette = palette,
             UiThemePaletteId = string.IsNullOrWhiteSpace(file.UiThemePaletteId) ? null : file.UiThemePaletteId.Trim(),
-            DefaultAssetFolderPath = string.IsNullOrWhiteSpace(file.DefaultAssetFolderPath) ? null : file.DefaultAssetFolderPath.Trim()
+            DefaultAssetFolderPath = string.IsNullOrWhiteSpace(file.DefaultAssetFolderPath) ? null : file.DefaultAssetFolderPath.Trim(),
+            ShowRenderFps = file.ShowRenderFps
         };
     }
 
@@ -244,6 +245,7 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
             DefaultScrollingSpeed = settings.DefaultScrollingSpeed,
             UiThemePaletteId = string.IsNullOrWhiteSpace(settings.UiThemePaletteId) ? null : settings.UiThemePaletteId.Trim(),
             DefaultAssetFolderPath = string.IsNullOrWhiteSpace(settings.DefaultAssetFolderPath) ? null : settings.DefaultAssetFolderPath.Trim(),
+            ShowRenderFps = settings.ShowRenderFps,
             Palette = new UiPaletteFile
             {
                 Normal = ColorPaletteParser.ToEntry(palette.Normal),
@@ -321,6 +323,7 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
         public double DefaultScrollingSpeed { get; set; } = 0.25;
         public string? UiThemePaletteId { get; set; }
         public string? DefaultAssetFolderPath { get; set; }
+        public bool ShowRenderFps { get; set; }
         public UiPaletteFile? Palette { get; set; }
     }
 

@@ -14,7 +14,8 @@ internal sealed class GeneralSettingsHubKeyHandlerConfig : IKeyHandlerConfig<Gen
     private const int MenuAppName = 2;
     private const int MenuDefaultAssetFolder = 3;
     private const int MenuTheme = 4;
-    private const int MenuCount = 5;
+    private const int MenuShowRenderFps = 5;
+    private const int MenuCount = 6;
 
     private static IReadOnlyList<KeyHandling.KeyBindingEntry<GeneralSettingsHubKeyContext>> GetEntries() =>
     [
@@ -68,8 +69,16 @@ internal sealed class GeneralSettingsHubKeyHandlerConfig : IKeyHandlerConfig<Gen
             MenuAppName => StartApplicationNameEdit(ctx),
             MenuDefaultAssetFolder => StartDefaultAssetFolderEdit(ctx),
             MenuTheme => OpenThemePicker(ctx),
+            MenuShowRenderFps => ToggleShowRenderFps(ctx),
             _ => false
         };
+    }
+
+    private static bool ToggleShowRenderFps(GeneralSettingsHubKeyContext ctx)
+    {
+        ctx.UiSettings.ShowRenderFps = !ctx.UiSettings.ShowRenderFps;
+        ctx.SaveSettings();
+        return true;
     }
 
     private static bool CycleBpmSource(GeneralSettingsHubKeyContext ctx)

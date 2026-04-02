@@ -30,4 +30,9 @@ public sealed class AnalysisSnapshot
     public float RightChannel { get; set; }
     public float LeftPeakHold { get; set; }
     public float RightPeakHold { get; set; }
+
+    /// <summary>
+    /// When show-render-FPS is enabled in UI settings, smoothed full main render FPS (ADR-0067); otherwise unset.
+    /// </summary>
+    public double? MeasuredMainRenderFps { get; set; }
 }

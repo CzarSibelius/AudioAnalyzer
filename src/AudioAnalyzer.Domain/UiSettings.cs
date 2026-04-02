@@ -31,4 +31,7 @@ public class UiSettings
     /// the process content root (<c>AppContext.BaseDirectory</c>) is used as the global base; relative layer paths combine with that base.
     /// </summary>
     public string? DefaultAssetFolderPath { get; set; }
+
+    /// <summary>When true, show smoothed main render FPS on the toolbar (ADR-0067).</summary>
+    public bool ShowRenderFps { get; set; }
 }

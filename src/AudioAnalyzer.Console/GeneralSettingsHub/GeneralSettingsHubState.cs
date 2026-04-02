@@ -3,7 +3,7 @@ namespace AudioAnalyzer.Console;
 /// <summary>Mutable UI state for the General Settings hub (menu selection and inline text edits).</summary>
 internal sealed class GeneralSettingsHubState
 {
-    /// <summary>Selected menu row index (0 = audio, 1 = BPM source, 2 = application name, 3 = default asset folder, 4 = UI theme).</summary>
+    /// <summary>Selected menu row index (0 = audio, 1 = BPM source, 2 = application name, 3 = default asset folder, 4 = UI theme, 5 = show render FPS).</summary>
     public int SelectedIndex { get; set; }
 
     /// <summary>When not <see cref="GeneralSettingsHubEditMode.None"/>, keys edit <see cref="RenameBuffer"/>.</summary>

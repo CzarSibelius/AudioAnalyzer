@@ -4,7 +4,7 @@
 
 ## Context
 
-The application is a real-time console audio visualizer. It redraws the terminal at ~20 Hz while processing audio and handling keyboard input. Console I/O and polling are on the hot path; any inefficiency causes frame drops, input lag, or visual stutter.
+The application is a real-time console audio visualizer. It processes audio and keyboard input while redrawing the terminal; **target cadence for full main-area redraws** is ~60 Hz (see [ADR-0067](0067-60fps-target-and-render-fps-overlay.md)). Console I/O and polling are on the hot path; any inefficiency causes frame drops, input lag, or visual stutter.
 
 ## Decision
 
@@ -37,7 +37,7 @@ The application is a real-time console audio visualizer. It redraws the terminal
 
 2. **Toolbar and header skip-write**: Header skip-write was removed during the renderer-interfaces migration ([renderer-interfaces-migration.md](../../docs/refactoring/renderer-interfaces-migration.md)): dispatcher always writes header lines (no cache). Toolbar in main content still writes every frame; optional skip-write not implemented.
 
-3. **Cheaper time check in AnalysisEngine**: Replace `DateTime.Now` with `Environment.TickCount64` for `UpdateIntervalMs` throttling.
+3. **Cheaper time check**: `VisualizationOrchestrator` uses `Stopwatch.GetTimestamp()` for main-render throttling ([ADR-0067](0067-60fps-target-and-render-fps-overlay.md)). **`AnalysisEngine`** may still use `DateTime.Now` where applicable; prefer high-resolution or tick APIs on hot paths when touched.
 
 4. **Header batching**: If beneficial, build the 6-line header into a single string and write once (with newlines) instead of 6 separate writes. Profile first.
 

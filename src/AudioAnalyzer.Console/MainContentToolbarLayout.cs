@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Application.Display;
@@ -12,6 +13,7 @@ internal static class MainContentToolbarLayout
 {
     public static (IReadOnlyList<LabeledValueDescriptor> Descriptors, IReadOnlyList<int> Widths) BuildGeneralSettingsToolbarRowData(
         RenderContext context,
+        UiSettings uiSettings,
         UiPalette effectiveUiPalette,
         IVisualizer visualizer,
         IReadOnlyList<PaletteColor>? paletteForSwatch,
@@ -34,11 +36,12 @@ internal static class MainContentToolbarLayout
                 }, preformattedAnsi: true)
                 : new LabeledValueDescriptor("", () => new PlainText(""))
         };
-        return (descriptors, new[] { cell1Width, cell2Width });
+        return AppendFpsToolbarCellIfEnabled(uiSettings, context.Snapshot!, descriptors, new[] { cell1Width, cell2Width });
     }
 
     public static (IReadOnlyList<LabeledValueDescriptor> Descriptors, IReadOnlyList<int> Widths) BuildVisualizerToolbarRowData(
         RenderContext context,
+        UiSettings uiSettings,
         UiPalette effectiveUiPalette,
         IVisualizer visualizer,
         IReadOnlyList<PaletteColor>? paletteForSwatch,
@@ -54,7 +57,7 @@ internal static class MainContentToolbarLayout
         if (segmentDescriptors is { Count: > 0 })
         {
             IReadOnlyList<int> segmentWidths = GetToolbarSegmentWidths(width, segmentDescriptors.Count);
-            return (segmentDescriptors, segmentWidths);
+            return AppendFpsToolbarCellIfEnabled(uiSettings, context.Snapshot!, segmentDescriptors, segmentWidths);
         }
 
         (int cell1Width, int cell2Width) = GetToolbarCellWidths(width);
@@ -75,7 +78,57 @@ internal static class MainContentToolbarLayout
                 : new LabeledValueDescriptor("", () => new PlainText(""))
         };
         var widths = new[] { cell1Width, cell2Width };
-        return (descriptors, widths);
+        return AppendFpsToolbarCellIfEnabled(uiSettings, context.Snapshot!, descriptors, widths);
+    }
+
+    /// <summary>
+    /// When <see cref="UiSettings.ShowRenderFps"/> is true, appends an FPS value column (ADR-0067).
+    /// </summary>
+    public static (IReadOnlyList<LabeledValueDescriptor> Descriptors, IReadOnlyList<int> Widths) AppendFpsToolbarCellIfEnabled(
+        UiSettings uiSettings,
+        AnalysisSnapshot snapshot,
+        IReadOnlyList<LabeledValueDescriptor> descriptors,
+        IReadOnlyList<int> widths)
+    {
+        if (!uiSettings.ShowRenderFps || descriptors.Count == 0 || widths.Count != descriptors.Count)
+        {
+            return (descriptors, widths);
+        }
+
+        const int fpsColumnWidth = 8;
+        const int minRemainInDonor = 8;
+        var w = new List<int>(widths);
+        int donor = -1;
+        for (int i = 0; i < w.Count; i++)
+        {
+            if (w[i] >= fpsColumnWidth + minRemainInDonor)
+            {
+                donor = i;
+                break;
+            }
+        }
+
+        if (donor < 0)
+        {
+            return (descriptors, widths);
+        }
+
+        w[donor] -= fpsColumnWidth;
+        var d = new List<LabeledValueDescriptor>(descriptors)
+        {
+            new LabeledValueDescriptor("FPS", () =>
+            {
+                if (!snapshot.MeasuredMainRenderFps.HasValue)
+                {
+                    return new PlainText("\u2014");
+                }
+
+                int rounded = (int)Math.Round(Math.Clamp(snapshot.MeasuredMainRenderFps.Value, 0, 999));
+                return new PlainText(rounded.ToString(CultureInfo.InvariantCulture));
+            })
+        };
+        w.Add(fpsColumnWidth);
+        return (d, w);
     }
 
     /// <summary>Distributes total width across N toolbar segments in 8-column blocks.</summary>

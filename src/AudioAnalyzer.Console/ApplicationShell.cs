@@ -218,7 +218,7 @@ internal sealed class ApplicationShell
                     }
                 }
             }
-            Thread.Sleep(50);
+            Thread.Sleep(16);
         }
 
         Shutdown();

@@ -129,6 +129,29 @@ internal static class GeneralSettingsHubMenuLines
         return sb.ToString();
     }
 
+    /// <summary>Formats the show-render-FPS toolbar overlay row (ADR-0067).</summary>
+    public static string FormatShowRenderFpsLine(
+        GeneralSettingsHubState state,
+        UiPalette palette,
+        AnalysisSnapshot snapshot,
+        IReadOnlyList<PaletteColor> beatColors,
+        UiSettings uiSettings)
+    {
+        string value = uiSettings.ShowRenderFps ? "On" : "Off";
+        string prefix = state.SelectedIndex == 5 ? "> " : "  ";
+        var sb = new StringBuilder();
+        AppendMenuLine(
+            sb,
+            palette,
+            snapshot,
+            beatColors,
+            prefix,
+            state.SelectedIndex == 5,
+            "Show render FPS (Enter)",
+            value);
+        return sb.ToString();
+    }
+
     /// <summary>Formats the default asset folder row for preformatted horizontal-row rendering.</summary>
     public static string FormatDefaultAssetFolderLine(
         GeneralSettingsHubState state,

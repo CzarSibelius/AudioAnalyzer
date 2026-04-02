@@ -63,3 +63,4 @@ For bug reports or sharing what you see: press **Ctrl+Shift+E** to write a plain
 - Use **loopback** to visualize system playback; use a **capture device** for microphone or other inputs.
 - **Demo Mode** is useful to explore visuals without playing music.
 - Meaningful spectrum and level readouts need signal on the chosen input (or Demo Mode).
+- In **General settings**, enable **Show render FPS** (or set `ShowRenderFps` in `appsettings.json`) to show smoothed visualization frame rate on the toolbar; see [ADR-0067](docs/adr/0067-60fps-target-and-render-fps-overlay.md).

@@ -143,6 +143,7 @@ internal static class ServiceConfiguration
         services.AddSingleton<IVolumeAnalyzer, VolumeAnalyzer>();
         services.AddSingleton<IFftBandProcessor, FftBandProcessor>();
         services.AddSingleton<AnalysisEngine>();
+        services.AddSingleton<MainRenderFpsMeter>();
         services.AddSingleton<IVisualizationOrchestrator, VisualizationOrchestrator>();
         services.AddSingleton<ShowPlaybackController>();
         services.AddSingleton<IScrollingTextEngine, ScrollingTextEngine>();

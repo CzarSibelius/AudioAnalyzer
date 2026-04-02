@@ -1,5 +1,8 @@
+using System.Diagnostics;
 using AudioAnalyzer.Application;
 using AudioAnalyzer.Application.Abstractions;
+using AudioAnalyzer.Application.Display;
+using AudioAnalyzer.Domain;
 
 namespace AudioAnalyzer.Console;
 
@@ -16,11 +19,14 @@ namespace AudioAnalyzer.Console;
 /// </remarks>
 internal sealed class VisualizationOrchestrator : IVisualizationOrchestrator
 {
-    private const int UpdateIntervalMs = 50;
+    /// <summary>Target ~60 FPS for full main redraw when the audio pipeline allows (ADR-0067).</summary>
+    private const int UpdateIntervalMs = 16;
     private const int MinWidth = 30;
     private const int MinHeight = 15;
 
-    private DateTime _lastUpdate = DateTime.Now;
+    private static readonly double s_msPerTick = 1000.0 / Stopwatch.Frequency;
+
+    private long _lastUpdateTicks;
     private int _lastTerminalWidth;
     private int _lastTerminalHeight;
     private int _displayStartRow = 3;
@@ -36,19 +42,25 @@ internal sealed class VisualizationOrchestrator : IVisualizationOrchestrator
     private readonly IDisplayDimensions _displayDimensions;
     private readonly IDisplayState _displayState;
     private readonly IApplicationModeHeaderProvider _headerLayout;
+    private readonly UiSettings _uiSettings;
+    private readonly MainRenderFpsMeter _fpsMeter;
 
     public VisualizationOrchestrator(
         AnalysisEngine engine,
         IVisualizationRenderer renderer,
         IDisplayDimensions displayDimensions,
         IDisplayState displayState,
-        IApplicationModeHeaderProvider headerLayout)
+        IApplicationModeHeaderProvider headerLayout,
+        UiSettings uiSettings,
+        MainRenderFpsMeter fpsMeter)
     {
         _engine = engine ?? throw new ArgumentNullException(nameof(engine));
         _renderer = renderer ?? throw new ArgumentNullException(nameof(renderer));
         _displayDimensions = displayDimensions ?? throw new ArgumentNullException(nameof(displayDimensions));
         _displayState = displayState ?? throw new ArgumentNullException(nameof(displayState));
         _headerLayout = headerLayout ?? throw new ArgumentNullException(nameof(headerLayout));
+        _uiSettings = uiSettings ?? throw new ArgumentNullException(nameof(uiSettings));
+        _fpsMeter = fpsMeter ?? throw new ArgumentNullException(nameof(fpsMeter));
         _displayState.Changed += (_, _) => UpdateDisplayStartRow();
         UpdateNumBandsFromDimensions();
     }
@@ -143,12 +155,13 @@ internal sealed class VisualizationOrchestrator : IVisualizationOrchestrator
     {
         _engine.ProcessAudio(buffer, bytesRecorded, format);
 
-        if ((DateTime.Now - _lastUpdate).TotalMilliseconds < UpdateIntervalMs)
+        long nowTicks = Stopwatch.GetTimestamp();
+        if ((nowTicks - _lastUpdateTicks) * s_msPerTick < UpdateIntervalMs)
         {
             return;
         }
 
-        _lastUpdate = DateTime.Now;
+        _lastUpdateTicks = nowTicks;
 
         int w = _displayDimensions.Width;
         int h = _displayDimensions.Height;
@@ -210,10 +223,16 @@ internal sealed class VisualizationOrchestrator : IVisualizationOrchestrator
             snapshot.DisplayStartRow = _displayStartRow;
             snapshot.TerminalWidth = w;
             snapshot.TerminalHeight = h;
+            snapshot.MeasuredMainRenderFps = null;
+            if (_uiSettings.ShowRenderFps && _fpsMeter.HasIntervalSample)
+            {
+                snapshot.MeasuredMainRenderFps = _fpsMeter.GetSmoothedFps();
+            }
 
             try
             {
                 _renderer.Render(snapshot);
+                _fpsMeter.RecordFrameCompleted();
             }
             catch (Exception ex)
             {

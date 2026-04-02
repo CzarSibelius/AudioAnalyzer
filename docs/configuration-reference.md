@@ -85,7 +85,7 @@ The **AsciiModel** text layer loads **Wavefront OBJ** files from a folder. The a
 
 - **BPM source** (`BpmSource`, per [ADR-0066](adr/0066-bpm-source-and-ableton-link.md)): Where tempo and the beat counter come from. Values: `AudioAnalysis` (default, energy detection on the audio stream), `DemoDevice` (BPM from the active `demo:NNN` synthetic device + time-based beats), `AbletonLink` (Ableton Link session via native `link_shim.dll`). Editable from General settings hub (**BPM source** row, **Enter** to cycle). FFT/spectrum/waveform always follow the **audio input**, not Link.
 
-- **UI settings** (`UiSettings`, per [ADR-0033](adr/0033-ui-principles-and-configurable-settings.md), [ADR-0065](adr/0065-ui-theme-from-layer-palettes.md)): App title, optional `TitleBarAppName` (short name for title bar, e.g. "aUdioNLZR"), optional `DefaultAssetFolderPath` (default base directory for AsciiImage / AsciiModel when the layer’s folder setting is empty; omit to use the app content root), optional `UiThemePaletteId` (palette filename without extension — when set, UI and title bar colors are derived from that layer palette file; omit or use General settings **(Custom)** for inline colors), optional `TitleBarPalette` (used when no theme id), UI palette (Normal, Highlighted, Dimmed, Label, optional Background), and default scrolling speed. Stored in `appsettings.json`. Colors support 24-bit RGB (`R`, `G`, `B`) or console color names (`Value`).
+- **UI settings** (`UiSettings`, per [ADR-0033](adr/0033-ui-principles-and-configurable-settings.md), [ADR-0065](adr/0065-ui-theme-from-layer-palettes.md), [ADR-0067](adr/0067-60fps-target-and-render-fps-overlay.md)): App title, optional `TitleBarAppName` (short name for title bar, e.g. "aUdioNLZR"), optional `DefaultAssetFolderPath` (default base directory for AsciiImage / AsciiModel when the layer’s folder setting is empty; omit to use the app content root), optional `UiThemePaletteId` (palette filename without extension — when set, UI and title bar colors are derived from that layer palette file; omit or use General settings **(Custom)** for inline colors), optional `TitleBarPalette` (used when no theme id), UI palette (Normal, Highlighted, Dimmed, Label, optional Background), default scrolling speed, and optional **`ShowRenderFps`** (`bool`, default `false`) to show smoothed main-render FPS on the toolbar. Stored in `appsettings.json`. Colors support 24-bit RGB (`R`, `G`, `B`) or console color names (`Value`).
 
 - **Visualizer-specific options** live under `VisualizerSettings` in the settings file (e.g. `appsettings.json`):
   - **Presets**: Stored as individual JSON files in the `presets/` directory (see above). `ActivePresetId` references the active preset. Press **V** to cycle presets (Preset editor); **S** to edit (R rename, N new preset).
@@ -99,6 +99,7 @@ Example `appsettings.json`:
   "UiSettings": {
     "Title": "AUDIO ANALYZER - Real-time Frequency Spectrum",
     "DefaultScrollingSpeed": 0.25,
+    "ShowRenderFps": false,
     "UiThemePaletteId": null,
     "Palette": {
       "Normal": { "Value": "Gray" },
