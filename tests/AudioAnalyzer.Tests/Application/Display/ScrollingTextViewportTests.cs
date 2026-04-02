@@ -122,8 +122,8 @@ public sealed class ScrollingTextViewportTests
         var palette = new UiPalette();
 
         // Drive to scroll-left: first Render goes right, second goes back left
-        _ = viewport.RenderWithLabel("Device", deviceName, totalWidth, 1.0, palette.Label, palette.Normal, "D");
-        string result = viewport.RenderWithLabel("Device", deviceName, totalWidth, 1.0, palette.Label, palette.Normal, "D");
+        _ = viewport.RenderWithLabel("Device", deviceName, totalWidth, 1.0, palette.Label, palette.Normal);
+        string result = viewport.RenderWithLabel("Device", deviceName, totalWidth, 1.0, palette.Label, palette.Normal);
 
         int displayWidth = AnsiConsole.GetDisplayWidth(result);
         Assert.Equal(totalWidth, displayWidth);
@@ -138,12 +138,12 @@ public sealed class ScrollingTextViewportTests
         var deviceWithoutEmojiFirst = new PlainText("Microphone Device Name");
 
         var viewport1 = CreateViewport();
-        _ = viewport1.RenderWithLabel("Device", deviceWithEmojiFirst, totalWidth, 1.0, palette.Label, palette.Normal, "D");
-        string resultEmoji = viewport1.RenderWithLabel("Device", deviceWithEmojiFirst, totalWidth, 1.0, palette.Label, palette.Normal, "D");
+        _ = viewport1.RenderWithLabel("Device", deviceWithEmojiFirst, totalWidth, 1.0, palette.Label, palette.Normal);
+        string resultEmoji = viewport1.RenderWithLabel("Device", deviceWithEmojiFirst, totalWidth, 1.0, palette.Label, palette.Normal);
 
         var viewport2 = CreateViewport();
-        _ = viewport2.RenderWithLabel("Device", deviceWithoutEmojiFirst, totalWidth, 1.0, palette.Label, palette.Normal, "D");
-        string resultNoEmoji = viewport2.RenderWithLabel("Device", deviceWithoutEmojiFirst, totalWidth, 1.0, palette.Label, palette.Normal, "D");
+        _ = viewport2.RenderWithLabel("Device", deviceWithoutEmojiFirst, totalWidth, 1.0, palette.Label, palette.Normal);
+        string resultNoEmoji = viewport2.RenderWithLabel("Device", deviceWithoutEmojiFirst, totalWidth, 1.0, palette.Label, palette.Normal);
 
         int lenEmoji = AnsiConsole.GetDisplayWidth(resultEmoji);
         int lenNoEmoji = AnsiConsole.GetDisplayWidth(resultNoEmoji);
@@ -154,19 +154,12 @@ public sealed class ScrollingTextViewportTests
     }
 
     [Fact]
-    public void FormatLabel_WithHotkey_ReturnsLabelWithHotkeyInParens()
+    public void FormatLabel_ReturnsLabelWithColonOnly()
     {
         var viewport = CreateViewport();
-        Assert.Equal("Preset(V):", viewport.FormatLabel("Preset", "V"));
-        Assert.Equal("Device(D):", viewport.FormatLabel("Device", "D"));
-        Assert.Equal("Mode(Tab):", viewport.FormatLabel("Mode", "Tab"));
-    }
-
-    [Fact]
-    public void FormatLabel_WithoutHotkey_ReturnsLabelWithColonOnly()
-    {
-        var viewport = CreateViewport();
-        Assert.Equal("Now:", viewport.FormatLabel("Now", null));
-        Assert.Equal("Device:", viewport.FormatLabel("Device", ""));
+        Assert.Equal("Now:", viewport.FormatLabel("Now"));
+        Assert.Equal("Device:", viewport.FormatLabel("Device"));
+        Assert.Equal("", viewport.FormatLabel(""));
+        Assert.Equal("", viewport.FormatLabel(null));
     }
 }

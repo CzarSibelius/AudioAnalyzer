@@ -72,7 +72,7 @@ public sealed class ScrollingTextComponentRenderer : IUiComponentRenderer<Scroll
     private string RenderLabeledCell(ScrollingTextComponent component, int cellWidth, double scrollSpeed,
         PaletteColor labelColor, PaletteColor textColor)
     {
-        string effectiveLabel = LabelFormatting.FormatLabel(component.Label, component.Hotkey);
+        string effectiveLabel = LabelFormatting.FormatLabel(component.Label);
         int labelDisplayWidth = string.IsNullOrEmpty(effectiveLabel)
             ? 0
             : DisplayWidth.GetDisplayWidth(effectiveLabel);

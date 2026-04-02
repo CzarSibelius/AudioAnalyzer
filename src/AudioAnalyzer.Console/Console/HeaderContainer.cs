@@ -5,7 +5,7 @@ using AudioAnalyzer.Domain;
 
 namespace AudioAnalyzer.Console;
 
-/// <summary>Header region: title bar; in Preset/Show modes also device/now and BPM/volume rows. In General settings, only the title breadcrumb row. Implements <see cref="IUiComponent"/> and composes child <see cref="IUiComponent"/>s; renders via <see cref="IUiComponentRenderer{TComponent}"/>.</summary>
+/// <summary>Header region: title bar; in Preset/Show modes also device/now and BPM/beat/volume rows. In General settings, only the title breadcrumb row. Implements <see cref="IUiComponent"/> and composes child <see cref="IUiComponent"/>s; renders via <see cref="IUiComponentRenderer{TComponent}"/>.</summary>
 internal sealed class HeaderContainer : IHeaderContainer, IUiComponent
 {
     private readonly IUiComponentRenderer<IUiComponent> _componentRenderer;
@@ -25,10 +25,9 @@ internal sealed class HeaderContainer : IHeaderContainer, IUiComponent
     private string _deviceName = "";
     private string? _nowPlayingText;
     private double _currentBpm = -1;
-    private double _beatSensitivity = 1.3;
-    private bool _beatFlashActive;
     private float _volume = -1;
-    private string _bpmBeatValue = "";
+    private string _bpmCellValue = "";
+    private string _beatCellValue = "";
     private string _volumeText = "";
 
     public HeaderContainer(
@@ -100,10 +99,9 @@ internal sealed class HeaderContainer : IHeaderContainer, IUiComponent
         _deviceName = data.DeviceName ?? "";
         _nowPlayingText = data.NowPlayingText;
         _currentBpm = data.CurrentBpm;
-        _beatSensitivity = data.BeatSensitivity;
-        _beatFlashActive = data.BeatFlashActive;
         _volume = data.Volume;
-        _bpmBeatValue = data.BpmBeatValue ?? "";
+        _bpmCellValue = data.BpmCellValue ?? "";
+        _beatCellValue = data.BeatCellValue ?? "";
         _volumeText = data.VolumeText ?? "";
     }
 
@@ -160,22 +158,28 @@ internal sealed class HeaderContainer : IHeaderContainer, IUiComponent
 
     private IReadOnlyList<LabeledValueDescriptor> BuildRow3Viewports()
     {
-        string bpmLabel = _currentBpm >= 0 ? (_currentBpm > 0 ? "BPM" : "Beat") : "";
-        return
-        [
-            _currentBpm >= 0
-                ? new LabeledValueDescriptor(bpmLabel, () => new PlainText(_bpmBeatValue))
-                : new LabeledValueDescriptor("", () => new PlainText("")),
-            _volume >= 0
-                ? new LabeledValueDescriptor("Volume/dB", () => new PlainText(_volumeText))
-                : new LabeledValueDescriptor("", () => new PlainText(""))
-        ];
+        LabeledValueDescriptor bpmDescriptor = _currentBpm >= 0
+            ? new LabeledValueDescriptor("BPM", () => new PlainText(_bpmCellValue))
+            : new LabeledValueDescriptor("", () => new PlainText(""));
+        LabeledValueDescriptor beatDescriptor = _currentBpm >= 0
+            ? new LabeledValueDescriptor("Beat", () => new PlainText(_beatCellValue))
+            : new LabeledValueDescriptor("", () => new PlainText(""));
+        LabeledValueDescriptor volumeDescriptor = _volume >= 0
+            ? new LabeledValueDescriptor("Volume/dB", () => new PlainText(_volumeText))
+            : new LabeledValueDescriptor("", () => new PlainText(""));
+        return [bpmDescriptor, beatDescriptor, volumeDescriptor];
     }
 
     private static IReadOnlyList<int> BuildRow3Widths(int width)
     {
-        int bpmCellWidth = Math.Max(8, (width / 2 / 8) * 8);
-        int volCellWidth = width - bpmCellWidth;
-        return [bpmCellWidth, volCellWidth];
+        int a = Math.Max(8, (width / 3 / 8) * 8);
+        int b = Math.Max(8, ((width - a) / 2 / 8) * 8);
+        int c = width - a - b;
+        if (c < 8 && width >= 24)
+        {
+            b = Math.Max(8, width - a - 8);
+            c = width - a - b;
+        }
+        return [a, b, Math.Max(1, c)];
     }
 }

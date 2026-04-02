@@ -40,17 +40,29 @@ internal sealed class HeaderContainerStateUpdater : IUiStateUpdater<HeaderContai
         float volume = _engine.Volume;
 
         string suffix = beatFlashActive ? " *BEAT*" : "";
-        string bpmBeatValue = _appSettings.BpmSource switch
+        string bpmCellValue;
+        string beatCellValue;
+        switch (_appSettings.BpmSource)
         {
-            BpmSource.AudioAnalysis => currentBpm > 0
-                ? $"{currentBpm:F0}  Beat: {beatSensitivity:F1} (+/-){suffix}"
-                : $"{beatSensitivity:F1} (+/-){suffix}",
-            BpmSource.DemoDevice => currentBpm > 0
-                ? $"{currentBpm:F0} (Demo){suffix}"
-                : $"— (Demo){suffix}",
-            BpmSource.AbletonLink => FormatLinkBpmLine(currentBpm, suffix),
-            _ => $"{currentBpm:F0}{suffix}"
-        };
+            case BpmSource.AudioAnalysis:
+                bpmCellValue = currentBpm > 0 ? $"{currentBpm:F0}" : "—";
+                beatCellValue = $"{beatSensitivity:F1} (+/-){suffix}";
+                break;
+            case BpmSource.DemoDevice:
+                bpmCellValue = currentBpm > 0
+                    ? $"{currentBpm:F0} (Demo){suffix}"
+                    : $"— (Demo){suffix}";
+                beatCellValue = "";
+                break;
+            case BpmSource.AbletonLink:
+                bpmCellValue = FormatLinkBpmLine(currentBpm, suffix);
+                beatCellValue = "";
+                break;
+            default:
+                bpmCellValue = $"{currentBpm:F0}{suffix}";
+                beatCellValue = "";
+                break;
+        }
 
         string volumeText;
         if (volume >= 0)
@@ -68,10 +80,9 @@ internal sealed class HeaderContainerStateUpdater : IUiStateUpdater<HeaderContai
             DeviceName = deviceName,
             NowPlayingText = nowPlayingText,
             CurrentBpm = currentBpm,
-            BeatSensitivity = beatSensitivity,
-            BeatFlashActive = beatFlashActive,
             Volume = volume,
-            BpmBeatValue = bpmBeatValue,
+            BpmCellValue = bpmCellValue,
+            BeatCellValue = beatCellValue,
             VolumeText = volumeText
         });
     }

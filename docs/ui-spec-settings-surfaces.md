@@ -27,7 +27,7 @@ All surfaces use **ITitleBarBreadcrumbFormatter** and **ITitleBarNavigationConte
 | Building block | Role |
 |----------------|------|
 | **Hint line** | Short instructions (toolbar-style). In the S modal, the hint row is rendered via **HorizontalRowComponent** ([ADR-0057](adr/0057-horizontal-row-unified-single-line-rows.md)). |
-| **Label:value** | [ADR-0050](adr/0050-ui-alignment-blocks-label-format.md): colon immediately after the label; optional hotkey as `Label(K):`. |
+| **Label:value** | [ADR-0050](adr/0050-ui-alignment-blocks-label-format.md): colon immediately after the label, no space before the value; no hotkey suffix in labels ([ADR-0034](adr/0034-viewport-label-hotkey-hints.md) superseded). |
 | **Menu rows (hub)** | Compact settings list with optional selection prefix; hub uses the same label/value idea as modal hints where applicable. |
 | **Vertical selectable list** | **↑/↓** move selection, **Enter** confirms, **Esc** cancels (device modal; palette picker in S modal uses **Esc** to discard preview). |
 | **Palette name coloring** | **PaletteSwatchFormatter** — beat- or tick-driven phase for per-letter colors (toolbar, S modal Palette row, palette picker list). |

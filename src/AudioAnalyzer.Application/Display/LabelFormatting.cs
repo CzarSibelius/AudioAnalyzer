@@ -1,18 +1,14 @@
 namespace AudioAnalyzer.Application.Display;
 
 /// <summary>
-/// Shared label formatting for viewports and toolbar. Produces "Label:" or "Label(K):" when hotkey is set.
+/// Shared label formatting for viewports and toolbar. Produces "Label:" with no space before the value.
 /// </summary>
 public static class LabelFormatting
 {
-    /// <summary>Formats a label with optional hotkey. When hotkey is provided, returns "Label(K):"; otherwise "Label:".</summary>
-    public static string FormatLabel(string label, string? hotkey)
+    /// <summary>Formats a label as "Label:" or empty string when label is null/empty.</summary>
+    public static string FormatLabel(string? label)
     {
         var baseLabel = label ?? "";
-        if (string.IsNullOrWhiteSpace(hotkey))
-        {
-            return string.IsNullOrEmpty(baseLabel) ? "" : baseLabel + ":";
-        }
-        return string.IsNullOrEmpty(baseLabel) ? "" : baseLabel + "(" + hotkey + "):";
+        return string.IsNullOrEmpty(baseLabel) ? "" : baseLabel + ":";
     }
 }

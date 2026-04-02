@@ -1,26 +1,18 @@
 # ADR-0034: Viewport label hotkey hints
 
-**Status**: Superseded (key hints removed from UI to avoid duplication with help modal; see plan "Remove duplicate key-binding UI"). The API (FormatLabel/RenderWithLabel with optional hotkey) remains; call sites pass null so labels show as "Label:" only. Help modal (H) is the single place for key-binding discovery.
+**Status**: Superseded. Key hints are **not** shown in viewport or row labels (avoid duplication with in-value hints and with the help modal). The help modal (**H**) is the place for key-binding discovery.
 
-## Context
+**Update (current codebase):** Optional hotkey support has been **removed** from APIs: `LabelFormatting.FormatLabel(string? label)` (only `"Label:"`), `IScrollingTextViewport` / `ScrollingTextViewport` (no hotkey on `RenderWithLabel`), and `LabeledValueDescriptor` / `ScrollingTextComponent` (no `Hotkey` property).
 
-Labeled UI regions (header cells, toolbar cells) display "label: value" but do not indicate when the feature has a keyboard shortcut. Users must open the help menu to discover hotkeys. Some labels reference features that have dedicated keys (e.g. Preset with V, Device with D, Palette with P).
+## Context (historical)
 
-## Decision
+Labeled UI regions (header cells, toolbar cells) display `label:value`. An earlier idea was to embed shortcuts in labels as `Label(K):`.
 
-1. **Format**: When a viewport label references a feature with a hotkey, include the hotkey in the label as **"Label(K):"** (e.g. "Preset(V):", "Device(D):"). When there is no hotkey, use **"Label:"**.
+## Decision (historical — superseded)
 
-2. **Optional hotkey on APIs**: Labeled viewports and the components that render them accept an optional hotkey parameter:
-   - `ScrollingTextViewport.FormatLabel(string label, string? hotkey)` — formats as "Label(K):" when hotkey is provided, else "Label:".
-   - `ScrollingTextViewport.RenderWithLabel` gains optional `string? hotkey` parameter; when provided, formats label via `FormatLabel` before rendering.
+The original ADR required **"Label(K):"** when a feature had a hotkey and optional hotkey parameters on viewport APIs. That approach was superseded: UI labels use **`Label:`** only; bindings are documented in the dynamic help screen.
 
-3. **Manual builders**: When building label strings manually (e.g. toolbar cells in VisualizationPaneLayout), use `FormatLabel` so hotkeys appear in the label rather than after the value.
+## Consequences (current)
 
-4. **Scope**: This applies to labeled UI regions (toolbar, header) that display "label: value". `VisualizerViewport` (bounds for visualizer output) is unchanged and does not take a hotkey property.
-
-## Consequences
-
-- Users see discoverable shortcuts directly in labels.
-- `ScrollingTextViewport` gains `FormatLabel` and an extended `RenderWithLabel` overload.
-- Call sites (ConsoleHeader, VisualizationPaneLayout) pass hotkeys where applicable; existing "(V)" or "(P)" suffixes after values are removed.
-- References: [ScrollingTextViewport](../../src/AudioAnalyzer.Application/ScrollingTextViewport.cs), [ConsoleHeader](../../src/AudioAnalyzer.Console/Console/ConsoleHeader.cs), [VisualizationPaneLayout](../../src/AudioAnalyzer.Console/Console/VisualizationPaneLayout.cs).
+- No hotkey parameters on label formatting or labeled row data types.
+- References: [LabelFormatting.cs](../../src/AudioAnalyzer.Application/Display/LabelFormatting.cs), [ScrollingTextViewport.cs](../../src/AudioAnalyzer.Application/ScrollingTextViewport.cs), [LabeledValueDescriptor.cs](../../src/AudioAnalyzer.Application/Abstractions/LabeledValueDescriptor.cs), [ADR-0049](0049-dynamic-help-screen.md).

@@ -12,7 +12,6 @@ public sealed class ScrollingTextComponent : IUiComponent
     private string? _lastText;
 
     private string _label = "";
-    private string? _hotkey;
     private Func<IDisplayText>? _getValue;
     private PaletteColor? _labelColor;
     private PaletteColor? _textColor;
@@ -20,9 +19,6 @@ public sealed class ScrollingTextComponent : IUiComponent
 
     /// <summary>Label text (e.g. "Device", "Palette").</summary>
     public string Label => _label;
-
-    /// <summary>Optional hotkey for the label (e.g. "Label(K):").</summary>
-    public string? Hotkey => _hotkey;
 
     /// <summary>Getter for the current display value. Set by <see cref="SetFromDescriptor"/>.</summary>
     public Func<IDisplayText>? GetValue => _getValue;
@@ -50,7 +46,6 @@ public sealed class ScrollingTextComponent : IUiComponent
     public void SetFromDescriptor(LabeledValueDescriptor descriptor)
     {
         _label = descriptor?.Label ?? "";
-        _hotkey = descriptor?.Hotkey;
         _getValue = descriptor?.GetValue;
         _labelColor = descriptor?.LabelColor;
         _textColor = descriptor?.TextColor;

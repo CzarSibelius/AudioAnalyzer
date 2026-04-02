@@ -12,7 +12,7 @@ The console UI needs consistent, predictable layout: alignment, fixed block sizi
 
 2. **8-character blocks:** UI elements are positioned so that each component uses space in **8-character (column) blocks**. Label components default to **8 columns for the label** and **8 columns for the value**; these widths can be overridden case by case when needed (e.g. longer labels or values). Sizing and layout calculations use multiples of 8 where practical (e.g. minimum cell widths, toolbar segments).
 
-3. **Label format:** Labels use a colon immediately after the label text with **no space** before the value: `Label:value` (not `Label: value`). This applies to all labeled UI (header, toolbar, modals). The existing `FormatLabel` in [ScrollingTextViewport.cs](../../src/AudioAnalyzer.Application/ScrollingTextViewport.cs) produces `"Label:"` or `"Label(K):"` with no trailing space; manual label+value concatenation (e.g. in [ConsoleHeader.cs](../../src/AudioAnalyzer.Console/Console/ConsoleHeader.cs) for BPM/Beat/Volume) must also never insert a space after the colon.
+3. **Label format:** Labels use a colon immediately after the label text with **no space** before the value: `Label:value` (not `Label: value`). This applies to all labeled UI (header, toolbar, modals). [LabelFormatting.FormatLabel](../../src/AudioAnalyzer.Application/Display/LabelFormatting.cs) (used from [ScrollingTextViewport.cs](../../src/AudioAnalyzer.Application/ScrollingTextViewport.cs) and row renderers) produces `"Label:"` with no trailing space; manual label+value concatenation must also never insert a space after the colon.
 
 ## Consequences
 

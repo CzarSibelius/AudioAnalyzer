@@ -8,7 +8,7 @@ Labeled UI rows (header Device/Now, BPM/Volume, toolbar Palette, settings hint) 
 
 ## Decision
 
-1. **Labeled value descriptor as data**: A **LabeledValueDescriptor** is a simple type (label, optional hotkey, value getter `Func<IDisplayText>`, optional label/text colors). It holds no scroll state. Layouts compose UI by creating descriptors (e.g. `new LabeledValueDescriptor("Device", () => new PlainText(deviceName))`) and arranging them into rows.
+1. **Labeled value descriptor as data**: A **LabeledValueDescriptor** is a simple type (label, value getter `Func<IDisplayText>`, optional label/text colors). It holds no scroll state. Layouts compose UI by creating descriptors (e.g. `new LabeledValueDescriptor("Device", () => new PlainText(deviceName))`) and arranging them into rows.
 
 2. **Row components**: **HorizontalRowComponent** with **ScrollingTextComponent** children renders a single row of cells into one line (ADR-0057). Each cell owns its scroll state; `IScrollingTextEngine` is used for overflow. Layouts set data each frame via `SetRowData(descriptors, widths)` and `SetFromDescriptor` per child.
 

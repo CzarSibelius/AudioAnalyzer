@@ -29,7 +29,7 @@ public sealed class TextLayersToolbarBuilder : ITextLayersToolbarBuilder
         if (sortedLayers is not { Count: > 0 })
         {
             var emptyPalette = _uiThemeResolver.GetEffectiveUiPalette();
-            string layersLabel = LabelFormatting.FormatLabel("Layers", null);
+            string layersLabel = LabelFormatting.FormatLabel("Layers");
             return AnsiConsole.ColorCode(emptyPalette.Label) + layersLabel + AnsiConsole.ResetCode + AnsiConsole.ColorCode(emptyPalette.Dimmed) + "(config in settings)" + AnsiConsole.ResetCode;
         }
 
@@ -46,7 +46,7 @@ public sealed class TextLayersToolbarBuilder : ITextLayersToolbarBuilder
 
         var palette = _uiThemeResolver.GetEffectiveUiPalette();
         var sb = new StringBuilder();
-        AnsiConsole.AppendColored(sb, LabelFormatting.FormatLabel("Layers", null), palette.Label);
+        AnsiConsole.AppendColored(sb, LabelFormatting.FormatLabel("Layers"), palette.Label);
         for (int i = 0; i < TextLayersLimits.MaxLayerCount; i++)
         {
             char digit = (char)('1' + i);
@@ -69,7 +69,7 @@ public sealed class TextLayersToolbarBuilder : ITextLayersToolbarBuilder
         }
         AppendContextualRowsPlainSuffix(sb, context);
         sb.Append(" | ");
-        sb.Append(LabelFormatting.FormatLabel("Palette", null));
+        sb.Append(LabelFormatting.FormatLabel("Palette"));
         AppendPaletteColoredName(sb, context, paletteDef, paletteName);
         return sb.ToString();
     }
@@ -95,14 +95,14 @@ public sealed class TextLayersToolbarBuilder : ITextLayersToolbarBuilder
 
         var sb = new StringBuilder();
         var palette = _uiThemeResolver.GetEffectiveUiPalette();
-        AnsiConsole.AppendColored(sb, LabelFormatting.FormatLabel("Show", null), palette.Label);
+        AnsiConsole.AppendColored(sb, LabelFormatting.FormatLabel("Show"), palette.Label);
         sb.Append(show);
         sb.Append(" | ");
-        AnsiConsole.AppendColored(sb, LabelFormatting.FormatLabel("Entry", null), palette.Label);
+        AnsiConsole.AppendColored(sb, LabelFormatting.FormatLabel("Entry"), palette.Label);
         sb.Append(entry);
         AppendContextualRowsPlainSuffix(sb, context);
         sb.Append(" | ");
-        AnsiConsole.AppendColored(sb, LabelFormatting.FormatLabel("Palette", null), palette.Label);
+        AnsiConsole.AppendColored(sb, LabelFormatting.FormatLabel("Palette"), palette.Label);
         AppendPaletteColoredName(sb, context, paletteDef, paletteName);
         return sb.ToString();
     }
@@ -137,7 +137,7 @@ public sealed class TextLayersToolbarBuilder : ITextLayersToolbarBuilder
         }
 
         var layersSb = new StringBuilder();
-        AnsiConsole.AppendColored(layersSb, LabelFormatting.FormatLabel("Layers", null), palette.Label);
+        AnsiConsole.AppendColored(layersSb, LabelFormatting.FormatLabel("Layers"), palette.Label);
         for (int i = 0; i < TextLayersLimits.MaxLayerCount; i++)
         {
             char digit = (char)('1' + i);
@@ -166,7 +166,7 @@ public sealed class TextLayersToolbarBuilder : ITextLayersToolbarBuilder
         const string paletteLabel = "Palette";
         var paletteColors = ColorPaletteParser.Parse(paletteDef);
         var paletteSb = new StringBuilder();
-        AnsiConsole.AppendColored(paletteSb, LabelFormatting.FormatLabel(paletteLabel, null), palette.Label);
+        AnsiConsole.AppendColored(paletteSb, LabelFormatting.FormatLabel(paletteLabel), palette.Label);
         int phase = PaletteSwatchFormatter.ComputeToolbarPhaseOffset(context.Snapshot, paletteColors?.Count ?? 0);
         paletteSb.Append(PaletteSwatchFormatter.FormatPaletteColoredName(paletteName, paletteColors, phase));
 
@@ -217,7 +217,7 @@ public sealed class TextLayersToolbarBuilder : ITextLayersToolbarBuilder
         const string paletteLabel = "Palette";
         var paletteColors = ColorPaletteParser.Parse(paletteDef);
         var paletteSb = new StringBuilder();
-        AnsiConsole.AppendColored(paletteSb, LabelFormatting.FormatLabel(paletteLabel, null), paletteUi.Label);
+        AnsiConsole.AppendColored(paletteSb, LabelFormatting.FormatLabel(paletteLabel), paletteUi.Label);
         int phase = PaletteSwatchFormatter.ComputeToolbarPhaseOffset(context.Snapshot!, paletteColors?.Count ?? 0);
         paletteSb.Append(PaletteSwatchFormatter.FormatPaletteColoredName(paletteName, paletteColors, phase));
         list.Add(new LabeledValueDescriptor(paletteLabel, () => new AnsiText(paletteSb.ToString()), preformattedAnsi: true));
@@ -238,7 +238,7 @@ public sealed class TextLayersToolbarBuilder : ITextLayersToolbarBuilder
         {
             string v = new PlainText(row.Value).TruncateWithEllipsis(maxW);
             sb.Append(" | ");
-            sb.Append(LabelFormatting.FormatLabel(row.Label, null));
+            sb.Append(LabelFormatting.FormatLabel(row.Label));
             sb.Append(v);
         }
     }

@@ -1,4 +1,3 @@
-using System.Globalization;
 using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Application.Display;
 using AudioAnalyzer.Domain;
@@ -19,15 +18,7 @@ public sealed class ScrollingTextViewport : IScrollingTextViewport
     }
 
     /// <inheritdoc />
-    public string FormatLabel(string label, string? hotkey)
-    {
-        var baseLabel = label ?? "";
-        if (string.IsNullOrWhiteSpace(hotkey))
-        {
-            return string.IsNullOrEmpty(baseLabel) ? "" : baseLabel + ":";
-        }
-        return string.IsNullOrEmpty(baseLabel) ? "" : baseLabel + "(" + hotkey + "):";
-    }
+    public string FormatLabel(string? label) => LabelFormatting.FormatLabel(label);
 
     /// <inheritdoc />
     public string Render<T>(T text, int width, double speedPerFrame)
@@ -43,7 +34,7 @@ public sealed class ScrollingTextViewport : IScrollingTextViewport
 
     /// <inheritdoc />
     public string RenderWithLabel<T>(string label, T text, int totalWidth, double speedPerFrame,
-        PaletteColor? labelColor = null, PaletteColor? textColor = null, string? hotkey = null)
+        PaletteColor? labelColor = null, PaletteColor? textColor = null)
         where T : IDisplayText
     {
         if (totalWidth <= 0)
@@ -51,7 +42,7 @@ public sealed class ScrollingTextViewport : IScrollingTextViewport
             return "";
         }
 
-        var effectiveLabel = FormatLabel(label ?? "", hotkey);
+        var effectiveLabel = FormatLabel(label);
         int labelDisplayWidth = string.IsNullOrEmpty(effectiveLabel)
             ? 0
             : DisplayWidth.GetDisplayWidth(effectiveLabel);

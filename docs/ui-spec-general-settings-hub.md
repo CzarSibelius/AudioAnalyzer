@@ -2,7 +2,7 @@
 
 **Application mode:** `ApplicationMode.Settings` ([`ApplicationMode`](../src/AudioAnalyzer.Domain/ApplicationMode.cs)). Listed in [ui-spec-application-modes.md](ui-spec-application-modes.md).
 
-This layout applies when **ApplicationMode** is **General settings** (`ApplicationMode.Settings`): **Tab** from Preset editor or Show play (when eligible). The **header is one row** (title breadcrumb only); Device/Now/BPM/Volume rows are not shown ([ADR-0062](adr/0062-application-mode-classes.md)).
+This layout applies when **ApplicationMode** is **General settings** (`ApplicationMode.Settings`): **Tab** from Preset editor or Show play (when eligible). The **header is one row** (title breadcrumb only); Device/Now/BPM/Beat/Volume rows are not shown ([ADR-0062](adr/0062-application-mode-classes.md)).
 
 Shared vocabulary and feature matrix: [ui-spec-settings-surfaces.md](ui-spec-settings-surfaces.md). Hub menu rows render via **HorizontalRowComponent** (single full-width preformatted cell) for alignment with other single-line row components ([ADR-0057](adr/0057-horizontal-row-unified-single-line-rows.md)).
 

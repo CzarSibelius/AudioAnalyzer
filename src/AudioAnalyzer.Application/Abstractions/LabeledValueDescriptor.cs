@@ -8,11 +8,8 @@ namespace AudioAnalyzer.Application.Abstractions;
 /// </summary>
 public sealed class LabeledValueDescriptor
 {
-    /// <summary>Label text (e.g. "Device", "Now"). Displayed as "Label:" or "Label(K):" when <see cref="Hotkey"/> is set.</summary>
+    /// <summary>Label text (e.g. "Device", "Now"). Displayed as "Label:" (no space before value).</summary>
     public string Label { get; }
-
-    /// <summary>Optional hotkey for the label (e.g. "D" for "Device(D):").</summary>
-    public string? Hotkey { get; }
 
     /// <summary>Returns the current display value for this cell. Called each frame by the row renderer.</summary>
     public Func<IDisplayText> GetValue { get; }
@@ -29,16 +26,14 @@ public sealed class LabeledValueDescriptor
     /// <summary>Creates a descriptor with the given label and value getter.</summary>
     /// <param name="label">Label text (e.g. "Device", "Now").</param>
     /// <param name="getValue">Getter for the current value. Must not be null.</param>
-    /// <param name="hotkey">Optional hotkey to show in the label (e.g. "Label(K):").</param>
     /// <param name="labelColor">Optional label color; when null, renderer uses palette.</param>
     /// <param name="textColor">Optional text color; when null, renderer uses palette.</param>
     /// <param name="preformattedAnsi">When true, value is rendered as-is (no palette wrap) with truncate-with-ellipsis.</param>
-    public LabeledValueDescriptor(string label, Func<IDisplayText> getValue, string? hotkey = null,
+    public LabeledValueDescriptor(string label, Func<IDisplayText> getValue,
         PaletteColor? labelColor = null, PaletteColor? textColor = null, bool preformattedAnsi = false)
     {
         Label = label ?? "";
         GetValue = getValue ?? throw new ArgumentNullException(nameof(getValue));
-        Hotkey = hotkey;
         LabelColor = labelColor;
         TextColor = textColor;
         PreformattedAnsi = preformattedAnsi;

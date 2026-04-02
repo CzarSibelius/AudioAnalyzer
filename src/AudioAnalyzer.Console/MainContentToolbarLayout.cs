@@ -28,7 +28,7 @@ internal static class MainContentToolbarLayout
                 ? new LabeledValueDescriptor("Palette", () =>
                 {
                     var sb = new StringBuilder();
-                    AnsiConsole.AppendColored(sb, LabelFormatting.FormatLabel("Palette", null), effectiveUiPalette.Label);
+                    AnsiConsole.AppendColored(sb, LabelFormatting.FormatLabel("Palette"), effectiveUiPalette.Label);
                     var snap = context.Snapshot!;
                     int phase = PaletteSwatchFormatter.ComputeToolbarPhaseOffset(snap, paletteForSwatch?.Count ?? 0);
                     sb.Append(PaletteSwatchFormatter.FormatPaletteColoredName(paletteDisplayName ?? "", paletteForSwatch, phase));
@@ -69,7 +69,7 @@ internal static class MainContentToolbarLayout
                 ? new LabeledValueDescriptor("Palette", () =>
                 {
                     var sb = new StringBuilder();
-                    AnsiConsole.AppendColored(sb, LabelFormatting.FormatLabel("Palette", null), effectiveUiPalette.Label);
+                    AnsiConsole.AppendColored(sb, LabelFormatting.FormatLabel("Palette"), effectiveUiPalette.Label);
                     var snap = context.Snapshot!;
                     int phase = PaletteSwatchFormatter.ComputeToolbarPhaseOffset(snap, paletteForSwatch?.Count ?? 0);
                     sb.Append(PaletteSwatchFormatter.FormatPaletteColoredName(paletteDisplayName ?? "", paletteForSwatch, phase));
