@@ -89,6 +89,7 @@ internal static class ServiceConfiguration
             sp.GetRequiredService<ITextLayersToolbarBuilder>(),
             sp.GetRequiredService<ITextLayerStateStore>(),
             sp.GetRequiredService<VisualizerSettings>(),
+            sp.GetRequiredService<IFileSystem>(),
             sp.GetRequiredService<IShowPlayToolbarInfo>(),
             sp.GetRequiredService<UiSettings>(),
             sp.GetRequiredService<ITextLayerBoundsEditSession>()));

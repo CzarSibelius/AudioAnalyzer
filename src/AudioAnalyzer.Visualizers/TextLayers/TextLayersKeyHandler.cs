@@ -80,7 +80,7 @@ public sealed class TextLayersKeyHandlerConfig : IKeyHandlerConfig<TextLayersKey
                     bool anyAdvanced = false;
                     for (int i = 0; i < sortedLayers.Count; i++)
                     {
-                        if (FileBasedLayerAssetPaths.TryAdvanceDirectoryAssetSelection(sortedLayers[i], context.UiSettings))
+                        if (FileBasedLayerAssetPaths.TryAdvanceDirectoryAssetSelection(sortedLayers[i], context.UiSettings, context.FileSystem))
                         {
                             anyAdvanced = true;
                         }

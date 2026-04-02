@@ -6,6 +6,7 @@ This document describes data files and settings beside the Audio Analyzer execut
 
 - **NAudio 2.2.1**: WASAPI capture/loopback and audio processing
 - **SixLabors.ImageSharp 3.1.12**: Image loading and processing for ASCII image layer (BMP, GIF, JPEG, PNG, WebP)
+- **System.IO.Abstractions 22.1.0**: `IFileSystem` for presets/palettes/shows (Infrastructure) and AsciiImage / AsciiModel asset enumeration and file reads (Visualizers); production uses the real `FileSystem`, tests use `MockFileSystem`
 - **Microsoft.Extensions.DependencyInjection 10.0.3**: Console host dependency injection
 - **Roslynator.Analyzers 4.15.0**: Code analyzers (e.g. RCS1075: no empty catch blocks, RCS1060: one file per class), enforced via `.editorconfig`
 

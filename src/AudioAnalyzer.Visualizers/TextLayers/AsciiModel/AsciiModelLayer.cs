@@ -1,3 +1,4 @@
+using System.IO.Abstractions;
 using System.Numerics;
 using AudioAnalyzer.Domain;
 
@@ -8,12 +9,14 @@ public sealed class AsciiModelLayer : TextLayerRendererBase, ITextLayerRenderer<
 {
     private readonly ITextLayerStateStore<AsciiModelState> _stateStore;
     private readonly UiSettings _uiSettings;
+    private readonly IFileSystem _fileSystem;
 
     /// <summary>Initializes a new instance of the <see cref="AsciiModelLayer"/> class.</summary>
-    public AsciiModelLayer(ITextLayerStateStore<AsciiModelState> stateStore, UiSettings uiSettings)
+    public AsciiModelLayer(ITextLayerStateStore<AsciiModelState> stateStore, UiSettings uiSettings, IFileSystem fileSystem)
     {
         _stateStore = stateStore ?? throw new ArgumentNullException(nameof(stateStore));
         _uiSettings = uiSettings ?? throw new ArgumentNullException(nameof(uiSettings));
+        _fileSystem = fileSystem ?? throw new ArgumentNullException(nameof(fileSystem));
     }
 
     /// <inheritdoc />
@@ -29,7 +32,7 @@ public sealed class AsciiModelLayer : TextLayerRendererBase, ITextLayerRenderer<
         int h = ctx.Height;
 
         var s = layer.GetCustom<AsciiModelSettings>() ?? new AsciiModelSettings();
-        var paths = FileBasedLayerAssetPaths.GetSortedObjPaths(s.ModelFolderPath, _uiSettings);
+        var paths = FileBasedLayerAssetPaths.GetSortedObjPaths(s.ModelFolderPath, _uiSettings, _fileSystem);
         if (paths.Count == 0)
         {
             RenderPlaceholder(ctx, "No models");
@@ -40,7 +43,7 @@ public sealed class AsciiModelLayer : TextLayerRendererBase, ITextLayerRenderer<
         string path = paths[fileIndex];
 
         var m = _stateStore.GetState(ctx.LayerIndex);
-        if (!TryRefreshMesh(path, s, m))
+        if (!TryRefreshMesh(path, s, m, _fileSystem))
         {
             RenderPlaceholder(ctx, "Load failed");
             return state;
@@ -122,11 +125,11 @@ public sealed class AsciiModelLayer : TextLayerRendererBase, ITextLayerRenderer<
         return state;
     }
 
-    private static bool TryRefreshMesh(string path, AsciiModelSettings settings, AsciiModelState m)
+    private static bool TryRefreshMesh(string path, AsciiModelSettings settings, AsciiModelState m, IFileSystem fileSystem)
     {
         try
         {
-            var info = new FileInfo(path);
+            IFileInfo info = fileSystem.FileInfo.New(path);
             if (!info.Exists)
             {
                 return false;
@@ -142,7 +145,7 @@ public sealed class AsciiModelLayer : TextLayerRendererBase, ITextLayerRenderer<
                 return true;
             }
 
-            var mesh = ObjFileParser.ParseFile(path);
+            var mesh = ObjFileParser.ParseFile(fileSystem, path);
             if (mesh == null)
             {
                 return false;

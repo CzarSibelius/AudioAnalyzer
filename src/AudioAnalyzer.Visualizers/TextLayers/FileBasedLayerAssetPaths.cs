@@ -1,3 +1,4 @@
+using System.IO.Abstractions;
 using AudioAnalyzer.Domain;
 
 namespace AudioAnalyzer.Visualizers;
@@ -8,24 +9,24 @@ public static class FileBasedLayerAssetPaths
     private static readonly string[] s_imageExtensions = [".bmp", ".gif", ".jpg", ".jpeg", ".png", ".webp"];
     private static readonly string[] s_objExtensions = [".obj"];
 
-    /// <summary>Returns sorted full paths to supported images under <paramref name="folderPath"/>, or empty if missing/invalid.</summary>
-    public static List<string> GetSortedImagePaths(string? folderPath) =>
-        GetSortedImagePaths(folderPath, uiSettings: null);
-
     /// <summary>Returns sorted full paths to supported images under the effective folder (layer path + optional <see cref="UiSettings.DefaultAssetFolderPath"/>).</summary>
-    public static List<string> GetSortedImagePaths(string? folderPath, UiSettings? uiSettings)
+    public static List<string> GetSortedImagePaths(string? folderPath, UiSettings? uiSettings, IFileSystem fileSystem)
     {
-        return EnumerateFiles(LayerAssetFolder.ResolveEffectiveFolder(folderPath, uiSettings), s_imageExtensions);
+        ArgumentNullException.ThrowIfNull(fileSystem);
+        return EnumerateFiles(
+            LayerAssetFolder.ResolveEffectiveFolder(folderPath, uiSettings),
+            s_imageExtensions,
+            fileSystem);
     }
 
-    /// <summary>Returns sorted full paths to .obj files under <paramref name="folderPath"/>, or empty if missing/invalid.</summary>
-    public static List<string> GetSortedObjPaths(string? folderPath) =>
-        GetSortedObjPaths(folderPath, uiSettings: null);
-
     /// <summary>Returns sorted full paths to .obj files under the effective folder (layer path + optional <see cref="UiSettings.DefaultAssetFolderPath"/>).</summary>
-    public static List<string> GetSortedObjPaths(string? folderPath, UiSettings? uiSettings)
+    public static List<string> GetSortedObjPaths(string? folderPath, UiSettings? uiSettings, IFileSystem fileSystem)
     {
-        return EnumerateFiles(LayerAssetFolder.ResolveEffectiveFolder(folderPath, uiSettings), s_objExtensions);
+        ArgumentNullException.ThrowIfNull(fileSystem);
+        return EnumerateFiles(
+            LayerAssetFolder.ResolveEffectiveFolder(folderPath, uiSettings),
+            s_objExtensions,
+            fileSystem);
     }
 
     /// <summary>Resolves <paramref name="fileName"/> to an index in <paramref name="sortedFullPaths"/> (file-name match, case-insensitive). Returns 0 when the list is empty, <paramref name="fileName"/> is null/whitespace, or no match.</summary>
@@ -62,18 +63,15 @@ public static class FileBasedLayerAssetPaths
     }
 
     /// <summary>Advances persisted selection for an AsciiImage or AsciiModel layer. Returns false if the layer type is not file-based or the folder has no assets.</summary>
-    public static bool TryAdvanceDirectoryAssetSelection(TextLayerSettings layer) =>
-        TryAdvanceDirectoryAssetSelection(layer, uiSettings: null);
-
-    /// <inheritdoc cref="TryAdvanceDirectoryAssetSelection(TextLayerSettings)"/>
-    public static bool TryAdvanceDirectoryAssetSelection(TextLayerSettings layer, UiSettings? uiSettings)
+    public static bool TryAdvanceDirectoryAssetSelection(TextLayerSettings layer, UiSettings? uiSettings, IFileSystem fileSystem)
     {
         ArgumentNullException.ThrowIfNull(layer);
+        ArgumentNullException.ThrowIfNull(fileSystem);
 
         if (layer.LayerType == TextLayerType.AsciiImage)
         {
             var s = layer.GetCustom<AsciiImageSettings>() ?? new AsciiImageSettings();
-            var paths = GetSortedImagePaths(s.ImageFolderPath, uiSettings);
+            var paths = GetSortedImagePaths(s.ImageFolderPath, uiSettings, fileSystem);
             if (paths.Count == 0)
             {
                 return false;
@@ -93,7 +91,7 @@ public static class FileBasedLayerAssetPaths
         if (layer.LayerType == TextLayerType.AsciiModel)
         {
             var s = layer.GetCustom<AsciiModelSettings>() ?? new AsciiModelSettings();
-            var paths = GetSortedObjPaths(s.ModelFolderPath, uiSettings);
+            var paths = GetSortedObjPaths(s.ModelFolderPath, uiSettings, fileSystem);
             if (paths.Count == 0)
             {
                 return false;
@@ -113,17 +111,17 @@ public static class FileBasedLayerAssetPaths
         return false;
     }
 
-    private static List<string> EnumerateFiles(string? folderPath, string[] extensions)
+    private static List<string> EnumerateFiles(string? folderPath, string[] extensions, IFileSystem fileSystem)
     {
         var result = new List<string>();
-        if (string.IsNullOrWhiteSpace(folderPath) || !Directory.Exists(folderPath))
+        if (string.IsNullOrWhiteSpace(folderPath) || !fileSystem.Directory.Exists(folderPath))
         {
             return result;
         }
 
         try
         {
-            foreach (var path in Directory.EnumerateFiles(folderPath))
+            foreach (var path in fileSystem.Directory.GetFiles(folderPath))
             {
                 var ext = Path.GetExtension(path).ToLowerInvariant();
                 if (ExtensionMatches(ext, extensions))

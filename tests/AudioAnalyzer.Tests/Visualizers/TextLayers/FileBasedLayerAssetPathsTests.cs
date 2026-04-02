@@ -1,3 +1,5 @@
+using System.IO.Abstractions;
+using System.IO.Abstractions.TestingHelpers;
 using AudioAnalyzer.Domain;
 using AudioAnalyzer.Visualizers;
 using Xunit;
@@ -7,6 +9,8 @@ namespace AudioAnalyzer.Tests.Visualizers.TextLayers;
 /// <summary>Tests for <see cref="FileBasedLayerAssetPaths"/> selection helpers.</summary>
 public sealed class FileBasedLayerAssetPathsTests
 {
+    private static readonly IFileSystem s_realFs = new FileSystem();
+
     [Fact]
     public void ResolveIndexByFileName_empty_list_returns_zero()
     {
@@ -71,12 +75,12 @@ public sealed class FileBasedLayerAssetPathsTests
             var layer = new TextLayerSettings { LayerType = TextLayerType.AsciiImage };
             layer.SetCustom(new AsciiImageSettings { ImageFolderPath = dir });
 
-            Assert.True(FileBasedLayerAssetPaths.TryAdvanceDirectoryAssetSelection(layer));
+            Assert.True(FileBasedLayerAssetPaths.TryAdvanceDirectoryAssetSelection(layer, null, s_realFs));
             var s = layer.GetCustom<AsciiImageSettings>();
             Assert.NotNull(s);
             Assert.Equal("b.png", s.SelectedImageFileName);
 
-            Assert.True(FileBasedLayerAssetPaths.TryAdvanceDirectoryAssetSelection(layer));
+            Assert.True(FileBasedLayerAssetPaths.TryAdvanceDirectoryAssetSelection(layer, null, s_realFs));
             s = layer.GetCustom<AsciiImageSettings>();
             Assert.Equal("a.png", s!.SelectedImageFileName);
         }
@@ -99,7 +103,7 @@ public sealed class FileBasedLayerAssetPathsTests
             var layer = new TextLayerSettings { LayerType = TextLayerType.AsciiModel };
             layer.SetCustom(new AsciiModelSettings { ModelFolderPath = dir });
 
-            Assert.True(FileBasedLayerAssetPaths.TryAdvanceDirectoryAssetSelection(layer));
+            Assert.True(FileBasedLayerAssetPaths.TryAdvanceDirectoryAssetSelection(layer, null, s_realFs));
             var s = layer.GetCustom<AsciiModelSettings>();
             Assert.NotNull(s);
             Assert.Equal("m2.obj", s.SelectedModelFileName);
@@ -111,10 +115,25 @@ public sealed class FileBasedLayerAssetPathsTests
     }
 
     [Fact]
+    public void GetSortedObjPaths_mock_file_system_enumerates_virtual_folder()
+    {
+        const string folder = "M:/objs";
+        string fullPath = Path.Combine(folder, "z.obj");
+        var fs = new MockFileSystem(new Dictionary<string, MockFileData>(StringComparer.OrdinalIgnoreCase)
+        {
+            [fullPath] = new MockFileData("x")
+        });
+
+        var list = FileBasedLayerAssetPaths.GetSortedObjPaths(folder, null, fs);
+        Assert.Single(list);
+        Assert.EndsWith("z.obj", list[0], StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public void TryAdvanceDirectoryAssetSelection_wrong_type_returns_false()
     {
         var layer = new TextLayerSettings { LayerType = TextLayerType.Marquee };
-        Assert.False(FileBasedLayerAssetPaths.TryAdvanceDirectoryAssetSelection(layer));
+        Assert.False(FileBasedLayerAssetPaths.TryAdvanceDirectoryAssetSelection(layer, null, s_realFs));
     }
 
     private static void TryDeleteTestDir(string dir)

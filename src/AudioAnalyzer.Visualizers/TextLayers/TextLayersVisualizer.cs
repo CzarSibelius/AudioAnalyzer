@@ -1,3 +1,4 @@
+using System.IO.Abstractions;
 using System.Text;
 using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Application.Palette;
@@ -24,6 +25,7 @@ public sealed class TextLayersVisualizer : IVisualizer
     private readonly ITextLayerStateStore _stateStore;
     private readonly ITextLayerBoundsEditSession? _boundsEditSession;
     private readonly VisualizerSettings _visualizerSettings;
+    private readonly IFileSystem _fileSystem;
     private readonly IShowPlayToolbarInfo? _showPlayToolbarInfo;
     /// <summary>Index of the layer whose palette P cycles. Updated when user presses 1–<see cref="TextLayersLimits.MaxLayerCount"/>.</summary>
     private int _paletteCycleLayerIndex;
@@ -37,6 +39,7 @@ public sealed class TextLayersVisualizer : IVisualizer
         ITextLayersToolbarBuilder toolbarBuilder,
         ITextLayerStateStore stateStore,
         VisualizerSettings visualizerSettings,
+        IFileSystem fileSystem,
         IShowPlayToolbarInfo? showPlayToolbarInfo = null,
         UiSettings? uiSettings = null,
         ITextLayerBoundsEditSession? boundsEditSession = null)
@@ -44,6 +47,7 @@ public sealed class TextLayersVisualizer : IVisualizer
         _settings = settings;
         _paletteRepo = paletteRepo;
         _consoleWriter = consoleWriter;
+        _fileSystem = fileSystem ?? throw new ArgumentNullException(nameof(fileSystem));
         _uiSettings = uiSettings ?? new UiSettings();
         _renderers = renderers.ToDictionary(r => r.LayerType);
         _keyHandler = keyHandler ?? throw new ArgumentNullException(nameof(keyHandler));
@@ -275,7 +279,7 @@ public sealed class TextLayersVisualizer : IVisualizer
 
         int snippetIndex = list.Count > 0 && idx < _layerStates.Count ? _layerStates[idx].SnippetIndex : 0;
         IReadOnlyList<LayerToolbarContextualRow> contextualRows = layer != null
-            ? LayerToolbarContextualRows.Resolve(layer, snippetIndex, _uiSettings)
+            ? LayerToolbarContextualRows.Resolve(layer, snippetIndex, _fileSystem, _uiSettings)
             : [];
 
         return new TextLayersToolbarContext
@@ -375,6 +379,7 @@ public sealed class TextLayersVisualizer : IVisualizer
             PaletteCycleLayerIndex = _paletteCycleLayerIndex,
             PaletteRepo = _paletteRepo,
             UiSettings = _uiSettings,
+            FileSystem = _fileSystem,
             AdvanceSnippetIndex = AdvanceSnippetIndexAt,
             ClearLayerState = ClearLayerStateWhenSwitching
         };

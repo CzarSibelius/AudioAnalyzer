@@ -15,6 +15,9 @@ internal static class TestHelpers
 {
     private const string TestRoot = "C:/AudioAnalyzerTest";
 
+    /// <summary>Root directory used by <see cref="CreateMockFileSystem"/> and <see cref="CreateMockFileSystemWithPreset"/> for absolute asset paths (AsciiImage / AsciiModel).</summary>
+    public static string MockFileSystemContentRoot => TestRoot;
+
     public static string PresetsPath => Path.Combine(TestRoot, "presets");
     public static string PalettesPath => Path.Combine(TestRoot, "palettes");
     public static string ShowsPath => Path.Combine(TestRoot, "shows");
@@ -75,15 +78,27 @@ internal static class TestHelpers
         });
     }
 
-    public static MockFileSystem CreateMockFileSystemWithPreset(string presetJson)
+    public static MockFileSystem CreateMockFileSystemWithPreset(
+        string presetJson,
+        IReadOnlyDictionary<string, MockFileData>? additionalFiles = null)
     {
         var paletteJson = """{"Name":"Default","Colors":["Magenta","Yellow","Green","Cyan","Blue"]}""";
 
-        return new MockFileSystem(new Dictionary<string, MockFileData>
+        var files = new Dictionary<string, MockFileData>(StringComparer.OrdinalIgnoreCase)
         {
             [Path.Combine(PalettesPath, "default.json")] = new MockFileData(paletteJson),
             [Path.Combine(PresetsPath, "preset-1.json")] = new MockFileData(presetJson)
-        });
+        };
+
+        if (additionalFiles != null)
+        {
+            foreach (KeyValuePair<string, MockFileData> kv in additionalFiles)
+            {
+                files[kv.Key] = kv.Value;
+            }
+        }
+
+        return new MockFileSystem(files);
     }
 
     public static ServiceProvider BuildTestServiceProvider(MockFileSystem fileSystem)

@@ -1,3 +1,4 @@
+using System.IO.Abstractions;
 using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Domain;
 
@@ -20,6 +21,9 @@ public sealed class TextLayersKeyContext : IKeyHandlerContext
 
     /// <summary>Resolves default asset folder for AsciiImage / AsciiModel path cycling.</summary>
     public UiSettings UiSettings { get; init; } = null!;
+
+    /// <summary>File system for enumerating and advancing AsciiImage / AsciiModel assets.</summary>
+    public IFileSystem FileSystem { get; init; } = null!;
 
     /// <summary>Called when I key advances snippet index for AsciiImage / AsciiModel layers.</summary>
     public Action<int> AdvanceSnippetIndex { get; init; } = _ => { };

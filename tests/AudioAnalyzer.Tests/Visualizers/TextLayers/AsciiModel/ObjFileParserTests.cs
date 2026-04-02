@@ -1,3 +1,4 @@
+using System.IO.Abstractions.TestingHelpers;
 using AudioAnalyzer.Visualizers;
 using Xunit;
 
@@ -45,5 +46,19 @@ public sealed class ObjFileParserTests
     {
         Assert.Null(ObjFileParser.Parse(""));
         Assert.Null(ObjFileParser.Parse("   "));
+    }
+
+    [Fact]
+    public void ParseFile_MockFileSystem_ReadsVirtualPath()
+    {
+        const string path = "M:/assets/m.obj";
+        var fs = new MockFileSystem(new Dictionary<string, MockFileData>(StringComparer.OrdinalIgnoreCase)
+        {
+            [path] = new MockFileData("v 0 0 0\nv 1 0 0\nv 0 1 0\nf 1 2 3\n")
+        });
+
+        var mesh = ObjFileParser.ParseFile(fs, path);
+        Assert.NotNull(mesh);
+        Assert.Equal(1, mesh!.TriangleCount);
     }
 }

@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.IO.Abstractions;
 using System.Numerics;
 
 namespace AudioAnalyzer.Visualizers;
@@ -91,12 +92,13 @@ public static class ObjFileParser
         return char.IsWhiteSpace(line[1]);
     }
 
-    /// <summary>Parses OBJ from a file path.</summary>
-    public static TriangleMesh? ParseFile(string filePath)
+    /// <summary>Parses OBJ from a file path using <paramref name="fileSystem"/> (supports test doubles such as <see cref="System.IO.Abstractions.TestingHelpers.MockFileSystem"/>).</summary>
+    public static TriangleMesh? ParseFile(IFileSystem fileSystem, string filePath)
     {
+        ArgumentNullException.ThrowIfNull(fileSystem);
         try
         {
-            return Parse(File.ReadAllText(filePath));
+            return Parse(fileSystem.File.ReadAllText(filePath));
         }
         catch (Exception ex)
         {

@@ -38,7 +38,8 @@ Renders images from a configured folder as ASCII art. Converts each image to a c
 ## Implementation notes
 
 - **Layer**: `AsciiImageLayer` in `TextLayers/AsciiImage/AsciiImageLayer.cs`
-- **Converter**: `AsciiImageConverter.Convert` loads image via SixLabors.ImageSharp, resizes (preserve aspect), outputs chars + brightness; when `includeRgb` true, also outputs per-pixel R,G,B
+- **Converter**: `AsciiImageConverter.Convert(IFileSystem, path, …)` opens the file via `IFileSystem.File.OpenRead` then loads with SixLabors.ImageSharp, resizes (preserve aspect), outputs chars + brightness; when `includeRgb` true, also outputs per-pixel R,G,B
+- **Assets**: `FileBasedLayerAssetPaths.GetSortedImagePaths` enumerates supported extensions through `IFileSystem.Directory` (same DI `IFileSystem` as presets in tests).
 - **State**: `AsciiImageState` holds ScrollX, ScrollY, ZoomPhase, cached frame; cache invalidated when path, dimensions, or PaletteSource change
 - **PaletteSource=LayerPalette**: Maps brightness (0–255) to palette index; uses `ctx.Palette`, ColorIndex, Pulse beat reaction
 - **PaletteSource=ImageColors**: Uses `PaletteColor.FromRgb(r,g,b)` from cached frame; no palette lookup

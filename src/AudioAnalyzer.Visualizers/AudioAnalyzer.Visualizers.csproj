@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <PackageReference Include="SixLabors.ImageSharp" Version="3.1.12" />
+    <PackageReference Include="System.IO.Abstractions" Version="22.1.0" />
     <ProjectReference Include="..\AudioAnalyzer.Application\AudioAnalyzer.Application.csproj" />
     <ProjectReference Include="..\AudioAnalyzer.Domain\AudioAnalyzer.Domain.csproj" />
   </ItemGroup>

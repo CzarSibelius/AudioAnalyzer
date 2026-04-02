@@ -20,12 +20,12 @@ dotnet test tests/AudioAnalyzer.Tests/AudioAnalyzer.Tests.csproj
 
 Coverage includes:
 
-- **Render performance**: Single-frame render completes within 10 ms (guards against regressions; target is 50 ms for 20 FPS per [ADR-0030](../adr/0030-performance-priority.md)).
+- **Render performance**: Single-frame render completes within 10 ms (guards against regressions; target is 50 ms for 20 FPS per [ADR-0030](../adr/0030-performance-priority.md)). A separate case registers a minimal OBJ on the **mock `IFileSystem`** and asserts **AsciiModel** end-to-end render stays within a modest ms budget (`RenderPerformanceTests.AsciiModelSingleFrameCompletesWithinThreshold`).
 - **Layer rendering**: Each layer type (GeissBackground, Marquee, Oscilloscope, etc.) renders without throwing.
 - **Preset loading**: Preset load/save round-trip and render-with-preset.
 - **Smoke**: Multiple frames render without exception.
 
-Tests use **System.IO.Abstractions.TestingHelpers** (MockFileSystem) instead of the real file system: no temp directories, no disk I/O, fully isolated and deterministic.
+Integration tests and several performance cases use **System.IO.Abstractions.TestingHelpers** (`MockFileSystem`) for the app `IFileSystem`, so presets/palettes and AsciiImage/AsciiModel assets can share the same virtual tree without disk I/O. Some unit tests still use `new FileSystem()` with a temp directory when exercising real OS path behavior.
 
 ## When modifying UI/display
 

@@ -1,3 +1,4 @@
+using System.IO.Abstractions;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
@@ -14,13 +15,15 @@ public static class AsciiImageConverter
     /// Converts an image file to ASCII art. Resizes to fit target dimensions while preserving aspect ratio.
     /// Returns null if the image cannot be loaded.
     /// </summary>
+    /// <param name="fileSystem">File system used to open <paramref name="imagePath"/> (supports test doubles).</param>
     /// <param name="imagePath">Full path to the image file.</param>
     /// <param name="targetWidth">Target width in characters.</param>
     /// <param name="targetHeight">Target height in characters.</param>
     /// <param name="includeRgb">When true, populates per-pixel RGB for ImageColors palette source.</param>
     /// <returns>Character grid and brightness grid (and optionally RGB), or null on failure.</returns>
-    public static AsciiFrame? Convert(string imagePath, int targetWidth, int targetHeight, bool includeRgb = false)
+    public static AsciiFrame? Convert(IFileSystem fileSystem, string imagePath, int targetWidth, int targetHeight, bool includeRgb = false)
     {
+        ArgumentNullException.ThrowIfNull(fileSystem);
         if (targetWidth <= 0 || targetHeight <= 0)
         {
             return null;
@@ -28,7 +31,8 @@ public static class AsciiImageConverter
 
         try
         {
-            using var image = Image.Load<Rgba32>(imagePath);
+            using Stream stream = fileSystem.File.OpenRead(imagePath);
+            using var image = Image.Load<Rgba32>(stream);
 
             image.Mutate(x => x.Resize(new ResizeOptions
             {

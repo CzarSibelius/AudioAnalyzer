@@ -1,3 +1,4 @@
+using System.IO.Abstractions;
 using AudioAnalyzer.Domain;
 
 namespace AudioAnalyzer.Visualizers;
@@ -7,11 +8,14 @@ public sealed class AsciiImageLayer : TextLayerRendererBase, ITextLayerRenderer<
 {
     private readonly ITextLayerStateStore<AsciiImageState> _stateStore;
     private readonly UiSettings _uiSettings;
+    private readonly IFileSystem _fileSystem;
 
-    public AsciiImageLayer(ITextLayerStateStore<AsciiImageState> stateStore, UiSettings uiSettings)
+    /// <summary>Initializes a new instance of the <see cref="AsciiImageLayer"/> class.</summary>
+    public AsciiImageLayer(ITextLayerStateStore<AsciiImageState> stateStore, UiSettings uiSettings, IFileSystem fileSystem)
     {
         _stateStore = stateStore ?? throw new ArgumentNullException(nameof(stateStore));
         _uiSettings = uiSettings ?? throw new ArgumentNullException(nameof(uiSettings));
+        _fileSystem = fileSystem ?? throw new ArgumentNullException(nameof(fileSystem));
     }
 
     public override TextLayerType LayerType => TextLayerType.AsciiImage;
@@ -25,7 +29,7 @@ public sealed class AsciiImageLayer : TextLayerRendererBase, ITextLayerRenderer<
         int h = ctx.Height;
 
         var s = layer.GetCustom<AsciiImageSettings>() ?? new AsciiImageSettings();
-        var imagePaths = FileBasedLayerAssetPaths.GetSortedImagePaths(s.ImageFolderPath, _uiSettings);
+        var imagePaths = FileBasedLayerAssetPaths.GetSortedImagePaths(s.ImageFolderPath, _uiSettings, _fileSystem);
         if (imagePaths.Count == 0)
         {
             RenderPlaceholder(ctx, "No images");
@@ -43,7 +47,7 @@ public sealed class AsciiImageLayer : TextLayerRendererBase, ITextLayerRenderer<
         bool includeRgb = s.PaletteSource == AsciiImagePaletteSource.ImageColors;
         if (asciiState.CachedFrame == null || asciiState.CachedPath != imagePath || asciiState.CachedWidth != convertW || asciiState.CachedHeight != convertH || asciiState.CachedPaletteSource != s.PaletteSource)
         {
-            asciiState.CachedFrame = AsciiImageConverter.Convert(imagePath, convertW, convertH, includeRgb);
+            asciiState.CachedFrame = AsciiImageConverter.Convert(_fileSystem, imagePath, convertW, convertH, includeRgb);
             asciiState.CachedPath = imagePath;
             asciiState.CachedWidth = convertW;
             asciiState.CachedHeight = convertH;

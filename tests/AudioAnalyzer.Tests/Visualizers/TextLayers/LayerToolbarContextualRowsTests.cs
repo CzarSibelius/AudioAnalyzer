@@ -1,3 +1,4 @@
+using System.IO.Abstractions;
 using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Domain;
 using AudioAnalyzer.Visualizers;
@@ -8,11 +9,13 @@ namespace AudioAnalyzer.Tests.Visualizers.TextLayers;
 /// <summary>Tests for <see cref="LayerToolbarContextualRows"/> and shared <see cref="FileBasedLayerAssetPaths"/> ordering.</summary>
 public sealed class LayerToolbarContextualRowsTests
 {
+    private static readonly IFileSystem s_realFs = new FileSystem();
+
     [Fact]
     public void Oscilloscope_uses_default_gain_when_no_custom()
     {
         var layer = new TextLayerSettings { LayerType = TextLayerType.Oscilloscope };
-        IReadOnlyList<LayerToolbarContextualRow> rows = LayerToolbarContextualRows.Resolve(layer, 0);
+        IReadOnlyList<LayerToolbarContextualRow> rows = LayerToolbarContextualRows.Resolve(layer, 0, s_realFs);
         Assert.Single(rows);
         Assert.Equal("Gain", rows[0].Label);
         Assert.Equal("2.5", rows[0].Value);
@@ -23,7 +26,7 @@ public sealed class LayerToolbarContextualRowsTests
     {
         var layer = new TextLayerSettings { LayerType = TextLayerType.Oscilloscope };
         layer.SetCustom(new OscilloscopeSettings { Gain = 4.5 });
-        IReadOnlyList<LayerToolbarContextualRow> rows = LayerToolbarContextualRows.Resolve(layer, 0);
+        IReadOnlyList<LayerToolbarContextualRow> rows = LayerToolbarContextualRows.Resolve(layer, 0, s_realFs);
         Assert.Single(rows);
         Assert.Equal("Gain", rows[0].Label);
         Assert.Equal("4.5", rows[0].Value);
@@ -33,7 +36,7 @@ public sealed class LayerToolbarContextualRowsTests
     public void Marquee_returns_empty()
     {
         var layer = new TextLayerSettings { LayerType = TextLayerType.Marquee };
-        IReadOnlyList<LayerToolbarContextualRow> rows = LayerToolbarContextualRows.Resolve(layer, 0);
+        IReadOnlyList<LayerToolbarContextualRow> rows = LayerToolbarContextualRows.Resolve(layer, 0, s_realFs);
         Assert.Empty(rows);
     }
 
@@ -46,7 +49,7 @@ public sealed class LayerToolbarContextualRowsTests
         {
             var layer = new TextLayerSettings { LayerType = TextLayerType.AsciiImage };
             layer.SetCustom(new AsciiImageSettings { ImageFolderPath = dir });
-            IReadOnlyList<LayerToolbarContextualRow> rows = LayerToolbarContextualRows.Resolve(layer, 0);
+            IReadOnlyList<LayerToolbarContextualRow> rows = LayerToolbarContextualRows.Resolve(layer, 0, s_realFs);
             Assert.Single(rows);
             Assert.Equal("Image", rows[0].Label);
             Assert.Equal("No images", rows[0].Value);
@@ -71,8 +74,8 @@ public sealed class LayerToolbarContextualRowsTests
             var layer = new TextLayerSettings { LayerType = TextLayerType.AsciiImage };
             layer.SetCustom(new AsciiImageSettings { ImageFolderPath = dir });
 
-            Assert.Equal("a.png", LayerToolbarContextualRows.Resolve(layer, 0)[0].Value);
-            Assert.Equal("a.png", LayerToolbarContextualRows.Resolve(layer, 99)[0].Value);
+            Assert.Equal("a.png", LayerToolbarContextualRows.Resolve(layer, 0, s_realFs)[0].Value);
+            Assert.Equal("a.png", LayerToolbarContextualRows.Resolve(layer, 99, s_realFs)[0].Value);
         }
         finally
         {
@@ -93,7 +96,7 @@ public sealed class LayerToolbarContextualRowsTests
             var layer = new TextLayerSettings { LayerType = TextLayerType.AsciiImage };
             layer.SetCustom(new AsciiImageSettings { ImageFolderPath = dir, SelectedImageFileName = "m.png" });
 
-            Assert.Equal("m.png", LayerToolbarContextualRows.Resolve(layer, 0)[0].Value);
+            Assert.Equal("m.png", LayerToolbarContextualRows.Resolve(layer, 0, s_realFs)[0].Value);
         }
         finally
         {
@@ -114,9 +117,9 @@ public sealed class LayerToolbarContextualRowsTests
             var layer = new TextLayerSettings { LayerType = TextLayerType.AsciiModel };
             layer.SetCustom(new AsciiModelSettings { ModelFolderPath = dir });
 
-            Assert.Equal("a.obj", LayerToolbarContextualRows.Resolve(layer, 0)[0].Value);
+            Assert.Equal("a.obj", LayerToolbarContextualRows.Resolve(layer, 0, s_realFs)[0].Value);
             layer.SetCustom(new AsciiModelSettings { ModelFolderPath = dir, SelectedModelFileName = "b.obj" });
-            Assert.Equal("b.obj", LayerToolbarContextualRows.Resolve(layer, 0)[0].Value);
+            Assert.Equal("b.obj", LayerToolbarContextualRows.Resolve(layer, 0, s_realFs)[0].Value);
         }
         finally
         {
@@ -133,7 +136,7 @@ public sealed class LayerToolbarContextualRowsTests
         {
             File.WriteAllText(Path.Combine(dir, "2.png"), "x");
             File.WriteAllText(Path.Combine(dir, "1.png"), "x");
-            var images = FileBasedLayerAssetPaths.GetSortedImagePaths(dir);
+            var images = FileBasedLayerAssetPaths.GetSortedImagePaths(dir, null, s_realFs);
             Assert.Equal(2, images.Count);
             Assert.EndsWith("1.png", images[0], StringComparison.OrdinalIgnoreCase);
             Assert.EndsWith("2.png", images[1], StringComparison.OrdinalIgnoreCase);
