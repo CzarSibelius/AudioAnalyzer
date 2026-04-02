@@ -18,6 +18,7 @@ General settings hub, device selection modal, and the preset (S) settings modal 
 
 ## Consequences
 
+- **Update (current):** List and palette **selection** appearance (arrow, background/foreground, padding) must follow [ADR-0069](0069-unified-menu-selection-affordance.md); use **`MenuSelectionAffordance`** with the shared drawing helpers.
 - Changes to list appearance or scroll behavior should be made in the shared helpers so device and palette surfaces stay aligned.
 - Further modal migration to full **IUiComponent** trees can wrap or replace these helpers without changing key-handling contracts.
 - UI specs: [ui-spec-settings-surfaces.md](../ui-spec-settings-surfaces.md).

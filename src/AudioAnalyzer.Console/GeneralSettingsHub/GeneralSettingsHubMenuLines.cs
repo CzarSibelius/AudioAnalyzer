@@ -39,20 +39,19 @@ internal static class GeneralSettingsHubMenuLines
         UiPalette palette,
         AnalysisSnapshot snapshot,
         IReadOnlyList<PaletteColor> beatColors,
-        string? deviceNameRaw)
+        string? deviceNameRaw,
+        int rowDisplayWidth)
     {
         string deviceDisplay = FormatSettingValue(deviceNameRaw);
-        string prefix = state.SelectedIndex == 0 ? "> " : "  ";
+        if (state.SelectedIndex == 0)
+        {
+            var (selBg, selFg) = MenuSelectionAffordance.GetSelectionColors(palette);
+            string inner = MenuSelectionAffordance.GetPrefix(true) + "Audio input devices (D):" + deviceDisplay;
+            return MenuSelectionAffordance.FormatAnsiSelectableRow(true, inner, rowDisplayWidth, selBg, selFg);
+        }
+
         var sb = new StringBuilder();
-        AppendMenuLine(
-            sb,
-            palette,
-            snapshot,
-            beatColors,
-            prefix,
-            state.SelectedIndex == 0,
-            "Audio input devices (D)",
-            deviceDisplay);
+        AppendMenuLineUnselected(sb, palette, snapshot, beatColors, "Audio input devices (D)", deviceDisplay);
         return sb.ToString();
     }
 
@@ -62,7 +61,8 @@ internal static class GeneralSettingsHubMenuLines
         UiPalette palette,
         AnalysisSnapshot snapshot,
         IReadOnlyList<PaletteColor> beatColors,
-        BpmSource source)
+        BpmSource source,
+        int rowDisplayWidth)
     {
         string value = source switch
         {
@@ -71,17 +71,15 @@ internal static class GeneralSettingsHubMenuLines
             BpmSource.AbletonLink => "Ableton Link",
             _ => source.ToString()
         };
-        string prefix = state.SelectedIndex == 1 ? "> " : "  ";
+        if (state.SelectedIndex == 1)
+        {
+            var (selBg, selFg) = MenuSelectionAffordance.GetSelectionColors(palette);
+            string inner = MenuSelectionAffordance.GetPrefix(true) + "BPM source (Enter):" + value;
+            return MenuSelectionAffordance.FormatAnsiSelectableRow(true, inner, rowDisplayWidth, selBg, selFg);
+        }
+
         var sb = new StringBuilder();
-        AppendMenuLine(
-            sb,
-            palette,
-            snapshot,
-            beatColors,
-            prefix,
-            state.SelectedIndex == 1,
-            "BPM source (Enter)",
-            value);
+        AppendMenuLineUnselected(sb, palette, snapshot, beatColors, "BPM source (Enter)", value);
         return sb.ToString();
     }
 
@@ -91,19 +89,18 @@ internal static class GeneralSettingsHubMenuLines
         UiPalette palette,
         AnalysisSnapshot snapshot,
         IReadOnlyList<PaletteColor> beatColors,
-        string appDisplay)
+        string appDisplay,
+        int rowDisplayWidth)
     {
-        string prefix = state.SelectedIndex == 2 ? "> " : "  ";
+        if (state.SelectedIndex == 2)
+        {
+            var (selBg, selFg) = MenuSelectionAffordance.GetSelectionColors(palette);
+            string inner = MenuSelectionAffordance.GetPrefix(true) + "Application name:" + appDisplay;
+            return MenuSelectionAffordance.FormatAnsiSelectableRow(true, inner, rowDisplayWidth, selBg, selFg);
+        }
+
         var sb = new StringBuilder();
-        AppendMenuLine(
-            sb,
-            palette,
-            snapshot,
-            beatColors,
-            prefix,
-            state.SelectedIndex == 2,
-            "Application name",
-            appDisplay);
+        AppendMenuLineUnselected(sb, palette, snapshot, beatColors, "Application name", appDisplay);
         return sb.ToString();
     }
 
@@ -113,19 +110,18 @@ internal static class GeneralSettingsHubMenuLines
         UiPalette palette,
         AnalysisSnapshot snapshot,
         IReadOnlyList<PaletteColor> beatColors,
-        string themeDisplay)
+        string themeDisplay,
+        int rowDisplayWidth)
     {
-        string prefix = state.SelectedIndex == 4 ? "> " : "  ";
+        if (state.SelectedIndex == 4)
+        {
+            var (selBg, selFg) = MenuSelectionAffordance.GetSelectionColors(palette);
+            string inner = MenuSelectionAffordance.GetPrefix(true) + "UI theme (T):" + themeDisplay;
+            return MenuSelectionAffordance.FormatAnsiSelectableRow(true, inner, rowDisplayWidth, selBg, selFg);
+        }
+
         var sb = new StringBuilder();
-        AppendMenuLine(
-            sb,
-            palette,
-            snapshot,
-            beatColors,
-            prefix,
-            state.SelectedIndex == 4,
-            "UI theme (T)",
-            themeDisplay);
+        AppendMenuLineUnselected(sb, palette, snapshot, beatColors, "UI theme (T)", themeDisplay);
         return sb.ToString();
     }
 
@@ -135,20 +131,19 @@ internal static class GeneralSettingsHubMenuLines
         UiPalette palette,
         AnalysisSnapshot snapshot,
         IReadOnlyList<PaletteColor> beatColors,
-        UiSettings uiSettings)
+        UiSettings uiSettings,
+        int rowDisplayWidth)
     {
         string value = uiSettings.ShowRenderFps ? "On" : "Off";
-        string prefix = state.SelectedIndex == 5 ? "> " : "  ";
+        if (state.SelectedIndex == 5)
+        {
+            var (selBg, selFg) = MenuSelectionAffordance.GetSelectionColors(palette);
+            string inner = MenuSelectionAffordance.GetPrefix(true) + "Show render FPS (Enter):" + value;
+            return MenuSelectionAffordance.FormatAnsiSelectableRow(true, inner, rowDisplayWidth, selBg, selFg);
+        }
+
         var sb = new StringBuilder();
-        AppendMenuLine(
-            sb,
-            palette,
-            snapshot,
-            beatColors,
-            prefix,
-            state.SelectedIndex == 5,
-            "Show render FPS (Enter)",
-            value);
+        AppendMenuLineUnselected(sb, palette, snapshot, beatColors, "Show render FPS (Enter)", value);
         return sb.ToString();
     }
 
@@ -158,22 +153,21 @@ internal static class GeneralSettingsHubMenuLines
         UiPalette palette,
         AnalysisSnapshot snapshot,
         IReadOnlyList<PaletteColor> beatColors,
-        UiSettings uiSettings)
+        UiSettings uiSettings,
+        int rowDisplayWidth)
     {
         string valueDisplay = string.IsNullOrWhiteSpace(uiSettings.DefaultAssetFolderPath)
             ? "(App base)"
             : FormatSettingValue(uiSettings.DefaultAssetFolderPath);
-        string prefix = state.SelectedIndex == 3 ? "> " : "  ";
+        if (state.SelectedIndex == 3)
+        {
+            var (selBg, selFg) = MenuSelectionAffordance.GetSelectionColors(palette);
+            string inner = MenuSelectionAffordance.GetPrefix(true) + "Default asset folder:" + valueDisplay;
+            return MenuSelectionAffordance.FormatAnsiSelectableRow(true, inner, rowDisplayWidth, selBg, selFg);
+        }
+
         var sb = new StringBuilder();
-        AppendMenuLine(
-            sb,
-            palette,
-            snapshot,
-            beatColors,
-            prefix,
-            state.SelectedIndex == 3,
-            "Default asset folder",
-            valueDisplay);
+        AppendMenuLineUnselected(sb, palette, snapshot, beatColors, "Default asset folder", valueDisplay);
         return sb.ToString();
     }
 
@@ -225,20 +219,18 @@ internal static class GeneralSettingsHubMenuLines
     private static string FormatSettingValue(string? raw) =>
         string.IsNullOrWhiteSpace(raw) ? "\u2014" : raw.Trim();
 
-    private static void AppendMenuLine(
+    private static void AppendMenuLineUnselected(
         StringBuilder sb,
         UiPalette palette,
         AnalysisSnapshot snapshot,
         IReadOnlyList<PaletteColor> beatColors,
-        string prefix,
-        bool selected,
         string labelBeforeColon,
         string valueText)
     {
-        var labelColor = selected ? palette.Highlighted : palette.Normal;
+        string prefix = MenuSelectionAffordance.GetPrefix(false);
         AnsiConsole.AppendColored(sb, prefix, palette.Label);
-        AnsiConsole.AppendColored(sb, labelBeforeColon, labelColor);
-        AnsiConsole.AppendColored(sb, ":", labelColor);
+        AnsiConsole.AppendColored(sb, labelBeforeColon, palette.Normal);
+        AnsiConsole.AppendColored(sb, ":", palette.Normal);
 
         if (beatColors is { Count: > 0 })
         {
@@ -247,8 +239,7 @@ internal static class GeneralSettingsHubMenuLines
         }
         else
         {
-            var valueColor = selected ? palette.Highlighted : palette.Dimmed;
-            AnsiConsole.AppendColored(sb, valueText, valueColor);
+            AnsiConsole.AppendColored(sb, valueText, palette.Dimmed);
         }
     }
 }

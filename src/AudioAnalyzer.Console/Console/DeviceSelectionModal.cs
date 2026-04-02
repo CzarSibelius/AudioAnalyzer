@@ -82,8 +82,7 @@ internal sealed class DeviceSelectionModal : IDeviceSelectionModal
         };
 
         var palette = _uiThemeResolver.GetEffectiveUiPalette();
-        var selBg = palette.Background ?? PaletteColor.FromConsoleColor(ConsoleColor.DarkBlue);
-        var selFg = palette.Highlighted;
+        var (selBg, selFg) = MenuSelectionAffordance.GetSelectionColors(palette);
         var currentColor = palette.Highlighted;
 
         void DrawDeviceContent()

@@ -32,14 +32,9 @@ All surfaces use **ITitleBarBreadcrumbFormatter** and **ITitleBarNavigationConte
 | **Vertical selectable list** | **↑/↓** move selection, **Enter** confirms, **Esc** cancels (device modal; palette picker in S modal uses **Esc** to discard preview). |
 | **Palette name coloring** | **PaletteSwatchFormatter** — beat- or tick-driven phase for per-letter colors (toolbar, S modal Palette row, palette picker list). |
 
-## Selection affordances (current variants)
+## Selection affordance
 
-Until implementation unifies, specs document **both**:
-
-- **Hub menu rows:** leading `>` on the selected row, two spaces otherwise (`GeneralSettingsHubAreaRenderer`).
-- **Modal lists (device, S modal layer list):** leading ` ► ` on the selected row, three spaces otherwise.
-
-Palette picker rows in the S modal use background/foreground highlight on the selected entry (including **(inherit)**).
+All selectable hub rows and vertical lists use the same **arrow + full-width theme highlight** per [ui-spec-menu-selection.md](ui-spec-menu-selection.md) and [ADR-0069](adr/0069-unified-menu-selection-affordance.md).
 
 ## Feature matrix (where capabilities exist today)
 
@@ -58,8 +53,8 @@ Palette picker rows in the S modal use background/foreground highlight on the se
 
 ## Related overlay: Show edit modal
 
-**Show edit** (**S** in Show play) uses a similar **two-column overlay** shell as the S modal (breadcrumb, hint, separator, list \| detail). It does not yet have a dedicated ui-spec; when added, reuse the “overlay shell” structure described in [ui-spec-preset-settings-modal.md](ui-spec-preset-settings-modal.md).
+**Show edit** (**S** in Show play) uses a similar **two-column overlay** shell as the S modal (breadcrumb, hint, separator, list \| detail). List selection matches [ui-spec-menu-selection.md](ui-spec-menu-selection.md). A dedicated Show edit ui-spec may still be added; reuse the overlay shell described in [ui-spec-preset-settings-modal.md](ui-spec-preset-settings-modal.md).
 
 ## Implementation note
 
-Shared list and palette drawing for device selection and the S modal palette picker are consolidated in the Console project (`SettingsSurfacesListDrawing`, `PalettePickerListDrawer`) per [ADR-0063](adr/0063-uniform-settings-list-and-palette-drawing.md).
+Shared list and palette drawing for device selection and the S modal palette picker are consolidated in the Console project (`SettingsSurfacesListDrawing`, `SettingsSurfacesPaletteDrawing`, `MenuSelectionAffordance`) per [ADR-0063](adr/0063-uniform-settings-list-and-palette-drawing.md) and [ADR-0069](adr/0069-unified-menu-selection-affordance.md).

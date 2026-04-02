@@ -79,7 +79,8 @@ internal sealed class GeneralSettingsHubAreaRenderer : IUiComponentRenderer<Gene
                         palette,
                         snapshot,
                         beatColors,
-                        context.DeviceName)),
+                        context.DeviceName,
+                        width)),
                     preformattedAnsi: true)
             ],
             [width]);
@@ -92,7 +93,8 @@ internal sealed class GeneralSettingsHubAreaRenderer : IUiComponentRenderer<Gene
                         palette,
                         snapshot,
                         beatColors,
-                        _appSettings.BpmSource)),
+                        _appSettings.BpmSource,
+                        width)),
                     preformattedAnsi: true)
             ],
             [width]);
@@ -105,7 +107,8 @@ internal sealed class GeneralSettingsHubAreaRenderer : IUiComponentRenderer<Gene
                         palette,
                         snapshot,
                         beatColors,
-                        appDisplay)),
+                        appDisplay,
+                        width)),
                     preformattedAnsi: true)
             ],
             [width]);
@@ -118,7 +121,8 @@ internal sealed class GeneralSettingsHubAreaRenderer : IUiComponentRenderer<Gene
                         palette,
                         snapshot,
                         beatColors,
-                        _uiSettings)),
+                        _uiSettings,
+                        width)),
                     preformattedAnsi: true)
             ],
             [width]);
@@ -131,7 +135,8 @@ internal sealed class GeneralSettingsHubAreaRenderer : IUiComponentRenderer<Gene
                         palette,
                         snapshot,
                         beatColors,
-                        themeDisplay)),
+                        themeDisplay,
+                        width)),
                     preformattedAnsi: true)
             ],
             [width]);
@@ -166,7 +171,8 @@ internal sealed class GeneralSettingsHubAreaRenderer : IUiComponentRenderer<Gene
                         palette,
                         snapshot,
                         beatColors,
-                        _uiSettings)),
+                        _uiSettings,
+                        width)),
                     preformattedAnsi: true)
             ],
             [width]);

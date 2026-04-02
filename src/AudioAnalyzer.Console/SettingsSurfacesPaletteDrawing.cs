@@ -65,11 +65,11 @@ internal static class SettingsSurfacesPaletteDrawing
             bool selected = i == state.PalettePickerSelectedIndex;
             if (includeInheritFirst && i == 0)
             {
-                string plain = StaticTextViewport.TruncateWithEllipsis(new PlainText("(inherit)"), rightColWidth);
-                string core = selected
-                    ? AnsiConsole.BackgroundCode(selBg) + AnsiConsole.ColorCode(selFg) + plain + AnsiConsole.ResetCode
-                    : plain;
-                System.Console.Write(AnsiConsole.PadToDisplayWidth(core, rightColWidth));
+                string prefix = MenuSelectionAffordance.GetPrefix(selected);
+                int nameBudget = Math.Max(0, rightColWidth - MenuSelectionAffordance.PrefixDisplayWidth);
+                string plain = StaticTextViewport.TruncateWithEllipsis(new PlainText("(inherit)"), nameBudget);
+                string inner = prefix + plain;
+                System.Console.Write(MenuSelectionAffordance.FormatAnsiSelectableRow(selected, inner, rightColWidth, selBg, selFg));
             }
             else
             {
@@ -103,13 +103,13 @@ internal static class SettingsSurfacesPaletteDrawing
     {
         var def = paletteRepo.GetById(paletteId);
         var colors = ColorPaletteParser.Parse(def);
-        string truncatedName = StaticTextViewport.TruncateWithEllipsis(new PlainText(displayName), rightColWidth);
+        string prefix = MenuSelectionAffordance.GetPrefix(selected);
+        int nameBudget = Math.Max(0, rightColWidth - MenuSelectionAffordance.PrefixDisplayWidth);
+        string truncatedName = StaticTextViewport.TruncateWithEllipsis(new PlainText(displayName), nameBudget);
         int phase = PaletteSwatchFormatter.ComputeToolbarPhaseOffset(analysisSnapshot, colors?.Count ?? 0);
         string coloredName = PaletteSwatchFormatter.FormatPaletteColoredName(truncatedName, colors, phase);
-        string core = selected
-            ? AnsiConsole.BackgroundCode(selBg) + AnsiConsole.ColorCode(selFg) + coloredName + AnsiConsole.ResetCode
-            : coloredName;
-        return AnsiConsole.PadToDisplayWidth(core, rightColWidth);
+        string inner = prefix + coloredName;
+        return MenuSelectionAffordance.FormatAnsiSelectableRow(selected, inner, rightColWidth, selBg, selFg);
     }
 
     /// <summary>Palette setting row in the settings column (label + colored effective palette name).</summary>
@@ -135,19 +135,17 @@ internal static class SettingsSurfacesPaletteDrawing
 
         var def = paletteRepo.GetById(effectiveId);
         var colors = ColorPaletteParser.Parse(def);
-        int labelCols = DisplayWidth.GetDisplayWidth(labelText);
+        string prefix = MenuSelectionAffordance.GetPrefix(selected);
+        string labelWithPrefix = prefix + labelText;
+        int labelCols = DisplayWidth.GetDisplayWidth(labelWithPrefix);
         int nameMaxCols = Math.Max(0, rightColWidth - labelCols);
         string truncatedName = nameMaxCols > 0
             ? StaticTextViewport.TruncateWithEllipsis(new PlainText(namePart), nameMaxCols)
             : "";
         int phase = PaletteSwatchFormatter.ComputeToolbarPhaseOffset(analysisSnapshot, colors?.Count ?? 0);
         string coloredName = PaletteSwatchFormatter.FormatPaletteColoredName(truncatedName, colors, phase);
-
-        string core = selected
-            ? AnsiConsole.BackgroundCode(selBg) + AnsiConsole.ColorCode(selFg) + labelText + AnsiConsole.ResetCode + coloredName
-            : labelText + coloredName;
-
-        return AnsiConsole.PadToDisplayWidth(core, rightColWidth);
+        string inner = labelWithPrefix + coloredName;
+        return MenuSelectionAffordance.FormatAnsiSelectableRow(selected, inner, rightColWidth, selBg, selFg);
     }
 
     /// <summary>Preset default palette row: <c>TextLayers.PaletteId</c> (falls back to <c>default</c> when empty).</summary>
@@ -170,19 +168,17 @@ internal static class SettingsSurfacesPaletteDrawing
         string namePart = ResolvePresetDefaultPaletteDisplayName(paletteRepo, textLayers);
         var def = paletteRepo.GetById(effectiveId);
         var colors = ColorPaletteParser.Parse(def);
-        int labelCols = DisplayWidth.GetDisplayWidth(labelText);
+        string prefix = MenuSelectionAffordance.GetPrefix(selected);
+        string labelWithPrefix = prefix + labelText;
+        int labelCols = DisplayWidth.GetDisplayWidth(labelWithPrefix);
         int nameMaxCols = Math.Max(0, rightColWidth - labelCols);
         string truncatedName = nameMaxCols > 0
             ? StaticTextViewport.TruncateWithEllipsis(new PlainText(namePart), nameMaxCols)
             : "";
         int phase = PaletteSwatchFormatter.ComputeToolbarPhaseOffset(analysisSnapshot, colors?.Count ?? 0);
         string coloredName = PaletteSwatchFormatter.FormatPaletteColoredName(truncatedName, colors, phase);
-
-        string core = selected
-            ? AnsiConsole.BackgroundCode(selBg) + AnsiConsole.ColorCode(selFg) + labelText + AnsiConsole.ResetCode + coloredName
-            : labelText + coloredName;
-
-        return AnsiConsole.PadToDisplayWidth(core, rightColWidth);
+        string inner = labelWithPrefix + coloredName;
+        return MenuSelectionAffordance.FormatAnsiSelectableRow(selected, inner, rightColWidth, selBg, selFg);
     }
 
     /// <summary>Plain summary for preset default palette list rows (matches <see cref="FormatPresetDefaultPaletteSettingRow"/>).</summary>

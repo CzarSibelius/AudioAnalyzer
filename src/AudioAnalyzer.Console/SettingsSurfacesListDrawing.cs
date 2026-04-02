@@ -18,7 +18,7 @@ internal static class SettingsSurfacesListDrawing
         return Math.Clamp(selectedIndex - (visibleCount - 1), 0, totalCount - visibleCount);
     }
 
-    /// <summary>Draws the device list starting at <paramref name="startRow"/> (full width). Rows use ► / spaces prefix and optional (current) suffix.</summary>
+    /// <summary>Draws the device list starting at <paramref name="startRow"/> (full width). Rows use <see cref="MenuSelectionAffordance"/> prefix and optional (current) suffix.</summary>
     public static void DrawAudioDeviceList(
         int startRow,
         int width,
@@ -32,7 +32,7 @@ internal static class SettingsSurfacesListDrawing
         for (int i = 0; i < devices.Count; i++)
         {
             bool isCurrent = currentDeviceName != null && devices[i].Name == currentDeviceName;
-            string prefix = i == selectedIndex ? " ► " : "   ";
+            string prefix = MenuSelectionAffordance.GetPrefix(i == selectedIndex);
             string suffix = isCurrent ? " (current)" : "";
             string line = $"{prefix}{devices[i].Name}{suffix}";
             if (line.Length < width - 1)
@@ -47,7 +47,7 @@ internal static class SettingsSurfacesListDrawing
             string lineToWrite;
             if (i == selectedIndex)
             {
-                lineToWrite = AnsiConsole.BackgroundCode(selBg) + AnsiConsole.ColorCode(selFg) + line + AnsiConsole.ResetCode;
+                lineToWrite = MenuSelectionAffordance.ApplyRowHighlight(true, line, selBg, selFg);
             }
             else if (isCurrent)
             {
@@ -96,7 +96,7 @@ internal static class SettingsSurfacesListDrawing
         AnalysisSnapshot analysisSnapshot)
     {
         int total = 1 + palettes.Count;
-        int rightCol = Math.Max(8, width - 4);
+        int rowWidth = Math.Max(8, width - 1);
         for (int vi = 0; vi < visibleRows; vi++)
         {
             int globalIndex = scrollOffset + vi;
@@ -115,23 +115,26 @@ internal static class SettingsSurfacesListDrawing
                 continue;
             }
 
-            string prefix = globalIndex == selectedIndex ? " ► " : "   ";
+            bool rowSelected = globalIndex == selectedIndex;
             string lineToWrite;
             if (globalIndex == 0)
             {
                 bool customCurrent = string.IsNullOrWhiteSpace(currentThemePaletteId);
                 string core = "(Custom)" + (customCurrent ? " (current)" : "");
-                if (globalIndex == selectedIndex)
+                string prefix = MenuSelectionAffordance.GetPrefix(rowSelected);
+                string inner = prefix + core;
+                if (rowSelected)
                 {
-                    lineToWrite = AnsiConsole.BackgroundCode(selBg) + AnsiConsole.ColorCode(selFg) + prefix + core + AnsiConsole.ResetCode;
+                    lineToWrite = MenuSelectionAffordance.FormatAnsiSelectableRow(true, inner, rowWidth, selBg, selFg);
                 }
                 else if (customCurrent)
                 {
-                    lineToWrite = AnsiConsole.ColorCode(currentHighlightColor) + prefix + core + AnsiConsole.ResetCode;
+                    string colored = AnsiConsole.ColorCode(currentHighlightColor) + inner + AnsiConsole.ResetCode;
+                    lineToWrite = AnsiConsole.PadToDisplayWidth(colored, rowWidth);
                 }
                 else
                 {
-                    lineToWrite = prefix + core;
+                    lineToWrite = AnsiConsole.PadToDisplayWidth(inner, rowWidth);
                 }
             }
             else
@@ -140,16 +143,15 @@ internal static class SettingsSurfacesListDrawing
                 string displayName = !string.IsNullOrWhiteSpace(p.Name?.Trim()) ? p.Name!.Trim() : p.Id;
                 bool isCurrent = !string.IsNullOrWhiteSpace(currentThemePaletteId)
                     && string.Equals(p.Id, currentThemePaletteId.Trim(), StringComparison.OrdinalIgnoreCase);
-                string row = SettingsSurfacesPaletteDrawing.FormatPickerPaletteRow(
+                lineToWrite = SettingsSurfacesPaletteDrawing.FormatPickerPaletteRow(
                     paletteRepo,
                     p.Id,
                     displayName + (isCurrent ? " (current)" : ""),
-                    rightCol,
-                    globalIndex == selectedIndex,
+                    rowWidth,
+                    rowSelected,
                     selBg,
                     selFg,
                     analysisSnapshot);
-                lineToWrite = prefix + row;
             }
 
             try

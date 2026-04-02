@@ -85,8 +85,7 @@ internal sealed class ShowEditModal : IShowEditModal
         int rightColWidth = Math.Max(10, width - LeftColWidth - 1);
 
         var palette = _uiThemeResolver.GetEffectiveUiPalette();
-        var selBg = palette.Background ?? PaletteColor.FromConsoleColor(ConsoleColor.DarkBlue);
-        var selFg = palette.Highlighted;
+        var (selBg, selFg) = MenuSelectionAffordance.GetSelectionColors(palette);
 
         void DrawContent()
         {
@@ -127,12 +126,11 @@ internal sealed class ShowEditModal : IShowEditModal
                         var presetName = preset?.Name?.Trim() ?? entry.PresetId;
                         var dur = entry.Duration ?? new DurationConfig();
                         var durStr = dur.Unit == DurationUnit.Beats ? $"{dur.Value:F0} beats" : $"{dur.Value:F0}s";
-                        string prefix = i == context.SelectedIndex ? " ► " : "   ";
+                        string prefix = MenuSelectionAffordance.GetPrefix(i == context.SelectedIndex);
                         string line = $"{prefix}{i + 1}. {StaticTextViewport.TruncateWithEllipsis(new PlainText(presetName), LeftColWidth - 10)}  {durStr}";
-                        line = StaticTextViewport.TruncateWithEllipsis(new PlainText(line), LeftColWidth).PadRight(LeftColWidth);
-                        string lineToWrite = i == context.SelectedIndex
-                            ? AnsiConsole.BackgroundCode(selBg) + AnsiConsole.ColorCode(selFg) + line + AnsiConsole.ResetCode
-                            : line;
+                        line = StaticTextViewport.TruncateWithEllipsis(new PlainText(line), LeftColWidth);
+                        line = AnsiConsole.PadToDisplayWidth(line, LeftColWidth);
+                        string lineToWrite = MenuSelectionAffordance.ApplyRowHighlight(i == context.SelectedIndex, line, selBg, selFg);
                         System.Console.Write(lineToWrite);
                         System.Console.Write(" ");
                         if (i == context.SelectedIndex && !context.EditingDuration)

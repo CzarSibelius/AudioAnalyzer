@@ -13,8 +13,12 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
     private const int HintRow = 1;
     private const int SeparatorRow = 2;
     private const int FirstLayerRow = 3;
+
+    /// <summary>First console row for the right-hand settings and palette-picker column; one below <see cref="FirstLayerRow"/> so detail lines align with layer list rows, not the Preset header.</summary>
+    private const int RightColumnContentStartRow = FirstLayerRow + 1;
+
     private const int LeftColWidth = 28;
-    private static readonly int SettingsVisibleRows = OverlayRowCount - FirstLayerRow;
+    private static readonly int SettingsVisibleRows = OverlayRowCount - RightColumnContentStartRow;
 
     private readonly VisualizerSettings _visualizerSettings;
     private readonly UiSettings _uiSettings;
@@ -68,8 +72,7 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
 
         int rightColWidth = Math.Max(10, width - LeftColWidth - 1);
         var palette = _uiThemeResolver.GetEffectiveUiPalette();
-        var selBg = palette.Background ?? PaletteColor.FromConsoleColor(ConsoleColor.DarkBlue);
-        var selFg = palette.Highlighted;
+        var (selBg, selFg) = MenuSelectionAffordance.GetSelectionColors(palette);
         double scrollSpeed = _uiSettings?.DefaultScrollingSpeed ?? 0.25;
 
         try
@@ -111,12 +114,12 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
             }
 
             int presetRow = FirstLayerRow;
-            string presetPrefix = state.LeftPanelPresetSelected ? " ► " : "   ";
+            string presetPrefix = MenuSelectionAffordance.GetPrefix(state.LeftPanelPresetSelected);
             string presetLeft = $"{presetPrefix}Preset";
             presetLeft = StaticTextViewport.TruncateWithEllipsis(new PlainText(presetLeft), LeftColWidth).PadRight(LeftColWidth);
             System.Console.SetCursorPosition(0, presetRow);
             string presetLeftWrite = state.LeftPanelPresetSelected && state.Focus == SettingsModalFocus.LayerList && !state.Renaming
-                ? AnsiConsole.BackgroundCode(selBg) + AnsiConsole.ColorCode(selFg) + presetLeft + AnsiConsole.ResetCode
+                ? MenuSelectionAffordance.ApplyRowHighlight(true, presetLeft, selBg, selFg)
                 : presetLeft;
             System.Console.Write(presetLeftWrite);
             System.Console.Write(" ");
@@ -131,14 +134,14 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
                 }
 
                 var layer = sortedLayers[i];
-                string prefix = !state.LeftPanelPresetSelected && i == state.SelectedLayerIndex ? " ► " : "   ";
+                string prefix = MenuSelectionAffordance.GetPrefix(!state.LeftPanelPresetSelected && i == state.SelectedLayerIndex);
                 string enabledMark = layer.Enabled ? "●" : "○";
                 string leftLine = $"{prefix}{enabledMark} {i + 1}. {layer.LayerType}";
                 leftLine = StaticTextViewport.TruncateWithEllipsis(new PlainText(leftLine), LeftColWidth).PadRight(LeftColWidth);
 
                 System.Console.SetCursorPosition(0, row);
                 string leftLineToWrite = !state.LeftPanelPresetSelected && i == state.SelectedLayerIndex && state.Focus == SettingsModalFocus.LayerList && !state.Renaming
-                    ? AnsiConsole.BackgroundCode(selBg) + AnsiConsole.ColorCode(selFg) + leftLine + AnsiConsole.ResetCode
+                    ? MenuSelectionAffordance.ApplyRowHighlight(true, leftLine, selBg, selFg)
                     : leftLine;
                 System.Console.Write(leftLineToWrite);
                 System.Console.Write(" ");
@@ -154,7 +157,7 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
                     _paletteRepo,
                     state,
                     LeftColWidth,
-                    FirstLayerRow,
+                    RightColumnContentStartRow,
                     SettingsVisibleRows,
                     rightColWidth,
                     selBg,
@@ -171,7 +174,7 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
                     var row = presetSettingsRows[vi];
                     bool showBuffer = state.Focus == SettingsModalFocus.EditingSetting && vi == state.SelectedSettingIndex && row.EditMode == SettingEditMode.TextEdit;
                     bool selected = vi == state.SelectedSettingIndex && (state.Focus == SettingsModalFocus.SettingsList || state.Focus == SettingsModalFocus.EditingSetting);
-                    System.Console.SetCursorPosition(LeftColWidth + 1, FirstLayerRow + vi);
+                    System.Console.SetCursorPosition(LeftColWidth + 1, RightColumnContentStartRow + vi);
                     if (row.Id == PresetSettingsModalRows.DefaultPaletteId && !showBuffer)
                     {
                         System.Console.Write(SettingsSurfacesPaletteDrawing.FormatPresetDefaultPaletteSettingRow(
@@ -185,14 +188,12 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
                         continue;
                     }
 
+                    string aff = MenuSelectionAffordance.GetPrefix(selected);
                     string labelWithColon = string.IsNullOrEmpty(row.Label) ? "" : row.Label + ":";
-                    string lineText = $"{labelWithColon}{(showBuffer ? state.EditingBuffer + "_" : row.DisplayValue)}";
+                    string lineText = $"{aff}{labelWithColon}{(showBuffer ? state.EditingBuffer + "_" : row.DisplayValue)}";
                     string line = StaticTextViewport.TruncateWithEllipsis(new PlainText(lineText), rightColWidth);
-                    string linePadded = line.PadRight(rightColWidth);
-                    string lineToWrite = selected
-                        ? AnsiConsole.BackgroundCode(selBg) + AnsiConsole.ColorCode(selFg) + linePadded + AnsiConsole.ResetCode
-                        : linePadded;
-                    System.Console.Write(lineToWrite);
+                    string linePadded = AnsiConsole.PadToDisplayWidth(line, rightColWidth);
+                    System.Console.Write(MenuSelectionAffordance.ApplyRowHighlight(selected, linePadded, selBg, selFg));
                 }
             }
             else if (showLayerPanel)
@@ -208,7 +209,7 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
                     var row = settingsRows[i];
                     bool showBuffer = state.Focus == SettingsModalFocus.EditingSetting && i == state.SelectedSettingIndex && row.EditMode == SettingEditMode.TextEdit;
                     bool rowSelected = i == state.SelectedSettingIndex && (state.Focus == SettingsModalFocus.SettingsList || state.Focus == SettingsModalFocus.EditingSetting);
-                    System.Console.SetCursorPosition(LeftColWidth + 1, FirstLayerRow + vi);
+                    System.Console.SetCursorPosition(LeftColWidth + 1, RightColumnContentStartRow + vi);
                     if (row.Id == "Palette" && !showBuffer)
                     {
                         System.Console.Write(SettingsSurfacesPaletteDrawing.FormatPaletteSettingRow(
@@ -223,14 +224,12 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
                         continue;
                     }
 
+                    string aff = MenuSelectionAffordance.GetPrefix(rowSelected);
                     string labelWithColon = string.IsNullOrEmpty(row.Label) ? "" : row.Label + ":";
-                    string lineText = $"{labelWithColon}{(showBuffer ? state.EditingBuffer + "_" : row.DisplayValue)}";
+                    string lineText = $"{aff}{labelWithColon}{(showBuffer ? state.EditingBuffer + "_" : row.DisplayValue)}";
                     string line = StaticTextViewport.TruncateWithEllipsis(new PlainText(lineText), rightColWidth);
-                    string linePadded = line.PadRight(rightColWidth);
-                    string lineToWrite = rowSelected
-                        ? AnsiConsole.BackgroundCode(selBg) + AnsiConsole.ColorCode(selFg) + linePadded + AnsiConsole.ResetCode
-                        : linePadded;
-                    System.Console.Write(lineToWrite);
+                    string linePadded = AnsiConsole.PadToDisplayWidth(line, rightColWidth);
+                    System.Console.Write(MenuSelectionAffordance.ApplyRowHighlight(rowSelected, linePadded, selBg, selFg));
                 }
             }
 
@@ -268,7 +267,11 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
                 _lastPickerIdleTickBucket = -1;
             }
         }
-        catch (Exception ex) { _ = ex; /* Draw settings modal failed */ }
+        catch (Exception ex)
+        {
+            /* Console unavailable during settings modal draw: swallow to avoid crashing the app loop */
+            _ = ex;
+        }
     }
 
     /// <inheritdoc />
@@ -288,7 +291,11 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
             TryRedrawPaletteRowForIdleInOpenSyncFrame(state, sortedLayers, width, analysisSnapshot);
             System.Console.Write(SyncOutputEnd);
         }
-        catch (Exception ex) { _ = ex; /* Idle overlay tick failed */ }
+        catch (Exception ex)
+        {
+            /* Console unavailable during settings modal idle tick: swallow to avoid crashing */
+            _ = ex;
+        }
     }
 
     /// <summary>Updates palette cell if phase advanced; caller must wrap the whole idle frame in synchronized output.</summary>
@@ -334,8 +341,7 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
 
             int vi = paletteRowIndex;
             var uiPalette = _uiThemeResolver.GetEffectiveUiPalette();
-            var selBg = uiPalette.Background ?? PaletteColor.FromConsoleColor(ConsoleColor.DarkBlue);
-            var selFg = uiPalette.Highlighted;
+            var (selBg, selFg) = MenuSelectionAffordance.GetSelectionColors(uiPalette);
             var row = presetRows[paletteRowIndex];
             bool showBuffer = state.Focus == SettingsModalFocus.EditingSetting && paletteRowIndex == state.SelectedSettingIndex && row.EditMode == SettingEditMode.TextEdit;
             if (showBuffer)
@@ -356,11 +362,15 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
 
             try
             {
-                System.Console.SetCursorPosition(LeftColWidth + 1, FirstLayerRow + vi);
+                System.Console.SetCursorPosition(LeftColWidth + 1, RightColumnContentStartRow + vi);
                 System.Console.Write(line);
                 _lastIdlePresetDefaultPalettePhase = phase;
             }
-            catch (Exception ex) { _ = ex; /* Preset palette idle redraw failed */ }
+            catch (Exception ex)
+            {
+                /* Console unavailable: swallow */
+                _ = ex;
+            }
 
             return;
         }
@@ -408,8 +418,7 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
         }
 
         var uiPal = _uiThemeResolver.GetEffectiveUiPalette();
-        var selBgL = uiPal.Background ?? PaletteColor.FromConsoleColor(ConsoleColor.DarkBlue);
-        var selFgL = uiPal.Highlighted;
+        var (selBgL, selFgL) = MenuSelectionAffordance.GetSelectionColors(uiPal);
         var rowL = settingsRows[paletteRowIndexLayer];
         bool showBufferL = state.Focus == SettingsModalFocus.EditingSetting && paletteRowIndexLayer == state.SelectedSettingIndex && rowL.EditMode == SettingEditMode.TextEdit;
         if (rowL.Id != "Palette" || showBufferL)
@@ -431,11 +440,15 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
 
         try
         {
-            System.Console.SetCursorPosition(LeftColWidth + 1, FirstLayerRow + viLayer);
+            System.Console.SetCursorPosition(LeftColWidth + 1, RightColumnContentStartRow + viLayer);
             System.Console.Write(lineL);
             _lastIdlePalettePhase = layerPhase;
         }
-        catch (Exception ex) { _ = ex; /* Palette idle redraw failed */ }
+        catch (Exception ex)
+        {
+            /* Console unavailable: swallow */
+            _ = ex;
+        }
     }
 
     private void SyncPickerIdleTracking(AnalysisSnapshot analysisSnapshot)
@@ -453,15 +466,14 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
 
         int rightColWidth = Math.Max(10, width - LeftColWidth - 1);
         var uiPalette = _uiThemeResolver.GetEffectiveUiPalette();
-        var selBg = uiPalette.Background ?? PaletteColor.FromConsoleColor(ConsoleColor.DarkBlue);
-        var selFg = uiPalette.Highlighted;
+        var (selBg, selFg) = MenuSelectionAffordance.GetSelectionColors(uiPalette);
         try
         {
             SettingsSurfacesPaletteDrawing.DrawPicker(
                 _paletteRepo,
                 state,
                 LeftColWidth,
-                FirstLayerRow,
+                RightColumnContentStartRow,
                 SettingsVisibleRows,
                 rightColWidth,
                 selBg,
@@ -471,7 +483,11 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
             _lastPickerIdleBeatCount = beatCount;
             _lastPickerIdleTickBucket = tickBucket;
         }
-        catch (Exception ex) { _ = ex; /* Palette picker idle redraw failed */ }
+        catch (Exception ex)
+        {
+            /* Console unavailable: swallow */
+            _ = ex;
+        }
     }
 
     private int GetPalettePhaseForLayer(TextLayerSettings layer, AnalysisSnapshot analysisSnapshot)

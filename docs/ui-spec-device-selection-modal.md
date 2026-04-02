@@ -1,6 +1,6 @@
 # UI spec: Device selection modal
 
-Full-screen modal for choosing an audio input device. Opened from **D** in Preset / Show modes, or **Enter** on **Audio input devices** in [General settings hub](ui-spec-general-settings-hub.md). See [ui-spec-settings-surfaces.md](ui-spec-settings-surfaces.md) for shared patterns.
+Full-screen modal for choosing an audio input device. Opened from **D** in Preset / Show modes, or **Enter** on **Audio input devices** in [General settings hub](ui-spec-general-settings-hub.md). See [ui-spec-settings-surfaces.md](ui-spec-settings-surfaces.md) for shared patterns. List selection: [ui-spec-menu-selection.md](ui-spec-menu-selection.md).
 
 ## Screenshot
 
