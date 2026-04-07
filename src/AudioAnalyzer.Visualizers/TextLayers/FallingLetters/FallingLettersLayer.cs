@@ -1,3 +1,4 @@
+using AudioAnalyzer.Application;
 using AudioAnalyzer.Domain;
 
 namespace AudioAnalyzer.Visualizers;
@@ -50,7 +51,8 @@ public sealed class FallingLettersLayer : TextLayerRendererBase, ITextLayerRende
             fallSpeed *= 2.0;
         }
 
-        state.Offset += 0.1;
+        double dtScale = DisplayAnimationTiming.ScaleForReference60(ctx.FrameDeltaSeconds);
+        state.Offset += 0.1 * dtScale;
         if (state.Offset > 2.0 && particles.Count < w)
         {
             state.Offset = 0;
@@ -62,7 +64,7 @@ public sealed class FallingLettersLayer : TextLayerRendererBase, ITextLayerRende
         for (int i = particles.Count - 1; i >= 0; i--)
         {
             var p = particles[i];
-            p.Y += fallSpeed;
+            p.Y += fallSpeed * dtScale;
             int row = (int)Math.Floor(p.Y);
             if (row >= 0 && row < h && p.Col >= 0 && p.Col < w)
             {

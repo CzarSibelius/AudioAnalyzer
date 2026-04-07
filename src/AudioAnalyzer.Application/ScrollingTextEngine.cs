@@ -7,7 +7,7 @@ namespace AudioAnalyzer.Application;
 public sealed class ScrollingTextEngine : IScrollingTextEngine
 {
     /// <inheritdoc />
-    public string GetVisibleSlice<T>(T text, int width, ref ScrollingTextViewportState state, double speedPerFrame)
+    public string GetVisibleSlice<T>(T text, int width, ref ScrollingTextViewportState state, double speedPerReferenceFrame, double frameDeltaSeconds)
         where T : IDisplayText
     {
         if (width <= 0)
@@ -29,7 +29,8 @@ public sealed class ScrollingTextEngine : IScrollingTextEngine
 
         int maxOffset = displayWidth - width;
 
-        state.Offset += speedPerFrame * state.Direction;
+        double dt = frameDeltaSeconds > 0 ? frameDeltaSeconds : 1.0 / 60.0;
+        state.Offset += speedPerReferenceFrame * DisplayAnimationTiming.ScaleForReference60(dt) * state.Direction;
 
         if (state.Offset >= maxOffset)
         {

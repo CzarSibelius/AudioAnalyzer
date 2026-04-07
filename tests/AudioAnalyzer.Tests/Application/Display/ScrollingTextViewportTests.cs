@@ -9,6 +9,8 @@ namespace AudioAnalyzer.Tests.Application.Display;
 /// <summary>Tests for ScrollingTextViewport grapheme-cluster and display-width handling (emoji, surrogate pairs).</summary>
 public sealed class ScrollingTextViewportTests
 {
+    private const double D60 = 1.0 / 60.0;
+
     [Fact]
     public void DisplayWidth_Emoji_CountsAsTwoColumns()
     {
@@ -35,6 +37,21 @@ public sealed class ScrollingTextViewportTests
     }
 
     [Fact]
+    public void DoubleFrameDelta_DoublesScrollAdvancePerTick()
+    {
+        var text = new PlainText("0123456789ABCDEF");
+        int width = 4;
+        var v1 = CreateViewport();
+        _ = v1.Render(text, width, 1.0, D60);
+        string afterTwoSmall = v1.Render(text, width, 1.0, D60);
+
+        var v2 = CreateViewport();
+        string afterOneDouble = v2.Render(text, width, 1.0, 2.0 * D60);
+
+        Assert.Equal(afterTwoSmall, afterOneDouble);
+    }
+
+    [Fact]
     public void Emoji_NotSplit_WhenScrolling()
     {
         var viewport = CreateViewport();
@@ -42,7 +59,7 @@ public sealed class ScrollingTextViewportTests
 
         for (int step = 0; step < 20; step++)
         {
-            string result = viewport.Render(text, 8, 1.0);
+            string result = viewport.Render(text, 8, 1.0, D60);
 
             Assert.DoesNotContain('\ufffd', result);
 
@@ -81,8 +98,8 @@ public sealed class ScrollingTextViewportTests
         int width = 5;
 
         // Two Renders to reach scroll-left (offset 0)
-        _ = viewport.Render(text, width, 1.0);
-        string result = viewport.Render(text, width, 1.0);
+        _ = viewport.Render(text, width, 1.0, D60);
+        string result = viewport.Render(text, width, 1.0, D60);
 
         int displayWidth = AnsiConsole.GetDisplayWidth(result);
         Assert.Equal(width, displayWidth);
@@ -97,13 +114,13 @@ public sealed class ScrollingTextViewportTests
         var textWithoutEmojiFirst = new PlainText("01234"); // 6 graphemes (no emoji at start)
 
         // Drive to scroll-left (offset 0): first Render goes right, second goes back left
-        string resultEmojiFirst = viewport.Render(textWithEmojiFirst, width, 1.0);
-        resultEmojiFirst = viewport.Render(textWithEmojiFirst, width, 1.0);
+        string resultEmojiFirst = viewport.Render(textWithEmojiFirst, width, 1.0, D60);
+        resultEmojiFirst = viewport.Render(textWithEmojiFirst, width, 1.0, D60);
 
         // Use new viewport for second text (content change resets state)
         var viewport2 = CreateViewport();
-        string resultNoEmoji = viewport2.Render(textWithoutEmojiFirst, width, 1.0);
-        resultNoEmoji = viewport2.Render(textWithoutEmojiFirst, width, 1.0);
+        string resultNoEmoji = viewport2.Render(textWithoutEmojiFirst, width, 1.0, D60);
+        resultNoEmoji = viewport2.Render(textWithoutEmojiFirst, width, 1.0, D60);
 
         int lenEmoji = AnsiConsole.GetDisplayWidth(resultEmojiFirst);
         int lenNoEmoji = AnsiConsole.GetDisplayWidth(resultNoEmoji);
@@ -122,8 +139,8 @@ public sealed class ScrollingTextViewportTests
         var palette = new UiPalette();
 
         // Drive to scroll-left: first Render goes right, second goes back left
-        _ = viewport.RenderWithLabel("Device", deviceName, totalWidth, 1.0, palette.Label, palette.Normal);
-        string result = viewport.RenderWithLabel("Device", deviceName, totalWidth, 1.0, palette.Label, palette.Normal);
+        _ = viewport.RenderWithLabel("Device", deviceName, totalWidth, 1.0, D60, palette.Label, palette.Normal);
+        string result = viewport.RenderWithLabel("Device", deviceName, totalWidth, 1.0, D60, palette.Label, palette.Normal);
 
         int displayWidth = AnsiConsole.GetDisplayWidth(result);
         Assert.Equal(totalWidth, displayWidth);
@@ -138,12 +155,12 @@ public sealed class ScrollingTextViewportTests
         var deviceWithoutEmojiFirst = new PlainText("Microphone Device Name");
 
         var viewport1 = CreateViewport();
-        _ = viewport1.RenderWithLabel("Device", deviceWithEmojiFirst, totalWidth, 1.0, palette.Label, palette.Normal);
-        string resultEmoji = viewport1.RenderWithLabel("Device", deviceWithEmojiFirst, totalWidth, 1.0, palette.Label, palette.Normal);
+        _ = viewport1.RenderWithLabel("Device", deviceWithEmojiFirst, totalWidth, 1.0, D60, palette.Label, palette.Normal);
+        string resultEmoji = viewport1.RenderWithLabel("Device", deviceWithEmojiFirst, totalWidth, 1.0, D60, palette.Label, palette.Normal);
 
         var viewport2 = CreateViewport();
-        _ = viewport2.RenderWithLabel("Device", deviceWithoutEmojiFirst, totalWidth, 1.0, palette.Label, palette.Normal);
-        string resultNoEmoji = viewport2.RenderWithLabel("Device", deviceWithoutEmojiFirst, totalWidth, 1.0, palette.Label, palette.Normal);
+        _ = viewport2.RenderWithLabel("Device", deviceWithoutEmojiFirst, totalWidth, 1.0, D60, palette.Label, palette.Normal);
+        string resultNoEmoji = viewport2.RenderWithLabel("Device", deviceWithoutEmojiFirst, totalWidth, 1.0, D60, palette.Label, palette.Normal);
 
         int lenEmoji = AnsiConsole.GetDisplayWidth(resultEmoji);
         int lenNoEmoji = AnsiConsole.GetDisplayWidth(resultNoEmoji);

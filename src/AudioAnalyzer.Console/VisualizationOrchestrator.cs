@@ -12,21 +12,16 @@ namespace AudioAnalyzer.Console;
 /// </summary>
 /// <remarks>
 /// <para><strong>Responsibility.</strong> Orchestrator owns the display pipeline: overlay, header row, when to refresh the header
-/// and when to run one frame (throttling, guard, dimensions), and execution of one frame
-/// (header callback + engine snapshot + renderer). It receives audio via <see cref="IVisualizationOrchestrator.OnAudioData"/>
-/// and drives throttled render from there. <see cref="ApplicationShell"/> configures this orchestrator and triggers
-/// Redraw/RedrawWithFullHeader in response to user or app events; the orchestrator does not decide app logic.</para>
+/// and when to run one frame (guard, dimensions), and execution of one frame
+/// (header callback + engine snapshot + renderer). <see cref="IVisualizationOrchestrator.OnAudioData"/> feeds analysis only;
+/// <see cref="ApplicationShell"/> drives display cadence by calling <see cref="Redraw"/> / <see cref="RedrawWithFullHeader"/>
+/// each main-loop tick and on user events. The orchestrator does not decide app logic.</para>
 /// </remarks>
 internal sealed class VisualizationOrchestrator : IVisualizationOrchestrator
 {
-    /// <summary>Target ~60 FPS for full main redraw when the audio pipeline allows (ADR-0067).</summary>
-    private const int UpdateIntervalMs = 16;
     private const int MinWidth = 30;
     private const int MinHeight = 15;
 
-    private static readonly double s_msPerTick = 1000.0 / Stopwatch.Frequency;
-
-    private long _lastUpdateTicks;
     private int _lastTerminalWidth;
     private int _lastTerminalHeight;
     private int _displayStartRow = 3;
@@ -44,6 +39,9 @@ internal sealed class VisualizationOrchestrator : IVisualizationOrchestrator
     private readonly IApplicationModeHeaderProvider _headerLayout;
     private readonly UiSettings _uiSettings;
     private readonly MainRenderFpsMeter _fpsMeter;
+    private readonly IDisplayFrameClock _displayFrameClock;
+    private long _lastFrameTimestampTicks;
+    private bool _hasFrameTimestamp;
 
     public VisualizationOrchestrator(
         AnalysisEngine engine,
@@ -52,7 +50,8 @@ internal sealed class VisualizationOrchestrator : IVisualizationOrchestrator
         IDisplayState displayState,
         IApplicationModeHeaderProvider headerLayout,
         UiSettings uiSettings,
-        MainRenderFpsMeter fpsMeter)
+        MainRenderFpsMeter fpsMeter,
+        IDisplayFrameClock displayFrameClock)
     {
         _engine = engine ?? throw new ArgumentNullException(nameof(engine));
         _renderer = renderer ?? throw new ArgumentNullException(nameof(renderer));
@@ -61,6 +60,7 @@ internal sealed class VisualizationOrchestrator : IVisualizationOrchestrator
         _headerLayout = headerLayout ?? throw new ArgumentNullException(nameof(headerLayout));
         _uiSettings = uiSettings ?? throw new ArgumentNullException(nameof(uiSettings));
         _fpsMeter = fpsMeter ?? throw new ArgumentNullException(nameof(fpsMeter));
+        _displayFrameClock = displayFrameClock ?? throw new ArgumentNullException(nameof(displayFrameClock));
         _displayState.Changed += (_, _) => UpdateDisplayStartRow();
         UpdateNumBandsFromDimensions();
     }
@@ -112,6 +112,7 @@ internal sealed class VisualizationOrchestrator : IVisualizationOrchestrator
 
         void DoRefreshHeader()
         {
+            _displayFrameClock.SetFrameDeltaSeconds(0.05);
             _engine.PulseBeatVisualIfDue();
             _onRefreshHeader?.Invoke();
         }
@@ -154,34 +155,6 @@ internal sealed class VisualizationOrchestrator : IVisualizationOrchestrator
     public void OnAudioData(byte[] buffer, int bytesRecorded, AudioFormat format)
     {
         _engine.ProcessAudio(buffer, bytesRecorded, format);
-
-        long nowTicks = Stopwatch.GetTimestamp();
-        if ((nowTicks - _lastUpdateTicks) * s_msPerTick < UpdateIntervalMs)
-        {
-            return;
-        }
-
-        _lastUpdateTicks = nowTicks;
-
-        int w = _displayDimensions.Width;
-        int h = _displayDimensions.Height;
-        if (w < MinWidth || h < MinHeight || (_renderGuard != null && !_renderGuard()))
-        {
-            return;
-        }
-
-        if (w != _lastTerminalWidth || h != _lastTerminalHeight)
-        {
-            UpdateNumBandsFromDimensions();
-            _lastTerminalWidth = w;
-            _lastTerminalHeight = h;
-            if (!_displayState.FullScreen && _overlayRowCount == 0)
-            {
-                _onRedrawHeader?.Invoke();
-            }
-        }
-
-        DoRender(w, h, useFullHeaderRedraw: false);
     }
 
     private void RedrawInternal(bool useFullHeaderRedraw)
@@ -198,6 +171,15 @@ internal sealed class VisualizationOrchestrator : IVisualizationOrchestrator
             return;
         }
 
+        if (w != _lastTerminalWidth || h != _lastTerminalHeight)
+        {
+            UpdateNumBandsFromDimensions();
+            if (!_displayState.FullScreen && _overlayRowCount == 0)
+            {
+                _onRedrawHeader?.Invoke();
+            }
+        }
+
         DoRender(w, h, useFullHeaderRedraw);
     }
 
@@ -207,6 +189,22 @@ internal sealed class VisualizationOrchestrator : IVisualizationOrchestrator
 
         void RenderCore()
         {
+            long nowTicks = Stopwatch.GetTimestamp();
+            double frameDeltaSeconds;
+            if (!_hasFrameTimestamp)
+            {
+                frameDeltaSeconds = 1.0 / 60.0;
+                _hasFrameTimestamp = true;
+            }
+            else
+            {
+                double elapsed = (nowTicks - _lastFrameTimestampTicks) / (double)Stopwatch.Frequency;
+                frameDeltaSeconds = Math.Min(Math.Max(elapsed, 1.0 / 100_000.0), 0.25);
+            }
+
+            _lastFrameTimestampTicks = nowTicks;
+            _displayFrameClock.SetFrameDeltaSeconds(frameDeltaSeconds);
+
             if (!_displayState.FullScreen && _overlayRowCount == 0)
             {
                 if (useFullHeaderRedraw)
@@ -223,6 +221,7 @@ internal sealed class VisualizationOrchestrator : IVisualizationOrchestrator
             snapshot.DisplayStartRow = _displayStartRow;
             snapshot.TerminalWidth = w;
             snapshot.TerminalHeight = h;
+            snapshot.FrameDeltaSeconds = frameDeltaSeconds;
             snapshot.MeasuredMainRenderFps = null;
             if (_uiSettings.ShowRenderFps && _fpsMeter.HasIntervalSample)
             {

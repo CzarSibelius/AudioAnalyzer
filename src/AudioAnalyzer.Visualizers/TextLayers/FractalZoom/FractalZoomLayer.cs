@@ -1,3 +1,4 @@
+using AudioAnalyzer.Application;
 using AudioAnalyzer.Domain;
 
 namespace AudioAnalyzer.Visualizers;
@@ -28,13 +29,14 @@ public sealed class FractalZoomLayer : TextLayerRendererBase, ITextLayerRenderer
 
         int maxIter = Math.Clamp(s.MaxIterations, 4, 32);
 
+        double dtScale = DisplayAnimationTiming.ScaleForReference60(ctx.FrameDeltaSeconds);
         double phaseStep = s.ZoomSpeed * layer.SpeedMultiplier * ctx.SpeedBurst;
         if (s.BeatReaction == FractalZoomBeatReaction.SpeedBurst && snapshot.BeatFlashActive)
         {
             phaseStep *= 2.0;
         }
 
-        st.ZoomPhase += phaseStep;
+        st.ZoomPhase += phaseStep * dtScale;
         while (st.ZoomPhase >= 1.0)
         {
             st.ZoomPhase -= 1.0;
@@ -43,7 +45,7 @@ public sealed class FractalZoomLayer : TextLayerRendererBase, ITextLayerRenderer
 
         double flashBoost = (s.BeatReaction == FractalZoomBeatReaction.Flash && snapshot.BeatFlashActive) ? 0.12 : 0;
 
-        st.ViewRotation += 0.0018 * layer.SpeedMultiplier * ctx.SpeedBurst;
+        st.ViewRotation += 0.0018 * layer.SpeedMultiplier * ctx.SpeedBurst * dtScale;
 
         double logScaleMin = s.LogScaleMin;
         double logScaleMax = s.LogScaleMax;

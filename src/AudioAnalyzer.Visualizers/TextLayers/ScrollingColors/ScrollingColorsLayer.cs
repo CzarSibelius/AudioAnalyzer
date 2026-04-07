@@ -1,3 +1,4 @@
+using AudioAnalyzer.Application;
 using AudioAnalyzer.Domain;
 
 namespace AudioAnalyzer.Visualizers;
@@ -21,7 +22,7 @@ public sealed class ScrollingColorsLayer : TextLayerRendererBase, ITextLayerRend
             speed *= 2.0;
         }
 
-        state.Offset += speed;
+        state.Offset += speed * DisplayAnimationTiming.ScaleForReference60(ctx.FrameDeltaSeconds);
         double offset = state.Offset;
         int colorOffset = s.BeatReaction == ScrollingColorsBeatReaction.ColorPop && ctx.Snapshot.BeatFlashActive
             ? 1

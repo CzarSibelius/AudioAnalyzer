@@ -9,11 +9,12 @@ public interface IScrollingTextViewport
     string FormatLabel(string? label);
 
     /// <summary>Renders scrollable text. Advances scroll state; resets when text changes.</summary>
-    string Render<T>(T text, int width, double speedPerFrame)
+    /// <param name="frameDeltaSeconds">Wall-clock seconds since last scroll tick (ADR-0072).</param>
+    string Render<T>(T text, int width, double speedPerReferenceFrame, double frameDeltaSeconds)
         where T : IDisplayText;
 
     /// <summary>Renders a label followed by scrollable content. Label is static; text scrolls when it overflows.</summary>
-    string RenderWithLabel<T>(string label, T text, int totalWidth, double speedPerFrame,
+    string RenderWithLabel<T>(string label, T text, int totalWidth, double speedPerReferenceFrame, double frameDeltaSeconds,
         PaletteColor? labelColor = null, PaletteColor? textColor = null)
         where T : IDisplayText;
 }

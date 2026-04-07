@@ -1,3 +1,4 @@
+using AudioAnalyzer.Application;
 using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Domain;
 
@@ -26,9 +27,10 @@ public sealed class GeissBackgroundLayer : TextLayerRendererBase, ITextLayerRend
         var snapshot = ctx.Snapshot;
         var geissState = _stateStore.GetState(ctx.LayerIndex);
 
+        double dtScale = DisplayAnimationTiming.ScaleForReference60(ctx.FrameDeltaSeconds);
         double phaseSpeed = layer.SpeedMultiplier * ctx.SpeedBurst * 0.15;
-        geissState.Phase += phaseSpeed;
-        geissState.ColorPhase += 0.08;
+        geissState.Phase += phaseSpeed * dtScale;
+        geissState.ColorPhase += 0.08 * dtScale;
 
         if (snapshot.SmoothedMagnitudes.Length > 0)
         {

@@ -1,3 +1,4 @@
+using AudioAnalyzer.Application;
 using AudioAnalyzer.Domain;
 
 namespace AudioAnalyzer.Visualizers;
@@ -27,7 +28,7 @@ public sealed class WaveTextLayer : TextLayerRendererBase, ITextLayerRenderer<No
             state.SnippetIndex = (state.SnippetIndex + 1) % Math.Max(1, snippets.Count);
         }
 
-        state.Offset += 0.05 * layer.SpeedMultiplier * ctx.SpeedBurst;
+        state.Offset += 0.05 * layer.SpeedMultiplier * ctx.SpeedBurst * DisplayAnimationTiming.ScaleForReference60(ctx.FrameDeltaSeconds);
         double phase = state.Offset;
         double amplitude = 2.0 + (ctx.Snapshot.BeatFlashActive && s.BeatReaction == WaveTextBeatReaction.Pulse ? 2.0 : 0);
         int centerY = h / 2;

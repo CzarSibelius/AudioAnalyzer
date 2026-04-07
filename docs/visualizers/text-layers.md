@@ -25,6 +25,7 @@ Composites multiple independent layers (e.g. ScrollingColors, Marquee, FallingLe
 - `BeatFlashActive` — triggers SpeedBurst, Flash, SpawnMore, Pulse, ColorPop when true
 - `SmoothedMagnitudes`, `TargetMaxMagnitude` — used by GeissBackground, BeatCircles, and UnknownPleasures for bass/treble intensity, plasma modulation, and pulse lines
 - `Waveform`, `WaveformPosition`, `WaveformSize` — used by Oscilloscope layer for time-domain waveform
+- `FrameDeltaSeconds` — wall time since the previous full main render; layers scale continuous motion with `DisplayAnimationTiming.ScaleForReference60` so speed stays consistent when FPS varies ([ADR-0072](../adr/0072-delta-time-display-animation.md))
 - NowPlaying layer injects INowPlayingProvider directly; see implementation notes below
 
 ## Presets

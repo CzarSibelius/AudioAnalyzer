@@ -17,6 +17,7 @@ internal sealed class HeaderContainer : IHeaderContainer, IUiComponent
     private readonly IUiThemeResolver _uiThemeResolver;
     private readonly ITitleBarContentProvider _titleBarContentProvider;
     private readonly IApplicationModeFactory _applicationModeFactory;
+    private readonly IDisplayFrameClock _displayFrameClock;
 
     private readonly HorizontalRowComponent _titleRow;
     private readonly HorizontalRowComponent _row2;
@@ -39,7 +40,8 @@ internal sealed class HeaderContainer : IHeaderContainer, IUiComponent
         UiSettings uiSettings,
         IUiThemeResolver uiThemeResolver,
         ITitleBarContentProvider titleBarContentProvider,
-        IApplicationModeFactory applicationModeFactory)
+        IApplicationModeFactory applicationModeFactory,
+        IDisplayFrameClock displayFrameClock)
     {
         _componentRenderer = componentRenderer ?? throw new ArgumentNullException(nameof(componentRenderer));
         _stateUpdater = stateUpdater ?? throw new ArgumentNullException(nameof(stateUpdater));
@@ -50,6 +52,7 @@ internal sealed class HeaderContainer : IHeaderContainer, IUiComponent
         _uiThemeResolver = uiThemeResolver ?? throw new ArgumentNullException(nameof(uiThemeResolver));
         _titleBarContentProvider = titleBarContentProvider ?? throw new ArgumentNullException(nameof(titleBarContentProvider));
         _applicationModeFactory = applicationModeFactory ?? throw new ArgumentNullException(nameof(applicationModeFactory));
+        _displayFrameClock = displayFrameClock ?? throw new ArgumentNullException(nameof(displayFrameClock));
 
         _titleRow = new HorizontalRowComponent();
         _row2 = new HorizontalRowComponent();
@@ -134,7 +137,8 @@ internal sealed class HeaderContainer : IHeaderContainer, IUiComponent
             Palette = palette,
             ScrollSpeed = _uiSettings.DefaultScrollingSpeed,
             DeviceName = deviceName,
-            InvalidateWriteCache = invalidateCache
+            InvalidateWriteCache = invalidateCache,
+            FrameDeltaSeconds = _displayFrameClock.FrameDeltaSeconds
         };
     }
 

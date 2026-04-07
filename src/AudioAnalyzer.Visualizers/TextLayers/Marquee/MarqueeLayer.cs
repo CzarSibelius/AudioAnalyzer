@@ -1,3 +1,4 @@
+using AudioAnalyzer.Application;
 using AudioAnalyzer.Domain;
 
 namespace AudioAnalyzer.Visualizers;
@@ -30,10 +31,11 @@ public sealed class MarqueeLayer : TextLayerRendererBase, ITextLayerRenderer<NoL
             speed *= 2.5;
         }
 
-        state.Offset += speed;
+        double dtScale = DisplayAnimationTiming.ScaleForReference60(ctx.FrameDeltaSeconds);
+        state.Offset += speed * dtScale;
         if (s.BeatReaction == MarqueeBeatReaction.Flash && ctx.Snapshot.BeatFlashActive)
         {
-            state.Offset += 1.0;
+            state.Offset += 1.0 * dtScale;
         }
 
         int scrollOffset = (int)Math.Floor(state.Offset) % (text.Length + w);

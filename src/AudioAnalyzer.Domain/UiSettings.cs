@@ -23,7 +23,7 @@ public class UiSettings
     /// </summary>
     public string? UiThemeId { get; set; }
 
-    /// <summary>Default scrolling speed (characters per frame) for ScrollingTextViewport. Default: 0.25.</summary>
+    /// <summary>Default scrolling speed as character advance per reference frame at 60 Hz; actual advance scales with <c>FrameDeltaSeconds</c> (ADR-0072). Default: 0.25.</summary>
     public double DefaultScrollingSpeed { get; set; } = 0.25;
 
     /// <summary>

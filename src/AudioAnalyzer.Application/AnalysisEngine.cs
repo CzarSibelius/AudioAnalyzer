@@ -8,12 +8,18 @@ namespace AudioAnalyzer.Application;
 /// Performs analysis on incoming audio and exposes results via properties and GetSnapshot().
 /// Callers/orchestrators are responsible for display dimensions, rendering, and header refresh.
 /// </summary>
+/// <remarks>
+/// <see cref="ProcessAudio"/> may run on the capture thread while the UI thread calls <see cref="GetSnapshot"/>; a private lock
+/// and per-call snapshot copies keep those paths thread-safe.
+/// </remarks>
 public sealed class AnalysisEngine
 {
     private const int FftLength = 8192;
     private const int WaveformSize = 512;
     private const int UpdateIntervalMs = 50;
     private static readonly int FftLog2N = (int)Math.Log2(FftLength);
+
+    private readonly object _sync = new();
 
     private readonly ComplexFloat[] _fftBuffer = new ComplexFloat[FftLength];
     private int _bufferPosition;
@@ -58,7 +64,10 @@ public sealed class AnalysisEngine
     /// </summary>
     public void SetNumBands(int numBands)
     {
-        _numBands = Math.Max(8, Math.Min(60, numBands));
+        lock (_sync)
+        {
+            _numBands = Math.Max(8, Math.Min(60, numBands));
+        }
     }
 
     /// <summary>
@@ -67,24 +76,24 @@ public sealed class AnalysisEngine
     /// </summary>
     public void PulseBeatVisualIfDue()
     {
-        DateTime now = DateTime.Now;
-        if ((now - _lastBeatVisualPulse).TotalMilliseconds < UpdateIntervalMs)
+        lock (_sync)
         {
-            return;
+            PulseBeatVisualIfDueCore();
         }
-
-        _lastBeatVisualPulse = now;
-        _beatTiming.OnVisualTick();
     }
 
     /// <summary>
-    /// Returns the current analysis snapshot (analysis data only). Display fields (DisplayStartRow,
-    /// TerminalWidth, TerminalHeight) are left at default; the caller/orchestrator sets them before rendering.
+    /// Returns a copy of the current analysis snapshot (analysis data only). Array properties are cloned so callers can
+    /// render without racing <see cref="ProcessAudio"/>. Display fields (DisplayStartRow, TerminalWidth, TerminalHeight,
+    /// MeasuredMainRenderFps, FrameDeltaSeconds) are defaults unless the caller sets them before rendering.
     /// </summary>
     public AnalysisSnapshot GetSnapshot()
     {
-        FillSnapshot();
-        return _snapshot;
+        lock (_sync)
+        {
+            FillSnapshot();
+            return CloneSnapshotArrays(_snapshot);
+        }
     }
 
     /// <summary>
@@ -92,6 +101,14 @@ public sealed class AnalysisEngine
     /// the display waveform at UpdateIntervalMs. Does not perform any rendering or header refresh.
     /// </summary>
     public void ProcessAudio(byte[] buffer, int bytesRecorded, AudioFormat format)
+    {
+        lock (_sync)
+        {
+            ProcessAudioCore(buffer, bytesRecorded, format);
+        }
+    }
+
+    private void ProcessAudioCore(byte[] buffer, int bytesRecorded, AudioFormat format)
     {
         int bytesPerFrame = format.BytesPerFrame;
         int framesRecorded = bytesRecorded / bytesPerFrame;
@@ -155,8 +172,20 @@ public sealed class AnalysisEngine
             Array.Copy(_waveformBuffer, _displayWaveform, WaveformSize);
             _displayWaveformPosition = _waveformPosition;
             _lastUpdate = DateTime.Now;
-            PulseBeatVisualIfDue();
+            PulseBeatVisualIfDueCore();
         }
+    }
+
+    private void PulseBeatVisualIfDueCore()
+    {
+        DateTime now = DateTime.Now;
+        if ((now - _lastBeatVisualPulse).TotalMilliseconds < UpdateIntervalMs)
+        {
+            return;
+        }
+
+        _lastBeatVisualPulse = now;
+        _beatTiming.OnVisualTick();
     }
 
     private void FillSnapshot()
@@ -177,6 +206,51 @@ public sealed class AnalysisEngine
         _snapshot.RightChannel = _volumeAnalyzer.RightChannel;
         _snapshot.LeftPeakHold = _volumeAnalyzer.LeftPeakHold;
         _snapshot.RightPeakHold = _volumeAnalyzer.RightPeakHold;
+    }
+
+    private static AnalysisSnapshot CloneSnapshotArrays(AnalysisSnapshot source)
+    {
+        double[] sm = source.SmoothedMagnitudes ?? Array.Empty<double>();
+        double[] ph = source.PeakHold ?? Array.Empty<double>();
+        float[] wf = source.Waveform ?? Array.Empty<float>();
+
+        var smCopy = sm.Length == 0 ? Array.Empty<double>() : new double[sm.Length];
+        if (sm.Length > 0)
+        {
+            Array.Copy(sm, smCopy, sm.Length);
+        }
+
+        var phCopy = ph.Length == 0 ? Array.Empty<double>() : new double[ph.Length];
+        if (ph.Length > 0)
+        {
+            Array.Copy(ph, phCopy, ph.Length);
+        }
+
+        var wfCopy = wf.Length == 0 ? Array.Empty<float>() : new float[wf.Length];
+        if (wf.Length > 0)
+        {
+            Array.Copy(wf, wfCopy, wf.Length);
+        }
+
+        return new AnalysisSnapshot
+        {
+            Volume = source.Volume,
+            CurrentBpm = source.CurrentBpm,
+            BeatSensitivity = source.BeatSensitivity,
+            BeatFlashActive = source.BeatFlashActive,
+            BeatCount = source.BeatCount,
+            NumBands = source.NumBands,
+            SmoothedMagnitudes = smCopy,
+            PeakHold = phCopy,
+            TargetMaxMagnitude = source.TargetMaxMagnitude,
+            Waveform = wfCopy,
+            WaveformPosition = source.WaveformPosition,
+            WaveformSize = source.WaveformSize,
+            LeftChannel = source.LeftChannel,
+            RightChannel = source.RightChannel,
+            LeftPeakHold = source.LeftPeakHold,
+            RightPeakHold = source.RightPeakHold
+        };
     }
 
     private void ApplyWindow()

@@ -198,6 +198,7 @@ internal sealed class ApplicationShell
                             _orchestrator.Redraw();
                         }
 
+                        Thread.Sleep(0);
                         continue;
                     }
                 }
@@ -218,7 +219,18 @@ internal sealed class ApplicationShell
                     }
                 }
             }
-            Thread.Sleep(16);
+
+            try
+            {
+                _orchestrator.Redraw();
+            }
+            catch (Exception ex)
+            {
+                _ = ex; /* Display tick failed: swallow to avoid crashing main loop */
+            }
+
+            // Cooperative yield: avoid busy-spin without enforcing a ~60 Hz ceiling (ADR-0067).
+            Thread.Sleep(0);
         }
 
         Shutdown();

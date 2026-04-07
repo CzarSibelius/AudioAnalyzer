@@ -1,3 +1,4 @@
+using AudioAnalyzer.Application;
 using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Domain;
 
@@ -49,7 +50,8 @@ public sealed class BeatCirclesLayer : TextLayerRendererBase, ITextLayerRenderer
             beatState.LastBeatCount = snapshot.BeatCount;
             SpawnBeatCircle(beatState.Circles, bassIntensity);
         }
-        UpdateBeatCircles(beatState.Circles);
+        double dtScale = DisplayAnimationTiming.ScaleForReference60(ctx.FrameDeltaSeconds);
+        UpdateBeatCircles(beatState.Circles, dtScale);
 
         bool usePalette = ctx.Palette.Count > 0;
 
@@ -65,7 +67,7 @@ public sealed class BeatCirclesLayer : TextLayerRendererBase, ITextLayerRenderer
 
                 foreach (var circle in beatState.Circles)
                 {
-                    double thickness = 0.02 + (1.0 - (double)circle.Age / 30) * 0.01;
+                    double thickness = 0.02 + (1.0 - circle.Age / 30.0) * 0.01;
                     if (Math.Abs(distFromCenter - circle.Radius) < thickness)
                     {
                         PaletteColor color;
@@ -98,14 +100,14 @@ public sealed class BeatCirclesLayer : TextLayerRendererBase, ITextLayerRenderer
         }
     }
 
-    private static void UpdateBeatCircles(List<BeatCircle> circles)
+    private static void UpdateBeatCircles(List<BeatCircle> circles, double dtScale)
     {
         for (int i = circles.Count - 1; i >= 0; i--)
         {
             var c = circles[i];
-            double newRadius = c.Radius + 0.03;
-            int newAge = c.Age + 1;
-            if (newRadius > c.MaxRadius || newAge > 30)
+            double newRadius = c.Radius + 0.03 * dtScale;
+            double newAge = c.Age + dtScale;
+            if (newRadius > c.MaxRadius || newAge > 30.0)
             {
                 circles.RemoveAt(i);
             }

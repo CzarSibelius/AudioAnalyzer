@@ -35,4 +35,10 @@ public sealed class AnalysisSnapshot
     /// When show-render-FPS is enabled in UI settings, smoothed full main render FPS (ADR-0067); otherwise unset.
     /// </summary>
     public double? MeasuredMainRenderFps { get; set; }
+
+    /// <summary>
+    /// Wall-clock seconds since the previous full main render tick, set by the visualization orchestrator (ADR-0072).
+    /// Not set by <see cref="AnalysisEngine"/>; used for delta-time animation in the visualizer and UI scrolling.
+    /// </summary>
+    public double FrameDeltaSeconds { get; set; }
 }

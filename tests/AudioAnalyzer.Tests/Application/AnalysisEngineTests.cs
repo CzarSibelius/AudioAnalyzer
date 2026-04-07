@@ -1,0 +1,78 @@
+using AudioAnalyzer.Application;
+using AudioAnalyzer.Application.Abstractions;
+using AudioAnalyzer.Application.Fft;
+using AudioAnalyzer.Application.VolumeAnalysis;
+using Xunit;
+
+namespace AudioAnalyzer.Tests.Application;
+
+public sealed class AnalysisEngineTests
+{
+    private sealed class StubBeatTiming : IBeatTimingSource
+    {
+        public double CurrentBpm => 120;
+        public int BeatCount => 0;
+        public bool BeatFlashActive => false;
+        public double BeatSensitivity { get; set; } = 1.0;
+
+        public void OnAudioFrame(double avgEnergy)
+        {
+        }
+
+        public void OnVisualTick()
+        {
+        }
+    }
+
+    /// <summary>
+    /// <see cref="AnalysisEngine.ProcessAudio"/> may run on the capture thread while the UI thread calls
+    /// <see cref="AnalysisEngine.GetSnapshot"/>; this stress ensures no exceptions and consistent band array sizing.
+    /// </summary>
+    [Fact]
+    public async Task ProcessAudio_and_GetSnapshot_concurrent_stress_remain_consistent()
+    {
+        var engine = new AnalysisEngine(new StubBeatTiming(), new VolumeAnalyzer(), new FftBandProcessor());
+        engine.SetNumBands(24);
+
+        var format = new AudioFormat { SampleRate = 48_000, BitsPerSample = 16, Channels = 1 };
+        var buffer = new byte[16_384];
+
+        Task audio = Task.Run(() =>
+        {
+            for (int i = 0; i < 2_000; i++)
+            {
+                engine.ProcessAudio(buffer, buffer.Length, format);
+            }
+        });
+
+        Task ui = Task.Run(() =>
+        {
+            for (int i = 0; i < 2_000; i++)
+            {
+                AnalysisSnapshot s = engine.GetSnapshot();
+                Assert.Equal(s.NumBands, s.SmoothedMagnitudes.Length);
+                Assert.Equal(s.NumBands, s.PeakHold.Length);
+                Assert.Equal(s.WaveformSize, s.Waveform.Length);
+            }
+        });
+
+        await Task.WhenAll(audio, ui);
+    }
+
+    [Fact]
+    public void GetSnapshot_returns_cloned_arrays_each_call()
+    {
+        var engine = new AnalysisEngine(new StubBeatTiming(), new VolumeAnalyzer(), new FftBandProcessor());
+        engine.SetNumBands(8);
+        var format = new AudioFormat { SampleRate = 48_000, BitsPerSample = 16, Channels = 1 };
+        var buffer = new byte[16_384];
+        engine.ProcessAudio(buffer, buffer.Length, format);
+
+        AnalysisSnapshot a = engine.GetSnapshot();
+        AnalysisSnapshot b = engine.GetSnapshot();
+
+        Assert.NotSame(a.SmoothedMagnitudes, b.SmoothedMagnitudes);
+        Assert.NotSame(a.PeakHold, b.PeakHold);
+        Assert.NotSame(a.Waveform, b.Waveform);
+    }
+}

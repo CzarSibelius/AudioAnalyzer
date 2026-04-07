@@ -1,3 +1,4 @@
+using AudioAnalyzer.Application;
 using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Domain;
 
@@ -41,10 +42,11 @@ public sealed class NowPlayingLayer : TextLayerRendererBase, ITextLayerRenderer<
             speed *= 2.5;
         }
 
-        state.Offset += speed;
+        double dtScale = DisplayAnimationTiming.ScaleForReference60(ctx.FrameDeltaSeconds);
+        state.Offset += speed * dtScale;
         if (settings.BeatReaction == NowPlayingBeatReaction.Flash && ctx.Snapshot.BeatFlashActive)
         {
-            state.Offset += 1.0;
+            state.Offset += 1.0 * dtScale;
         }
 
         string position = settings.VerticalPosition?.Trim() ?? "Center";

@@ -62,7 +62,6 @@ public sealed class TextLayersVisualizer : IVisualizer
     /// <summary>Per-layer state: (offset for scroll/marquee/wave, snippet index). Index matches sorted layer list.</summary>
     private readonly List<(double Offset, int SnippetIndex)> _layerStates = new();
     private int _lastBeatCount = -1;
-    private int _beatFlashFrames;
 
     public void Render(AnalysisSnapshot snapshot, VisualizerViewport viewport)
     {
@@ -100,15 +99,11 @@ public sealed class TextLayersVisualizer : IVisualizer
 
         _stateStore.EnsureCapacity(sortedLayers.Count);
 
+        double frameDelta = snapshot.FrameDeltaSeconds > 0 ? snapshot.FrameDeltaSeconds : 1.0 / 60.0;
+
         if (snapshot.BeatCount != _lastBeatCount)
         {
             _lastBeatCount = snapshot.BeatCount;
-            _beatFlashFrames = 3;
-        }
-
-        if (_beatFlashFrames > 0)
-        {
-            _beatFlashFrames--;
         }
 
         double speedBurst = snapshot.BeatFlashActive ? 2.0 : 1.0;
@@ -140,7 +135,8 @@ public sealed class TextLayersVisualizer : IVisualizer
                     Height = hasBounds ? clipH : h,
                     BufferOriginX = hasBounds ? clipL : 0,
                     BufferOriginY = hasBounds ? clipT : 0,
-                    LayerIndex = i
+                    LayerIndex = i,
+                    FrameDeltaSeconds = frameDelta
                 };
                 state = renderer.Draw(layer, ref state, ctx);
             }

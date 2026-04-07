@@ -12,9 +12,13 @@
 
 2. **TextLayersVisualizer injects all six typed stores** (e.g. `ITextLayerStateStore<BeatCirclesState>`); it calls `EnsureCapacity(sortedLayers.Count)` on any one at the start of each render and uses the appropriate store’s `SetState` in `ClearLayerStateWhenSwitching` when the user changes layer type. **Stateful layers inject only the store for their state type** (e.g. `ITextLayerStateStore<BeatCirclesState>`) and in `Draw()` call `_stateStore.GetState(ctx.LayerIndex)`. Each layer thus depends only on its own `TState` (interface segregation).
 
-3. **`TextLayerDrawContext` carries only shared frame data**: buffer, snapshot, palette, dimensions, speed burst, and layer index. It no longer has any layer-specific state properties. New stateful layers extend the store (implement `ITextLayerStateStore<NewState>` on the concrete store, register it in DI) and inject that typed store; they do not extend the context.
+3. **`TextLayerDrawContext` carries only shared frame data**: buffer, snapshot, palette, dimensions, speed burst, layer index, and (since ADR-0072) `FrameDeltaSeconds` for delta-time animation. It no longer has any layer-specific state properties. New stateful layers extend the store (implement `ITextLayerStateStore<NewState>` on the concrete store, register it in DI) and inject that typed store; they do not extend the context.
 
 4. **Registration**: `TextLayerStateStore` is registered as a singleton; the same instance is registered as `ITextLayerStateStore` (non-generic) and as each of the six `ITextLayerStateStore<TState>`. Registration happens before `AddTextLayerRenderers()`. The TextLayersVisualizer factory receives a single `ITextLayerStateStore`.
+
+## Update (shared frame timing)
+
+`TextLayerDrawContext` includes **`FrameDeltaSeconds`** (wall-clock seconds since the previous full main render), set by `TextLayersVisualizer` from `AnalysisSnapshot.FrameDeltaSeconds`. This remains **shared frame data**, not per-layer state; layers use it with `DisplayAnimationTiming.ScaleForReference60` for FPS-independent motion (ADR-0072). Per-layer animation state stays in `ITextLayerStateStore<TState>`.
 
 ## Update (one state per slot)
 

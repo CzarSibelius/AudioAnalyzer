@@ -41,7 +41,8 @@ internal sealed class HorizontalRowComponentRenderer : IUiComponentRenderer<Hori
                 DeviceName = context.DeviceName,
                 Snapshot = context.Snapshot,
                 PaletteDisplayName = context.PaletteDisplayName,
-                InvalidateWriteCache = context.InvalidateWriteCache
+                InvalidateWriteCache = context.InvalidateWriteCache,
+                FrameDeltaSeconds = context.FrameDeltaSeconds > 0 ? context.FrameDeltaSeconds : 1.0 / 60.0
             };
             ComponentRenderResult result = _cellRenderer.Render(component.Children[i], childContext);
             string part = result.LineContents is { Count: > 0 } ? result.LineContents[0] : (cellWidth > 0 ? new string(' ', cellWidth) : "");

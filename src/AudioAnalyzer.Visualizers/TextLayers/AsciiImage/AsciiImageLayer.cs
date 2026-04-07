@@ -1,4 +1,5 @@
 using System.IO.Abstractions;
+using AudioAnalyzer.Application;
 using AudioAnalyzer.Domain;
 
 namespace AudioAnalyzer.Visualizers;
@@ -66,18 +67,19 @@ public sealed class AsciiImageLayer : TextLayerRendererBase, ITextLayerRenderer<
             speed *= 2.0;
         }
 
+        double dtScale = DisplayAnimationTiming.ScaleForReference60(ctx.FrameDeltaSeconds);
         var movement = s.Movement;
         bool doScroll = movement is AsciiImageMovement.Scroll or AsciiImageMovement.Both;
         bool doZoom = movement is AsciiImageMovement.Zoom or AsciiImageMovement.Both;
 
         if (doScroll)
         {
-            asciiState.ScrollX += speed;
-            asciiState.ScrollY += speed * s.ScrollRatioY;
+            asciiState.ScrollX += speed * dtScale;
+            asciiState.ScrollY += speed * s.ScrollRatioY * dtScale;
         }
         if (doZoom)
         {
-            asciiState.ZoomPhase += speed * s.ZoomSpeed;
+            asciiState.ZoomPhase += speed * s.ZoomSpeed * dtScale;
             if (asciiState.ZoomPhase > 1.0)
             {
                 asciiState.ZoomPhase -= 1.0;

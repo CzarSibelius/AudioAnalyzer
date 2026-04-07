@@ -7,10 +7,11 @@ public readonly struct BeatCircle
 {
     public double Radius { get; }
     public double MaxRadius { get; }
-    public int Age { get; }
+    /// <summary>Age in reference-frame units (~60 Hz); removes near 30 for same lifetime as legacy frame count.</summary>
+    public double Age { get; }
     public int ColorIndex { get; }
 
-    public BeatCircle(double radius, double maxRadius, int age, int colorIndex)
+    public BeatCircle(double radius, double maxRadius, double age, int colorIndex)
     {
         Radius = radius;
         MaxRadius = maxRadius;

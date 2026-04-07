@@ -154,7 +154,8 @@ internal sealed class GeneralSettingsHubAreaRenderer : IUiComponentRenderer<Gene
             Snapshot = context.Snapshot,
             DeviceName = context.DeviceName,
             PaletteDisplayName = context.PaletteDisplayName,
-            InvalidateWriteCache = context.InvalidateWriteCache
+            InvalidateWriteCache = context.InvalidateWriteCache,
+            FrameDeltaSeconds = context.FrameDeltaSeconds > 0 ? context.FrameDeltaSeconds : 1.0 / 60.0
         };
         _horizontalRowRenderer.Render(_audioMenuRow, rowContext);
         rowContext.StartRow = startRow + 3;

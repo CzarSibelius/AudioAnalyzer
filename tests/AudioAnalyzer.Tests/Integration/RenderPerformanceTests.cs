@@ -11,7 +11,7 @@ namespace AudioAnalyzer.Tests.Integration;
 
 public sealed class RenderPerformanceTests
 {
-    /// <summary>Budget for one full frame at ~60 FPS (ADR-0067).</summary>
+    /// <summary>Budget for one full frame consistent with the at-least ~60 FPS bar (ADR-0067).</summary>
     private const int RenderThresholdMs = 17;
 
     /// <summary>
@@ -52,7 +52,7 @@ public sealed class RenderPerformanceTests
 
             Assert.True(
                 sw.ElapsedMilliseconds < RenderThresholdMs,
-                $"Single render took {sw.ElapsedMilliseconds}ms; threshold is {RenderThresholdMs}ms (~60 FPS ≈ 16.7ms per frame).");
+                $"Single render took {sw.ElapsedMilliseconds}ms; threshold is {RenderThresholdMs}ms (at-least ~60 FPS bar ≈ 16.7ms per frame).");
         }
         finally
         {

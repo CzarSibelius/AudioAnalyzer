@@ -1,5 +1,6 @@
 using System.IO.Abstractions;
 using System.Numerics;
+using AudioAnalyzer.Application;
 using AudioAnalyzer.Domain;
 
 namespace AudioAnalyzer.Visualizers;
@@ -67,12 +68,13 @@ public sealed class AsciiModelLayer : TextLayerRendererBase, ITextLayerRenderer<
             speed *= 2.0;
         }
 
+        double dtScale = DisplayAnimationTiming.ScaleForReference60(ctx.FrameDeltaSeconds);
         double dir = s.RotationDirection == AsciiModelRotationDirection.CounterClockwise ? 1.0 : -1.0;
-        m.RotationAngle += speed * s.RotationSpeed * dir;
+        m.RotationAngle += speed * s.RotationSpeed * dir * dtScale;
 
         if (s.EnableZoom)
         {
-            m.ZoomPhase += speed * s.ZoomSpeed;
+            m.ZoomPhase += speed * s.ZoomSpeed * dtScale;
             if (m.ZoomPhase > 1.0)
             {
                 m.ZoomPhase -= 1.0;

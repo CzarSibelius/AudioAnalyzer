@@ -47,7 +47,8 @@ public sealed class FillLayerBlendOverTests
             Height = 5,
             BufferOriginX = 0,
             BufferOriginY = 5,
-            LayerIndex = 2
+            LayerIndex = 2,
+            FrameDeltaSeconds = 1.0 / 60.0
         };
 
         var fill = new FillLayer();
@@ -90,7 +91,8 @@ public sealed class FillLayerBlendOverTests
             ViewportHeight = 10,
             Width = 10,
             Height = 10,
-            LayerIndex = 0
+            LayerIndex = 0,
+            FrameDeltaSeconds = 1.0 / 60.0
         };
 
         var fill = new FillLayer();
@@ -135,7 +137,8 @@ public sealed class FillLayerBlendOverTests
             ViewportHeight = 10,
             Width = 10,
             Height = 10,
-            LayerIndex = 0
+            LayerIndex = 0,
+            FrameDeltaSeconds = 1.0 / 60.0
         };
 
         var fill = new FillLayer();

@@ -35,15 +35,16 @@ public sealed class ScrollingTextComponentRenderer : IUiComponentRenderer<Scroll
         var palette = context.Palette ?? new UiPalette();
         var labelColor = component.LabelColor ?? palette.Label;
         var textColor = component.TextColor ?? palette.Normal;
+        double frameDelta = context.FrameDeltaSeconds > 0 ? context.FrameDeltaSeconds : 1.0 / 60.0;
 
         string cell = component.PreformattedAnsi
-            ? RenderPreformattedCell(component, cellWidth, context.ScrollSpeed)
-            : RenderLabeledCell(component, cellWidth, context.ScrollSpeed, labelColor, textColor);
+            ? RenderPreformattedCell(component, cellWidth, context.ScrollSpeed, frameDelta)
+            : RenderLabeledCell(component, cellWidth, context.ScrollSpeed, frameDelta, labelColor, textColor);
 
         return ComponentRenderResult.Line(1, cell);
     }
 
-    private string RenderPreformattedCell(ScrollingTextComponent component, int cellWidth, double scrollSpeed)
+    private string RenderPreformattedCell(ScrollingTextComponent component, int cellWidth, double scrollSpeed, double frameDeltaSeconds)
     {
         IDisplayText value = component.GetValue!();
         if (string.IsNullOrEmpty(value.Value))
@@ -57,7 +58,7 @@ public sealed class ScrollingTextComponentRenderer : IUiComponentRenderer<Scroll
                 component.GetScrollStateRef().Reset();
                 component.LastText = value.Value;
             }
-            string part = _engine.GetVisibleSlice(value, cellWidth, ref component.GetScrollStateRef(), scrollSpeed);
+            string part = _engine.GetVisibleSlice(value, cellWidth, ref component.GetScrollStateRef(), scrollSpeed, frameDeltaSeconds);
             component.LastText = value.Value;
             return AnsiConsole.GetDisplayWidth(part) > cellWidth
                 ? AnsiConsole.GetDisplaySubstring(part, 0, cellWidth)
@@ -69,7 +70,7 @@ public sealed class ScrollingTextComponentRenderer : IUiComponentRenderer<Scroll
             : AnsiConsole.PadToDisplayWidth(truncated, cellWidth);
     }
 
-    private string RenderLabeledCell(ScrollingTextComponent component, int cellWidth, double scrollSpeed,
+    private string RenderLabeledCell(ScrollingTextComponent component, int cellWidth, double scrollSpeed, double frameDeltaSeconds,
         PaletteColor labelColor, PaletteColor textColor)
     {
         string effectiveLabel = LabelFormatting.FormatLabel(component.Label);
@@ -93,7 +94,7 @@ public sealed class ScrollingTextComponentRenderer : IUiComponentRenderer<Scroll
         else
         {
             ref ScrollingTextViewportState stateRef = ref component.GetScrollStateRef();
-            scrollPart = _engine.GetVisibleSlice(text, scrollWidth, ref stateRef, scrollSpeed);
+            scrollPart = _engine.GetVisibleSlice(text, scrollWidth, ref stateRef, scrollSpeed, frameDeltaSeconds);
         }
 
         component.LastText = text.Value;

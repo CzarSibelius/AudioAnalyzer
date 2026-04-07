@@ -21,7 +21,7 @@ public sealed class ScrollingTextViewport : IScrollingTextViewport
     public string FormatLabel(string? label) => LabelFormatting.FormatLabel(label);
 
     /// <inheritdoc />
-    public string Render<T>(T text, int width, double speedPerFrame)
+    public string Render<T>(T text, int width, double speedPerReferenceFrame, double frameDeltaSeconds)
         where T : IDisplayText
     {
         if (text.Value != _lastText)
@@ -29,11 +29,11 @@ public sealed class ScrollingTextViewport : IScrollingTextViewport
             _state.Reset();
             _lastText = text.Value;
         }
-        return _engine.GetVisibleSlice(text, width, ref _state, speedPerFrame);
+        return _engine.GetVisibleSlice(text, width, ref _state, speedPerReferenceFrame, frameDeltaSeconds);
     }
 
     /// <inheritdoc />
-    public string RenderWithLabel<T>(string label, T text, int totalWidth, double speedPerFrame,
+    public string RenderWithLabel<T>(string label, T text, int totalWidth, double speedPerReferenceFrame, double frameDeltaSeconds,
         PaletteColor? labelColor = null, PaletteColor? textColor = null)
         where T : IDisplayText
     {
@@ -50,7 +50,7 @@ public sealed class ScrollingTextViewport : IScrollingTextViewport
 
         string scrollPart = string.IsNullOrEmpty(text.Value)
             ? new string(' ', scrollWidth)
-            : Render(text, scrollWidth, speedPerFrame);
+            : Render(text, scrollWidth, speedPerReferenceFrame, frameDeltaSeconds);
 
         string labelSegment = labelColor.HasValue
             ? AnsiConsole.ColorCode(labelColor.Value) + effectiveLabel + AnsiConsole.ResetCode

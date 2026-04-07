@@ -103,7 +103,7 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
 
             TitleBarBreadcrumbRow.Write(0, width, _breadcrumbFormatter);
 
-            RenderHintRow(state, width, palette, scrollSpeed, HintRow);
+            RenderHintRow(state, width, palette, scrollSpeed, HintRow, 1.0 / 60.0);
             System.Console.SetCursorPosition(0, SeparatorRow);
             System.Console.Write(StaticTextViewport.TruncateToWidth(new PlainText("  ─" + new string('─', LeftColWidth - 2) + "┬" + new string('─', rightColWidth) + "─"), width).PadRight(width));
 
@@ -287,7 +287,7 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
         try
         {
             System.Console.Write(SyncOutputBegin);
-            RenderHintRow(state, width, palette, scrollSpeed, HintRow);
+            RenderHintRow(state, width, palette, scrollSpeed, HintRow, 0.05);
             TryRedrawPaletteRowForIdleInOpenSyncFrame(state, sortedLayers, width, analysisSnapshot);
             System.Console.Write(SyncOutputEnd);
         }
@@ -518,7 +518,7 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
         return PaletteSwatchFormatter.ComputeToolbarPhaseOffset(analysisSnapshot, colors?.Count ?? 0);
     }
 
-    private void RenderHintRow(SettingsModalState state, int width, UiPalette palette, double scrollSpeed, int startRow)
+    private void RenderHintRow(SettingsModalState state, int width, UiPalette palette, double scrollSpeed, int startRow, double frameDeltaSeconds)
     {
         string hint = GetHintText(state);
         var hintDescriptor = new LabeledValueDescriptor("", () => new PlainText(hint));
@@ -529,7 +529,8 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
             StartRow = startRow,
             MaxLines = 1,
             Palette = palette,
-            ScrollSpeed = scrollSpeed
+            ScrollSpeed = scrollSpeed,
+            FrameDeltaSeconds = frameDeltaSeconds > 0 ? frameDeltaSeconds : 1.0 / 60.0
         };
         _componentRenderer.Render(_hintRoot, context);
     }

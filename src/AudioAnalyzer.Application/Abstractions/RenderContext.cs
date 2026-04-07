@@ -20,7 +20,7 @@ public sealed class RenderContext
     /// <summary>UI palette for label and text colors.</summary>
     public UiPalette Palette { get; set; } = new();
 
-    /// <summary>Scrolling speed (characters per frame) for labeled rows.</summary>
+    /// <summary>Scrolling speed (characters per 60 Hz reference frame; scaled by <see cref="FrameDeltaSeconds"/>).</summary>
     public double ScrollSpeed { get; set; }
 
     /// <summary>Optional current audio input device display name (header viewports, General Settings hub).</summary>
@@ -34,4 +34,7 @@ public sealed class RenderContext
 
     /// <summary>When true, the component renderer should invalidate any write caches (e.g. header line cache) before rendering.</summary>
     public bool InvalidateWriteCache { get; set; }
+
+    /// <summary>Wall-clock seconds since last display tick for this surface; used for scrolling (ADR-0072).</summary>
+    public double FrameDeltaSeconds { get; set; }
 }

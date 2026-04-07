@@ -82,11 +82,12 @@ Decisions are numbered and kept under version control so the rationale stays wit
 | [0064](0064-test-project-mirrors-production-layout.md) | Test project folder layout mirrors production (single test project) | Accepted |
 | [0065](0065-ui-theme-from-layer-palettes.md) | UI theme from shared layer palette files — historical; superseded by 0071 | Superseded |
 | [0066](0066-bpm-source-and-ableton-link.md) | BPM source (audio / demo / Ableton Link), `IBeatTimingSource`, native `link_shim` | Accepted |
-| [0067](0067-60fps-target-and-render-fps-overlay.md) | 60 FPS target for main redraw, `MeasuredMainRenderFps`, optional toolbar FPS overlay | Accepted |
+| [0067](0067-60fps-target-and-render-fps-overlay.md) | At least ~60 FPS bar, uncapped main-loop redraw, `MeasuredMainRenderFps`, optional toolbar FPS overlay; analysis remains on capture thread | Accepted |
 | [0068](0068-agents-md-vs-readme.md) | AGENTS.md vs README — agent instructions vs human documentation | Accepted |
 | [0069](0069-unified-menu-selection-affordance.md) | Unified menu selection affordance — arrow + theme background/foreground | Accepted |
 | [0070](0070-settings-modal-add-remove-layers.md) | Settings modal — add/remove text layers (0..MaxLayerCount) | Accepted |
 | [0071](0071-ui-themes-separate-from-palettes.md) | UI themes in `themes/*.json`, `UiThemeId`, authoring modal, `IUiThemeRepository` | Accepted |
+| [0072](0072-delta-time-display-animation.md) | Delta-time animation and scrolling (reference 60 Hz), `FrameDeltaSeconds`, `IDisplayFrameClock` | Accepted |
 
 ## Process
 

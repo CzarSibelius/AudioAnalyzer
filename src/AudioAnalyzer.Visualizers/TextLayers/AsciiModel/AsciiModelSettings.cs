@@ -53,7 +53,7 @@ public sealed class AsciiModelSettings
     [Setting("RotationDirection", "Rotation direction")]
     public AsciiModelRotationDirection RotationDirection { get; set; } = AsciiModelRotationDirection.CounterClockwise;
 
-    /// <summary>Base rotation speed multiplier (0.002–0.15 radians per frame step before SpeedMultiplier). Default 0.03.</summary>
+    /// <summary>Base rotation speed multiplier (0.002–0.15 radians per 60 Hz reference step before SpeedMultiplier). Default 0.03.</summary>
     [Setting("RotationSpeed", "Rotation speed")]
     [SettingRange(0.002, 0.15, 0.002)]
     public double RotationSpeed { get; set; } = 0.03;

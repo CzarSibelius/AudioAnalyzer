@@ -10,8 +10,8 @@ namespace AudioAnalyzer.Console;
 /// <remarks>
 /// <strong>Responsibility boundary.</strong> Implementations own the render pipeline (when and how to run one frame).
 /// Full-screen and other display state are owned by <see cref="IDisplayState"/> and injected where needed.
-/// The application shell configures the orchestrator (callbacks, guard, lock) and triggers Redraw/RedrawWithFullHeader;
-/// the orchestrator executes one frame (header + snapshot + render) and, when receiving audio, drives throttled render.
+/// The application shell configures the orchestrator (callbacks, guard, lock), drives display cadence via
+/// <see cref="Redraw"/> / <see cref="RedrawWithFullHeader"/>, and feeds analysis via <see cref="OnAudioData"/> (no full render there).
 /// </remarks>
 internal interface IVisualizationOrchestrator
 {
@@ -49,8 +49,8 @@ internal interface IVisualizationOrchestrator
     void RedrawWithFullHeader();
 
     /// <summary>
-    /// Feeds audio to the analysis engine and, when the update interval has elapsed, refreshes header and renders.
-    /// Call from the audio capture callback.
+    /// Feeds audio to the analysis engine only. Full main-area render is driven by the shell main loop calling
+    /// <see cref="Redraw"/> / <see cref="RedrawWithFullHeader"/>. Call from the audio capture callback.
     /// </summary>
     void OnAudioData(byte[] buffer, int bytesRecorded, AudioFormat format);
 

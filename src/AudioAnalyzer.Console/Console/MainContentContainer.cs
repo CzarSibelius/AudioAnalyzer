@@ -119,7 +119,8 @@ internal sealed class MainContentContainer : IVisualizationRenderer
                 ScrollSpeed = _uiSettings.DefaultScrollingSpeed,
                 Snapshot = snapshot,
                 PaletteDisplayName = _palette.DisplayName,
-                DeviceName = _deviceCapture.Value.CurrentDeviceName
+                DeviceName = _deviceCapture.Value.CurrentDeviceName,
+                FrameDeltaSeconds = snapshot.FrameDeltaSeconds > 0 ? snapshot.FrameDeltaSeconds : 1.0 / 60.0
             };
 
             var root = new CompositeComponent(ctx => activeMode.GetMainComponents(new MainContentRenderArgs

@@ -1,3 +1,4 @@
+using AudioAnalyzer.Application;
 using AudioAnalyzer.Domain;
 
 namespace AudioAnalyzer.Visualizers;
@@ -24,7 +25,8 @@ public sealed class MatrixRainLayer : TextLayerRendererBase, ITextLayerRenderer<
 
         var s = layer.GetCustom<MatrixRainSettings>() ?? new MatrixRainSettings();
         double colPhase = state.Offset;
-        state.Offset += 0.15 * layer.SpeedMultiplier * ctx.SpeedBurst;
+        state.Offset += 0.15 * layer.SpeedMultiplier * ctx.SpeedBurst * DisplayAnimationTiming.ScaleForReference60(ctx.FrameDeltaSeconds);
+        // Beat flash nudge stays per draw (discrete), not scaled by dt (ADR-0072).
         if (s.BeatReaction == MatrixRainBeatReaction.Flash && ctx.Snapshot.BeatFlashActive)
         {
             colPhase += Random.Shared.Next(0, 20);

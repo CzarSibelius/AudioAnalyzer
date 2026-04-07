@@ -48,7 +48,8 @@ public sealed class OscilloscopeLayerRenderBoundsTests
             Height = 5,
             BufferOriginX = 0,
             BufferOriginY = 5,
-            LayerIndex = 0
+            LayerIndex = 0,
+            FrameDeltaSeconds = 1.0 / 60.0
         };
 
         var osc = new OscilloscopeLayer();

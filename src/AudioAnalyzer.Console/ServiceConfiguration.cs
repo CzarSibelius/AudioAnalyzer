@@ -122,7 +122,8 @@ internal static class ServiceConfiguration
                 sp.GetRequiredService<UiSettings>(),
                 sp.GetRequiredService<IUiThemeResolver>(),
                 sp.GetRequiredService<ITitleBarContentProvider>(),
-                sp.GetRequiredService<IApplicationModeFactory>()));
+                sp.GetRequiredService<IApplicationModeFactory>(),
+                sp.GetRequiredService<IDisplayFrameClock>()));
         services.AddSingleton<Lazy<IDeviceCaptureController>>(sp =>
             new Lazy<IDeviceCaptureController>(() => sp.GetRequiredService<IDeviceCaptureController>()));
         services.AddSingleton<IVisualizationRenderer>(sp =>
@@ -149,6 +150,7 @@ internal static class ServiceConfiguration
         services.AddSingleton<IFftBandProcessor, FftBandProcessor>();
         services.AddSingleton<AnalysisEngine>();
         services.AddSingleton<MainRenderFpsMeter>();
+        services.AddSingleton<IDisplayFrameClock, DisplayFrameClock>();
         services.AddSingleton<IVisualizationOrchestrator, VisualizationOrchestrator>();
         services.AddSingleton<ShowPlaybackController>();
         services.AddSingleton<IScrollingTextEngine, ScrollingTextEngine>();

@@ -53,7 +53,8 @@ internal static class TestHelpers
             LeftChannel = 0.5f,
             RightChannel = 0.5f,
             LeftPeakHold = 0.5f,
-            RightPeakHold = 0.5f
+            RightPeakHold = 0.5f,
+            FrameDeltaSeconds = 1.0 / 60.0
         };
     }
 
