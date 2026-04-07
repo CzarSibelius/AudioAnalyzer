@@ -11,22 +11,27 @@ namespace AudioAnalyzer.Console;
 internal static class GeneralSettingsHubMenuLines
 {
     /// <summary>
-    /// Layer palette colors for the current UI theme when <see cref="UiSettings.UiThemePaletteId"/> is set;
-    /// otherwise semantic <see cref="UiPalette"/> slots for beat/tick phase animation (Custom theme).
+    /// Layer palette colors when the active UI theme has <c>FallbackPaletteId</c>;
+    /// otherwise semantic <see cref="UiPalette"/> slots for beat/tick phase animation.
     /// </summary>
     public static IReadOnlyList<PaletteColor> ResolveHubBeatPaletteColors(
         UiSettings uiSettings,
         IPaletteRepository paletteRepo,
+        IUiThemeRepository themeRepo,
         UiPalette effectivePalette)
     {
-        string? id = uiSettings.UiThemePaletteId;
-        if (!string.IsNullOrWhiteSpace(id))
+        string? themeId = uiSettings.UiThemeId;
+        if (!string.IsNullOrWhiteSpace(themeId))
         {
-            var def = paletteRepo.GetById(id.Trim());
-            var colors = ColorPaletteParser.Parse(def);
-            if (colors is { Count: > 0 })
+            var theme = themeRepo.GetById(themeId.Trim());
+            if (theme != null && !string.IsNullOrWhiteSpace(theme.FallbackPaletteId))
             {
-                return colors;
+                var def = paletteRepo.GetById(theme.FallbackPaletteId.Trim());
+                var colors = ColorPaletteParser.Parse(def);
+                if (colors is { Count: > 0 })
+                {
+                    return colors;
+                }
             }
         }
 
@@ -171,28 +176,28 @@ internal static class GeneralSettingsHubMenuLines
         return sb.ToString();
     }
 
-    /// <summary>Resolves display text for the current <see cref="UiSettings.UiThemePaletteId"/>.</summary>
-    public static string ResolveUiThemeDisplaySummary(UiSettings uiSettings, IPaletteRepository paletteRepo)
+    /// <summary>Resolves display text for the current <see cref="UiSettings.UiThemeId"/>.</summary>
+    public static string ResolveUiThemeDisplaySummary(UiSettings uiSettings, IUiThemeRepository themeRepo)
     {
-        string? id = uiSettings.UiThemePaletteId;
+        string? id = uiSettings.UiThemeId;
         if (string.IsNullOrWhiteSpace(id))
         {
             return "(Custom)";
         }
 
         string trimmed = id.Trim();
-        var def = paletteRepo.GetById(trimmed);
-        var fromFile = def?.Name?.Trim();
-        if (!string.IsNullOrEmpty(fromFile))
+        var theme = themeRepo.GetById(trimmed);
+        if (theme != null)
         {
-            return fromFile;
+            var name = theme.Name?.Trim();
+            return !string.IsNullOrEmpty(name) ? name : trimmed;
         }
 
-        foreach (var p in paletteRepo.GetAll())
+        foreach (var t in themeRepo.GetAll())
         {
-            if (string.Equals(p.Id, trimmed, StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(t.Id, trimmed, StringComparison.OrdinalIgnoreCase))
             {
-                return !string.IsNullOrWhiteSpace(p.Name?.Trim()) ? p.Name!.Trim() : p.Id;
+                return !string.IsNullOrWhiteSpace(t.Name?.Trim()) ? t.Name!.Trim() : t.Id;
             }
         }
 

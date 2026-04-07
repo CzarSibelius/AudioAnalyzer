@@ -80,12 +80,13 @@ Decisions are numbered and kept under version control so the rationale stays wit
 | [0062](0062-application-mode-classes.md) | Application modes as `IApplicationMode` classes — layout, toolbar, header chrome | Accepted |
 | [0063](0063-uniform-settings-list-and-palette-drawing.md) | Uniform settings list and palette drawing (shared helpers, hub rows via HorizontalRowComponent) | Accepted |
 | [0064](0064-test-project-mirrors-production-layout.md) | Test project folder layout mirrors production (single test project) | Accepted |
-| [0065](0065-ui-theme-from-layer-palettes.md) | UI theme from shared layer palette files — `UiThemePaletteId`, hub + modal, `IUiThemeResolver` | Accepted |
+| [0065](0065-ui-theme-from-layer-palettes.md) | UI theme from shared layer palette files — historical; superseded by 0071 | Superseded |
 | [0066](0066-bpm-source-and-ableton-link.md) | BPM source (audio / demo / Ableton Link), `IBeatTimingSource`, native `link_shim` | Accepted |
 | [0067](0067-60fps-target-and-render-fps-overlay.md) | 60 FPS target for main redraw, `MeasuredMainRenderFps`, optional toolbar FPS overlay | Accepted |
 | [0068](0068-agents-md-vs-readme.md) | AGENTS.md vs README — agent instructions vs human documentation | Accepted |
 | [0069](0069-unified-menu-selection-affordance.md) | Unified menu selection affordance — arrow + theme background/foreground | Accepted |
 | [0070](0070-settings-modal-add-remove-layers.md) | Settings modal — add/remove text layers (0..MaxLayerCount) | Accepted |
+| [0071](0071-ui-themes-separate-from-palettes.md) | UI themes in `themes/*.json`, `UiThemeId`, authoring modal, `IUiThemeRepository` | Accepted |
 
 ## Process
 

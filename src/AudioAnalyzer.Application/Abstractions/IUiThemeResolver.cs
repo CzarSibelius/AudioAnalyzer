@@ -4,7 +4,7 @@ namespace AudioAnalyzer.Application.Abstractions;
 
 /// <summary>
 /// Resolves effective <see cref="UiPalette"/> and <see cref="TitleBarPalette"/> from
-/// <see cref="UiSettings.UiThemePaletteId"/> (shared layer palette files) or inline settings.
+/// <see cref="UiSettings.UiThemeId"/> (<c>themes/</c> JSON) or inline settings.
 /// </summary>
 public interface IUiThemeResolver
 {

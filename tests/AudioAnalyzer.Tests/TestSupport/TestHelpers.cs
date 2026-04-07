@@ -21,6 +21,7 @@ internal static class TestHelpers
     public static string PresetsPath => Path.Combine(TestRoot, "presets");
     public static string PalettesPath => Path.Combine(TestRoot, "palettes");
     public static string ShowsPath => Path.Combine(TestRoot, "shows");
+    public static string ThemesPath => Path.Combine(TestRoot, "themes");
     public static string SettingsPath => Path.Combine(TestRoot, "appsettings.json");
 
     public static AnalysisSnapshot CreateTestSnapshot(int width, int height)
@@ -59,6 +60,7 @@ internal static class TestHelpers
     public static MockFileSystem CreateMockFileSystem()
     {
         var paletteJson = """{"Name":"Default","Colors":["Magenta","Yellow","Green","Cyan","Blue"]}""";
+        var themeJson = """{"Name":"Test theme","FallbackPaletteId":"default"}""";
         var presetJson = """
             {
               "Name": "Test Preset",
@@ -74,6 +76,7 @@ internal static class TestHelpers
         return new MockFileSystem(new Dictionary<string, MockFileData>
         {
             [Path.Combine(PalettesPath, "default.json")] = new MockFileData(paletteJson),
+            [Path.Combine(ThemesPath, "test-theme.json")] = new MockFileData(themeJson),
             [Path.Combine(PresetsPath, "preset-1.json")] = new MockFileData(presetJson)
         });
     }
@@ -84,9 +87,11 @@ internal static class TestHelpers
     {
         var paletteJson = """{"Name":"Default","Colors":["Magenta","Yellow","Green","Cyan","Blue"]}""";
 
+        var themeJson = """{"Name":"Test theme","FallbackPaletteId":"default"}""";
         var files = new Dictionary<string, MockFileData>(StringComparer.OrdinalIgnoreCase)
         {
             [Path.Combine(PalettesPath, "default.json")] = new MockFileData(paletteJson),
+            [Path.Combine(ThemesPath, "test-theme.json")] = new MockFileData(themeJson),
             [Path.Combine(PresetsPath, "preset-1.json")] = new MockFileData(presetJson)
         };
 
@@ -115,7 +120,8 @@ internal static class TestHelpers
             NowPlayingProvider = new NullNowPlayingProvider(),
             PaletteRepository = paletteRepo,
             FileSystem = fileSystem,
-            ShowsDirectory = ShowsPath
+            ShowsDirectory = ShowsPath,
+            ThemesDirectory = ThemesPath
         };
 
         return ServiceConfiguration.Build(settingsRepo, presetRepo, settings, vs, options);

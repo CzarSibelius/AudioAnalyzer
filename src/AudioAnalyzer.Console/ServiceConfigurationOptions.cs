@@ -13,4 +13,10 @@ internal sealed class ServiceConfigurationOptions
     public IFileSystem? FileSystem { get; init; }
     /// <summary>Shows directory path when using a custom file system (e.g. for tests). When null, uses default next to executable.</summary>
     public string? ShowsDirectory { get; init; }
+
+    /// <summary>UI themes directory when using a custom file system (e.g. for tests). When null, uses default next to executable.</summary>
+    public string? ThemesDirectory { get; init; }
+
+    /// <summary>Override UI theme repository for tests.</summary>
+    public IUiThemeRepository? UiThemeRepository { get; init; }
 }

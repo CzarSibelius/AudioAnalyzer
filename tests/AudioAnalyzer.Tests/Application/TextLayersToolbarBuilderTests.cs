@@ -23,6 +23,19 @@ public sealed class TextLayersToolbarBuilderTests
             _byId.TryGetValue(id, out var d) ? d : null;
     }
 
+    private sealed class FakeUiThemeRepository : IUiThemeRepository
+    {
+        public IReadOnlyList<ThemeInfo> GetAll() => [];
+
+        public UiThemeDefinition? GetById(string id) => null;
+
+        public void Save(string id, UiThemeDefinition definition)
+        {
+        }
+
+        public string Create(UiThemeDefinition definition) => "theme-test";
+    }
+
     private static string StripAnsi(string s) =>
         Regex.Replace(s, @"\x1b\[[\d;]*m", string.Empty);
 
@@ -36,7 +49,7 @@ public sealed class TextLayersToolbarBuilderTests
             Label = PaletteColor.FromRgb(40, 40, 40)
         };
         var uiSettings = new UiSettings { Palette = inline };
-        var resolver = new UiThemeResolver(uiSettings, new FakePaletteRepo());
+        var resolver = new UiThemeResolver(uiSettings, new FakePaletteRepo(), new FakeUiThemeRepository());
         effectivePalette = resolver.GetEffectiveUiPalette();
         return new TextLayersToolbarBuilder(resolver);
     }

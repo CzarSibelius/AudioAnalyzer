@@ -1,6 +1,6 @@
 # AudioAnalyzer.Infrastructure — folder layout
 
-**Project root**: file-based repositories (`FilePresetRepository`, `FileSettingsRepository`, `FilePaletteRepository`, `FileShowRepository`), NAudio-backed audio input (`NAudioAudioInput`, `NAudioDeviceInfo`), synthetic/demo audio (`SyntheticAudioInput`), and similar adapters that are not grouped under a dedicated subfolder yet.
+**Project root**: file-based repositories (`FilePresetRepository`, `FileSettingsRepository`, `FilePaletteRepository`, `FileShowRepository`, `FileUiThemeRepository`), NAudio-backed audio input (`NAudioAudioInput`, `NAudioDeviceInfo`), synthetic/demo audio (`SyntheticAudioInput`), and similar adapters that are not grouped under a dedicated subfolder yet.
 
 **`NowPlaying/`**: `NullNowPlayingProvider` and other infrastructure implementations of now-playing that live in this assembly.
 

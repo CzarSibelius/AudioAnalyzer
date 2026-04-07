@@ -1,0 +1,19 @@
+{
+  "Name": "Commodore 64",
+  "FallbackPaletteId": "c64",
+  "Ui": {
+    "Normal": { "Value": "#959595" },
+    "Highlighted": { "Value": "#B8C76F" },
+    "Dimmed": { "Value": "#6C6C6C" },
+    "Label": { "Value": "#70A4B2" },
+    "Background": { "Value": "#352879" }
+  },
+  "TitleBar": {
+    "AppName": { "Value": "#FFFFFF" },
+    "Mode": { "Value": "#6C5EB5" },
+    "Preset": { "Value": "#B8C76F" },
+    "Layer": { "Value": "#9AD284" },
+    "Separator": { "Value": "#6F3D86" },
+    "Frame": { "Value": "#000000" }
+  }
+}

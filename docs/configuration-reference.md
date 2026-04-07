@@ -51,7 +51,7 @@ Example (`shows/show-1.json`):
 
 ## Palettes (JSON files)
 
-Color palettes are stored as **JSON files** in a **`palettes`** directory next to the executable (e.g. `palettes/` in the same folder as the .exe). The app ships with `palettes/default.json`, `palettes/oscilloscope.json` (classic waveform gradient: Cyan → Green → Yellow → Red), `palettes/clear-black.json` (black-first palette useful when the buffer clear color should read as black for Fill **BlendOver**), themed sets such as `pine-forest`, `jungle`, `miami-1984`, and `radioactive`, UI-oriented themes `bill` (Windows 95–inspired), `ddos` (DOS/CGA-inspired), and `blue-pill` (Matrix-inspired), and others. You can add more `.json` files; each file is one palette. Press **P** to cycle through all available palettes when using a palette-aware visualizer; the change applies only to the current visualizer and is saved to that visualizer's settings.
+Color palettes are stored as **JSON files** in a **`palettes`** directory next to the executable (e.g. `palettes/` in the same folder as the .exe). The app ships with `palettes/default.json`, `palettes/oscilloscope.json` (classic waveform gradient: Cyan → Green → Yellow → Red), `palettes/clear-black.json` (black-first palette useful when the buffer clear color should read as black for Fill **BlendOver**), themed sets such as `pine-forest`, `jungle`, `miami-1984`, and `radioactive`, UI-oriented themes `bill` (Windows 95–inspired), `ddos` (DOS/CGA-inspired), and `blue-pill` (Matrix-inspired), **four-color CGA hardware–style sets** (`cga-mode4-palette0-low` / `-high`, `cga-mode4-palette1-low` / `-high`, `cga-mode5-low` / `-high`; usable as layer palettes), **`c64`** (16-color Commodore 64 VIC-II order, Pepto-style RGB), and others. You can add more `.json` files; each file is one palette. Press **P** to cycle through all available palettes when using a palette-aware visualizer; the change applies only to the current visualizer and is saved to that visualizer's settings.
 
 **Palette JSON format:**
 
@@ -78,6 +78,30 @@ Example with 24-bit colors:
 }
 ```
 
+## UI themes (JSON files)
+
+UI chrome colors are configured with **theme files** in a **`themes`** directory next to the executable (see [ADR-0071](adr/0071-ui-themes-separate-from-palettes.md)). General Settings **UI theme (T)** lists **`(Custom)`** and these files only (not every layer palette). **N** in the theme modal starts **new theme from palette**: pick a source palette, map 11 semantic slots to palette indices, then save (creates `theme-1.json`, `theme-2.json`, …). The app ships **`themes/default.json`** and **`themes/c64.json`** (Commodore 64 chrome with `FallbackPaletteId` **`c64`** for hub swatches).
+
+**Theme JSON format:**
+
+- **`Name`** (optional): display name in lists.
+- **`FallbackPaletteId`** (optional): layer palette id used for (a) base UI/title-bar mapping via the same index rules as [ADR-0065](adr/0065-ui-theme-from-layer-palettes.md) / `UiThemePaletteMapper`, and (b) animated swatches in the theme list and General Settings hub when set.
+- **`Ui`** (optional object): semantic slots `Normal`, `Highlighted`, `Dimmed`, `Label`, optional `Background` — each a color entry like palette colors.
+- **`TitleBar`** (optional object): `AppName`, `Mode`, `Preset`, `Layer`, `Separator`, `Frame` — same entry shape.
+
+Explicit slots **override** the fallback mapping; omitted slots keep the base.
+
+Example (`themes/default.json` ships with the app):
+
+```json
+{
+  "Name": "Default theme",
+  "FallbackPaletteId": "default"
+}
+```
+
+`appsettings.json` holds **`UiSettings.UiThemeId`** (filename without extension, or null/`(Custom)` for inline `Palette` / `TitleBarPalette`).
+
 ## Sample OBJ models (AsciiModel)
 
 The **AsciiModel** text layer loads **Wavefront OBJ** files from a folder. The app ships **`models/sample/`** next to the executable (`cube.obj`, `tetrahedron.obj`; see `models/sample/README.md`). In the S modal, set **Model folder** to that directory (e.g. `models\sample` when running from the build output folder). Press **I** to cycle `.obj` files in alphabetical order. **Ambient**, **Lighting preset** (Classic, Headlight, or Custom angles), and related options reduce overly dark sides; details are in [visualizers/ascii-model.md](visualizers/ascii-model.md).
@@ -86,7 +110,7 @@ The **AsciiModel** text layer loads **Wavefront OBJ** files from a folder. The a
 
 - **BPM source** (`BpmSource`, per [ADR-0066](adr/0066-bpm-source-and-ableton-link.md)): Where tempo and the beat counter come from. Values: `AudioAnalysis` (default, energy detection on the audio stream), `DemoDevice` (BPM from the active `demo:NNN` synthetic device + time-based beats), `AbletonLink` (Ableton Link session via native `link_shim.dll`). Editable from General settings hub (**BPM source** row, **Enter** to cycle). FFT/spectrum/waveform always follow the **audio input**, not Link.
 
-- **UI settings** (`UiSettings`, per [ADR-0033](adr/0033-ui-principles-and-configurable-settings.md), [ADR-0065](adr/0065-ui-theme-from-layer-palettes.md), [ADR-0067](adr/0067-60fps-target-and-render-fps-overlay.md)): App title, optional `TitleBarAppName` (short name for title bar, e.g. "aUdioNLZR"), optional `DefaultAssetFolderPath` (default base directory for AsciiImage / AsciiModel when the layer’s folder setting is empty; omit to use the app content root), optional `UiThemePaletteId` (palette filename without extension — when set, UI and title bar colors are derived from that layer palette file; omit or use General settings **(Custom)** for inline colors), optional `TitleBarPalette` (used when no theme id), UI palette (Normal, Highlighted, Dimmed, Label, optional Background), default scrolling speed, and optional **`ShowRenderFps`** (`bool`, default `false`) to show smoothed main-render FPS on the toolbar. Stored in `appsettings.json`. Colors support 24-bit RGB (`R`, `G`, `B`) or console color names (`Value`).
+- **UI settings** (`UiSettings`, per [ADR-0033](adr/0033-ui-principles-and-configurable-settings.md), [ADR-0071](adr/0071-ui-themes-separate-from-palettes.md), [ADR-0067](adr/0067-60fps-target-and-render-fps-overlay.md)): App title, optional `TitleBarAppName` (short name for title bar, e.g. "aUdioNLZR"), optional `DefaultAssetFolderPath` (default base directory for AsciiImage / AsciiModel when the layer’s folder setting is empty; omit to use the app content root), optional `UiThemeId` (`themes/*.json` id — when set and the file loads, effective UI/title bar colors come from the theme; omit or use General settings **(Custom)** for inline colors), optional `TitleBarPalette` (used for base when no theme or theme has no usable fallback), UI palette (Normal, Highlighted, Dimmed, Label, optional Background), default scrolling speed, and optional **`ShowRenderFps`** (`bool`, default `false`) to show smoothed main-render FPS on the toolbar. Stored in `appsettings.json`. Colors support 24-bit RGB (`R`, `G`, `B`) or console color names (`Value`).
 
 - **Visualizer-specific options** live under `VisualizerSettings` in the settings file (e.g. `appsettings.json`):
   - **Presets**: Stored as individual JSON files in the `presets/` directory (see above). `ActivePresetId` references the active preset. Press **V** to cycle presets (Preset editor); **S** to edit (R rename, N new preset).
@@ -101,7 +125,7 @@ Example `appsettings.json`:
     "Title": "AUDIO ANALYZER - Real-time Frequency Spectrum",
     "DefaultScrollingSpeed": 0.25,
     "ShowRenderFps": false,
-    "UiThemePaletteId": null,
+    "UiThemeId": null,
     "Palette": {
       "Normal": { "Value": "Gray" },
       "Highlighted": { "Value": "Yellow" },

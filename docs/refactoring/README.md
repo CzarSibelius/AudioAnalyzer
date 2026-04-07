@@ -20,4 +20,4 @@ Reduce component-specific renderer interfaces by using `IUiComponentRenderer<TCo
 
 ## Deferred: Application UI palette in General settings
 
-**General Settings hub** ([ADR-0061](../adr/0061-general-settings-mode.md)): Hub includes audio input, **Application name**, **Default asset folder** (`UiSettings.DefaultAssetFolderPath`), and **UI theme** (`UiThemePaletteId`). **Editing `UiSettings.Palette`** (semantic UI colors in appsettings) from the hub is **not implemented** — add a future task (e.g. theme presets or per-slot editor) when picked up.
+**General Settings hub** ([ADR-0061](../adr/0061-general-settings-mode.md)): Hub includes audio input, **Application name**, **Default asset folder** (`UiSettings.DefaultAssetFolderPath`), and **UI theme** (`UiSettings.UiThemeId` → `themes/*.json`, [ADR-0071](../adr/0071-ui-themes-separate-from-palettes.md)). **Editing `UiSettings.Palette`** (semantic UI colors in appsettings) from the hub is **not implemented** when using **(Custom)** — users can author themes via **N** in the theme modal or edit JSON.

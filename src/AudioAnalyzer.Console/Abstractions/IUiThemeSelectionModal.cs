@@ -6,7 +6,7 @@ namespace AudioAnalyzer.Console;
 internal interface IUiThemeSelectionModal
 {
     /// <summary>
-    /// Shows the palette list. (Custom) clears <c>UiThemePaletteId</c>; otherwise sets it to the chosen id.
+    /// Shows the theme list. (Custom) clears <c>UiThemeId</c>; otherwise sets it to the chosen theme file id.
     /// Calls <paramref name="saveSettings"/> after a successful selection.
     /// </summary>
     void Show(Action<bool> setModalOpen, Func<AnalysisSnapshot> getSnapshot, Action saveSettings);

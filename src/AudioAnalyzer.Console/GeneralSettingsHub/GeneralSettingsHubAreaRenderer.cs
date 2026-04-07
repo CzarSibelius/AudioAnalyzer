@@ -12,6 +12,7 @@ internal sealed class GeneralSettingsHubAreaRenderer : IUiComponentRenderer<Gene
     private readonly UiSettings _uiSettings;
     private readonly AppSettings _appSettings;
     private readonly IPaletteRepository _paletteRepo;
+    private readonly IUiThemeRepository _themeRepo;
     private readonly IUiComponentRenderer<HorizontalRowComponent> _horizontalRowRenderer;
     private readonly HorizontalRowComponent _audioMenuRow = new();
     private readonly HorizontalRowComponent _bpmSourceMenuRow = new();
@@ -26,12 +27,14 @@ internal sealed class GeneralSettingsHubAreaRenderer : IUiComponentRenderer<Gene
         UiSettings uiSettings,
         AppSettings appSettings,
         IPaletteRepository paletteRepo,
+        IUiThemeRepository themeRepo,
         IUiComponentRenderer<HorizontalRowComponent> horizontalRowRenderer)
     {
         _state = state ?? throw new ArgumentNullException(nameof(state));
         _uiSettings = uiSettings ?? throw new ArgumentNullException(nameof(uiSettings));
         _appSettings = appSettings ?? throw new ArgumentNullException(nameof(appSettings));
         _paletteRepo = paletteRepo ?? throw new ArgumentNullException(nameof(paletteRepo));
+        _themeRepo = themeRepo ?? throw new ArgumentNullException(nameof(themeRepo));
         _horizontalRowRenderer = horizontalRowRenderer ?? throw new ArgumentNullException(nameof(horizontalRowRenderer));
     }
 
@@ -60,9 +63,9 @@ internal sealed class GeneralSettingsHubAreaRenderer : IUiComponentRenderer<Gene
         var palette = context.Palette;
         var snapshot = context.Snapshot;
         IReadOnlyList<PaletteColor> beatColors =
-            GeneralSettingsHubMenuLines.ResolveHubBeatPaletteColors(_uiSettings, _paletteRepo, palette);
+            GeneralSettingsHubMenuLines.ResolveHubBeatPaletteColors(_uiSettings, _paletteRepo, _themeRepo, palette);
         string appDisplay = EffectiveAppName.FromUiSettings(_uiSettings);
-        string themeDisplay = GeneralSettingsHubMenuLines.ResolveUiThemeDisplaySummary(_uiSettings, _paletteRepo);
+        string themeDisplay = GeneralSettingsHubMenuLines.ResolveUiThemeDisplaySummary(_uiSettings, _themeRepo);
 
         WriteRaw(0, startRow, width, sb =>
         {

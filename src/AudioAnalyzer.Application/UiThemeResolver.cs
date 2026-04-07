@@ -1,6 +1,5 @@
 using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Application.Display;
-using AudioAnalyzer.Application.Palette;
 using AudioAnalyzer.Domain;
 
 namespace AudioAnalyzer.Application;
@@ -10,18 +9,20 @@ public sealed class UiThemeResolver : IUiThemeResolver
 {
     private readonly UiSettings _uiSettings;
     private readonly IPaletteRepository _paletteRepo;
+    private readonly IUiThemeRepository _themeRepo;
 
     /// <summary>Initializes a new instance of the <see cref="UiThemeResolver"/> class.</summary>
-    public UiThemeResolver(UiSettings uiSettings, IPaletteRepository paletteRepo)
+    public UiThemeResolver(UiSettings uiSettings, IPaletteRepository paletteRepo, IUiThemeRepository themeRepo)
     {
         _uiSettings = uiSettings ?? throw new ArgumentNullException(nameof(uiSettings));
         _paletteRepo = paletteRepo ?? throw new ArgumentNullException(nameof(paletteRepo));
+        _themeRepo = themeRepo ?? throw new ArgumentNullException(nameof(themeRepo));
     }
 
     /// <inheritdoc />
     public UiPalette GetEffectiveUiPalette()
     {
-        if (!TryGetThemeMappedPalettes(out UiPalette? ui, out _))
+        if (!TryResolveFromTheme(out UiPalette? ui, out _))
         {
             return _uiSettings.Palette ?? new UiPalette();
         }
@@ -32,7 +33,7 @@ public sealed class UiThemeResolver : IUiThemeResolver
     /// <inheritdoc />
     public TitleBarPalette GetEffectiveTitleBarPalette()
     {
-        if (!TryGetThemeMappedPalettes(out _, out TitleBarPalette? titleBar))
+        if (!TryResolveFromTheme(out _, out TitleBarPalette? titleBar))
         {
             return _uiSettings.TitleBarPalette ?? new TitleBarPalette();
         }
@@ -40,26 +41,27 @@ public sealed class UiThemeResolver : IUiThemeResolver
         return titleBar!;
     }
 
-    private bool TryGetThemeMappedPalettes(out UiPalette? ui, out TitleBarPalette? titleBar)
+    private bool TryResolveFromTheme(out UiPalette? ui, out TitleBarPalette? titleBar)
     {
         ui = null;
         titleBar = null;
-        string? id = _uiSettings.UiThemePaletteId;
+        string? id = _uiSettings.UiThemeId;
         if (string.IsNullOrWhiteSpace(id))
         {
             return false;
         }
 
-        var def = _paletteRepo.GetById(id.Trim());
-        var colors = ColorPaletteParser.Parse(def);
-        if (colors is not { Count: > 0 })
+        var theme = _themeRepo.GetById(id.Trim());
+        if (theme == null)
         {
             return false;
         }
 
-        (UiPalette mappedUi, TitleBarPalette mappedTb) = UiThemePaletteMapper.Map(colors);
-        ui = mappedUi;
-        titleBar = mappedTb;
+        (UiPalette baseUi, TitleBarPalette baseTb) = UiThemeMerger.ResolveBase(
+            theme.FallbackPaletteId,
+            _uiSettings,
+            _paletteRepo);
+        (ui, titleBar) = UiThemeMerger.MergeOverlay(theme, baseUi, baseTb);
         return true;
     }
 }

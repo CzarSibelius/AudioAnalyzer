@@ -33,6 +33,9 @@ internal static class ServiceConfiguration
         services.AddSingleton<ISettingsRepository>(_ => settingsRepo);
         services.AddSingleton<IVisualizerSettingsRepository>(_ => settingsRepo);
         services.AddSingleton<IPaletteRepository>(_ => options?.PaletteRepository ?? new FilePaletteRepository());
+        services.AddSingleton<IUiThemeRepository>(_ =>
+            options?.UiThemeRepository
+            ?? new FileUiThemeRepository(options?.FileSystem ?? new FileSystem(), options?.ThemesDirectory));
         services.AddSingleton<IUiThemeResolver, UiThemeResolver>();
         services.AddSingleton<IPresetRepository>(presetRepo);
         services.AddSingleton<IFileSystem>(_ => options?.FileSystem ?? new FileSystem());
@@ -158,6 +161,7 @@ internal static class ServiceConfiguration
                 sp.GetRequiredService<UiSettings>(),
                 sp.GetRequiredService<AppSettings>(),
                 sp.GetRequiredService<IPaletteRepository>(),
+                sp.GetRequiredService<IUiThemeRepository>(),
                 sp.GetRequiredService<IUiComponentRenderer<HorizontalRowComponent>>()));
         services.AddSingleton<IKeyHandlerConfig<GeneralSettingsHubKeyContext>, GeneralSettingsHubKeyHandlerConfig>();
         services.AddSingleton<IKeyHandler<GeneralSettingsHubKeyContext>, GenericKeyHandler<GeneralSettingsHubKeyContext>>();

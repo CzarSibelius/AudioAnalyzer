@@ -1,12 +1,12 @@
 # ADR-0065: UI theme from shared layer palette files
 
-**Status**: Accepted
+**Status**: Superseded by [ADR-0071](0071-ui-themes-separate-from-palettes.md)
 
 ## Context
 
 Users need a single place to tune **UI chrome colors** (header, toolbar labels, modals) and **title bar breadcrumb colors** without hand-editing many slots. TextLayers already use **JSON palette files** in the `palettes/` directory (same ids as `IPaletteRepository`). Reusing those palettes for UI keeps visual consistency and avoids a second palette system.
 
-## Decision
+## Decision (historical)
 
 1. **Persisted field**: `UiSettings.UiThemePaletteId` (optional string, same id semantics as `TextLayersVisualizerSettings.PaletteId` — filename without extension). Stored under `UiSettings` in `appsettings.json`.
 
@@ -20,9 +20,13 @@ Users need a single place to tune **UI chrome colors** (header, toolbar labels, 
 
 5. **General Settings hub**: Third menu row **UI theme (T)** opens injectable **`IUiThemeSelectionModal`** (blocking, same modal pattern as device selection). First list entry **`(Custom)`** clears `UiThemePaletteId` and saves; other entries set it to the chosen palette id. **Enter** on the row or **T** when that row is selected opens the modal.
 
-## Consequences
+## Consequences (historical)
 
 - **No auto-sync** with the active preset’s `TextLayers.PaletteId`; users pick the same palette id manually if they want a match.
 - **No migration** of old files; new property is optional ([ADR-0029](0029-no-settings-migration.md)).
 - **Help and bindings**: General settings hub exposes the **T** binding for the theme row via `IKeyHandler` entries.
 - **Tests**: Mapper and resolver have unit tests; palette list drawing reuses shared `SettingsSurfacesPaletteDrawing.FormatPickerPaletteRow` patterns ([ADR-0063](0063-uniform-settings-list-and-palette-drawing.md)).
+
+## Update (current)
+
+UI themes are **`themes/*.json`** with `UiSettings.UiThemeId`; **`UiThemePaletteMapper`** remains the algorithm for **`FallbackPaletteId`** inside a theme file. Follow [ADR-0071](0071-ui-themes-separate-from-palettes.md).

@@ -20,7 +20,7 @@ Canonical rules for **keyboard-selected rows** in the console UI: hub menus, ful
 |---------|-------------------|
 | General settings hub menu | `GeneralSettingsHubMenuLines` + `MenuSelectionAffordance.FormatAnsiSelectableRow` when selected; `GeneralSettingsHubAreaRenderer` passes row width. |
 | Device selection modal list | `SettingsSurfacesListDrawing.DrawAudioDeviceList` |
-| UI theme palette modal list | `SettingsSurfacesListDrawing.DrawUiThemePaletteList` |
+| UI theme modal — theme list / palette pick | `SettingsSurfacesListDrawing.DrawUiThemeFileList`, `DrawPaletteOnlyList`; slot editor: `DrawUiThemeSlotAuthoringList` |
 | S modal — left column (Preset / layers) | `SettingsModalRenderer` |
 | S modal — settings column (incl. Palette / Default palette rows) | `SettingsModalRenderer` + `SettingsSurfacesPaletteDrawing.FormatPaletteSettingRow` / `FormatPresetDefaultPaletteSettingRow` |
 | S modal — palette picker | `SettingsSurfacesPaletteDrawing.DrawPicker` / `FormatPickerPaletteRow` |
