@@ -65,7 +65,11 @@ internal static class ModalSystem
     /// <param name="onEnter">Called when the overlay opens.</param>
     /// <param name="onScrollTick">Called on each poll when no key available; use for lightweight updates (e.g. hint line). Ignored when <paramref name="idleFullRedraw"/> is true.</param>
     /// <param name="idleFullRedraw">When true, idle polls (no key) redraw the overlay without a keypress. Uses in-place redraw (no blank row clear) to avoid flicker; key handling still uses full clear+draw.</param>
-    public static void RunOverlayModal(int overlayRowCount, int consoleWidth, Action drawContent, Func<ConsoleKeyInfo, bool> handleKey, object? consoleLock = null, Action? onClose = null, Action? onEnter = null, Action? onScrollTick = null, bool idleFullRedraw = false)
+    /// <param name="onIdleVisualizationTick">
+    /// When set, invoked on each idle poll (~50 ms) <strong>before</strong> overlay idle redraw, and <strong>without</strong> holding <paramref name="consoleLock"/>.
+    /// Use for <see cref="IVisualizationOrchestrator.Redraw"/> so the main visualizer keeps animating while the main loop is blocked inside this modal.
+    /// </param>
+    public static void RunOverlayModal(int overlayRowCount, int consoleWidth, Action drawContent, Func<ConsoleKeyInfo, bool> handleKey, object? consoleLock = null, Action? onClose = null, Action? onEnter = null, Action? onScrollTick = null, bool idleFullRedraw = false, Action? onIdleVisualizationTick = null)
     {
         System.Console.CursorVisible = false;
         onEnter?.Invoke();
@@ -148,39 +152,46 @@ internal static class ModalSystem
                     ClearAndDraw();
                 }
             }
-            else if (idleFullRedraw)
+            else
             {
-                long nowMs = Environment.TickCount64;
-                if (nowMs - lastIdleOverlayRedrawMs >= IdleOverlayRedrawMinIntervalMs)
+                // Redraw main content first, outside consoleLock — orchestrator.Redraw() acquires the same lock and would deadlock if called under it.
+                onIdleVisualizationTick?.Invoke();
+
+                if (idleFullRedraw)
                 {
-                    lastIdleOverlayRedrawMs = nowMs;
-                    if (consoleLock != null)
+                    long nowMs = Environment.TickCount64;
+                    if (nowMs - lastIdleOverlayRedrawMs >= IdleOverlayRedrawMinIntervalMs)
                     {
-                        lock (consoleLock)
+                        lastIdleOverlayRedrawMs = nowMs;
+                        if (consoleLock != null)
+                        {
+                            lock (consoleLock)
+                            {
+                                DrawOverlayInPlace();
+                            }
+                        }
+                        else
                         {
                             DrawOverlayInPlace();
                         }
                     }
-                    else
-                    {
-                        DrawOverlayInPlace();
-                    }
                 }
-            }
-            else if (onScrollTick != null)
-            {
-                if (consoleLock != null)
+                else if (onScrollTick != null)
                 {
-                    lock (consoleLock)
+                    if (consoleLock != null)
+                    {
+                        lock (consoleLock)
+                        {
+                            onScrollTick();
+                        }
+                    }
+                    else
                     {
                         onScrollTick();
                     }
                 }
-                else
-                {
-                    onScrollTick();
-                }
             }
+
             Thread.Sleep(50);
         }
     closed:

@@ -12,11 +12,13 @@ Layout rules: [ui-spec-format.md](ui-spec-format.md), [ADR-0050](adr/0050-ui-ali
 
 ## When each surface appears
 
-| Surface | How to open | ADR |
-|--------|----------------|-----|
-| **General settings hub** | **Tab** to General settings mode (after Preset editor / Show play when eligible). | [ADR-0061](adr/0061-general-settings-mode.md), [ADR-0062](adr/0062-application-mode-classes.md) |
-| **Device selection modal** | **D** from main loop (Preset / Show), or **Enter** on **Audio input devices** in the General hub. | [ADR-0035](adr/0035-modal-dependency-injection.md) |
-| **Preset / layer settings (S)** | **S** in Preset editor or Show play (not in General settings). | [ADR-0023](adr/0023-settings-modal-layer-editing.md) |
+
+| Surface                         | How to open                                                                                       | ADR                                                                                             |
+| ------------------------------- | ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| **General settings hub**        | **Tab** to General settings mode (after Preset editor / Show play when eligible).                 | [ADR-0061](adr/0061-general-settings-mode.md), [ADR-0062](adr/0062-application-mode-classes.md) |
+| **Device selection modal**      | **D** from main loop (Preset / Show), or **Enter** on **Audio input devices** in the General hub. | [ADR-0035](adr/0035-modal-dependency-injection.md)                                              |
+| **Preset / layer settings (S)** | **S** in Preset editor or Show play (not in General settings).                                    | [ADR-0023](adr/0023-settings-modal-layer-editing.md)                                            |
+
 
 ## Universal row 0: title breadcrumb
 
@@ -24,13 +26,15 @@ All surfaces use **ITitleBarBreadcrumbFormatter** and **ITitleBarNavigationConte
 
 ## Shared building blocks
 
-| Building block | Role |
-|----------------|------|
-| **Hint line** | Short instructions (toolbar-style). In the S modal, the hint row is rendered via **HorizontalRowComponent** ([ADR-0057](adr/0057-horizontal-row-unified-single-line-rows.md)). |
-| **Label:value** | [ADR-0050](adr/0050-ui-alignment-blocks-label-format.md): colon immediately after the label, no space before the value; no hotkey suffix in labels ([ADR-0034](adr/0034-viewport-label-hotkey-hints.md) superseded). |
-| **Menu rows (hub)** | Compact settings list with optional selection prefix; hub uses the same label/value idea as modal hints where applicable. |
-| **Vertical selectable list** | **↑/↓** move selection, **Enter** confirms, **Esc** cancels (device modal; palette picker in S modal uses **Esc** to discard preview). |
-| **Palette name coloring** | **PaletteSwatchFormatter** — beat- or tick-driven phase for per-letter colors (toolbar, S modal Palette row, palette picker list). |
+
+| Building block               | Role                                                                                                                                                                                                                 |
+| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Hint line**                | Short instructions (toolbar-style). In the S modal, the hint row is rendered via **HorizontalRowComponent** ([ADR-0057](adr/0057-horizontal-row-unified-single-line-rows.md)).                                       |
+| **Label:value**              | [ADR-0050](adr/0050-ui-alignment-blocks-label-format.md): colon immediately after the label, no space before the value; no hotkey suffix in labels ([ADR-0034](adr/0034-viewport-label-hotkey-hints.md) superseded). |
+| **Menu rows (hub)**          | Compact settings list with optional selection prefix; hub uses the same label/value idea as modal hints where applicable.                                                                                            |
+| **Vertical selectable list** | **↑/↓** move selection, **Enter** confirms, **Esc** cancels (device modal; palette picker in S modal uses **Esc** to discard preview).                                                                               |
+| **Palette name coloring**    | **PaletteSwatchFormatter** — beat- or tick-driven phase for per-letter colors (toolbar, S modal Palette row, palette picker list).                                                                                   |
+
 
 ## Selection affordance
 
@@ -38,22 +42,24 @@ All selectable hub rows and vertical lists use the same **arrow + full-width the
 
 ## Feature matrix (where capabilities exist today)
 
-| Feature | General hub | Device modal | S modal (preset / layers) |
-|--------|-------------|--------------|---------------------------|
-| Title breadcrumb row | Yes | Yes | Yes |
-| Hint / instruction line | Toolbar row | Line below breadcrumb | Line 1 (HorizontalRowComponent) |
-| `Label:value` menu | Yes (audio, app name) | No (plain list) | Settings column |
-| Inline text edit | Application name | No | Preset rename, string settings |
-| Full-screen list picker | No | Yes | Palette picker (right column) |
-| Two-column overlay | No | No | Yes (layers \| settings / picker) |
-| Palette swatch / animation | Toolbar palette cell | No | Palette row + picker list |
-| Idle redraw (palette phase) | Same as main toolbar | No | Yes (`DrawIdleOverlayTick`) |
+
+| Feature                     | General hub           | Device modal          | S modal (preset / layers)        |
+| --------------------------- | --------------------- | --------------------- | -------------------------------- |
+| Title breadcrumb row        | Yes                   | Yes                   | Yes                              |
+| Hint / instruction line     | Toolbar row           | Line below breadcrumb | Line 1 (HorizontalRowComponent)  |
+| `Label:value` menu          | Yes (audio, app name) | No (plain list)       | Settings column                  |
+| Inline text edit            | Application name      | No                    | Preset rename, string settings   |
+| Full-screen list picker     | No                    | Yes                   | Palette picker (right column)    |
+| Two-column overlay          | No                    | No                    | Yes (layers | settings / picker) |
+| Palette swatch / animation  | Toolbar palette cell  | No                    | Palette row + picker list        |
+| Idle redraw (palette phase) | Same as main toolbar  | No                    | Yes (`DrawIdleOverlayTick`)      |
+
 
 **Global palette:** In General settings, palette is shown on the **toolbar** and cycled from the main key map; the hub does not host a palette list picker (same as toolbar-only cycling unless product direction changes).
 
 ## Related overlay: Show edit modal
 
-**Show edit** (**S** in Show play) uses a similar **two-column overlay** shell as the S modal (breadcrumb, hint, separator, list \| detail). List selection matches [ui-spec-menu-selection.md](ui-spec-menu-selection.md). A dedicated Show edit ui-spec may still be added; reuse the overlay shell described in [ui-spec-preset-settings-modal.md](ui-spec-preset-settings-modal.md).
+**Show edit** (**S** in Show play) uses a similar **two-column overlay** shell as the S modal (breadcrumb, hint, separator, list  detail). List selection matches [ui-spec-menu-selection.md](ui-spec-menu-selection.md). A dedicated Show edit ui-spec may still be added; reuse the overlay shell described in [ui-spec-preset-settings-modal.md](ui-spec-preset-settings-modal.md).
 
 ## Implementation note
 

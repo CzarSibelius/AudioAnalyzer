@@ -124,6 +124,7 @@ internal sealed class SettingsModal : ISettingsModal
                 _navigation.View = TitleBarViewKind.PresetSettingsModal;
                 _orchestrator.SetOverlayActive(true, OverlayRowCount);
             },
-            onScrollTick: OnScrollTick);
+            onScrollTick: OnScrollTick,
+            onIdleVisualizationTick: _orchestrator.Redraw);
     }
 }

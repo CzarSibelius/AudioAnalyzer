@@ -175,6 +175,7 @@ internal sealed class ShowEditModal : IShowEditModal
             {
                 _navigation.View = TitleBarViewKind.ShowEditModal;
                 _orchestrator.SetOverlayActive(true, OverlayRowCount);
-            });
+            },
+            onIdleVisualizationTick: _orchestrator.Redraw);
     }
 }

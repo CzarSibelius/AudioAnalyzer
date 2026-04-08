@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.IO.Abstractions;
 using System.Text;
 using AudioAnalyzer.Application.Abstractions;
@@ -61,6 +62,7 @@ public sealed class TextLayersVisualizer : IVisualizer
     private readonly ViewportCellBuffer _buffer = new();
     /// <summary>Per-layer state: (offset for scroll/marquee/wave, snippet index). Index matches sorted layer list.</summary>
     private readonly List<(double Offset, int SnippetIndex)> _layerStates = new();
+    private readonly double?[] _layerRenderTimeScratch = new double?[TextLayersLimits.MaxLayerCount];
     private int _lastBeatCount = -1;
 
     public void Render(AnalysisSnapshot snapshot, VisualizerViewport viewport)
@@ -68,6 +70,7 @@ public sealed class TextLayersVisualizer : IVisualizer
         var sortedLayers = TryGetSortedLayersSnapshot(_settings);
         if (sortedLayers is not { Count: > 0 })
         {
+            snapshot.LayerRenderTimeMs = null;
             RenderEmpty(viewport);
             return;
         }
@@ -76,6 +79,7 @@ public sealed class TextLayersVisualizer : IVisualizer
         int h = viewport.MaxLines;
         if (w < 10 || h < 3)
         {
+            snapshot.LayerRenderTimeMs = null;
             return;
         }
 
@@ -108,6 +112,16 @@ public sealed class TextLayersVisualizer : IVisualizer
 
         double speedBurst = snapshot.BeatFlashActive ? 2.0 : 1.0;
 
+        if (_uiSettings.ShowLayerRenderTime)
+        {
+            Array.Clear(_layerRenderTimeScratch, 0, TextLayersLimits.MaxLayerCount);
+            snapshot.LayerRenderTimeMs = _layerRenderTimeScratch;
+        }
+        else
+        {
+            snapshot.LayerRenderTimeMs = null;
+        }
+
         for (int i = 0; i < sortedLayers.Count; i++)
         {
             var layer = sortedLayers[i];
@@ -138,7 +152,17 @@ public sealed class TextLayersVisualizer : IVisualizer
                     LayerIndex = i,
                     FrameDeltaSeconds = frameDelta
                 };
-                state = renderer.Draw(layer, ref state, ctx);
+                if (_uiSettings.ShowLayerRenderTime)
+                {
+                    long t0 = Stopwatch.GetTimestamp();
+                    state = renderer.Draw(layer, ref state, ctx);
+                    long t1 = Stopwatch.GetTimestamp();
+                    _layerRenderTimeScratch[i] = (t1 - t0) * 1000.0 / Stopwatch.Frequency;
+                }
+                else
+                {
+                    state = renderer.Draw(layer, ref state, ctx);
+                }
             }
             finally
             {

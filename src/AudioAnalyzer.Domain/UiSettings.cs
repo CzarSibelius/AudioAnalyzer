@@ -34,4 +34,7 @@ public class UiSettings
 
     /// <summary>When true, show smoothed main render FPS on the toolbar (ADR-0067).</summary>
     public bool ShowRenderFps { get; set; }
+
+    /// <summary>When true, show each text layer’s last measured <c>Draw</c> time in the S modal (ADR-0073).</summary>
+    public bool ShowLayerRenderTime { get; set; }
 }

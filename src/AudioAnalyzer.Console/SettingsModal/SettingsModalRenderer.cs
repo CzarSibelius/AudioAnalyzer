@@ -1,3 +1,4 @@
+using System.Text;
 using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Application.Display;
 using AudioAnalyzer.Application.Palette;
@@ -65,6 +66,7 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
     /// <inheritdoc />
     public void Draw(SettingsModalState state, IReadOnlyList<TextLayerSettings> sortedLayers, int width, AnalysisSnapshot analysisSnapshot)
     {
+        ArgumentNullException.ThrowIfNull(analysisSnapshot);
         if (width < 40)
         {
             return;
@@ -73,7 +75,7 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
         int rightColWidth = Math.Max(10, width - LeftColWidth - 1);
         var palette = _uiThemeResolver.GetEffectiveUiPalette();
         var (selBg, selFg) = MenuSelectionAffordance.GetSelectionColors(palette);
-        double scrollSpeed = _uiSettings?.DefaultScrollingSpeed ?? 0.25;
+        double scrollSpeed = _uiSettings.DefaultScrollingSpeed;
 
         try
         {
@@ -125,6 +127,20 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
             System.Console.Write(" ");
             System.Console.Write(new string(' ', rightColWidth));
 
+            int enabledLayerCountForTiming = 0;
+            if (_uiSettings.ShowLayerRenderTime)
+            {
+                foreach (var l in sortedLayers)
+                {
+                    if (l.Enabled)
+                    {
+                        enabledLayerCountForTiming++;
+                    }
+                }
+            }
+
+            double perLayerBudgetMs = LayerRenderTimeFormatting.PerLayerBudgetMsFor60Fps(enabledLayerCountForTiming);
+
             for (int i = 0; i < sortedLayers.Count && i < TextLayersLimits.MaxLayerCount; i++)
             {
                 int row = FirstLayerRow + 1 + i;
@@ -136,11 +152,42 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
                 var layer = sortedLayers[i];
                 string prefix = MenuSelectionAffordance.GetPrefix(!state.LeftPanelPresetSelected && i == state.SelectedLayerIndex);
                 string enabledMark = layer.Enabled ? "●" : "○";
-                string leftLine = $"{prefix}{enabledMark} {i + 1}. {layer.LayerType}";
-                leftLine = StaticTextViewport.TruncateWithEllipsis(new PlainText(leftLine), LeftColWidth).PadRight(LeftColWidth);
+                string basePlain = $"{prefix}{enabledMark} {i + 1}. {layer.LayerType}";
+                bool rowSelected = !state.LeftPanelPresetSelected && i == state.SelectedLayerIndex && state.Focus == SettingsModalFocus.LayerList && !state.Renaming;
+                string leftLine;
+                if (_uiSettings.ShowLayerRenderTime)
+                {
+                    double? ms = null;
+                    var times = analysisSnapshot.LayerRenderTimeMs;
+                    if (times != null && i < times.Length)
+                    {
+                        ms = times[i];
+                    }
+
+                    string suffixPlain = LayerRenderTimeFormatting.FormatEntrySuffix(ms);
+                    int suffixCols = DisplayWidth.GetDisplayWidth(suffixPlain);
+                    int baseMax = Math.Max(0, LeftColWidth - suffixCols);
+                    string baseTrunc = StaticTextViewport.TruncateWithEllipsis(new PlainText(basePlain), baseMax);
+                    if (rowSelected)
+                    {
+                        leftLine = new PlainText(baseTrunc + suffixPlain).PadToDisplayWidth(LeftColWidth);
+                    }
+                    else
+                    {
+                        PaletteColor tierFg = LayerRenderTimeFormatting.GetTierForeground(palette, ms, perLayerBudgetMs);
+                        var sb = new StringBuilder();
+                        sb.Append(baseTrunc);
+                        AnsiConsole.AppendColored(sb, suffixPlain, tierFg);
+                        leftLine = AnsiConsole.PadToDisplayWidth(sb.ToString(), LeftColWidth);
+                    }
+                }
+                else
+                {
+                    leftLine = StaticTextViewport.TruncateWithEllipsis(new PlainText(basePlain), LeftColWidth).PadRight(LeftColWidth);
+                }
 
                 System.Console.SetCursorPosition(0, row);
-                string leftLineToWrite = !state.LeftPanelPresetSelected && i == state.SelectedLayerIndex && state.Focus == SettingsModalFocus.LayerList && !state.Renaming
+                string leftLineToWrite = rowSelected
                     ? MenuSelectionAffordance.ApplyRowHighlight(true, leftLine, selBg, selFg)
                     : leftLine;
                 System.Console.Write(leftLineToWrite);
@@ -282,7 +329,7 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
             return;
         }
 
-        double scrollSpeed = _uiSettings?.DefaultScrollingSpeed ?? 0.25;
+        double scrollSpeed = _uiSettings.DefaultScrollingSpeed;
         var palette = _uiThemeResolver.GetEffectiveUiPalette();
         try
         {

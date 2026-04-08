@@ -20,6 +20,7 @@ internal sealed class GeneralSettingsHubAreaRenderer : IUiComponentRenderer<Gene
     private readonly HorizontalRowComponent _defaultAssetMenuRow = new();
     private readonly HorizontalRowComponent _themeMenuRow = new();
     private readonly HorizontalRowComponent _showRenderFpsMenuRow = new();
+    private readonly HorizontalRowComponent _showLayerRenderTimeMenuRow = new();
     private bool _regionCleared;
 
     public GeneralSettingsHubAreaRenderer(
@@ -182,10 +183,26 @@ internal sealed class GeneralSettingsHubAreaRenderer : IUiComponentRenderer<Gene
             [width]);
         rowContext.StartRow = startRow + 7;
         _horizontalRowRenderer.Render(_showRenderFpsMenuRow, rowContext);
+        _showLayerRenderTimeMenuRow.SetRowData(
+            [
+                new LabeledValueDescriptor(
+                    "",
+                    () => new AnsiText(GeneralSettingsHubMenuLines.FormatShowLayerRenderTimeLine(
+                        _state,
+                        palette,
+                        snapshot,
+                        beatColors,
+                        _uiSettings,
+                        width)),
+                    preformattedAnsi: true)
+            ],
+            [width]);
+        rowContext.StartRow = startRow + 8;
+        _horizontalRowRenderer.Render(_showLayerRenderTimeMenuRow, rowContext);
 
         if (_state.EditMode != GeneralSettingsHubEditMode.None)
         {
-            WriteRaw(9, startRow, width, sb =>
+            WriteRaw(10, startRow, width, sb =>
             {
                 AnsiConsole.AppendColored(sb, "  Edit: ", palette.Label);
                 AnsiConsole.AppendColored(sb, _state.RenameBuffer, palette.Highlighted);

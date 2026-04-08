@@ -1,3 +1,5 @@
+using AudioAnalyzer.Domain;
+
 namespace AudioAnalyzer.Application.Abstractions;
 
 /// <summary>
@@ -35,6 +37,12 @@ public sealed class AnalysisSnapshot
     /// When show-render-FPS is enabled in UI settings, smoothed full main render FPS (ADR-0067); otherwise unset.
     /// </summary>
     public double? MeasuredMainRenderFps { get; set; }
+
+    /// <summary>
+    /// When layer render timing is enabled, per sorted-layer-index <c>Draw</c> duration in milliseconds from the last main render (ADR-0073).
+    /// Length is <see cref="TextLayersLimits.MaxLayerCount"/>; <c>null</c> entries mean not timed. Not produced by <see cref="AnalysisEngine"/>; merged in <c>GetSnapshotForUi</c> for modals.
+    /// </summary>
+    public double?[]? LayerRenderTimeMs { get; set; }
 
     /// <summary>
     /// Wall-clock seconds since the previous full main render tick, set by the visualization orchestrator (ADR-0072).

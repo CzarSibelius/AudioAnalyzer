@@ -18,6 +18,7 @@ General settings
    Default asset folder:(App base)
    UI theme (T):(Custom)
    Show render FPS (Enter):Off
+   Show layer render time (Enter):Off
 ```
 
 (Plain-text mockup; on screen the hub title and menu **values** use per-grapheme palette colors with the same beat/tick phase as the toolbar palette swatch.)
@@ -34,7 +35,8 @@ General settings
 - **8** — Menu: **Default asset folder:** when `UiSettings.DefaultAssetFolderPath` is unset, the value shows **`(App base)`** (layers with empty image/model folder use `AppContext.BaseDirectory` as the global base); when set, the configured path (trimmed). Same selection affordance as line **5**. **Enter** opens path edit; printable keys and **Backspace** edit; **Enter** confirms (empty buffer clears the setting); **Esc** cancels.
 - **9** — Menu: **UI theme (T):** theme display name from `themes/*.json`, **`(Custom)`** when `UiThemeId` is unset (inline `UiSettings.Palette` / `TitleBarPalette` in appsettings). Unselected value coloring matches line **5**; selected row uses solid selection colors (no swatch animation on that row). Same **` ► `** affordance when selected. **Enter** or **T** opens the theme list (**(Custom)** clears `UiThemeId`; otherwise sets it to the chosen theme file id). **N** in the modal starts **new theme from palette** (palette pick → 11-slot index editor → save). **Esc** cancels the modal or steps back in the authoring sub-flow. In the theme list, rows with **`FallbackPaletteId`** use the same beat/tick-driven per-letter colors as the S-modal palette picker where applicable; the list idle-redraws when the frame advances (`PaletteSwatchFormatter.PaletteAnimationFrameAdvanced`).
 - **10** — Menu: **Show render FPS (Enter):** **`On`** or **`Off`** for `UiSettings.ShowRenderFps` ([ADR-0067](adr/0067-60fps-target-and-render-fps-overlay.md)). When on, the main toolbar shows a smoothed **FPS** value for full main-area redraws (main-loop cadence—typically **≥~60** FPS on capable hosts). Same selection affordance as line **5**. **Enter** toggles and persists settings.
+- **11** — Menu: **Show layer render time (Enter):** **`On`** or **`Off`** for `UiSettings.ShowLayerRenderTime` ([ADR-0073](adr/0073-layer-render-time-overlay.md)). When on, the **S** modal left column appends a compact per-layer **`Draw`** duration (from the last completed main render) next to each layer line. Same selection affordance as line **5**. **Enter** toggles and persists settings.
 
-When **Application name** or **Default asset folder** is being edited, an additional line **Edit:** appears below the menu with the current buffer (implementation may truncate).
+When **Application name** or **Default asset folder** is being edited, an additional line **Edit:** appears below the last menu row with the current buffer (implementation may truncate; `GeneralSettingsHubAreaRenderer` draws it one line below the **Show layer render time** row).
 
 **Note:** Full screen (**F**) is disabled in General settings (fullscreen is cleared when entering General settings). The toolbar and hub remain visible when the window is wide enough.

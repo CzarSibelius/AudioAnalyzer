@@ -228,7 +228,8 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
             Palette = palette,
             UiThemeId = string.IsNullOrWhiteSpace(file.UiThemeId) ? null : file.UiThemeId.Trim(),
             DefaultAssetFolderPath = string.IsNullOrWhiteSpace(file.DefaultAssetFolderPath) ? null : file.DefaultAssetFolderPath.Trim(),
-            ShowRenderFps = file.ShowRenderFps
+            ShowRenderFps = file.ShowRenderFps,
+            ShowLayerRenderTime = file.ShowLayerRenderTime
         };
     }
 
@@ -247,6 +248,7 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
             UiThemeId = string.IsNullOrWhiteSpace(settings.UiThemeId) ? null : settings.UiThemeId.Trim(),
             DefaultAssetFolderPath = string.IsNullOrWhiteSpace(settings.DefaultAssetFolderPath) ? null : settings.DefaultAssetFolderPath.Trim(),
             ShowRenderFps = settings.ShowRenderFps,
+            ShowLayerRenderTime = settings.ShowLayerRenderTime,
             Palette = new UiPaletteFile
             {
                 Normal = ColorPaletteParser.ToEntry(palette.Normal),
@@ -309,6 +311,7 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
         public string? UiThemeId { get; set; }
         public string? DefaultAssetFolderPath { get; set; }
         public bool ShowRenderFps { get; set; }
+        public bool ShowLayerRenderTime { get; set; }
         public UiPaletteFile? Palette { get; set; }
     }
 

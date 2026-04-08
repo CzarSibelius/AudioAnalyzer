@@ -1,3 +1,4 @@
+using System.IO;
 using System.IO.Abstractions;
 using System.Numerics;
 using AudioAnalyzer.Application;
@@ -33,7 +34,9 @@ public sealed class AsciiModelLayer : TextLayerRendererBase, ITextLayerRenderer<
         int h = ctx.Height;
 
         var s = layer.GetCustom<AsciiModelSettings>() ?? new AsciiModelSettings();
-        var paths = FileBasedLayerAssetPaths.GetSortedObjPaths(s.ModelFolderPath, _uiSettings, _fileSystem);
+        var m = _stateStore.GetState(ctx.LayerIndex);
+        var paths = GetSortedObjPathsCached(s.ModelFolderPath, m);
+
         if (paths.Count == 0)
         {
             RenderPlaceholder(ctx, "No models");
@@ -43,7 +46,6 @@ public sealed class AsciiModelLayer : TextLayerRendererBase, ITextLayerRenderer<
         int fileIndex = FileBasedLayerAssetPaths.ResolveIndexByFileName(paths, s.SelectedModelFileName);
         string path = paths[fileIndex];
 
-        var m = _stateStore.GetState(ctx.LayerIndex);
         if (!TryRefreshMesh(path, s, m, _fileSystem))
         {
             RenderPlaceholder(ctx, "Load failed");
@@ -122,9 +124,60 @@ public sealed class AsciiModelLayer : TextLayerRendererBase, ITextLayerRenderer<
             lightDir,
             (float)s.Ambient,
             ctx.BufferOriginX,
-            ctx.BufferOriginY);
+            ctx.BufferOriginY,
+            m);
 
         return state;
+    }
+
+    private List<string> GetSortedObjPathsCached(string? modelFolderPath, AsciiModelState m)
+    {
+        string resolved = LayerAssetFolder.ResolveEffectiveFolder(modelFolderPath, _uiSettings);
+        bool pathsDirty = m.CachedSortedObjPaths == null
+            || !string.Equals(m.CachedResolvedObjFolder, resolved, StringComparison.OrdinalIgnoreCase);
+
+        if (!pathsDirty
+            && m.CachedObjFolderLastWriteUtc is DateTime cachedLw
+            && !string.IsNullOrWhiteSpace(resolved)
+            && _fileSystem.Directory.Exists(resolved))
+        {
+            try
+            {
+                DateTime dirLw = _fileSystem.Directory.GetLastWriteTimeUtc(resolved);
+                if (dirLw != cachedLw)
+                {
+                    pathsDirty = true;
+                }
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                Console.Error.WriteLine($"AsciiModel: folder LastWriteTime failed: {ex.Message}");
+                pathsDirty = true;
+            }
+        }
+
+        if (!pathsDirty && m.CachedSortedObjPaths != null)
+        {
+            return m.CachedSortedObjPaths;
+        }
+
+        var paths = FileBasedLayerAssetPaths.GetSortedObjPaths(modelFolderPath, _uiSettings, _fileSystem);
+        m.CachedResolvedObjFolder = resolved;
+        m.CachedSortedObjPaths = paths;
+        m.CachedObjFolderLastWriteUtc = null;
+        if (!string.IsNullOrWhiteSpace(resolved) && _fileSystem.Directory.Exists(resolved))
+        {
+            try
+            {
+                m.CachedObjFolderLastWriteUtc = _fileSystem.Directory.GetLastWriteTimeUtc(resolved);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                Console.Error.WriteLine($"AsciiModel: folder LastWriteTime failed: {ex.Message}");
+            }
+        }
+
+        return paths;
     }
 
     private static bool TryRefreshMesh(string path, AsciiModelSettings settings, AsciiModelState m, IFileSystem fileSystem)

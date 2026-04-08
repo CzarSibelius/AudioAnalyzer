@@ -10,15 +10,28 @@ public static class AsciiModelRasterizer
     /// <summary>ASCII gradient from dark to light (legacy mode; matches <see cref="AsciiImageConverter"/>).</summary>
     private const string AsciiGradient = " .:-=+*#%@";
 
-    /// <summary>
-    /// Terminal cells are taller than wide; multiply projected X by this so models do not look vertically stretched.
-    /// </summary>
+    /// <summary>Terminal cells are taller than wide; multiply projected X by this so models are not stretched vertically in the terminal.</summary>
     private const float CellAspectX = 2f;
 
     /// <summary>
     /// Renders the mesh into the buffer. Legacy mode writes only cells covered by projected triangles.
     /// Shape mode writes only cells where at least one subsample hit geometry; other cells are unchanged for compositing with lower-Z layers.
     /// </summary>
+    /// <param name="buffer">Target cell buffer.</param>
+    /// <param name="palette">Color palette for shaded output.</param>
+    /// <param name="colorBase">Base palette index for shading.</param>
+    /// <param name="width">Layer width in cells.</param>
+    /// <param name="height">Layer height in cells.</param>
+    /// <param name="mesh">Triangle mesh in model space.</param>
+    /// <param name="rotation">Model rotation applied before projection.</param>
+    /// <param name="cameraDistanceScale">Scale factor for camera distance / focal length.</param>
+    /// <param name="renderMode">Shape (subsampled) or legacy gradient.</param>
+    /// <param name="shapeContrastExponent">Shape-mode global contrast exponent.</param>
+    /// <param name="lightDirectionWorld">Direction to light in world space (normalized internally when non-zero).</param>
+    /// <param name="ambient">Ambient term in [0,1].</param>
+    /// <param name="bufferOriginX">Optional buffer X offset.</param>
+    /// <param name="bufferOriginY">Optional buffer Y offset.</param>
+    /// <param name="rasterScratch">When non-null, reuses z/luminance and world-space buffers from per-layer state to avoid per-frame allocations.</param>
     public static void Render(
         ViewportCellBuffer buffer,
         IReadOnlyList<PaletteColor> palette,
@@ -33,7 +46,8 @@ public static class AsciiModelRasterizer
         Vector3 lightDirectionWorld,
         float ambient,
         int bufferOriginX = 0,
-        int bufferOriginY = 0)
+        int bufferOriginY = 0,
+        AsciiModelState? rasterScratch = null)
     {
         if (width <= 0 || height <= 0 || palette.Count == 0)
         {
@@ -54,11 +68,11 @@ public static class AsciiModelRasterizer
 
         if (renderMode == AsciiModelRenderMode.LegacyGradient)
         {
-            RenderLegacy(buffer, palette, colorBase, width, height, mesh, rotation, cameraDistanceScale, lightDir, ambientClamped, bufferOriginX, bufferOriginY);
+            RenderLegacy(buffer, palette, colorBase, width, height, mesh, rotation, cameraDistanceScale, lightDir, ambientClamped, bufferOriginX, bufferOriginY, rasterScratch);
         }
         else
         {
-            RenderShape(buffer, palette, colorBase, width, height, mesh, rotation, cameraDistanceScale, shapeContrastExponent, lightDir, ambientClamped, bufferOriginX, bufferOriginY);
+            RenderShape(buffer, palette, colorBase, width, height, mesh, rotation, cameraDistanceScale, shapeContrastExponent, lightDir, ambientClamped, bufferOriginX, bufferOriginY, rasterScratch);
         }
     }
 
@@ -74,15 +88,18 @@ public static class AsciiModelRasterizer
         Vector3 lightDir,
         float ambient,
         int bufferOriginX,
-        int bufferOriginY)
+        int bufferOriginY,
+        AsciiModelState? rasterScratch)
     {
         float zOffset = (float)(2.0 / Math.Max(0.25, cameraDistanceScale));
         float focal = Math.Min(width, height) * 0.42f * (float)cameraDistanceScale;
-        var zBuf = new float[width * height];
-        Array.Fill(zBuf, float.PositiveInfinity);
+        int zLen = width * height;
+        float[] zBuf = AcquireLegacyZBuffer(zLen, rasterScratch);
+        Array.Fill(zBuf, float.PositiveInfinity, 0, zLen);
+
+        EnsureWorldSpaceTransformed(mesh, rotation, rasterScratch, out Vector3[] worldPos, out _);
 
         int triCount = mesh.TriangleCount;
-        var verts = mesh.Vertices;
         var idx = mesh.Indices;
         var faceN = mesh.FaceNormals;
 
@@ -92,19 +109,28 @@ public static class AsciiModelRasterizer
             int i1 = idx[t * 3 + 1];
             int i2 = idx[t * 3 + 2];
 
-            var p0 = Project(verts[i0], rotation, zOffset, focal, width, height);
-            var p1 = Project(verts[i1], rotation, zOffset, focal, width, height);
-            var p2 = Project(verts[i2], rotation, zOffset, focal, width, height);
-
-            if (!p0.Valid || !p1.Valid || !p2.Valid)
+            var c0 = worldPos[i0];
+            var c1 = worldPos[i1];
+            var c2 = worldPos[i2];
+            var nwRaw = Vector3.TransformNormal(faceN[t], rotation);
+            if (ShouldCullBackFace(c0, c1, c2, nwRaw))
             {
                 continue;
             }
 
-            var nw = Vector3.TransformNormal(faceN[t], rotation);
+            var nw = nwRaw;
             if (nw.LengthSquared() > 1e-12f)
             {
                 nw = Vector3.Normalize(nw);
+            }
+
+            var p0 = ProjectTransformed(c0, zOffset, focal, width, height);
+            var p1 = ProjectTransformed(c1, zOffset, focal, width, height);
+            var p2 = ProjectTransformed(c2, zOffset, focal, width, height);
+
+            if (!p0.Valid || !p1.Valid || !p2.Valid)
+            {
+                continue;
             }
 
             float nd = Math.Clamp(Vector3.Dot(nw, lightDir), 0f, 1f);
@@ -143,24 +169,31 @@ public static class AsciiModelRasterizer
         Vector3 lightDir,
         float ambient,
         int bufferOriginX,
-        int bufferOriginY)
+        int bufferOriginY,
+        AsciiModelState? rasterScratch)
     {
         float zOffset = (float)(2.0 / Math.Max(0.25, cameraDistanceScale));
         float focal = Math.Min(width, height) * 0.42f * (float)cameraDistanceScale;
         int cellCount = width * height;
         int sampleCount = AsciiCellSampling.SampleCount;
-        var zBuf = new float[cellCount * sampleCount];
-        var lumBuf = new float[cellCount * sampleCount];
-        Array.Fill(zBuf, float.PositiveInfinity);
+        int subsLen = cellCount * sampleCount;
+        var (zBuf, lumBuf) = AcquireShapeBuffers(subsLen, rasterScratch);
+        Array.Fill(zBuf, float.PositiveInfinity, 0, subsLen);
+        Array.Fill(lumBuf, 0f, 0, subsLen);
+
+        EnsureWorldSpaceTransformed(mesh, rotation, rasterScratch, out Vector3[] worldPos, out Vector3[] worldNormals);
 
         int triCount = mesh.TriangleCount;
-        var verts = mesh.Vertices;
         var idx = mesh.Indices;
         var faceN = mesh.FaceNormals;
-        var vn = mesh.VertexNormals;
 
         ReadOnlySpan<float> ox = AsciiCellSampling.NormalizedX;
         ReadOnlySpan<float> oy = AsciiCellSampling.NormalizedY;
+
+        int passX0 = width;
+        int passX1 = -1;
+        int passY0 = height;
+        int passY1 = -1;
 
         for (int t = 0; t < triCount; t++)
         {
@@ -168,9 +201,24 @@ public static class AsciiModelRasterizer
             int i1 = idx[t * 3 + 1];
             int i2 = idx[t * 3 + 2];
 
-            var p0 = Project(verts[i0], rotation, zOffset, focal, width, height);
-            var p1 = Project(verts[i1], rotation, zOffset, focal, width, height);
-            var p2 = Project(verts[i2], rotation, zOffset, focal, width, height);
+            var v0w = worldPos[i0];
+            var v1w = worldPos[i1];
+            var v2w = worldPos[i2];
+            var nwRaw = Vector3.TransformNormal(faceN[t], rotation);
+            if (ShouldCullBackFace(v0w, v1w, v2w, nwRaw))
+            {
+                continue;
+            }
+
+            var nw = nwRaw;
+            if (nw.LengthSquared() > 1e-12f)
+            {
+                nw = Vector3.Normalize(nw);
+            }
+
+            var p0 = ProjectTransformed(v0w, zOffset, focal, width, height);
+            var p1 = ProjectTransformed(v1w, zOffset, focal, width, height);
+            var p2 = ProjectTransformed(v2w, zOffset, focal, width, height);
 
             if (!p0.Valid || !p1.Valid || !p2.Valid)
             {
@@ -187,13 +235,18 @@ public static class AsciiModelRasterizer
             int y0 = Math.Max(0, (int)Math.Floor(minY));
             int y1 = Math.Min(height - 1, (int)Math.Ceiling(maxY));
 
+            passX0 = Math.Min(passX0, x0);
+            passX1 = Math.Max(passX1, x1);
+            passY0 = Math.Min(passY0, y0);
+            passY1 = Math.Max(passY1, y1);
+
             var a = new Vector2(p0.X, p0.Y);
             var b = new Vector2(p1.X, p1.Y);
             var c2 = new Vector2(p2.X, p2.Y);
 
-            var n0 = vn[i0];
-            var n1 = vn[i1];
-            var n2 = vn[i2];
+            var wn0 = worldNormals[i0];
+            var wn1 = worldNormals[i1];
+            var wn2 = worldNormals[i2];
 
             for (int py = y0; py <= y1; py++)
             {
@@ -218,20 +271,15 @@ public static class AsciiModelRasterizer
                         }
 
                         zBuf[zi] = z;
-                        var nInterp = w0 * n0 + w1 * n1 + w2 * n2;
+                        var nInterp = w0 * wn0 + w1 * wn1 + w2 * wn2;
+                        Vector3 nwInterp;
                         if (nInterp.LengthSquared() > 1e-12f)
                         {
-                            nInterp = Vector3.Normalize(nInterp);
+                            nwInterp = Vector3.Normalize(nInterp);
                         }
                         else
                         {
-                            nInterp = faceN[t];
-                        }
-
-                        var nwInterp = Vector3.TransformNormal(nInterp, rotation);
-                        if (nwInterp.LengthSquared() > 1e-12f)
-                        {
-                            nwInterp = Vector3.Normalize(nwInterp);
+                            nwInterp = nw;
                         }
 
                         float nd = Math.Clamp(Vector3.Dot(nwInterp, lightDir), 0f, 1f);
@@ -241,10 +289,15 @@ public static class AsciiModelRasterizer
             }
         }
 
-        Span<float> sample = stackalloc float[6];
-        for (int py = 0; py < height; py++)
+        if (passX1 < passX0 || passY1 < passY0)
         {
-            for (int px = 0; px < width; px++)
+            return;
+        }
+
+        Span<float> sample = stackalloc float[6];
+        for (int py = passY0; py <= passY1; py++)
+        {
+            for (int px = passX0; px <= passX1; px++)
             {
                 int cellBase = (py * width + px) * sampleCount;
                 bool anyHit = false;
@@ -361,9 +414,101 @@ public static class AsciiModelRasterizer
         public bool Valid { get; }
     }
 
-    private static ProjPoint Project(Vector3 v, Matrix4x4 rotation, float zOffset, float focal, int w, int h)
+    private static void EnsureWorldSpaceTransformed(
+        TriangleMesh mesh,
+        Matrix4x4 rotation,
+        AsciiModelState? scratch,
+        out Vector3[] worldPos,
+        out Vector3[] worldNormals)
     {
-        var p = Vector3.Transform(v, rotation);
+        int n = mesh.Vertices.Length;
+        Vector3[] pos;
+        Vector3[] norms;
+        if (scratch != null)
+        {
+            if (scratch.WorldVertices == null || scratch.WorldVertices.Length < n)
+            {
+                scratch.WorldVertices = new Vector3[n];
+                scratch.WorldVertexNormals = new Vector3[n];
+            }
+
+            pos = scratch.WorldVertices;
+            norms = scratch.WorldVertexNormals!;
+        }
+        else
+        {
+            pos = new Vector3[n];
+            norms = new Vector3[n];
+        }
+
+        var verts = mesh.Vertices;
+        var vn = mesh.VertexNormals;
+        for (int i = 0; i < n; i++)
+        {
+            pos[i] = Vector3.Transform(verts[i], rotation);
+            norms[i] = Vector3.TransformNormal(vn[i], rotation);
+        }
+
+        worldPos = pos;
+        worldNormals = norms;
+    }
+
+    private static float[] AcquireLegacyZBuffer(int length, AsciiModelState? scratch)
+    {
+        if (scratch == null)
+        {
+            return new float[length];
+        }
+
+        if (scratch.LegacyZBuffer == null || scratch.LegacyZBuffer.Length < length)
+        {
+            scratch.LegacyZBuffer = new float[length];
+        }
+
+        return scratch.LegacyZBuffer;
+    }
+
+    private static (float[] zBuf, float[] lumBuf) AcquireShapeBuffers(int length, AsciiModelState? scratch)
+    {
+        if (scratch == null)
+        {
+            return (new float[length], new float[length]);
+        }
+
+        if (scratch.ShapeZBuffer == null || scratch.ShapeZBuffer.Length < length)
+        {
+            scratch.ShapeZBuffer = new float[length];
+            scratch.ShapeLumBuffer = new float[length];
+        }
+
+        return (scratch.ShapeZBuffer, scratch.ShapeLumBuffer!);
+    }
+
+    /// <summary>
+    /// Skips triangles whose face normal clearly points away from the camera at the triangle centroid (eye at origin).
+    /// Grazing faces (dot product near zero) are not culled; only a strictly negative dot is treated as back-facing.
+    /// </summary>
+    private static bool ShouldCullBackFace(Vector3 v0, Vector3 v1, Vector3 v2, Vector3 faceNormalWorld)
+    {
+        if (faceNormalWorld.LengthSquared() < 1e-12f)
+        {
+            return false;
+        }
+
+        var unitN = Vector3.Normalize(faceNormalWorld);
+        var center = (v0 + v1 + v2) * (1f / 3f);
+        float lenSq = center.LengthSquared();
+        if (lenSq < 1e-18f)
+        {
+            return false;
+        }
+
+        var toEye = Vector3.Normalize(-center);
+        return Vector3.Dot(unitN, toEye) < 0f;
+    }
+
+    private static ProjPoint ProjectTransformed(Vector3 p, float zOffset, float focal, int w, int h)
+    {
         p.Z += zOffset;
         if (p.Z < 0.08f)
         {

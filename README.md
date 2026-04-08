@@ -1,6 +1,6 @@
 # Audio Analyzer
 
-**Audio Analyzer** is a Windows console app that listens to audio—what is playing on the PC (loopback), a chosen capture device, or a built-in **Demo Mode** when you want visuals without real audio—and shows real-time level and spectrum analysis. It uses FFT and beat/BPM from your choice of **source**: energy detection on the audio stream, fixed tempo for Demo mode, or **[Ableton Link](https://ableton.github.io/link/)** when you build and drop **`link_shim.dll`** next to the executable (same LAN as Rekordbox or other Link apps; Link and the shim are **GPL-2.0+** — see [docs/adr/0066-bpm-source-and-ableton-link.md](docs/adr/0066-bpm-source-and-ableton-link.md) and [NOTICE](NOTICE)). **Official releases from this repository do not ship** `link_shim.dll`; build it locally if you want Link mode. Spectrum and levels always follow the **audio input**; only tempo/beat counters follow Link or Demo when you select that in **General settings**.
+**Audio Analyzer** is a Windows console app that listens to audio—what is playing on the PC (loopback), a chosen capture device, or a built-in **Demo Mode** when you want visuals without real audio—and shows real-time level and spectrum analysis. It uses FFT and beat/BPM from your choice of **source**: energy detection on the audio stream, fixed tempo for Demo mode, or **[Ableton Link](https://ableton.github.io/link/)** when you build and drop `**link_shim.dll`** next to the executable (same LAN as Rekordbox or other Link apps; Link and the shim are **GPL-2.0+** — see [docs/adr/0066-bpm-source-and-ableton-link.md](docs/adr/0066-bpm-source-and-ableton-link.md) and [NOTICE](NOTICE)). **Official releases from this repository do not ship** `link_shim.dll`; build it locally if you want Link mode. Spectrum and levels always follow the **audio input**; only tempo/beat counters follow Link or Demo when you select that in **General settings**.
 
 This project is licensed under the **GNU General Public License v3.0 only** — see [LICENSE](LICENSE).
 
@@ -45,12 +45,12 @@ For bug reports or sharing what you see: press **Ctrl+Shift+E** to write a plain
 - **Audio**: Loopback, device capture, or Demo Mode; settings are saved when you change them.
 - **Layers & presets**: Up to nine layers per preset (fewer if you remove layers); add or remove layers with **Insert** / **Delete** in the **S** modal layer list; edit layer options there when in Preset editor.
 - **Shows**: Optional auto-cycling through presets (see **Tab** in the app help).
-- **Files next to the app**: `presets/`, `shows/`, `palettes/`, `themes/` (UI chrome themes), optional **`link_shim.dll`** for Ableton Link, and `appsettings.json` are documented in [docs/configuration-reference.md](docs/configuration-reference.md).
+- **Files next to the app**: `presets/`, `shows/`, `palettes/`, `themes/` (UI chrome themes), optional `**link_shim.dll`** for Ableton Link, and `appsettings.json` are documented in [docs/configuration-reference.md](docs/configuration-reference.md).
 
 ## License
 
 - **Audio Analyzer** (this repository): [GNU GPL v3.0 only](LICENSE) (SPDX: `GPL-3.0-only`).
-- **Ableton Link** and **`link_shim`**: GPL-2.0+ when you build or distribute those components — [NOTICE](NOTICE), [ADR-0066](docs/adr/0066-bpm-source-and-ableton-link.md).
+- **Ableton Link** and `**link_shim`**: GPL-2.0+ when you build or distribute those components — [NOTICE](NOTICE), [ADR-0066](docs/adr/0066-bpm-source-and-ableton-link.md).
 
 ## More documentation
 
@@ -64,3 +64,4 @@ For bug reports or sharing what you see: press **Ctrl+Shift+E** to write a plain
 - **Demo Mode** is useful to explore visuals without playing music.
 - Meaningful spectrum and level readouts need signal on the chosen input (or Demo Mode).
 - In **General settings**, enable **Show render FPS** (or set `ShowRenderFps` in `appsettings.json`) to show smoothed full main-render frame rate on the toolbar (main-loop cadence—typically **≥~60** FPS on capable hosts, not audio callback rate); see [ADR-0067](docs/adr/0067-60fps-target-and-render-fps-overlay.md).
+

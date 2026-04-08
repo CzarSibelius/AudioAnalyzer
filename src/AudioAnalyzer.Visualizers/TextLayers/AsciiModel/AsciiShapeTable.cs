@@ -1,3 +1,5 @@
+using System.Numerics;
+
 namespace AudioAnalyzer.Visualizers;
 
 /// <summary>Nearest-character lookup and global contrast on 6D sampling vectors (Harri-style).</summary>
@@ -34,18 +36,23 @@ internal static partial class AsciiShapeTable
     {
         ReadOnlySpan<float> rows = NormalizedShapeRows;
         int count = ShapeCharset.Length;
+        float s0 = sampling6[0];
+        float s1 = sampling6[1];
+        float s2 = sampling6[2];
+        float s3 = sampling6[3];
+        float s4 = sampling6[4];
+        float s5 = sampling6[5];
+
         int best = 0;
         float bestDist = float.PositiveInfinity;
         for (int i = 0; i < count; i++)
         {
-            float d = 0f;
             int o = i * 6;
-            for (int k = 0; k < 6; k++)
-            {
-                float t = sampling6[k] - rows[o + k];
-                d += t * t;
-            }
-
+            var dv = new Vector4(s0 - rows[o], s1 - rows[o + 1], s2 - rows[o + 2], s3 - rows[o + 3]);
+            float d = Vector4.Dot(dv, dv);
+            float t4 = s4 - rows[o + 4];
+            float t5 = s5 - rows[o + 5];
+            d += t4 * t4 + t5 * t5;
             if (d < bestDist)
             {
                 bestDist = d;

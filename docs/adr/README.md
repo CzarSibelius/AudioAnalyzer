@@ -88,6 +88,7 @@ Decisions are numbered and kept under version control so the rationale stays wit
 | [0070](0070-settings-modal-add-remove-layers.md) | Settings modal — add/remove text layers (0..MaxLayerCount) | Accepted |
 | [0071](0071-ui-themes-separate-from-palettes.md) | UI themes in `themes/*.json`, `UiThemeId`, authoring modal, `IUiThemeRepository` | Accepted |
 | [0072](0072-delta-time-display-animation.md) | Delta-time animation and scrolling (reference 60 Hz), `FrameDeltaSeconds`, `IDisplayFrameClock` | Accepted |
+| [0073](0073-layer-render-time-overlay.md) | Per-layer `Draw` timing in S modal, `LayerRenderTimeMs`, `ShowLayerRenderTime`, orchestrator merge for `GetSnapshotForUi` | Accepted |
 
 ## Process
 

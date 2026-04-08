@@ -15,7 +15,8 @@ internal sealed class GeneralSettingsHubKeyHandlerConfig : IKeyHandlerConfig<Gen
     private const int MenuDefaultAssetFolder = 3;
     private const int MenuTheme = 4;
     private const int MenuShowRenderFps = 5;
-    private const int MenuCount = 6;
+    private const int MenuShowLayerRenderTime = 6;
+    private const int MenuCount = 7;
 
     private static IReadOnlyList<KeyHandling.KeyBindingEntry<GeneralSettingsHubKeyContext>> GetEntries() =>
     [
@@ -70,6 +71,7 @@ internal sealed class GeneralSettingsHubKeyHandlerConfig : IKeyHandlerConfig<Gen
             MenuDefaultAssetFolder => StartDefaultAssetFolderEdit(ctx),
             MenuTheme => OpenThemePicker(ctx),
             MenuShowRenderFps => ToggleShowRenderFps(ctx),
+            MenuShowLayerRenderTime => ToggleShowLayerRenderTime(ctx),
             _ => false
         };
     }
@@ -77,6 +79,13 @@ internal sealed class GeneralSettingsHubKeyHandlerConfig : IKeyHandlerConfig<Gen
     private static bool ToggleShowRenderFps(GeneralSettingsHubKeyContext ctx)
     {
         ctx.UiSettings.ShowRenderFps = !ctx.UiSettings.ShowRenderFps;
+        ctx.SaveSettings();
+        return true;
+    }
+
+    private static bool ToggleShowLayerRenderTime(GeneralSettingsHubKeyContext ctx)
+    {
+        ctx.UiSettings.ShowLayerRenderTime = !ctx.UiSettings.ShowLayerRenderTime;
         ctx.SaveSettings();
         return true;
     }

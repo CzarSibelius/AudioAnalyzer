@@ -42,6 +42,7 @@ internal sealed class VisualizationOrchestrator : IVisualizationOrchestrator
     private readonly IDisplayFrameClock _displayFrameClock;
     private long _lastFrameTimestampTicks;
     private bool _hasFrameTimestamp;
+    private double?[]? _cachedLayerRenderTimeMsForUi;
 
     public VisualizationOrchestrator(
         AnalysisEngine engine,
@@ -149,7 +150,28 @@ internal sealed class VisualizationOrchestrator : IVisualizationOrchestrator
     }
 
     /// <inheritdoc />
-    public AnalysisSnapshot GetSnapshotForUi() => _engine.GetSnapshot();
+    public AnalysisSnapshot GetSnapshotForUi()
+    {
+        AnalysisSnapshot s = _engine.GetSnapshot();
+        if (_uiSettings.ShowLayerRenderTime && _cachedLayerRenderTimeMsForUi != null)
+        {
+            s.LayerRenderTimeMs = CloneLayerRenderTimeMs(_cachedLayerRenderTimeMsForUi);
+        }
+
+        return s;
+    }
+
+    private static double?[]? CloneLayerRenderTimeMs(double?[]? src)
+    {
+        if (src == null)
+        {
+            return null;
+        }
+
+        var copy = new double?[src.Length];
+        Array.Copy(src, copy, src.Length);
+        return copy;
+    }
 
     /// <inheritdoc />
     public void OnAudioData(byte[] buffer, int bytesRecorded, AudioFormat format)
@@ -232,9 +254,18 @@ internal sealed class VisualizationOrchestrator : IVisualizationOrchestrator
             {
                 _renderer.Render(snapshot);
                 _fpsMeter.RecordFrameCompleted();
+                if (_uiSettings.ShowLayerRenderTime && snapshot.LayerRenderTimeMs != null)
+                {
+                    _cachedLayerRenderTimeMsForUi = CloneLayerRenderTimeMs(snapshot.LayerRenderTimeMs);
+                }
+                else
+                {
+                    _cachedLayerRenderTimeMsForUi = null;
+                }
             }
             catch (Exception ex)
             {
+                _cachedLayerRenderTimeMsForUi = null;
                 _ = ex; /* Render failed: swallow to avoid crash */
             }
         }

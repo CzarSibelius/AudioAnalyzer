@@ -9,7 +9,7 @@ The UI is a console-based presentation layer in the **Console** project, with sh
 | Component | Role |
 |-----------|------|
 | **ApplicationShell** | Main loop, key routing (main + modals), device lifecycle, preset/palette actions. Holds `IHeaderContainer`, `IVisualizationRenderer`, modals, and key handlers. |
-| **ModalSystem** | Runs modals: `RunModal` (full-screen; optional **`onIdleTick`** ~50 ms when no key, e.g. UI theme palette list animation) and `RunOverlayModal` (top rows only). **`onScrollTick`**: ~50 ms idle polling for lightweight updates (e.g. settings hint + Palette row or palette picker list via `DrawIdleOverlayTick`). Optional **`idleFullRedraw`**: full in-place redraw, throttled ~100 ms. Keys use full clear+draw. ([ModalSystem.cs](../src/AudioAnalyzer.Console/Console/ModalSystem.cs)) |
+| **ModalSystem** | Runs modals: `RunModal` (full-screen; optional **`onIdleTick`** ~50 ms when no key, e.g. UI theme palette list animation) and `RunOverlayModal` (top rows only). **`onIdleVisualizationTick`**: ~50 ms when no key, **outside** `consoleLock`—e.g. orchestrator `Redraw` so the visualizer animates while the shell loop is blocked (**Settings**, **Show edit**). **`onScrollTick`**: overlay-only idle updates (e.g. settings hint + Palette row via `DrawIdleOverlayTick`). Optional **`idleFullRedraw`**: full in-place overlay redraw, throttled ~100 ms. Keys use full clear+draw. ([ModalSystem.cs](../src/AudioAnalyzer.Console/Console/ModalSystem.cs)) |
 
 ---
 
@@ -32,8 +32,8 @@ The UI is a console-based presentation layer in the **Console** project, with sh
 |-----------|------------|------|
 | **HelpModal** | IHelpModal | Full-screen modal (RunModal). Shows help text; any key closes. ([HelpModal.cs](../src/AudioAnalyzer.Console/Console/HelpModal.cs)) |
 | **DeviceSelectionModal** | IDeviceSelectionModal | Full-screen modal. Device list and selection; list drawing via **SettingsSurfacesListDrawing** shared with palette list patterns. UI spec: [ui-spec-device-selection-modal.md](ui-spec-device-selection-modal.md). ([DeviceSelectionModal.cs](../src/AudioAnalyzer.Console/Console/DeviceSelectionModal.cs)) |
-| **SettingsModal** | ISettingsModal | Overlay modal. Layer/preset/settings editing; uses ISettingsModalRenderer + IKeyHandler&lt;SettingsModalKeyContext&gt;. Idle: **DrawIdleOverlayTick** (hint + Palette cell or scrollable palette picker when animation frame advances, batched sync output). Hint via **HorizontalRowComponent** (ADR-0057). Palette rows/picker via **SettingsSurfacesPaletteDrawing**. UI spec: [ui-spec-preset-settings-modal.md](ui-spec-preset-settings-modal.md). ([SettingsModal.cs](../src/AudioAnalyzer.Console/Console/SettingsModal.cs), [SettingsModalRenderer.cs](../src/AudioAnalyzer.Console/SettingsModal/SettingsModalRenderer.cs)) |
-| **ShowEditModal** | IShowEditModal | Overlay modal. Edit show (preset list + durations). ([ShowEditModal.cs](../src/AudioAnalyzer.Console/Console/ShowEditModal.cs)) |
+| **SettingsModal** | ISettingsModal | Overlay modal. Layer/preset/settings editing; uses ISettingsModalRenderer + IKeyHandler&lt;SettingsModalKeyContext&gt;. Idle: **onIdleVisualizationTick** (`Redraw`) then **DrawIdleOverlayTick** when needed. Hint via **HorizontalRowComponent** (ADR-0057). Palette rows/picker via **SettingsSurfacesPaletteDrawing**. UI spec: [ui-spec-preset-settings-modal.md](ui-spec-preset-settings-modal.md). ([SettingsModal.cs](../src/AudioAnalyzer.Console/Console/SettingsModal.cs), [SettingsModalRenderer.cs](../src/AudioAnalyzer.Console/SettingsModal/SettingsModalRenderer.cs)) |
+| **ShowEditModal** | IShowEditModal | Overlay modal. Edit show (preset list + durations). Idle **onIdleVisualizationTick** (`Redraw`) keeps the visualizer animating below the overlay. ([ShowEditModal.cs](../src/AudioAnalyzer.Console/Console/ShowEditModal.cs)) |
 
 ---
 

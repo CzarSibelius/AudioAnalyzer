@@ -152,6 +152,28 @@ internal static class GeneralSettingsHubMenuLines
         return sb.ToString();
     }
 
+    /// <summary>Formats the show-layer-render-time row (ADR-0073).</summary>
+    public static string FormatShowLayerRenderTimeLine(
+        GeneralSettingsHubState state,
+        UiPalette palette,
+        AnalysisSnapshot snapshot,
+        IReadOnlyList<PaletteColor> beatColors,
+        UiSettings uiSettings,
+        int rowDisplayWidth)
+    {
+        string value = uiSettings.ShowLayerRenderTime ? "On" : "Off";
+        if (state.SelectedIndex == 6)
+        {
+            var (selBg, selFg) = MenuSelectionAffordance.GetSelectionColors(palette);
+            string inner = MenuSelectionAffordance.GetPrefix(true) + "Show layer render time (Enter):" + value;
+            return MenuSelectionAffordance.FormatAnsiSelectableRow(true, inner, rowDisplayWidth, selBg, selFg);
+        }
+
+        var sb = new StringBuilder();
+        AppendMenuLineUnselected(sb, palette, snapshot, beatColors, "Show layer render time (Enter)", value);
+        return sb.ToString();
+    }
+
     /// <summary>Formats the default asset folder row for preformatted horizontal-row rendering.</summary>
     public static string FormatDefaultAssetFolderLine(
         GeneralSettingsHubState state,

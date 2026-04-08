@@ -55,7 +55,8 @@ internal interface IVisualizationOrchestrator
     void OnAudioData(byte[] buffer, int bytesRecorded, AudioFormat format);
 
     /// <summary>
-    /// Current analysis snapshot for UI (e.g. settings modal palette phase). Delegates to the analysis engine.
+    /// Current analysis snapshot for UI (e.g. settings modal palette phase). Merges analysis data from the engine with
+    /// display-only fields such as <see cref="AnalysisSnapshot.LayerRenderTimeMs"/> when <c>ShowLayerRenderTime</c> is enabled (ADR-0073).
     /// </summary>
     AnalysisSnapshot GetSnapshotForUi();
 }

@@ -50,4 +50,48 @@ public sealed class AsciiShapeTableTests
 
         Assert.Equal(AsciiShapeTable.ShapeCharset[row], c);
     }
+
+    [Fact]
+    public void FindBestCharacter_MatchesScalarReference_ForRandomSamplingVectors()
+    {
+        var random = new Random(42);
+        ReadOnlySpan<float> rows = AsciiShapeTable.NormalizedShapeRows;
+        int count = AsciiShapeTable.ShapeCharset.Length;
+        Span<float> s = stackalloc float[6];
+        for (int iter = 0; iter < 2000; iter++)
+        {
+            for (int k = 0; k < 6; k++)
+            {
+                s[k] = (float)random.NextDouble();
+            }
+
+            char expected = FindBestCharacterScalarReference(s, rows, count);
+            char actual = AsciiShapeTable.FindBestCharacter(s);
+            Assert.Equal(expected, actual);
+        }
+    }
+
+    private static char FindBestCharacterScalarReference(ReadOnlySpan<float> sampling6, ReadOnlySpan<float> rows, int count)
+    {
+        int best = 0;
+        float bestDist = float.PositiveInfinity;
+        for (int i = 0; i < count; i++)
+        {
+            float d = 0f;
+            int o = i * 6;
+            for (int k = 0; k < 6; k++)
+            {
+                float t = sampling6[k] - rows[o + k];
+                d += t * t;
+            }
+
+            if (d < bestDist)
+            {
+                bestDist = d;
+                best = i;
+            }
+        }
+
+        return AsciiShapeTable.ShapeCharset[best];
+    }
 }
