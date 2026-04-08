@@ -38,7 +38,7 @@ public sealed class FillLayerBlendOverTests
         var ctx = new TextLayerDrawContext
         {
             Buffer = buffer,
-            Snapshot = new AnalysisSnapshot(),
+            Frame = new VisualizationFrameContext { Analysis = new AudioAnalysisSnapshot() },
             Palette = palette,
             SpeedBurst = 1.0,
             ViewportWidth = 10,
@@ -84,7 +84,7 @@ public sealed class FillLayerBlendOverTests
         var ctx = new TextLayerDrawContext
         {
             Buffer = buffer,
-            Snapshot = new AnalysisSnapshot(),
+            Frame = new VisualizationFrameContext { Analysis = new AudioAnalysisSnapshot() },
             Palette = palette,
             SpeedBurst = 1.0,
             ViewportWidth = 10,
@@ -130,7 +130,7 @@ public sealed class FillLayerBlendOverTests
         var ctx = new TextLayerDrawContext
         {
             Buffer = buffer,
-            Snapshot = new AnalysisSnapshot(),
+            Frame = new VisualizationFrameContext { Analysis = new AudioAnalysisSnapshot() },
             Palette = palette,
             SpeedBurst = 1.0,
             ViewportWidth = 10,

@@ -145,7 +145,7 @@ internal sealed class GeneralSettingsHubKeyHandlerConfig : IKeyHandlerConfig<Gen
 
     private static bool OpenThemePicker(GeneralSettingsHubKeyContext ctx)
     {
-        ctx.UiThemeSelectionModal.Show(ctx.SetModalOpen, ctx.GetAnalysisSnapshot, ctx.SaveSettings);
+        ctx.UiThemeSelectionModal.Show(ctx.SetModalOpen, ctx.GetAudioAnalysisSnapshot, ctx.SaveSettings);
         if (!ctx.DisplayState.FullScreen)
         {
             ctx.Orchestrator.RedrawWithFullHeader();

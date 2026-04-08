@@ -26,8 +26,8 @@ public sealed class RenderContext
     /// <summary>Optional current audio input device display name (header viewports, General Settings hub).</summary>
     public string? DeviceName { get; set; }
 
-    /// <summary>Optional analysis snapshot for main content (toolbar, visualizer).</summary>
-    public AnalysisSnapshot? Snapshot { get; set; }
+    /// <summary>Optional per-frame context for main content (toolbar, visualizer); null for header-only renders.</summary>
+    public VisualizationFrameContext? Frame { get; set; }
 
     /// <summary>Optional palette display name for toolbar palette cell.</summary>
     public string? PaletteDisplayName { get; set; }
@@ -35,6 +35,9 @@ public sealed class RenderContext
     /// <summary>When true, the component renderer should invalidate any write caches (e.g. header line cache) before rendering.</summary>
     public bool InvalidateWriteCache { get; set; }
 
-    /// <summary>Wall-clock seconds since last display tick for this surface; used for scrolling (ADR-0072).</summary>
+    /// <summary>
+    /// Wall-clock seconds since last display tick for this surface; used for scrolling (ADR-0072).
+    /// For main content, prefer <see cref="VisualizationFrameContext.FrameDeltaSeconds"/> on <see cref="Frame"/> when set; header-only paths use this property from <see cref="IDisplayFrameClock"/>.
+    /// </summary>
     public double FrameDeltaSeconds { get; set; }
 }

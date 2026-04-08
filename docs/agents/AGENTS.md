@@ -11,6 +11,7 @@ This folder holds agent instructions grouped by topic. The root [AGENTS.md](../.
 | [testing-and-verification.md](testing-and-verification.md) | Build/test/format checklist, screen dump, display and audio testing |
 | [git-workflow.md](git-workflow.md) | Commit timing and messages |
 | [architecture-overview.md](architecture-overview.md) | Reference: components, data flow, colors, debugging tips |
+| [known-bugs-and-todos.md](known-bugs-and-todos.md) | Known product bugs and small TODOs (backlog for humans and agents) |
 | [project-structure/AGENTS.md](project-structure/AGENTS.md) | **Where to put files** — per-project folder layout (agents must follow) |
 | [native-link-shim-build.md](native-link-shim-build.md) | **Ableton Link** — CMake + MSVC Build Tools, Developer shell, clone `third_party/link`, build `link_shim.dll` |
 

@@ -57,10 +57,10 @@ internal sealed class UiThemeSelectionModal : IUiThemeSelectionModal
     }
 
     /// <inheritdoc />
-    public void Show(Action<bool> setModalOpen, Func<AnalysisSnapshot> getSnapshot, Action saveSettings)
+    public void Show(Action<bool> setModalOpen, Func<AudioAnalysisSnapshot> getAnalysis, Action saveSettings)
     {
         ArgumentNullException.ThrowIfNull(setModalOpen);
-        ArgumentNullException.ThrowIfNull(getSnapshot);
+        ArgumentNullException.ThrowIfNull(getAnalysis);
         ArgumentNullException.ThrowIfNull(saveSettings);
 
         IReadOnlyList<ThemeInfo> themes = _themeRepo.GetAll();
@@ -95,7 +95,7 @@ internal sealed class UiThemeSelectionModal : IUiThemeSelectionModal
         int lastPaletteAnimBeatCount = -1;
         long lastPaletteAnimTickBucket = -1;
 
-        void PaintThemeList(AnalysisSnapshot snapshot)
+        void PaintThemeList(AudioAnalysisSnapshot analysis)
         {
             int width = _consoleDimensions.GetConsoleWidth();
             int totalCount = 1 + context.Themes.Count;
@@ -118,10 +118,10 @@ internal sealed class UiThemeSelectionModal : IUiThemeSelectionModal
                 selBg,
                 selFg,
                 currentColor,
-                snapshot);
+                analysis);
         }
 
-        void PaintPalettePick(AnalysisSnapshot snapshot)
+        void PaintPalettePick(AudioAnalysisSnapshot analysis)
         {
             int width = _consoleDimensions.GetConsoleWidth();
             var palettes = context.NewPalettes ?? [];
@@ -148,7 +148,7 @@ internal sealed class UiThemeSelectionModal : IUiThemeSelectionModal
                 visibleRows,
                 selBg,
                 selFg,
-                snapshot);
+                analysis);
         }
 
         void PaintSlotEditor()
@@ -180,16 +180,16 @@ internal sealed class UiThemeSelectionModal : IUiThemeSelectionModal
                 selFg);
         }
 
-        void SyncPaletteListTrackingFrom(AnalysisSnapshot snapshot)
+        void SyncPaletteListTrackingFrom(AudioAnalysisSnapshot analysis)
         {
-            lastPaletteAnimBeatCount = snapshot.BeatCount;
+            lastPaletteAnimBeatCount = analysis.BeatCount;
             lastPaletteAnimTickBucket = PaletteSwatchFormatter.GetPaletteAnimationTickBucket();
         }
 
         void DrawContent()
         {
             int width = _consoleDimensions.GetConsoleWidth();
-            AnalysisSnapshot snapshot = getSnapshot();
+            AudioAnalysisSnapshot analysis = getAnalysis();
             TitleBarBreadcrumbRow.Write(0, width, _breadcrumbFormatter);
 
             System.Console.SetCursorPosition(0, 1);
@@ -211,12 +211,12 @@ internal sealed class UiThemeSelectionModal : IUiThemeSelectionModal
             switch (context.Phase)
             {
                 case UiThemeAuthoringPhase.PickTheme:
-                    PaintThemeList(snapshot);
-                    SyncPaletteListTrackingFrom(snapshot);
+                    PaintThemeList(analysis);
+                    SyncPaletteListTrackingFrom(analysis);
                     break;
                 case UiThemeAuthoringPhase.NewPickPalette:
-                    PaintPalettePick(snapshot);
-                    SyncPaletteListTrackingFrom(snapshot);
+                    PaintPalettePick(analysis);
+                    SyncPaletteListTrackingFrom(analysis);
                     break;
                 case UiThemeAuthoringPhase.NewEditSlots:
                     PaintSlotEditor();
@@ -231,9 +231,9 @@ internal sealed class UiThemeSelectionModal : IUiThemeSelectionModal
                 return;
             }
 
-            AnalysisSnapshot snapshot = getSnapshot();
+            AudioAnalysisSnapshot analysis = getAnalysis();
             if (!PaletteSwatchFormatter.PaletteAnimationFrameAdvanced(
-                    snapshot,
+                    analysis,
                     lastPaletteAnimBeatCount,
                     lastPaletteAnimTickBucket,
                     out _,
@@ -247,15 +247,15 @@ internal sealed class UiThemeSelectionModal : IUiThemeSelectionModal
                 System.Console.Write(SyncOutputBegin);
                 if (context.Phase == UiThemeAuthoringPhase.PickTheme)
                 {
-                    PaintThemeList(snapshot);
+                    PaintThemeList(analysis);
                 }
                 else if (context.Phase == UiThemeAuthoringPhase.NewPickPalette)
                 {
-                    PaintPalettePick(snapshot);
+                    PaintPalettePick(analysis);
                 }
 
                 System.Console.Write(SyncOutputEnd);
-                SyncPaletteListTrackingFrom(snapshot);
+                SyncPaletteListTrackingFrom(analysis);
             }
             catch (Exception ex)
             {

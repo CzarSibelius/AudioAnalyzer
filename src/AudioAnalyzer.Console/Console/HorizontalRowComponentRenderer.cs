@@ -39,7 +39,7 @@ internal sealed class HorizontalRowComponentRenderer : IUiComponentRenderer<Hori
                 Palette = context.Palette,
                 ScrollSpeed = context.ScrollSpeed,
                 DeviceName = context.DeviceName,
-                Snapshot = context.Snapshot,
+                Frame = context.Frame,
                 PaletteDisplayName = context.PaletteDisplayName,
                 InvalidateWriteCache = context.InvalidateWriteCache,
                 FrameDeltaSeconds = context.FrameDeltaSeconds > 0 ? context.FrameDeltaSeconds : 1.0 / 60.0

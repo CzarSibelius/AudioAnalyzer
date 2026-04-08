@@ -17,7 +17,7 @@ public sealed class OscilloscopeLayerRenderBoundsTests
         buffer.Clear(PaletteColor.FromRgb(0, 0, 0));
 
         var waveform = new float[32];
-        var snapshot = new AnalysisSnapshot
+        var analysis = new AudioAnalysisSnapshot
         {
             Waveform = waveform,
             WaveformSize = 32,
@@ -39,7 +39,7 @@ public sealed class OscilloscopeLayerRenderBoundsTests
         var ctx = new TextLayerDrawContext
         {
             Buffer = buffer,
-            Snapshot = snapshot,
+            Frame = new VisualizationFrameContext { Analysis = analysis },
             Palette = palette,
             SpeedBurst = 1.0,
             ViewportWidth = 10,

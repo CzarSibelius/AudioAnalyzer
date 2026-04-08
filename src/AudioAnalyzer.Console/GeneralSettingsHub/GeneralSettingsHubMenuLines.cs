@@ -42,7 +42,7 @@ internal static class GeneralSettingsHubMenuLines
     public static string FormatAudioLine(
         GeneralSettingsHubState state,
         UiPalette palette,
-        AnalysisSnapshot snapshot,
+        AudioAnalysisSnapshot analysis,
         IReadOnlyList<PaletteColor> beatColors,
         string? deviceNameRaw,
         int rowDisplayWidth)
@@ -56,7 +56,7 @@ internal static class GeneralSettingsHubMenuLines
         }
 
         var sb = new StringBuilder();
-        AppendMenuLineUnselected(sb, palette, snapshot, beatColors, "Audio input devices (D)", deviceDisplay);
+        AppendMenuLineUnselected(sb, palette, analysis, beatColors, "Audio input devices (D)", deviceDisplay);
         return sb.ToString();
     }
 
@@ -64,7 +64,7 @@ internal static class GeneralSettingsHubMenuLines
     public static string FormatBpmSourceLine(
         GeneralSettingsHubState state,
         UiPalette palette,
-        AnalysisSnapshot snapshot,
+        AudioAnalysisSnapshot analysis,
         IReadOnlyList<PaletteColor> beatColors,
         BpmSource source,
         int rowDisplayWidth)
@@ -84,7 +84,7 @@ internal static class GeneralSettingsHubMenuLines
         }
 
         var sb = new StringBuilder();
-        AppendMenuLineUnselected(sb, palette, snapshot, beatColors, "BPM source (Enter)", value);
+        AppendMenuLineUnselected(sb, palette, analysis, beatColors, "BPM source (Enter)", value);
         return sb.ToString();
     }
 
@@ -92,7 +92,7 @@ internal static class GeneralSettingsHubMenuLines
     public static string FormatApplicationNameLine(
         GeneralSettingsHubState state,
         UiPalette palette,
-        AnalysisSnapshot snapshot,
+        AudioAnalysisSnapshot analysis,
         IReadOnlyList<PaletteColor> beatColors,
         string appDisplay,
         int rowDisplayWidth)
@@ -105,7 +105,7 @@ internal static class GeneralSettingsHubMenuLines
         }
 
         var sb = new StringBuilder();
-        AppendMenuLineUnselected(sb, palette, snapshot, beatColors, "Application name", appDisplay);
+        AppendMenuLineUnselected(sb, palette, analysis, beatColors, "Application name", appDisplay);
         return sb.ToString();
     }
 
@@ -113,7 +113,7 @@ internal static class GeneralSettingsHubMenuLines
     public static string FormatUiThemeLine(
         GeneralSettingsHubState state,
         UiPalette palette,
-        AnalysisSnapshot snapshot,
+        AudioAnalysisSnapshot analysis,
         IReadOnlyList<PaletteColor> beatColors,
         string themeDisplay,
         int rowDisplayWidth)
@@ -126,7 +126,7 @@ internal static class GeneralSettingsHubMenuLines
         }
 
         var sb = new StringBuilder();
-        AppendMenuLineUnselected(sb, palette, snapshot, beatColors, "UI theme (T)", themeDisplay);
+        AppendMenuLineUnselected(sb, palette, analysis, beatColors, "UI theme (T)", themeDisplay);
         return sb.ToString();
     }
 
@@ -134,7 +134,7 @@ internal static class GeneralSettingsHubMenuLines
     public static string FormatShowRenderFpsLine(
         GeneralSettingsHubState state,
         UiPalette palette,
-        AnalysisSnapshot snapshot,
+        AudioAnalysisSnapshot analysis,
         IReadOnlyList<PaletteColor> beatColors,
         UiSettings uiSettings,
         int rowDisplayWidth)
@@ -148,7 +148,7 @@ internal static class GeneralSettingsHubMenuLines
         }
 
         var sb = new StringBuilder();
-        AppendMenuLineUnselected(sb, palette, snapshot, beatColors, "Show render FPS (Enter)", value);
+        AppendMenuLineUnselected(sb, palette, analysis, beatColors, "Show render FPS (Enter)", value);
         return sb.ToString();
     }
 
@@ -156,7 +156,7 @@ internal static class GeneralSettingsHubMenuLines
     public static string FormatShowLayerRenderTimeLine(
         GeneralSettingsHubState state,
         UiPalette palette,
-        AnalysisSnapshot snapshot,
+        AudioAnalysisSnapshot analysis,
         IReadOnlyList<PaletteColor> beatColors,
         UiSettings uiSettings,
         int rowDisplayWidth)
@@ -170,7 +170,7 @@ internal static class GeneralSettingsHubMenuLines
         }
 
         var sb = new StringBuilder();
-        AppendMenuLineUnselected(sb, palette, snapshot, beatColors, "Show layer render time (Enter)", value);
+        AppendMenuLineUnselected(sb, palette, analysis, beatColors, "Show layer render time (Enter)", value);
         return sb.ToString();
     }
 
@@ -178,7 +178,7 @@ internal static class GeneralSettingsHubMenuLines
     public static string FormatDefaultAssetFolderLine(
         GeneralSettingsHubState state,
         UiPalette palette,
-        AnalysisSnapshot snapshot,
+        AudioAnalysisSnapshot analysis,
         IReadOnlyList<PaletteColor> beatColors,
         UiSettings uiSettings,
         int rowDisplayWidth)
@@ -194,7 +194,7 @@ internal static class GeneralSettingsHubMenuLines
         }
 
         var sb = new StringBuilder();
-        AppendMenuLineUnselected(sb, palette, snapshot, beatColors, "Default asset folder", valueDisplay);
+        AppendMenuLineUnselected(sb, palette, analysis, beatColors, "Default asset folder", valueDisplay);
         return sb.ToString();
     }
 
@@ -249,7 +249,7 @@ internal static class GeneralSettingsHubMenuLines
     private static void AppendMenuLineUnselected(
         StringBuilder sb,
         UiPalette palette,
-        AnalysisSnapshot snapshot,
+        AudioAnalysisSnapshot analysis,
         IReadOnlyList<PaletteColor> beatColors,
         string labelBeforeColon,
         string valueText)
@@ -261,7 +261,7 @@ internal static class GeneralSettingsHubMenuLines
 
         if (beatColors is { Count: > 0 })
         {
-            int phase = PaletteSwatchFormatter.ComputeToolbarPhaseOffset(snapshot, beatColors.Count);
+            int phase = PaletteSwatchFormatter.ComputeToolbarPhaseOffset(analysis, beatColors.Count);
             sb.Append(PaletteSwatchFormatter.FormatPaletteColoredName(valueText, beatColors, phase));
         }
         else

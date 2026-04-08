@@ -24,6 +24,7 @@ Detailed agent instructions are split by topic:
 | Testing and verification | [docs/agents/testing-and-verification.md](docs/agents/testing-and-verification.md) |
 | Git workflow | [docs/agents/git-workflow.md](docs/agents/git-workflow.md) |
 | Architecture overview (reference) | [docs/agents/architecture-overview.md](docs/agents/architecture-overview.md) |
+| Known bugs / TODOs | [docs/agents/known-bugs-and-todos.md](docs/agents/known-bugs-and-todos.md) |
 | **Project file structure** | [docs/agents/project-structure/AGENTS.md](docs/agents/project-structure/AGENTS.md) |
 | **Native Link shim** (`link_shim.dll`, CMake + MSVC) | [docs/agents/native-link-shim-build.md](docs/agents/native-link-shim-build.md) |
 

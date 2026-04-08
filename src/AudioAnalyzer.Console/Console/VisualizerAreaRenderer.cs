@@ -18,7 +18,7 @@ internal sealed class VisualizerAreaRenderer : IUiComponentRenderer<VisualizerAr
     /// <inheritdoc />
     public ComponentRenderResult Render(VisualizerAreaComponent component, RenderContext context)
     {
-        if (context.Snapshot == null)
+        if (context.Frame == null)
         {
             return ComponentRenderResult.Written(0);
         }
@@ -42,7 +42,7 @@ internal sealed class VisualizerAreaRenderer : IUiComponentRenderer<VisualizerAr
 
         try
         {
-            _visualizer.Render(context.Snapshot, viewport);
+            _visualizer.Render(context.Frame, viewport);
         }
         catch (Exception ex)
         {

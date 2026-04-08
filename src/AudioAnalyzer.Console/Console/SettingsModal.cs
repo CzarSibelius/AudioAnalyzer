@@ -89,7 +89,7 @@ internal sealed class SettingsModal : ISettingsModal
         void DrawSettingsContent()
         {
             int width = _consoleDimensions.GetConsoleWidth();
-            _renderer.Draw(state, context.SortedLayers, width, _orchestrator.GetSnapshotForUi());
+            _renderer.Draw(state, context.SortedLayers, width, _orchestrator.GetFrameForUi());
         }
 
         bool HandleSettingsKey(ConsoleKeyInfo key)
@@ -100,7 +100,7 @@ internal sealed class SettingsModal : ISettingsModal
         void OnScrollTick()
         {
             int width = _consoleDimensions.GetConsoleWidth();
-            _renderer.DrawIdleOverlayTick(state, context.SortedLayers, width, _orchestrator.GetSnapshotForUi());
+            _renderer.DrawIdleOverlayTick(state, context.SortedLayers, width, _orchestrator.GetFrameForUi());
         }
 
         ModalSystem.RunOverlayModal(

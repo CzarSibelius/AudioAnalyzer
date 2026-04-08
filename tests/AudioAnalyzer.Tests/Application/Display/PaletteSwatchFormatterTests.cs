@@ -42,7 +42,7 @@ public sealed class PaletteSwatchFormatterTests
     [Fact]
     public void ComputeToolbarPhaseOffset_low_bpm_uses_tick_bucket()
     {
-        var snap = new AnalysisSnapshot { CurrentBpm = 0, BeatCount = 99 };
+        var snap = new AudioAnalysisSnapshot { CurrentBpm = 0, BeatCount = 99 };
         int p = PaletteSwatchFormatter.ComputeToolbarPhaseOffset(snap, 5);
         Assert.InRange(p, 0, 4);
     }
@@ -50,7 +50,7 @@ public sealed class PaletteSwatchFormatterTests
     [Fact]
     public void ComputeToolbarPhaseOffset_with_bpm_uses_beat_count_mod()
     {
-        var snap = new AnalysisSnapshot { CurrentBpm = 120, BeatCount = 7 };
+        var snap = new AudioAnalysisSnapshot { CurrentBpm = 120, BeatCount = 7 };
         int p = PaletteSwatchFormatter.ComputeToolbarPhaseOffset(snap, 5);
         Assert.Equal(7 % 5, p);
     }
@@ -58,7 +58,7 @@ public sealed class PaletteSwatchFormatterTests
     [Fact]
     public void PaletteAnimationFrameAdvanced_bpm_path_advances_on_beat_change()
     {
-        var snap = new AnalysisSnapshot { CurrentBpm = 120, BeatCount = 7 };
+        var snap = new AudioAnalysisSnapshot { CurrentBpm = 120, BeatCount = 7 };
         bool advanced = PaletteSwatchFormatter.PaletteAnimationFrameAdvanced(snap, 6, 0, out int beatCount, out _);
         Assert.True(advanced);
         Assert.Equal(7, beatCount);
@@ -67,7 +67,7 @@ public sealed class PaletteSwatchFormatterTests
     [Fact]
     public void PaletteAnimationFrameAdvanced_bpm_path_false_when_same_beat()
     {
-        var snap = new AnalysisSnapshot { CurrentBpm = 120, BeatCount = 7 };
+        var snap = new AudioAnalysisSnapshot { CurrentBpm = 120, BeatCount = 7 };
         bool advanced = PaletteSwatchFormatter.PaletteAnimationFrameAdvanced(snap, 7, 0, out _, out _);
         Assert.False(advanced);
     }
@@ -76,7 +76,7 @@ public sealed class PaletteSwatchFormatterTests
     public void PaletteAnimationFrameAdvanced_tick_path_false_when_same_bucket()
     {
         long bucket = PaletteSwatchFormatter.GetPaletteAnimationTickBucket();
-        var snap = new AnalysisSnapshot { CurrentBpm = 0, BeatCount = 0 };
+        var snap = new AudioAnalysisSnapshot { CurrentBpm = 0, BeatCount = 0 };
         bool advanced = PaletteSwatchFormatter.PaletteAnimationFrameAdvanced(snap, 0, bucket, out _, out long b1);
         Assert.False(advanced);
         Assert.Equal(bucket, b1);
@@ -85,7 +85,7 @@ public sealed class PaletteSwatchFormatterTests
     [Fact]
     public void PaletteAnimationFrameAdvanced_tick_path_true_when_bucket_differs()
     {
-        var snap = new AnalysisSnapshot { CurrentBpm = 0, BeatCount = 0 };
+        var snap = new AudioAnalysisSnapshot { CurrentBpm = 0, BeatCount = 0 };
         bool advanced = PaletteSwatchFormatter.PaletteAnimationFrameAdvanced(snap, 0, -1, out _, out _);
         Assert.True(advanced);
     }

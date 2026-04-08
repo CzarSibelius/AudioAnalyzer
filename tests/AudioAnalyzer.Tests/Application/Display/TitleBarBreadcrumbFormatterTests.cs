@@ -24,7 +24,7 @@ public sealed class TitleBarBreadcrumbFormatterTests
 
         public bool SupportsPaletteCycling => false;
 
-        public void Render(AnalysisSnapshot snapshot, VisualizerViewport viewport) { }
+        public void Render(VisualizationFrameContext frame, VisualizerViewport viewport) { }
 
         public string? GetActiveLayerDisplayName() => LayerName;
 

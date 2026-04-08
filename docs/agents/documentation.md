@@ -10,6 +10,6 @@ When adding or changing features:
 
 4. **README vs. deep docs vs. agents**: When user-facing behavior or run requirements change, update README.md. When configuration file formats, JSON examples, or pinned dependency versions change, update `docs/configuration-reference.md`. Build, test, format, static analysis, test suite overview, and `IVisualizer`/composite-renderer notes live under `docs/agents/` (see [AGENTS.md](AGENTS.md) index)—update the relevant topic file instead of expanding the root README. **Agent steering** at repo root lives in **[AGENTS.md](../../AGENTS.md)** with links into `docs/agents/`; do not put that content in README.md (see [ADR-0068](../adr/0068-agents-md-vs-readme.md)).
 
-5. **Document deferred work**: Every "will do later" task must be documented. When deferring work, add it to a task list in `docs/refactoring/`, a new or existing ADR, the refactoring README, or a dedicated TODO/backlog file. Do not leave deferred work only in code comments or conversation.
+5. **Document deferred work**: Every "will do later" task must be documented. When deferring work, add it to a task list in `docs/refactoring/`, a new or existing ADR, the refactoring README, or a dedicated TODO/backlog file. **Known product bugs and small TODOs** also belong in [known-bugs-and-todos.md](known-bugs-and-todos.md); keep `docs/refactoring/` for larger refactors. Do not leave deferred work only in code comments or conversation.
 
 Do not complete feature work without updating the relevant documentation.

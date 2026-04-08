@@ -22,7 +22,7 @@ public sealed class StaticTextLayer : TextLayerRendererBase, ITextLayerRenderer<
         }
 
         var s = layer.GetCustom<StaticTextSettings>() ?? new StaticTextSettings();
-        if (s.BeatReaction == StaticTextBeatReaction.Flash && ctx.Snapshot.BeatFlashActive)
+        if (s.BeatReaction == StaticTextBeatReaction.Flash && ctx.Analysis.BeatFlashActive)
         {
             state.SnippetIndex = (state.SnippetIndex + 1) % Math.Max(1, snippets.Count);
             text = snippets.Count > 0 ? snippets[state.SnippetIndex % snippets.Count] : text;
@@ -31,7 +31,7 @@ public sealed class StaticTextLayer : TextLayerRendererBase, ITextLayerRenderer<
         int centerY = h / 2;
         int startX = Math.Max(0, (w - text.Length) / 2);
         var color = ctx.Palette[Math.Max(0, layer.ColorIndex % ctx.Palette.Count)];
-        if (s.BeatReaction == StaticTextBeatReaction.Pulse && ctx.Snapshot.BeatFlashActive)
+        if (s.BeatReaction == StaticTextBeatReaction.Pulse && ctx.Analysis.BeatFlashActive)
         {
             color = ctx.Palette[(layer.ColorIndex + 1) % ctx.Palette.Count];
         }

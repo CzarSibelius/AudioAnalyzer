@@ -30,8 +30,8 @@ internal sealed class GeneralSettingsHubKeyContext : IKeyHandlerContext
     /// <summary>UI theme palette selection modal.</summary>
     public required IUiThemeSelectionModal UiThemeSelectionModal { get; init; }
 
-    /// <summary>Current analysis snapshot for theme list coloring.</summary>
-    public required Func<AnalysisSnapshot> GetAnalysisSnapshot { get; init; }
+    /// <summary>Current audio analysis for theme list coloring.</summary>
+    public required Func<AudioAnalysisSnapshot> GetAudioAnalysisSnapshot { get; init; }
 
     /// <summary>UI settings (hub-edited fields include title bar name and default asset folder).</summary>
     public required UiSettings UiSettings { get; init; }

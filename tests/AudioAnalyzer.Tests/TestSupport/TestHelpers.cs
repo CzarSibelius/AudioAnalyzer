@@ -24,7 +24,8 @@ internal static class TestHelpers
     public static string ThemesPath => Path.Combine(TestRoot, "themes");
     public static string SettingsPath => Path.Combine(TestRoot, "appsettings.json");
 
-    public static AnalysisSnapshot CreateTestSnapshot(int width, int height)
+    /// <summary>Builds a typical <see cref="AudioAnalysisSnapshot"/> for tests (FFT bands scale with width).</summary>
+    public static AudioAnalysisSnapshot CreateTestAnalysis(int width)
     {
         int numBands = Math.Min(40, Math.Max(8, width / 2));
         var magnitudes = new double[numBands];
@@ -33,11 +34,8 @@ internal static class TestHelpers
             magnitudes[i] = 0.3 + 0.4 * Math.Sin(i * 0.2);
         }
 
-        return new AnalysisSnapshot
+        return new AudioAnalysisSnapshot
         {
-            DisplayStartRow = 8,
-            TerminalWidth = width,
-            TerminalHeight = height,
             Volume = 0.5f,
             CurrentBpm = 120,
             BeatSensitivity = 1.3,
@@ -53,7 +51,19 @@ internal static class TestHelpers
             LeftChannel = 0.5f,
             RightChannel = 0.5f,
             LeftPeakHold = 0.5f,
-            RightPeakHold = 0.5f,
+            RightPeakHold = 0.5f
+        };
+    }
+
+    /// <summary>Full <see cref="VisualizationFrameContext"/> for integration render tests.</summary>
+    public static VisualizationFrameContext CreateTestFrame(int width, int height)
+    {
+        return new VisualizationFrameContext
+        {
+            Analysis = CreateTestAnalysis(width),
+            DisplayStartRow = 8,
+            TerminalWidth = width,
+            TerminalHeight = height,
             FrameDeltaSeconds = 1.0 / 60.0
         };
     }

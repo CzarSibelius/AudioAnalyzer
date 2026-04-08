@@ -5,7 +5,7 @@ This folder holds the **application-layer contracts** for AudioAnalyzer: interfa
 ## Contents
 
 - **Interfaces** — Service and component contracts for dependency injection (e.g. `IAudioInput`, `IVisualizer`, `ISettingsRepository`, `IDefaultTextLayersSettingsFactory`, `IKeyHandler<T>`, `IScrollingTextViewport`, `INowPlayingProvider`, `ITitleBarNavigationContext`, `ITitleBarBreadcrumbFormatter`). See [ADR-0040](../../../docs/adr/0040-dependency-injection-preference.md), [ADR-0060](../../../docs/adr/0060-universal-title-breadcrumb.md).
-- **DTOs / value types** — Cross-cutting data passed between layers: `AnalysisSnapshot`, `PresetInfo`, `NowPlayingInfo`, `VisualizerViewport`, `AudioDeviceEntry`, `ScrollingTextViewportState`, etc.
+- **DTOs / value types** — Cross-cutting data passed between layers: `AudioAnalysisSnapshot`, `VisualizationFrameContext`, `PresetInfo`, `NowPlayingInfo`, `VisualizerViewport`, `AudioDeviceEntry`, `ScrollingTextViewportState`, etc.
 
 ## Conventions
 

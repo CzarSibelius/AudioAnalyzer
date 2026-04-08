@@ -29,14 +29,14 @@ internal static class MainContentToolbarLayout
                 {
                     var sb = new StringBuilder();
                     AnsiConsole.AppendColored(sb, LabelFormatting.FormatLabel("Palette"), effectiveUiPalette.Label);
-                    var snap = context.Snapshot!;
-                    int phase = PaletteSwatchFormatter.ComputeToolbarPhaseOffset(snap, paletteForSwatch?.Count ?? 0);
+                    var analysis = context.Frame!.Analysis;
+                    int phase = PaletteSwatchFormatter.ComputeToolbarPhaseOffset(analysis, paletteForSwatch?.Count ?? 0);
                     sb.Append(PaletteSwatchFormatter.FormatPaletteColoredName(paletteDisplayName ?? "", paletteForSwatch, phase));
                     return new AnsiText(sb.ToString());
                 }, preformattedAnsi: true)
                 : new LabeledValueDescriptor("", () => new PlainText(""))
         };
-        return AppendFpsToolbarCellIfEnabled(uiSettings, context.Snapshot!, descriptors, new[] { cell1Width, cell2Width });
+        return AppendFpsToolbarCellIfEnabled(uiSettings, context.Frame!, descriptors, new[] { cell1Width, cell2Width });
     }
 
     public static (IReadOnlyList<LabeledValueDescriptor> Descriptors, IReadOnlyList<int> Widths) BuildVisualizerToolbarRowData(
@@ -53,15 +53,15 @@ internal static class MainContentToolbarLayout
             width = context.Width;
         }
 
-        IReadOnlyList<LabeledValueDescriptor>? segmentDescriptors = visualizer.GetToolbarViewports(context.Snapshot!);
+        IReadOnlyList<LabeledValueDescriptor>? segmentDescriptors = visualizer.GetToolbarViewports(context.Frame!);
         if (segmentDescriptors is { Count: > 0 })
         {
             IReadOnlyList<int> segmentWidths = GetToolbarSegmentWidths(width, segmentDescriptors.Count);
-            return AppendFpsToolbarCellIfEnabled(uiSettings, context.Snapshot!, segmentDescriptors, segmentWidths);
+            return AppendFpsToolbarCellIfEnabled(uiSettings, context.Frame!, segmentDescriptors, segmentWidths);
         }
 
         (int cell1Width, int cell2Width) = GetToolbarCellWidths(width);
-        string? toolbarSuffix = visualizer.GetToolbarSuffix(context.Snapshot!);
+        string? toolbarSuffix = visualizer.GetToolbarSuffix(context.Frame!);
         var descriptors = new List<LabeledValueDescriptor>
         {
             new LabeledValueDescriptor("", () => toolbarSuffix != null ? new AnsiText(toolbarSuffix) : (IDisplayText)new PlainText(""), preformattedAnsi: true),
@@ -70,15 +70,15 @@ internal static class MainContentToolbarLayout
                 {
                     var sb = new StringBuilder();
                     AnsiConsole.AppendColored(sb, LabelFormatting.FormatLabel("Palette"), effectiveUiPalette.Label);
-                    var snap = context.Snapshot!;
-                    int phase = PaletteSwatchFormatter.ComputeToolbarPhaseOffset(snap, paletteForSwatch?.Count ?? 0);
+                    var analysis = context.Frame!.Analysis;
+                    int phase = PaletteSwatchFormatter.ComputeToolbarPhaseOffset(analysis, paletteForSwatch?.Count ?? 0);
                     sb.Append(PaletteSwatchFormatter.FormatPaletteColoredName(paletteDisplayName ?? "", paletteForSwatch, phase));
                     return new AnsiText(sb.ToString());
                 }, preformattedAnsi: true)
                 : new LabeledValueDescriptor("", () => new PlainText(""))
         };
         var widths = new[] { cell1Width, cell2Width };
-        return AppendFpsToolbarCellIfEnabled(uiSettings, context.Snapshot!, descriptors, widths);
+        return AppendFpsToolbarCellIfEnabled(uiSettings, context.Frame!, descriptors, widths);
     }
 
     /// <summary>
@@ -86,7 +86,7 @@ internal static class MainContentToolbarLayout
     /// </summary>
     public static (IReadOnlyList<LabeledValueDescriptor> Descriptors, IReadOnlyList<int> Widths) AppendFpsToolbarCellIfEnabled(
         UiSettings uiSettings,
-        AnalysisSnapshot snapshot,
+        VisualizationFrameContext frame,
         IReadOnlyList<LabeledValueDescriptor> descriptors,
         IReadOnlyList<int> widths)
     {
@@ -118,12 +118,12 @@ internal static class MainContentToolbarLayout
         {
             new LabeledValueDescriptor("FPS", () =>
             {
-                if (!snapshot.MeasuredMainRenderFps.HasValue)
+                if (!frame.MeasuredMainRenderFps.HasValue)
                 {
                     return new PlainText("\u2014");
                 }
 
-                int rounded = (int)Math.Round(Math.Clamp(snapshot.MeasuredMainRenderFps.Value, 0, 999));
+                int rounded = (int)Math.Round(Math.Clamp(frame.MeasuredMainRenderFps.Value, 0, 999));
                 return new PlainText(rounded.ToString(CultureInfo.InvariantCulture));
             })
         };

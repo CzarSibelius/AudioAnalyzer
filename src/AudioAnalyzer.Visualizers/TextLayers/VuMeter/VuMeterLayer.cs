@@ -16,7 +16,7 @@ public sealed class VuMeterLayer : TextLayerRendererBase, ITextLayerRenderer<NoL
     {
         int w = ctx.Width;
         int h = ctx.Height;
-        var snapshot = ctx.Snapshot;
+        var snapshot = ctx.Analysis;
 
         if (w < 30 || h < 7)
         {

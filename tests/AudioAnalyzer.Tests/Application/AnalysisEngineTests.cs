@@ -49,7 +49,7 @@ public sealed class AnalysisEngineTests
         {
             for (int i = 0; i < 2_000; i++)
             {
-                AnalysisSnapshot s = engine.GetSnapshot();
+                AudioAnalysisSnapshot s = engine.GetSnapshot();
                 Assert.Equal(s.NumBands, s.SmoothedMagnitudes.Length);
                 Assert.Equal(s.NumBands, s.PeakHold.Length);
                 Assert.Equal(s.WaveformSize, s.Waveform.Length);
@@ -68,8 +68,8 @@ public sealed class AnalysisEngineTests
         var buffer = new byte[16_384];
         engine.ProcessAudio(buffer, buffer.Length, format);
 
-        AnalysisSnapshot a = engine.GetSnapshot();
-        AnalysisSnapshot b = engine.GetSnapshot();
+        AudioAnalysisSnapshot a = engine.GetSnapshot();
+        AudioAnalysisSnapshot b = engine.GetSnapshot();
 
         Assert.NotSame(a.SmoothedMagnitudes, b.SmoothedMagnitudes);
         Assert.NotSame(a.PeakHold, b.PeakHold);

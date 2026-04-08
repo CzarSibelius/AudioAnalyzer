@@ -5,14 +5,19 @@ using AudioAnalyzer.Domain;
 
 namespace AudioAnalyzer.Visualizers;
 
-/// <summary>Context passed to layer renderers for drawing. Contains buffer, snapshot, palette, dimensions, layer index, and <see cref="FrameDeltaSeconds"/> for delta-time motion (ADR-0072). Per-layer animation state is obtained via <see cref="ITextLayerStateStore{TState}"/> (e.g. ITextLayerStateStore&lt;BeatCirclesState&gt;) injected into stateful layers (those implementing <see cref="ITextLayerRenderer{TState}"/> with a non-NoLayerState type).</summary>
+/// <summary>Context passed to layer renderers for drawing. Contains buffer, per-frame <see cref="Frame"/> (use <see cref="Analysis"/> for audio data), palette, dimensions, layer index, and <see cref="FrameDeltaSeconds"/> for delta-time motion (ADR-0072). Per-layer animation state is obtained via <see cref="ITextLayerStateStore{TState}"/> (e.g. ITextLayerStateStore&lt;BeatCirclesState&gt;) injected into stateful layers (those implementing <see cref="ITextLayerRenderer{TState}"/> with a non-NoLayerState type).</summary>
 /// <remarks>
 /// When <see cref="AudioAnalyzer.Domain.TextLayerSettings.RenderBounds"/> is set, <see cref="Width"/> and <see cref="Height"/> are the pixel size of that rectangle (layer-local coordinates); <see cref="BufferOriginX"/> and <see cref="BufferOriginY"/> map local (0,0) to the top-left cell of the clip. <see cref="ViewportWidth"/> and <see cref="ViewportHeight"/> are always the full visualizer viewport (for normalized bounds and layers that need global coordinates).
 /// </remarks>
 public sealed class TextLayerDrawContext
 {
     public required ViewportCellBuffer Buffer { get; init; }
-    public required AnalysisSnapshot Snapshot { get; init; }
+
+    /// <summary>Full visualization frame (layout + analysis + optional instrumentation).</summary>
+    public required VisualizationFrameContext Frame { get; init; }
+
+    /// <summary>Shorthand for <see cref="Frame"/>.<see cref="VisualizationFrameContext.Analysis"/>.</summary>
+    public AudioAnalysisSnapshot Analysis => Frame.Analysis;
     public required IReadOnlyList<PaletteColor> Palette { get; init; }
     public required double SpeedBurst { get; init; }
 

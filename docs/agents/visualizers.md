@@ -14,7 +14,7 @@ This prevents visualizers from scrolling the console or wrapping lines and corru
 
 ## BPM source vs spectrum
 
-`AnalysisSnapshot` carries FFT bands, waveform, and volume from **audio processing** regardless of **BpmSource** (General settings hub). Beat fields (`CurrentBpm`, `BeatCount`, `BeatFlashActive`) may come from energy detection, Demo timing, or Ableton Link. Layers that only use magnitudes or waveform need no changes; beat-synced layers follow the shared beat fields. See [ADR-0066](../adr/0066-bpm-source-and-ableton-link.md).
+`AudioAnalysisSnapshot` (inside `VisualizationFrameContext` on the render path) carries FFT bands, waveform, and volume from **audio processing** regardless of **BpmSource** (General settings hub). Beat fields (`CurrentBpm`, `BeatCount`, `BeatFlashActive`) may come from energy detection, Demo timing, or Ableton Link. Layers use `TextLayerDrawContext.Analysis` for that data. See [ADR-0066](../adr/0066-bpm-source-and-ableton-link.md), [ADR-0024](../adr/0024-analysissnapshot-frame-context.md).
 
 ## IVisualizer and composite renderer
 

@@ -1,7 +1,7 @@
 namespace AudioAnalyzer.Application.Abstractions;
 
 /// <summary>
-/// Last published main or header display frame delta for UI that renders without an <see cref="AnalysisSnapshot"/> (e.g. header rows). Set by the visualization orchestrator (ADR-0072).
+/// Last published main or header display frame delta for UI that renders without a <see cref="VisualizationFrameContext"/> (e.g. header rows). Set by the visualization orchestrator (ADR-0072).
 /// </summary>
 public interface IDisplayFrameClock
 {

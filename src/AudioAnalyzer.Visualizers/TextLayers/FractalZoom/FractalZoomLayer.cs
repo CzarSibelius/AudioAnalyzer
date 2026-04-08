@@ -23,7 +23,7 @@ public sealed class FractalZoomLayer : TextLayerRendererBase, ITextLayerRenderer
     {
         int w = ctx.Width;
         int h = ctx.Height;
-        var snapshot = ctx.Snapshot;
+        var snapshot = ctx.Analysis;
         var st = _stateStore.GetState(ctx.LayerIndex);
         var s = layer.GetCustom<FractalZoomSettings>() ?? new FractalZoomSettings();
 

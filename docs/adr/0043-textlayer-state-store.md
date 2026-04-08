@@ -18,7 +18,7 @@
 
 ## Update (shared frame timing)
 
-`TextLayerDrawContext` includes **`FrameDeltaSeconds`** (wall-clock seconds since the previous full main render), set by `TextLayersVisualizer` from `AnalysisSnapshot.FrameDeltaSeconds`. This remains **shared frame data**, not per-layer state; layers use it with `DisplayAnimationTiming.ScaleForReference60` for FPS-independent motion (ADR-0072). Per-layer animation state stays in `ITextLayerStateStore<TState>`.
+`TextLayerDrawContext` includes **`FrameDeltaSeconds`** (wall-clock seconds since the previous full main render), set by `TextLayersVisualizer` from `VisualizationFrameContext.FrameDeltaSeconds`. This remains **shared frame data**, not per-layer state; layers use it with `DisplayAnimationTiming.ScaleForReference60` for FPS-independent motion (ADR-0072). Per-layer animation state stays in `ITextLayerStateStore<TState>`.
 
 ## Update (one state per slot)
 

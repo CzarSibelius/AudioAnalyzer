@@ -65,7 +65,7 @@ public sealed class AsciiModelLayer : TextLayerRendererBase, ITextLayerRenderer<
         }
 
         double speed = layer.SpeedMultiplier * ctx.SpeedBurst * 0.3;
-        if (s.BeatReaction == AsciiModelBeatReaction.SpeedBurst && ctx.Snapshot.BeatFlashActive)
+        if (s.BeatReaction == AsciiModelBeatReaction.SpeedBurst && ctx.Analysis.BeatFlashActive)
         {
             speed *= 2.0;
         }
@@ -83,7 +83,7 @@ public sealed class AsciiModelLayer : TextLayerRendererBase, ITextLayerRenderer<
             }
         }
 
-        if (s.BeatReaction == AsciiModelBeatReaction.Flash && ctx.Snapshot.BeatFlashActive)
+        if (s.BeatReaction == AsciiModelBeatReaction.Flash && ctx.Analysis.BeatFlashActive)
         {
             var nextName = FileBasedLayerAssetPaths.NextFileNameAfter(paths, s.SelectedModelFileName);
             if (nextName != null)

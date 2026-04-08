@@ -41,7 +41,7 @@ public sealed class UnknownPleasuresLayer : TextLayerRendererBase, ITextLayerRen
             return state;
         }
 
-        var snapshot = ctx.Snapshot;
+        var snapshot = ctx.Analysis;
         var magnitudes = snapshot.SmoothedMagnitudes ?? Array.Empty<double>();
         int numBands = Math.Min(snapshot.NumBands, magnitudes.Length);
         if (numBands == 0)

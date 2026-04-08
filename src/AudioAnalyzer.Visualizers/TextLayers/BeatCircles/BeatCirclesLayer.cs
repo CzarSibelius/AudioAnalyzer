@@ -28,7 +28,7 @@ public sealed class BeatCirclesLayer : TextLayerRendererBase, ITextLayerRenderer
     {
         int w = ctx.Width;
         int h = ctx.Height;
-        var snapshot = ctx.Snapshot;
+        var snapshot = ctx.Analysis;
         var beatState = _stateStore.GetState(ctx.LayerIndex);
 
         double bassIntensity = beatState.BassIntensity;

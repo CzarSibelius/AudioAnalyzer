@@ -150,15 +150,19 @@ internal sealed class VisualizationOrchestrator : IVisualizationOrchestrator
     }
 
     /// <inheritdoc />
-    public AnalysisSnapshot GetSnapshotForUi()
+    public VisualizationFrameContext GetFrameForUi()
     {
-        AnalysisSnapshot s = _engine.GetSnapshot();
+        AudioAnalysisSnapshot analysis = _engine.GetSnapshot();
+        var frame = new VisualizationFrameContext
+        {
+            Analysis = analysis
+        };
         if (_uiSettings.ShowLayerRenderTime && _cachedLayerRenderTimeMsForUi != null)
         {
-            s.LayerRenderTimeMs = CloneLayerRenderTimeMs(_cachedLayerRenderTimeMsForUi);
+            frame.LayerRenderTimeMs = CloneLayerRenderTimeMs(_cachedLayerRenderTimeMsForUi);
         }
 
-        return s;
+        return frame;
     }
 
     private static double?[]? CloneLayerRenderTimeMs(double?[]? src)
@@ -239,24 +243,28 @@ internal sealed class VisualizationOrchestrator : IVisualizationOrchestrator
                 }
             }
 
-            var snapshot = _engine.GetSnapshot();
-            snapshot.DisplayStartRow = _displayStartRow;
-            snapshot.TerminalWidth = w;
-            snapshot.TerminalHeight = h;
-            snapshot.FrameDeltaSeconds = frameDeltaSeconds;
-            snapshot.MeasuredMainRenderFps = null;
+            AudioAnalysisSnapshot analysis = _engine.GetSnapshot();
+            var frame = new VisualizationFrameContext
+            {
+                Analysis = analysis,
+                DisplayStartRow = _displayStartRow,
+                TerminalWidth = w,
+                TerminalHeight = h,
+                FrameDeltaSeconds = frameDeltaSeconds,
+                MeasuredMainRenderFps = null
+            };
             if (_uiSettings.ShowRenderFps && _fpsMeter.HasIntervalSample)
             {
-                snapshot.MeasuredMainRenderFps = _fpsMeter.GetSmoothedFps();
+                frame.MeasuredMainRenderFps = _fpsMeter.GetSmoothedFps();
             }
 
             try
             {
-                _renderer.Render(snapshot);
+                _renderer.Render(frame);
                 _fpsMeter.RecordFrameCompleted();
-                if (_uiSettings.ShowLayerRenderTime && snapshot.LayerRenderTimeMs != null)
+                if (_uiSettings.ShowLayerRenderTime && frame.LayerRenderTimeMs != null)
                 {
-                    _cachedLayerRenderTimeMsForUi = CloneLayerRenderTimeMs(snapshot.LayerRenderTimeMs);
+                    _cachedLayerRenderTimeMsForUi = CloneLayerRenderTimeMs(frame.LayerRenderTimeMs);
                 }
                 else
                 {

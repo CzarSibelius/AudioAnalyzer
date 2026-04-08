@@ -5,8 +5,8 @@ namespace AudioAnalyzer.Application.Abstractions;
 /// <summary>Context for building the TextLayers toolbar suffix string (layer digits, hints, contextual rows, palette name).</summary>
 public sealed class TextLayersToolbarContext
 {
-    /// <summary>Current analysis snapshot (e.g. for future toolbar data).</summary>
-    public AnalysisSnapshot Snapshot { get; set; } = null!;
+    /// <summary>Current visualization frame (toolbar phase, terminal width).</summary>
+    public VisualizationFrameContext Frame { get; set; } = null!;
 
     /// <summary>Layers ordered by ZOrder.</summary>
     public IReadOnlyList<TextLayerSettings> SortedLayers { get; set; } = [];

@@ -93,7 +93,7 @@ internal static class SettingsSurfacesListDrawing
         PaletteColor selBg,
         PaletteColor selFg,
         PaletteColor currentHighlightColor,
-        AnalysisSnapshot analysisSnapshot)
+        AudioAnalysisSnapshot analysis)
     {
         int total = 1 + themes.Count;
         int rowWidth = Math.Max(8, width - 1);
@@ -168,7 +168,7 @@ internal static class SettingsSurfacesListDrawing
                         rowSelected,
                         selBg,
                         selFg,
-                        analysisSnapshot);
+                        analysis);
                 }
             }
 
@@ -202,7 +202,7 @@ internal static class SettingsSurfacesListDrawing
         int visibleRows,
         PaletteColor selBg,
         PaletteColor selFg,
-        AnalysisSnapshot analysisSnapshot)
+        AudioAnalysisSnapshot analysis)
     {
         int total = palettes.Count;
         int rowWidth = Math.Max(8, width - 1);
@@ -235,7 +235,7 @@ internal static class SettingsSurfacesListDrawing
                 rowSelected,
                 selBg,
                 selFg,
-                analysisSnapshot);
+                analysis);
 
             try
             {

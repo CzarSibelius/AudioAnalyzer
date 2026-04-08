@@ -35,7 +35,7 @@ public sealed class AnalysisEngine
     private readonly IBeatTimingSource _beatTiming;
     private readonly IVolumeAnalyzer _volumeAnalyzer;
     private readonly IFftBandProcessor _fftBandProcessor;
-    private readonly AnalysisSnapshot _snapshot = new();
+    private readonly AudioAnalysisSnapshot _snapshot = new();
 
     public AnalysisEngine(IBeatTimingSource beatTiming, IVolumeAnalyzer volumeAnalyzer, IFftBandProcessor fftBandProcessor)
     {
@@ -83,11 +83,10 @@ public sealed class AnalysisEngine
     }
 
     /// <summary>
-    /// Returns a copy of the current analysis snapshot (analysis data only). Array properties are cloned so callers can
-    /// render without racing <see cref="ProcessAudio"/>. Display fields (DisplayStartRow, TerminalWidth, TerminalHeight,
-    /// MeasuredMainRenderFps, FrameDeltaSeconds) are defaults unless the caller sets them before rendering.
+    /// Returns a copy of the current <see cref="AudioAnalysisSnapshot"/> with array properties cloned so callers can
+    /// use it without racing <see cref="ProcessAudio"/>. Wrap in <see cref="VisualizationFrameContext"/> for layout and timing (orchestrator).
     /// </summary>
-    public AnalysisSnapshot GetSnapshot()
+    public AudioAnalysisSnapshot GetSnapshot()
     {
         lock (_sync)
         {
@@ -208,7 +207,7 @@ public sealed class AnalysisEngine
         _snapshot.RightPeakHold = _volumeAnalyzer.RightPeakHold;
     }
 
-    private static AnalysisSnapshot CloneSnapshotArrays(AnalysisSnapshot source)
+    private static AudioAnalysisSnapshot CloneSnapshotArrays(AudioAnalysisSnapshot source)
     {
         double[] sm = source.SmoothedMagnitudes ?? Array.Empty<double>();
         double[] ph = source.PeakHold ?? Array.Empty<double>();
@@ -232,7 +231,7 @@ public sealed class AnalysisEngine
             Array.Copy(wf, wfCopy, wf.Length);
         }
 
-        return new AnalysisSnapshot
+        return new AudioAnalysisSnapshot
         {
             Volume = source.Volume,
             CurrentBpm = source.CurrentBpm,

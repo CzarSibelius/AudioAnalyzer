@@ -1,7 +1,7 @@
 namespace AudioAnalyzer.Application.Abstractions;
 
 /// <summary>
-/// Supplies BPM, beat count, and beat flash for <see cref="AnalysisEngine"/> and <see cref="AnalysisSnapshot"/>.
+/// Supplies BPM, beat count, and beat flash for <see cref="AnalysisEngine"/> and <see cref="AudioAnalysisSnapshot"/>.
 /// Audio FFT/waveform/volume are computed separately from captured buffers.
 /// </summary>
 public interface IBeatTimingSource

@@ -278,7 +278,7 @@ internal sealed class ApplicationShell
             RestartCapture = _deviceController.RestartCapture,
             DeviceSelectionModal = _deviceSelectionModal,
             UiThemeSelectionModal = _uiThemeSelectionModal,
-            GetAnalysisSnapshot = () => _engine.GetSnapshot(),
+            GetAudioAnalysisSnapshot = () => _engine.GetSnapshot(),
             UiSettings = _uiSettings,
             State = _generalSettingsHubState,
             DisplayState = _displayState,

@@ -129,7 +129,7 @@ public sealed class TextLayersToolbarBuilder : ITextLayersToolbarBuilder
         var paletteColors = ColorPaletteParser.Parse(paletteDef);
         var paletteSb = new StringBuilder();
         AnsiConsole.AppendColored(paletteSb, LabelFormatting.FormatLabel(paletteLabel), palette.Label);
-        int phase = PaletteSwatchFormatter.ComputeToolbarPhaseOffset(context.Snapshot, paletteColors?.Count ?? 0);
+        int phase = PaletteSwatchFormatter.ComputeToolbarPhaseOffset(context.Frame.Analysis, paletteColors?.Count ?? 0);
         paletteSb.Append(PaletteSwatchFormatter.FormatPaletteColoredName(paletteName, paletteColors, phase));
 
         list.Add(new LabeledValueDescriptor(paletteLabel, () => new AnsiText(paletteSb.ToString()), preformattedAnsi: true));
@@ -141,7 +141,7 @@ public sealed class TextLayersToolbarBuilder : ITextLayersToolbarBuilder
     {
         var paletteUi = _uiThemeResolver.GetEffectiveUiPalette();
         var list = new List<LabeledValueDescriptor>();
-        int termW = context.Snapshot?.TerminalWidth > 0 ? context.Snapshot.TerminalWidth : 80;
+        int termW = context.Frame.TerminalWidth > 0 ? context.Frame.TerminalWidth : 80;
         int maxShow = Math.Max(12, termW / 4);
         string rawShow = string.IsNullOrWhiteSpace(context.ActiveShowName) ? "—" : context.ActiveShowName.Trim();
         string showName = new PlainText(rawShow).TruncateWithEllipsis(maxShow);
@@ -180,7 +180,7 @@ public sealed class TextLayersToolbarBuilder : ITextLayersToolbarBuilder
         var paletteColors = ColorPaletteParser.Parse(paletteDef);
         var paletteSb = new StringBuilder();
         AnsiConsole.AppendColored(paletteSb, LabelFormatting.FormatLabel(paletteLabel), paletteUi.Label);
-        int phase = PaletteSwatchFormatter.ComputeToolbarPhaseOffset(context.Snapshot!, paletteColors?.Count ?? 0);
+        int phase = PaletteSwatchFormatter.ComputeToolbarPhaseOffset(context.Frame.Analysis, paletteColors?.Count ?? 0);
         paletteSb.Append(PaletteSwatchFormatter.FormatPaletteColoredName(paletteName, paletteColors, phase));
         list.Add(new LabeledValueDescriptor(paletteLabel, () => new AnsiText(paletteSb.ToString()), preformattedAnsi: true));
         return list;
@@ -206,7 +206,7 @@ public sealed class TextLayersToolbarBuilder : ITextLayersToolbarBuilder
     private static void AppendPaletteColoredName(StringBuilder sb, TextLayersToolbarContext context, PaletteDefinition? paletteDef, string paletteName)
     {
         var colors = ColorPaletteParser.Parse(paletteDef);
-        int phase = PaletteSwatchFormatter.ComputeToolbarPhaseOffset(context.Snapshot!, colors?.Count ?? 0);
+        int phase = PaletteSwatchFormatter.ComputeToolbarPhaseOffset(context.Frame.Analysis, colors?.Count ?? 0);
         sb.Append(PaletteSwatchFormatter.FormatPaletteColoredName(paletteName, colors, phase));
     }
 
@@ -243,7 +243,7 @@ public sealed class TextLayersToolbarBuilder : ITextLayersToolbarBuilder
 
     private static int GetContextualToolbarValueMaxWidth(TextLayersToolbarContext context)
     {
-        int tw = context.Snapshot?.TerminalWidth > 0 ? context.Snapshot.TerminalWidth : 80;
+        int tw = context.Frame.TerminalWidth > 0 ? context.Frame.TerminalWidth : 80;
         return Math.Clamp(Math.Max(16, tw / 4), 16, 40);
     }
 }

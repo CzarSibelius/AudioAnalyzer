@@ -35,7 +35,7 @@ public sealed class RenderPerformanceTests
         var fileSystem = TestHelpers.CreateMockFileSystem();
         using var provider = TestHelpers.BuildTestServiceProvider(fileSystem);
         var renderer = provider.GetRequiredService<IVisualizationRenderer>();
-        var snapshot = TestHelpers.CreateTestSnapshot(80, 24);
+        var frame = TestHelpers.CreateTestFrame(80, 24);
 
         var originalOut = System.Console.Out;
         try
@@ -43,11 +43,11 @@ public sealed class RenderPerformanceTests
             System.Console.SetOut(new StringWriter());
             for (int i = 0; i < WarmUpRenderCount; i++)
             {
-                renderer.Render(snapshot);
+                renderer.Render(frame);
             }
 
             var sw = Stopwatch.StartNew();
-            renderer.Render(snapshot);
+            renderer.Render(frame);
             sw.Stop();
 
             Assert.True(
@@ -104,7 +104,7 @@ public sealed class RenderPerformanceTests
 
         using var provider = TestHelpers.BuildTestServiceProvider(fileSystem);
         var renderer = provider.GetRequiredService<IVisualizationRenderer>();
-        var snapshot = TestHelpers.CreateTestSnapshot(80, 24);
+        var frame = TestHelpers.CreateTestFrame(80, 24);
 
         var originalOut = System.Console.Out;
         try
@@ -112,11 +112,11 @@ public sealed class RenderPerformanceTests
             System.Console.SetOut(new StringWriter());
             for (int i = 0; i < WarmUpRenderCount; i++)
             {
-                renderer.Render(snapshot);
+                renderer.Render(frame);
             }
 
             var sw = Stopwatch.StartNew();
-            renderer.Render(snapshot);
+            renderer.Render(frame);
             sw.Stop();
 
             Assert.True(
@@ -135,7 +135,7 @@ public sealed class RenderPerformanceTests
         var fileSystem = TestHelpers.CreateMockFileSystem();
         using var provider = TestHelpers.BuildTestServiceProvider(fileSystem);
         var renderer = provider.GetRequiredService<IVisualizationRenderer>();
-        var snapshot = TestHelpers.CreateTestSnapshot(80, 24);
+        var frame = TestHelpers.CreateTestFrame(80, 24);
 
         var originalOut = System.Console.Out;
         try
@@ -143,7 +143,7 @@ public sealed class RenderPerformanceTests
             System.Console.SetOut(new StringWriter());
             for (int i = 0; i < 5; i++)
             {
-                renderer.Render(snapshot);
+                renderer.Render(frame);
             }
         }
         finally

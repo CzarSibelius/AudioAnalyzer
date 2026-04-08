@@ -24,7 +24,7 @@ public sealed class GeissBackgroundLayer : TextLayerRendererBase, ITextLayerRend
     {
         int w = ctx.Width;
         int h = ctx.Height;
-        var snapshot = ctx.Snapshot;
+        var snapshot = ctx.Analysis;
         var geissState = _stateStore.GetState(ctx.LayerIndex);
 
         double dtScale = DisplayAnimationTiming.ScaleForReference60(ctx.FrameDeltaSeconds);

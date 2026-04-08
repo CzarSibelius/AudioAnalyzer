@@ -54,10 +54,10 @@ public sealed class MaschineLayer : TextLayerRendererBase, ITextLayerRenderer<Ma
         }
 
         int cycleLength = textDisplayWidth;
-        bool onBeat = ctx.Snapshot.BeatCount > maschineState.LastBeatCount;
+        bool onBeat = ctx.Analysis.BeatCount > maschineState.LastBeatCount;
         if (onBeat)
         {
-            maschineState.LastBeatCount = ctx.Snapshot.BeatCount;
+            maschineState.LastBeatCount = ctx.Analysis.BeatCount;
             maschineState.Phase = (maschineState.Phase + 1) % Math.Max(1, cycleLength);
             if (maschineState.Phase == 0)
             {

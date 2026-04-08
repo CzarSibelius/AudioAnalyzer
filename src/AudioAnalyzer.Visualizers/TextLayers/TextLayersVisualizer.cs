@@ -65,12 +65,12 @@ public sealed class TextLayersVisualizer : IVisualizer
     private readonly double?[] _layerRenderTimeScratch = new double?[TextLayersLimits.MaxLayerCount];
     private int _lastBeatCount = -1;
 
-    public void Render(AnalysisSnapshot snapshot, VisualizerViewport viewport)
+    public void Render(VisualizationFrameContext frame, VisualizerViewport viewport)
     {
         var sortedLayers = TryGetSortedLayersSnapshot(_settings);
         if (sortedLayers is not { Count: > 0 })
         {
-            snapshot.LayerRenderTimeMs = null;
+            frame.LayerRenderTimeMs = null;
             RenderEmpty(viewport);
             return;
         }
@@ -79,7 +79,7 @@ public sealed class TextLayersVisualizer : IVisualizer
         int h = viewport.MaxLines;
         if (w < 10 || h < 3)
         {
-            snapshot.LayerRenderTimeMs = null;
+            frame.LayerRenderTimeMs = null;
             return;
         }
 
@@ -103,23 +103,23 @@ public sealed class TextLayersVisualizer : IVisualizer
 
         _stateStore.EnsureCapacity(sortedLayers.Count);
 
-        double frameDelta = snapshot.FrameDeltaSeconds > 0 ? snapshot.FrameDeltaSeconds : 1.0 / 60.0;
+        double frameDelta = frame.FrameDeltaSeconds > 0 ? frame.FrameDeltaSeconds : 1.0 / 60.0;
 
-        if (snapshot.BeatCount != _lastBeatCount)
+        if (frame.Analysis.BeatCount != _lastBeatCount)
         {
-            _lastBeatCount = snapshot.BeatCount;
+            _lastBeatCount = frame.Analysis.BeatCount;
         }
 
-        double speedBurst = snapshot.BeatFlashActive ? 2.0 : 1.0;
+        double speedBurst = frame.Analysis.BeatFlashActive ? 2.0 : 1.0;
 
         if (_uiSettings.ShowLayerRenderTime)
         {
             Array.Clear(_layerRenderTimeScratch, 0, TextLayersLimits.MaxLayerCount);
-            snapshot.LayerRenderTimeMs = _layerRenderTimeScratch;
+            frame.LayerRenderTimeMs = _layerRenderTimeScratch;
         }
         else
         {
-            snapshot.LayerRenderTimeMs = null;
+            frame.LayerRenderTimeMs = null;
         }
 
         for (int i = 0; i < sortedLayers.Count; i++)
@@ -140,7 +140,7 @@ public sealed class TextLayersVisualizer : IVisualizer
                 var ctx = new TextLayerDrawContext
                 {
                     Buffer = _buffer,
-                    Snapshot = snapshot,
+                    Frame = frame,
                     Palette = layerColors,
                     SpeedBurst = speedBurst,
                     ViewportWidth = w,
@@ -275,21 +275,21 @@ public sealed class TextLayersVisualizer : IVisualizer
         ];
     }
 
-    public string? GetToolbarSuffix(AnalysisSnapshot snapshot)
+    public string? GetToolbarSuffix(VisualizationFrameContext frame)
     {
-        var context = CreateToolbarContext(snapshot);
+        var context = CreateToolbarContext(frame);
         return _toolbarBuilder.BuildSuffix(context);
     }
 
     /// <inheritdoc />
-    public IReadOnlyList<LabeledValueDescriptor>? GetToolbarViewports(AnalysisSnapshot snapshot)
+    public IReadOnlyList<LabeledValueDescriptor>? GetToolbarViewports(VisualizationFrameContext frame)
     {
-        var context = CreateToolbarContext(snapshot);
+        var context = CreateToolbarContext(frame);
         var descriptors = _toolbarBuilder.BuildViewports(context);
         return descriptors.Count > 0 ? descriptors : null;
     }
 
-    private TextLayersToolbarContext CreateToolbarContext(AnalysisSnapshot snapshot)
+    private TextLayersToolbarContext CreateToolbarContext(VisualizationFrameContext frame)
     {
         var sortedLayers = TryGetSortedLayersSnapshot(_settings);
         var list = sortedLayers ?? [];
@@ -310,7 +310,7 @@ public sealed class TextLayersVisualizer : IVisualizer
 
         return new TextLayersToolbarContext
         {
-            Snapshot = snapshot,
+            Frame = frame,
             SortedLayers = list,
             Settings = _settings,
             PaletteCycleLayerIndex = _paletteCycleLayerIndex,

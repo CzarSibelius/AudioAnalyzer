@@ -38,7 +38,7 @@ public sealed class FallingLettersLayer : TextLayerRendererBase, ITextLayerRende
 
         var s = layer.GetCustom<FallingLettersSettings>() ?? new FallingLettersSettings();
         double fallSpeed = layer.SpeedMultiplier * ctx.SpeedBurst * 0.4;
-        if (s.BeatReaction == FallingLettersBeatReaction.SpawnMore && ctx.Snapshot.BeatFlashActive)
+        if (s.BeatReaction == FallingLettersBeatReaction.SpawnMore && ctx.Analysis.BeatFlashActive)
         {
             for (int k = 0; k < 3; k++)
             {
@@ -46,7 +46,7 @@ public sealed class FallingLettersLayer : TextLayerRendererBase, ITextLayerRende
                 particles.Add(new FallingLetterState { Col = col, Y = 0, Character = charsSource[Random.Shared.Next(0, charsSource.Length)] });
             }
         }
-        if (s.BeatReaction == FallingLettersBeatReaction.SpeedBurst && ctx.Snapshot.BeatFlashActive)
+        if (s.BeatReaction == FallingLettersBeatReaction.SpeedBurst && ctx.Analysis.BeatFlashActive)
         {
             fallSpeed *= 2.0;
         }

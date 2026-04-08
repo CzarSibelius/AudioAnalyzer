@@ -43,5 +43,5 @@
 
 ## Spectrum / full-audio visualizers (Phase 1 verification)
 
-- [x] Confirm no visualizer changes required: they keep reading `AnalysisSnapshot.SmoothedMagnitudes`, waveform, volume from audio processing.
+- [x] Confirm no visualizer changes required: they keep reading `AudioAnalysisSnapshot.SmoothedMagnitudes`, waveform, volume from audio processing.
 - [x] Add a short note to ADR or [docs/agents/visualizers.md](../../agents/visualizers.md): beat fields may be **decoupled** from spectrum when `BpmSource != AudioAnalysis`.

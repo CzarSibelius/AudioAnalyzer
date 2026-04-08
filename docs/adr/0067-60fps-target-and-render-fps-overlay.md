@@ -14,7 +14,7 @@ The console visualizer historically throttled full main-area redraws to about 20
 
 2. **Definition of measured FPS**: **Completed successful full main renders per second**, using intervals between successive successful `_renderer.Render` completions in `VisualizationOrchestrator`. **Header-only** updates (`RefreshHeaderIfNeeded`) **do not** advance this counter. The header timer may remain at a lower cadence (e.g. 50 ms) to limit console work on that path unless profiling justifies aligning it with the main loop.
 
-3. **Measurement mechanics**: Use **`Stopwatch.GetTimestamp()`** (or equivalent) for intervals, not `DateTime.Now` (ADR-0030). Maintain a **rolling average** over the last **45** completed frame intervals for a stable readout. Expose the current smoothed value on **`AnalysisSnapshot.MeasuredMainRenderFps`** when the overlay is enabled; otherwise leave it unset (`null`).
+3. **Measurement mechanics**: Use **`Stopwatch.GetTimestamp()`** (or equivalent) for intervals, not `DateTime.Now` (ADR-0030). Maintain a **rolling average** over the last **45** completed frame intervals for a stable readout. Expose the current smoothed value on **`VisualizationFrameContext.MeasuredMainRenderFps`** when the overlay is enabled; otherwise leave it unset (`null`).
 
 4. **On-screen overlay**: When enabled, show a compact **`FPS:value`** cell on the **main toolbar row** in Preset editor, Show play, and General settings (modes that use `MainContentToolbarLayout`). In **fullscreen** layout where the toolbar is omitted, no FPS cell is shown. **Modals**: while the render guard suppresses full redraws, the last displayed value may freeze; no overlay inside modals is required.
 

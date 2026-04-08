@@ -79,17 +79,17 @@ internal sealed class MainContentContainer : IVisualizationRenderer
     }
 
     /// <inheritdoc />
-    public void Render(AnalysisSnapshot snapshot)
+    public void Render(VisualizationFrameContext frame)
     {
         try
         {
-            if (snapshot.TerminalWidth < 30 || snapshot.TerminalHeight < 15)
+            if (frame.TerminalWidth < 30 || frame.TerminalHeight < 15)
             {
                 return;
             }
 
-            int termWidth = snapshot.TerminalWidth;
-            int startRow = snapshot.DisplayStartRow;
+            int termWidth = frame.TerminalWidth;
+            int startRow = frame.DisplayStartRow;
             var activeMode = _applicationModeFactory.GetActiveApplicationMode();
             bool layoutFullScreen = _displayState.FullScreen && activeMode.AllowsVisualizerFullscreen;
 
@@ -99,15 +99,15 @@ internal sealed class MainContentContainer : IVisualizationRenderer
             }
             else
             {
-                if (startRow < 0 || startRow + ToolbarLineCount >= snapshot.TerminalHeight)
+                if (startRow < 0 || startRow + ToolbarLineCount >= frame.TerminalHeight)
                 {
                     return;
                 }
             }
 
             int visualizerMaxLines = layoutFullScreen
-                ? Math.Max(1, snapshot.TerminalHeight - 1)
-                : Math.Max(1, snapshot.TerminalHeight - startRow - ToolbarLineCount - 1);
+                ? Math.Max(1, frame.TerminalHeight - 1)
+                : Math.Max(1, frame.TerminalHeight - startRow - ToolbarLineCount - 1);
 
             UiPalette palette = _uiThemeResolver.GetEffectiveUiPalette();
             var context = new RenderContext
@@ -117,10 +117,10 @@ internal sealed class MainContentContainer : IVisualizationRenderer
                 MaxLines = visualizerMaxLines,
                 Palette = palette,
                 ScrollSpeed = _uiSettings.DefaultScrollingSpeed,
-                Snapshot = snapshot,
+                Frame = frame,
                 PaletteDisplayName = _palette.DisplayName,
                 DeviceName = _deviceCapture.Value.CurrentDeviceName,
-                FrameDeltaSeconds = snapshot.FrameDeltaSeconds > 0 ? snapshot.FrameDeltaSeconds : 1.0 / 60.0
+                FrameDeltaSeconds = frame.FrameDeltaSeconds > 0 ? frame.FrameDeltaSeconds : 1.0 / 60.0
             };
 
             var root = new CompositeComponent(ctx => activeMode.GetMainComponents(new MainContentRenderArgs

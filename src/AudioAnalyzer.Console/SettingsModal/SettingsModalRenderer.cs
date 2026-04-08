@@ -7,7 +7,7 @@ using AudioAnalyzer.Visualizers;
 
 namespace AudioAnalyzer.Console;
 
-/// <summary>Renders the settings overlay modal: frame, preset title, hint line, layer list, and settings panel. Hint line is rendered via <see cref="IUiComponentRenderer{T}"/> using <see cref="HorizontalRowComponent"/>.</summary>
+/// <summary>Renders the settings overlay modal (frame, preset title, hint line, layer list, settings panel). Hint line is rendered via <see cref="IUiComponentRenderer{T}"/> using <see cref="HorizontalRowComponent"/>.</summary>
 internal sealed class SettingsModalRenderer : ISettingsModalRenderer
 {
     private const int OverlayRowCount = 16;
@@ -64,9 +64,9 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
     }
 
     /// <inheritdoc />
-    public void Draw(SettingsModalState state, IReadOnlyList<TextLayerSettings> sortedLayers, int width, AnalysisSnapshot analysisSnapshot)
+    public void Draw(SettingsModalState state, IReadOnlyList<TextLayerSettings> sortedLayers, int width, VisualizationFrameContext frame)
     {
-        ArgumentNullException.ThrowIfNull(analysisSnapshot);
+        ArgumentNullException.ThrowIfNull(frame);
         if (width < 40)
         {
             return;
@@ -158,7 +158,7 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
                 if (_uiSettings.ShowLayerRenderTime)
                 {
                     double? ms = null;
-                    var times = analysisSnapshot.LayerRenderTimeMs;
+                    var times = frame.LayerRenderTimeMs;
                     if (times != null && i < times.Length)
                     {
                         ms = times[i];
@@ -209,7 +209,7 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
                     rightColWidth,
                     selBg,
                     selFg,
-                    analysisSnapshot,
+                    frame.Analysis,
                     includeInheritFirst: !state.PalettePickerForPresetDefault);
             }
             else if (showPresetPanel)
@@ -231,7 +231,7 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
                             selected,
                             selBg,
                             selFg,
-                            analysisSnapshot));
+                            frame.Analysis));
                         continue;
                     }
 
@@ -267,7 +267,7 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
                             rowSelected,
                             selBg,
                             selFg,
-                            analysisSnapshot));
+                            frame.Analysis));
                         continue;
                     }
 
@@ -288,7 +288,7 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
 
             if (showPresetPanel && state.Focus != SettingsModalFocus.PickingPalette)
             {
-                _lastIdlePresetDefaultPalettePhase = GetPalettePhaseForPresetDefault(textLayers, analysisSnapshot);
+                _lastIdlePresetDefaultPalettePhase = GetPalettePhaseForPresetDefault(textLayers, frame);
             }
             else
             {
@@ -297,7 +297,7 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
 
             if (showLayerPanel && state.Focus != SettingsModalFocus.PickingPalette)
             {
-                _lastIdlePalettePhase = GetPalettePhaseForLayer(selectedLayer!, analysisSnapshot);
+                _lastIdlePalettePhase = GetPalettePhaseForLayer(selectedLayer!, frame);
             }
             else if (!showLayerPanel)
             {
@@ -306,7 +306,7 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
 
             if (state.Focus == SettingsModalFocus.PickingPalette)
             {
-                SyncPickerIdleTracking(analysisSnapshot);
+                SyncPickerIdleTracking(frame);
             }
             else
             {
@@ -322,7 +322,7 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
     }
 
     /// <inheritdoc />
-    public void DrawIdleOverlayTick(SettingsModalState state, IReadOnlyList<TextLayerSettings> sortedLayers, int width, AnalysisSnapshot analysisSnapshot)
+    public void DrawIdleOverlayTick(SettingsModalState state, IReadOnlyList<TextLayerSettings> sortedLayers, int width, VisualizationFrameContext frame)
     {
         if (width < 40)
         {
@@ -335,7 +335,7 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
         {
             System.Console.Write(SyncOutputBegin);
             RenderHintRow(state, width, palette, scrollSpeed, HintRow, 0.05);
-            TryRedrawPaletteRowForIdleInOpenSyncFrame(state, sortedLayers, width, analysisSnapshot);
+            TryRedrawPaletteRowForIdleInOpenSyncFrame(state, sortedLayers, width, frame);
             System.Console.Write(SyncOutputEnd);
         }
         catch (Exception ex)
@@ -346,7 +346,7 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
     }
 
     /// <summary>Updates palette cell if phase advanced; caller must wrap the whole idle frame in synchronized output.</summary>
-    private void TryRedrawPaletteRowForIdleInOpenSyncFrame(SettingsModalState state, IReadOnlyList<TextLayerSettings> sortedLayers, int width, AnalysisSnapshot analysisSnapshot)
+    private void TryRedrawPaletteRowForIdleInOpenSyncFrame(SettingsModalState state, IReadOnlyList<TextLayerSettings> sortedLayers, int width, VisualizationFrameContext frame)
     {
         if (width < 40)
         {
@@ -355,14 +355,14 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
 
         if (state.Focus == SettingsModalFocus.PickingPalette)
         {
-            TryRedrawPalettePickerForIdle(state, width, analysisSnapshot);
+            TryRedrawPalettePickerForIdle(state, width, frame);
             return;
         }
 
         var textLayers = _visualizerSettings.TextLayers ?? new TextLayersVisualizerSettings();
         if (state.LeftPanelPresetSelected)
         {
-            int phase = GetPalettePhaseForPresetDefault(textLayers, analysisSnapshot);
+            int phase = GetPalettePhaseForPresetDefault(textLayers, frame);
             if (phase == _lastIdlePresetDefaultPalettePhase)
             {
                 return;
@@ -405,7 +405,7 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
                 selected,
                 selBg,
                 selFg,
-                analysisSnapshot);
+                frame.Analysis);
 
             try
             {
@@ -430,7 +430,7 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
             return;
         }
 
-        int layerPhase = GetPalettePhaseForLayer(selectedLayer, analysisSnapshot);
+        int layerPhase = GetPalettePhaseForLayer(selectedLayer, frame);
         if (layerPhase == _lastIdlePalettePhase)
         {
             return;
@@ -483,7 +483,7 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
             selectedL,
             selBgL,
             selFgL,
-            analysisSnapshot);
+            frame.Analysis);
 
         try
         {
@@ -498,15 +498,15 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
         }
     }
 
-    private void SyncPickerIdleTracking(AnalysisSnapshot analysisSnapshot)
+    private void SyncPickerIdleTracking(VisualizationFrameContext frame)
     {
-        _lastPickerIdleBeatCount = analysisSnapshot.BeatCount;
+        _lastPickerIdleBeatCount = frame.Analysis.BeatCount;
         _lastPickerIdleTickBucket = PaletteSwatchFormatter.GetPaletteAnimationTickBucket();
     }
 
-    private void TryRedrawPalettePickerForIdle(SettingsModalState state, int width, AnalysisSnapshot analysisSnapshot)
+    private void TryRedrawPalettePickerForIdle(SettingsModalState state, int width, VisualizationFrameContext frame)
     {
-        if (!PaletteSwatchFormatter.PaletteAnimationFrameAdvanced(analysisSnapshot, _lastPickerIdleBeatCount, _lastPickerIdleTickBucket, out int beatCount, out long tickBucket))
+        if (!PaletteSwatchFormatter.PaletteAnimationFrameAdvanced(frame.Analysis, _lastPickerIdleBeatCount, _lastPickerIdleTickBucket, out int beatCount, out long tickBucket))
         {
             return;
         }
@@ -525,7 +525,7 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
                 rightColWidth,
                 selBg,
                 selFg,
-                analysisSnapshot,
+                frame.Analysis,
                 includeInheritFirst: !state.PalettePickerForPresetDefault);
             _lastPickerIdleBeatCount = beatCount;
             _lastPickerIdleTickBucket = tickBucket;
@@ -537,7 +537,7 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
         }
     }
 
-    private int GetPalettePhaseForLayer(TextLayerSettings layer, AnalysisSnapshot analysisSnapshot)
+    private int GetPalettePhaseForLayer(TextLayerSettings layer, VisualizationFrameContext frame)
     {
         string effectiveId = string.IsNullOrWhiteSpace(layer.PaletteId)
             ? (_visualizerSettings.TextLayers?.PaletteId ?? "")
@@ -549,10 +549,10 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
 
         var def = _paletteRepo.GetById(effectiveId);
         var colors = ColorPaletteParser.Parse(def);
-        return PaletteSwatchFormatter.ComputeToolbarPhaseOffset(analysisSnapshot, colors?.Count ?? 0);
+        return PaletteSwatchFormatter.ComputeToolbarPhaseOffset(frame.Analysis, colors?.Count ?? 0);
     }
 
-    private int GetPalettePhaseForPresetDefault(TextLayersVisualizerSettings textLayers, AnalysisSnapshot analysisSnapshot)
+    private int GetPalettePhaseForPresetDefault(TextLayersVisualizerSettings textLayers, VisualizationFrameContext frame)
     {
         string effectiveId = textLayers.PaletteId ?? "";
         if (string.IsNullOrWhiteSpace(effectiveId))
@@ -562,7 +562,7 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
 
         var def = _paletteRepo.GetById(effectiveId);
         var colors = ColorPaletteParser.Parse(def);
-        return PaletteSwatchFormatter.ComputeToolbarPhaseOffset(analysisSnapshot, colors?.Count ?? 0);
+        return PaletteSwatchFormatter.ComputeToolbarPhaseOffset(frame.Analysis, colors?.Count ?? 0);
     }
 
     private void RenderHintRow(SettingsModalState state, int width, UiPalette palette, double scrollSpeed, int startRow, double frameDeltaSeconds)

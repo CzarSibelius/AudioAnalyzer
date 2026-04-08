@@ -62,7 +62,11 @@ public sealed class TextLayersToolbarBuilderTests
         var settings = new TextLayersVisualizerSettings { PaletteId = "default", Layers = sortedLayers.ToList() };
         return new TextLayersToolbarContext
         {
-            Snapshot = new AnalysisSnapshot { TerminalWidth = 120, BeatCount = 0 },
+            Frame = new VisualizationFrameContext
+            {
+                Analysis = new AudioAnalysisSnapshot { BeatCount = 0 },
+                TerminalWidth = 120
+            },
             SortedLayers = sortedLayers,
             Settings = settings,
             PaletteCycleLayerIndex = paletteCycleLayerIndex,

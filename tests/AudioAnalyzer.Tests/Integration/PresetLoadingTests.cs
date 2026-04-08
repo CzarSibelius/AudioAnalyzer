@@ -24,13 +24,13 @@ public sealed class PresetLoadingTests
 
         using var provider = TestHelpers.BuildTestServiceProvider(fileSystem);
         var renderer = provider.GetRequiredService<IVisualizationRenderer>();
-        var snapshot = TestHelpers.CreateTestSnapshot(80, 24);
+        var frame = TestHelpers.CreateTestFrame(80, 24);
 
         var originalOut = System.Console.Out;
         try
         {
             System.Console.SetOut(new StringWriter());
-            renderer.Render(snapshot);
+            renderer.Render(frame);
         }
         finally
         {

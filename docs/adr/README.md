@@ -39,7 +39,7 @@ Decisions are numbered and kept under version control so the rationale stays wit
 | [0021](0021-textlayer-settings-common-custom.md) | TextLayerSettings — common properties plus Custom JSON | Accepted |
 | [0022](0022-presets-in-own-files.md) | Presets in own files (palette-style storage) | Accepted |
 | [0023](0023-settings-modal-layer-editing.md) | Settings modal for layer settings editing | Accepted |
-| [0024](0024-analysissnapshot-frame-context.md) | AnalysisSnapshot as frame context | Accepted |
+| [0024](0024-analysissnapshot-frame-context.md) | Audio analysis snapshot vs visualization frame context | Accepted |
 | [0025](0025-reflection-based-layer-settings.md) | Reflection-based layer settings discovery | Accepted |
 | [0026](0026-console-ui-architecture.md) | Console UI architecture — modular presentation layer | Accepted |
 | [0027](0027-now-playing-header.md) | Now-playing song in header | Accepted |
@@ -88,7 +88,7 @@ Decisions are numbered and kept under version control so the rationale stays wit
 | [0070](0070-settings-modal-add-remove-layers.md) | Settings modal — add/remove text layers (0..MaxLayerCount) | Accepted |
 | [0071](0071-ui-themes-separate-from-palettes.md) | UI themes in `themes/*.json`, `UiThemeId`, authoring modal, `IUiThemeRepository` | Accepted |
 | [0072](0072-delta-time-display-animation.md) | Delta-time animation and scrolling (reference 60 Hz), `FrameDeltaSeconds`, `IDisplayFrameClock` | Accepted |
-| [0073](0073-layer-render-time-overlay.md) | Per-layer `Draw` timing in S modal, `LayerRenderTimeMs`, `ShowLayerRenderTime`, orchestrator merge for `GetSnapshotForUi` | Accepted |
+| [0073](0073-layer-render-time-overlay.md) | Per-layer `Draw` timing in S modal, `LayerRenderTimeMs`, `ShowLayerRenderTime`, orchestrator merge for `GetFrameForUi` | Accepted |
 
 ## Process
 

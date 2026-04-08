@@ -43,7 +43,7 @@ internal sealed class ShowPlayApplicationMode : IApplicationMode
             return [VisualizerAreaComponent.Instance];
         }
 
-        int width = args.Context.Snapshot?.TerminalWidth ?? args.Context.Width;
+        int width = args.Context.Frame?.TerminalWidth ?? args.Context.Width;
         if (width < 30)
         {
             width = args.Context.Width;

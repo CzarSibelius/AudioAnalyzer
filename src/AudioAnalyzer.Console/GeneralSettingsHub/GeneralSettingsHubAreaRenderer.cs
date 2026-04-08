@@ -42,7 +42,7 @@ internal sealed class GeneralSettingsHubAreaRenderer : IUiComponentRenderer<Gene
     /// <inheritdoc />
     public ComponentRenderResult Render(GeneralSettingsHubAreaComponent component, RenderContext context)
     {
-        if (context.Snapshot == null)
+        if (context.Frame == null)
         {
             return ComponentRenderResult.Written(0);
         }
@@ -62,7 +62,7 @@ internal sealed class GeneralSettingsHubAreaRenderer : IUiComponentRenderer<Gene
         }
 
         var palette = context.Palette;
-        var snapshot = context.Snapshot;
+        AudioAnalysisSnapshot analysis = context.Frame.Analysis;
         IReadOnlyList<PaletteColor> beatColors =
             GeneralSettingsHubMenuLines.ResolveHubBeatPaletteColors(_uiSettings, _paletteRepo, _themeRepo, palette);
         string appDisplay = EffectiveAppName.FromUiSettings(_uiSettings);
@@ -70,7 +70,7 @@ internal sealed class GeneralSettingsHubAreaRenderer : IUiComponentRenderer<Gene
 
         WriteRaw(0, startRow, width, sb =>
         {
-            int phase = PaletteSwatchFormatter.ComputeToolbarPhaseOffset(snapshot, beatColors.Count);
+            int phase = PaletteSwatchFormatter.ComputeToolbarPhaseOffset(analysis, beatColors.Count);
             sb.Append(PaletteSwatchFormatter.FormatPaletteColoredName("General settings", beatColors, phase));
         });
 
@@ -81,7 +81,7 @@ internal sealed class GeneralSettingsHubAreaRenderer : IUiComponentRenderer<Gene
                     () => new AnsiText(GeneralSettingsHubMenuLines.FormatAudioLine(
                         _state,
                         palette,
-                        snapshot,
+                        analysis,
                         beatColors,
                         context.DeviceName,
                         width)),
@@ -95,7 +95,7 @@ internal sealed class GeneralSettingsHubAreaRenderer : IUiComponentRenderer<Gene
                     () => new AnsiText(GeneralSettingsHubMenuLines.FormatBpmSourceLine(
                         _state,
                         palette,
-                        snapshot,
+                        analysis,
                         beatColors,
                         _appSettings.BpmSource,
                         width)),
@@ -109,7 +109,7 @@ internal sealed class GeneralSettingsHubAreaRenderer : IUiComponentRenderer<Gene
                     () => new AnsiText(GeneralSettingsHubMenuLines.FormatApplicationNameLine(
                         _state,
                         palette,
-                        snapshot,
+                        analysis,
                         beatColors,
                         appDisplay,
                         width)),
@@ -123,7 +123,7 @@ internal sealed class GeneralSettingsHubAreaRenderer : IUiComponentRenderer<Gene
                     () => new AnsiText(GeneralSettingsHubMenuLines.FormatDefaultAssetFolderLine(
                         _state,
                         palette,
-                        snapshot,
+                        analysis,
                         beatColors,
                         _uiSettings,
                         width)),
@@ -137,7 +137,7 @@ internal sealed class GeneralSettingsHubAreaRenderer : IUiComponentRenderer<Gene
                     () => new AnsiText(GeneralSettingsHubMenuLines.FormatUiThemeLine(
                         _state,
                         palette,
-                        snapshot,
+                        analysis,
                         beatColors,
                         themeDisplay,
                         width)),
@@ -152,7 +152,7 @@ internal sealed class GeneralSettingsHubAreaRenderer : IUiComponentRenderer<Gene
             MaxLines = 1,
             Palette = palette,
             ScrollSpeed = context.ScrollSpeed,
-            Snapshot = context.Snapshot,
+            Frame = context.Frame,
             DeviceName = context.DeviceName,
             PaletteDisplayName = context.PaletteDisplayName,
             InvalidateWriteCache = context.InvalidateWriteCache,
@@ -174,7 +174,7 @@ internal sealed class GeneralSettingsHubAreaRenderer : IUiComponentRenderer<Gene
                     () => new AnsiText(GeneralSettingsHubMenuLines.FormatShowRenderFpsLine(
                         _state,
                         palette,
-                        snapshot,
+                        analysis,
                         beatColors,
                         _uiSettings,
                         width)),
@@ -190,7 +190,7 @@ internal sealed class GeneralSettingsHubAreaRenderer : IUiComponentRenderer<Gene
                     () => new AnsiText(GeneralSettingsHubMenuLines.FormatShowLayerRenderTimeLine(
                         _state,
                         palette,
-                        snapshot,
+                        analysis,
                         beatColors,
                         _uiSettings,
                         width)),

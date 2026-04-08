@@ -14,7 +14,7 @@ public sealed class OscilloscopeLayer : TextLayerRendererBase, ITextLayerRendere
     {
         int w = ctx.Width;
         int h = ctx.Height;
-        var snapshot = ctx.Snapshot;
+        var snapshot = ctx.Analysis;
 
         if (snapshot.Waveform is not { Length: > 0 } || snapshot.WaveformSize <= 0)
         {

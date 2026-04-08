@@ -4,7 +4,7 @@
 
 ## Context
 
-Per-visualizer settings types (e.g. `TextLayerSettings`, `GeissVisualizerSettings`, `VisualizerSettings`) were originally in the Domain layer. Moving them into the Visualizers project (each in its visualizer subfolder per [ADR-0007](0007-visualizer-subfolder-structure.md)) would improve cohesion but risks a circular dependency: if `AppSettings` retains a `VisualizerSettings` property, Domain would need to reference Visualizers, while Visualizers already references Domain for `PaletteColor`, `AnalysisSnapshot`, etc.
+Per-visualizer settings types (e.g. `TextLayerSettings`, `GeissVisualizerSettings`, `VisualizerSettings`) were originally in the Domain layer. Moving them into the Visualizers project (each in its visualizer subfolder per [ADR-0007](0007-visualizer-subfolder-structure.md)) would improve cohesion but risks a circular dependency: if `AppSettings` retains a `VisualizerSettings` property, Domain would need to reference Visualizers, while Visualizers already references Domain for `PaletteColor` and Application.Abstractions for shared render/analysis DTOs, etc.
 
 ## Decision
 

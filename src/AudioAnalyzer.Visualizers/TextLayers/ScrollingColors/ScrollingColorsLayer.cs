@@ -17,14 +17,14 @@ public sealed class ScrollingColorsLayer : TextLayerRendererBase, ITextLayerRend
         int h = ctx.Height;
         var s = layer.GetCustom<ScrollingColorsSettings>() ?? new ScrollingColorsSettings();
         double speed = layer.SpeedMultiplier * ctx.SpeedBurst * 0.5;
-        if (s.BeatReaction == ScrollingColorsBeatReaction.SpeedBurst && ctx.Snapshot.BeatFlashActive)
+        if (s.BeatReaction == ScrollingColorsBeatReaction.SpeedBurst && ctx.Analysis.BeatFlashActive)
         {
             speed *= 2.0;
         }
 
         state.Offset += speed * DisplayAnimationTiming.ScaleForReference60(ctx.FrameDeltaSeconds);
         double offset = state.Offset;
-        int colorOffset = s.BeatReaction == ScrollingColorsBeatReaction.ColorPop && ctx.Snapshot.BeatFlashActive
+        int colorOffset = s.BeatReaction == ScrollingColorsBeatReaction.ColorPop && ctx.Analysis.BeatFlashActive
             ? 1
             : 0;
         int paletteCount = ctx.Palette.Count;

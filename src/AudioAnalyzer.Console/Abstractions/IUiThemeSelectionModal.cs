@@ -9,5 +9,5 @@ internal interface IUiThemeSelectionModal
     /// Shows the theme list. (Custom) clears <c>UiThemeId</c>; otherwise sets it to the chosen theme file id.
     /// Calls <paramref name="saveSettings"/> after a successful selection.
     /// </summary>
-    void Show(Action<bool> setModalOpen, Func<AnalysisSnapshot> getSnapshot, Action saveSettings);
+    void Show(Action<bool> setModalOpen, Func<AudioAnalysisSnapshot> getAnalysis, Action saveSettings);
 }

@@ -18,7 +18,7 @@ Users want tempo and beat alignment from **Ableton Link** (e.g. Rekordbox on the
 
 ## Consequences
 
-- Spectrum-driven layers need no changes: they read `AnalysisSnapshot` magnitudes/waveform from audio; beat-synced layers follow `BeatCount` / BPM from the selected source.
+- Spectrum-driven layers need no changes: they read `AudioAnalysisSnapshot` magnitudes/waveform from audio; beat-synced layers follow `BeatCount` / BPM from the selected source.
 - CI and developers without CMake still build; Link features activate when `link_shim.dll` is copied next to the executable.
 - New persisted field: `BpmSource`. Missing property on load defaults to `AudioAnalysis` per [ADR-0029](0029-no-settings-migration.md).
 

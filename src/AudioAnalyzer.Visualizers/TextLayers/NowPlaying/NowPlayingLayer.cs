@@ -37,14 +37,14 @@ public sealed class NowPlayingLayer : TextLayerRendererBase, ITextLayerRenderer<
 
         var settings = layer.GetCustom<NowPlayingSettings>() ?? new NowPlayingSettings();
         double speed = layer.SpeedMultiplier * ctx.SpeedBurst * 0.8;
-        if (settings.BeatReaction == NowPlayingBeatReaction.SpeedBurst && ctx.Snapshot.BeatFlashActive)
+        if (settings.BeatReaction == NowPlayingBeatReaction.SpeedBurst && ctx.Analysis.BeatFlashActive)
         {
             speed *= 2.5;
         }
 
         double dtScale = DisplayAnimationTiming.ScaleForReference60(ctx.FrameDeltaSeconds);
         state.Offset += speed * dtScale;
-        if (settings.BeatReaction == NowPlayingBeatReaction.Flash && ctx.Snapshot.BeatFlashActive)
+        if (settings.BeatReaction == NowPlayingBeatReaction.Flash && ctx.Analysis.BeatFlashActive)
         {
             state.Offset += 1.0 * dtScale;
         }
@@ -56,7 +56,7 @@ public sealed class NowPlayingLayer : TextLayerRendererBase, ITextLayerRenderer<
             "bottom" => Math.Max(0, h - 1),
             _ => h / 2
         };
-        bool pulse = settings.BeatReaction == NowPlayingBeatReaction.Pulse && ctx.Snapshot.BeatFlashActive;
+        bool pulse = settings.BeatReaction == NowPlayingBeatReaction.Pulse && ctx.Analysis.BeatFlashActive;
         var color = ctx.Palette[Math.Max(0, layer.ColorIndex % ctx.Palette.Count)];
         if (pulse)
         {

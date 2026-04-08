@@ -15,7 +15,7 @@ public sealed class LlamaStyleLayer : TextLayerRendererBase, ITextLayerRenderer<
     {
         int w = ctx.Width;
         int h = ctx.Height;
-        var snapshot = ctx.Snapshot;
+        var snapshot = ctx.Analysis;
 
         if (w < 30 || h < 5)
         {
