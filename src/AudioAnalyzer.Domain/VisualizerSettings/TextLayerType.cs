@@ -22,5 +22,6 @@ public enum TextLayerType
     NowPlaying,
     Mirror,
     Maschine,
-    Fill
+    Fill,
+    AsciiVideo
 }

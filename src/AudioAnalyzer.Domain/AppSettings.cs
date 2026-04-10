@@ -47,4 +47,7 @@ public class AppSettings
     /// UI configuration: title, palette, scrolling speed. Per ADR-0033.
     /// </summary>
     public UiSettings UiSettings { get; set; } = new();
+
+    /// <summary>Optional file logging (ADR-0076). Persisted under <c>Logging</c> in <c>appsettings.json</c>.</summary>
+    public AppLoggingSettings Logging { get; set; } = new();
 }

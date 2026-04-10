@@ -1,5 +1,6 @@
 using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Domain;
+using Microsoft.Extensions.Logging;
 
 namespace AudioAnalyzer.Console;
 
@@ -7,7 +8,7 @@ namespace AudioAnalyzer.Console;
 /// Main content region: toolbar row + visualizer or settings hub. Implements <see cref="IVisualizationRenderer"/>
 /// so the orchestrator and shell keep the same contract. Delegates layout to <see cref="IApplicationMode"/>.
 /// </summary>
-internal sealed class MainContentContainer : IVisualizationRenderer
+internal sealed partial class MainContentContainer : IVisualizationRenderer
 {
     private const int ToolbarLineCount = 1;
 
@@ -21,6 +22,7 @@ internal sealed class MainContentContainer : IVisualizationRenderer
     private readonly ITextLayerBoundsEditSession _boundsEditSession;
     private readonly IApplicationModeFactory _applicationModeFactory;
     private readonly Lazy<IDeviceCaptureController> _deviceCapture;
+    private readonly ILogger<MainContentContainer> _logger;
 
     private (IReadOnlyList<PaletteColor>? Palette, string? DisplayName) _palette;
 
@@ -33,7 +35,8 @@ internal sealed class MainContentContainer : IVisualizationRenderer
         IUiThemeResolver uiThemeResolver,
         ITextLayerBoundsEditSession boundsEditSession,
         IApplicationModeFactory applicationModeFactory,
-        Lazy<IDeviceCaptureController> deviceCapture)
+        Lazy<IDeviceCaptureController> deviceCapture,
+        ILogger<MainContentContainer> logger)
     {
         _componentRenderer = componentRenderer ?? throw new ArgumentNullException(nameof(componentRenderer));
         _stateUpdater = stateUpdater ?? throw new ArgumentNullException(nameof(stateUpdater));
@@ -44,6 +47,7 @@ internal sealed class MainContentContainer : IVisualizationRenderer
         _boundsEditSession = boundsEditSession ?? throw new ArgumentNullException(nameof(boundsEditSession));
         _applicationModeFactory = applicationModeFactory ?? throw new ArgumentNullException(nameof(applicationModeFactory));
         _deviceCapture = deviceCapture ?? throw new ArgumentNullException(nameof(deviceCapture));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
         _displayState.Changed += (_, _) =>
         {
@@ -139,7 +143,10 @@ internal sealed class MainContentContainer : IVisualizationRenderer
         }
         catch (Exception ex)
         {
-            _ = ex; /* Last-resort render failure: swallow to avoid crash */
+            LogMainContentRenderFailed(ex);
         }
     }
+
+    [LoggerMessage(EventId = 7620, Level = LogLevel.Error, Message = "Main content render failed")]
+    private partial void LogMainContentRenderFailed(Exception ex);
 }

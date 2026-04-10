@@ -8,10 +8,14 @@ using AudioAnalyzer.Application.Fft;
 using AudioAnalyzer.Application.VolumeAnalysis;
 using AudioAnalyzer.Domain;
 using AudioAnalyzer.Infrastructure;
+using AudioAnalyzer.Infrastructure.AsciiVideo;
 using AudioAnalyzer.Infrastructure.NowPlaying;
+using AudioAnalyzer.Platform.Windows.AsciiVideo;
 using AudioAnalyzer.Platform.Windows.NowPlaying;
 using AudioAnalyzer.Visualizers;
+using AudioAnalyzer.Infrastructure.Logging;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace AudioAnalyzer.Console;
 
@@ -28,6 +32,13 @@ internal static class ServiceConfiguration
         var services = new ServiceCollection();
         services.AddSingleton(settings);
         services.AddSingleton(visualizerSettings);
+        services.AddSingleton<ILoggerProvider>(sp =>
+            BackgroundFileLoggerProvider.Create(sp.GetRequiredService<AppSettings>().Logging, sp.GetRequiredService<IFileSystem>()));
+        services.AddLogging(logging =>
+        {
+            AppLoggingSettings logSettings = settings.Logging ?? new AppLoggingSettings();
+            logging.SetMinimumLevel(logSettings.Enabled ? AppLoggingLevelParser.Parse(logSettings.MinimumLevel) : LogLevel.None);
+        });
         services.AddSingleton(settings.UiSettings ?? new UiSettings());
         services.AddSingleton<IDisplayDimensions>(sp => options?.DisplayDimensions ?? new ConsoleDisplayDimensions());
         services.AddSingleton<ISettingsRepository>(_ => settingsRepo);
@@ -57,6 +68,36 @@ internal static class ServiceConfiguration
             return new NullNowPlayingProvider();
         });
 
+        services.AddSingleton<IAsciiVideoFrameSource>(sp =>
+        {
+            if (options?.AsciiVideoFrameSource != null)
+            {
+                return options.AsciiVideoFrameSource;
+            }
+
+            if (OperatingSystem.IsWindows())
+            {
+                return new WindowsAsciiVideoFrameSource(sp.GetRequiredService<ILogger<WindowsAsciiVideoFrameSource>>());
+            }
+
+            return new NullAsciiVideoFrameSource();
+        });
+
+        services.AddSingleton<IAsciiVideoDeviceCatalog>(_ =>
+        {
+            if (options?.AsciiVideoDeviceCatalog != null)
+            {
+                return options.AsciiVideoDeviceCatalog;
+            }
+
+            if (OperatingSystem.IsWindows())
+            {
+                return new WindowsAsciiVideoDeviceCatalog();
+            }
+
+            return new NullAsciiVideoDeviceCatalog();
+        });
+
         services.AddSingleton<IDefaultTextLayersSettingsFactory>(_ => new DefaultTextLayersSettingsFactory());
         services.AddSingleton<TextLayerStateStore>();
         services.AddSingleton<ITextLayerStateStore>(sp => sp.GetRequiredService<TextLayerStateStore>());
@@ -68,6 +109,7 @@ internal static class ServiceConfiguration
         services.AddSingleton<ITextLayerStateStore<BeatCirclesState>>(sp => sp.GetRequiredService<TextLayerStateStore>());
         services.AddSingleton<ITextLayerStateStore<UnknownPleasuresState>>(sp => sp.GetRequiredService<TextLayerStateStore>());
         services.AddSingleton<ITextLayerStateStore<MaschineState>>(sp => sp.GetRequiredService<TextLayerStateStore>());
+        services.AddSingleton<ITextLayerStateStore<AsciiVideoState>>(sp => sp.GetRequiredService<TextLayerStateStore>());
         services.AddTextLayerRenderers();
 
         services.AddSingleton<IConsoleWriter, ConsoleWriter>();
@@ -94,6 +136,7 @@ internal static class ServiceConfiguration
             sp.GetRequiredService<ITextLayerStateStore>(),
             sp.GetRequiredService<VisualizerSettings>(),
             sp.GetRequiredService<IFileSystem>(),
+            sp.GetRequiredService<IAsciiVideoFrameSource>(),
             sp.GetRequiredService<IShowPlayToolbarInfo>(),
             sp.GetRequiredService<UiSettings>(),
             sp.GetRequiredService<ITextLayerBoundsEditSession>()));
@@ -123,7 +166,8 @@ internal static class ServiceConfiguration
                 sp.GetRequiredService<IUiThemeResolver>(),
                 sp.GetRequiredService<ITitleBarContentProvider>(),
                 sp.GetRequiredService<IApplicationModeFactory>(),
-                sp.GetRequiredService<IDisplayFrameClock>()));
+                sp.GetRequiredService<IDisplayFrameClock>(),
+                sp.GetRequiredService<ILogger<HeaderContainer>>()));
         services.AddSingleton<Lazy<IDeviceCaptureController>>(sp =>
             new Lazy<IDeviceCaptureController>(() => sp.GetRequiredService<IDeviceCaptureController>()));
         services.AddSingleton<IVisualizationRenderer>(sp =>
@@ -136,7 +180,8 @@ internal static class ServiceConfiguration
                 sp.GetRequiredService<IUiThemeResolver>(),
                 sp.GetRequiredService<ITextLayerBoundsEditSession>(),
                 sp.GetRequiredService<IApplicationModeFactory>(),
-                sp.GetRequiredService<Lazy<IDeviceCaptureController>>()));
+                sp.GetRequiredService<Lazy<IDeviceCaptureController>>(),
+                sp.GetRequiredService<ILogger<MainContentContainer>>()));
         services.AddSingleton<IBeatDetector, BeatDetector>();
         services.AddSingleton(sp => new AudioDerivedBeatTimingSource(sp.GetRequiredService<IBeatDetector>()));
         services.AddSingleton<DemoBeatTimingSource>();
@@ -151,11 +196,24 @@ internal static class ServiceConfiguration
         services.AddSingleton<AnalysisEngine>();
         services.AddSingleton<MainRenderFpsMeter>();
         services.AddSingleton<IDisplayFrameClock, DisplayFrameClock>();
-        services.AddSingleton<IVisualizationOrchestrator, VisualizationOrchestrator>();
+        services.AddSingleton<IVisualizationOrchestrator>(sp =>
+            new VisualizationOrchestrator(
+                sp.GetRequiredService<AnalysisEngine>(),
+                sp.GetRequiredService<IVisualizationRenderer>(),
+                sp.GetRequiredService<IDisplayDimensions>(),
+                sp.GetRequiredService<IDisplayState>(),
+                sp.GetRequiredService<IApplicationModeHeaderProvider>(),
+                sp.GetRequiredService<UiSettings>(),
+                sp.GetRequiredService<MainRenderFpsMeter>(),
+                sp.GetRequiredService<IDisplayFrameClock>(),
+                sp.GetRequiredService<ILogger<VisualizationOrchestrator>>()));
         services.AddSingleton<ShowPlaybackController>();
         services.AddSingleton<IScrollingTextEngine, ScrollingTextEngine>();
         services.AddSingleton<IScrollingTextViewportFactory, ScrollingTextViewportFactory>();
-        services.AddSingleton<IUiComponentRenderer<VisualizerAreaComponent>, VisualizerAreaRenderer>();
+        services.AddSingleton<IUiComponentRenderer<VisualizerAreaComponent>>(sp =>
+            new VisualizerAreaRenderer(
+                sp.GetRequiredService<IVisualizer>(),
+                sp.GetRequiredService<ILogger<VisualizerAreaRenderer>>()));
         services.AddSingleton<GeneralSettingsHubState>();
         services.AddSingleton<IUiComponentRenderer<GeneralSettingsHubAreaComponent>>(sp =>
             new GeneralSettingsHubAreaRenderer(

@@ -7,7 +7,7 @@ namespace AudioAnalyzer.Console;
 /// <summary>Extension methods for configuring text layer renderers in the DI container.</summary>
 internal static class ServiceCollectionExtensions
 {
-    /// <summary>Registers all text layer renderer implementations discovered via reflection. Requires INowPlayingProvider to be registered for NowPlayingLayer.</summary>
+    /// <summary>Registers all text layer renderer implementations discovered via reflection. Requires INowPlayingProvider for NowPlayingLayer and IAsciiVideoFrameSource for AsciiVideoLayer.</summary>
     public static IServiceCollection AddTextLayerRenderers(this IServiceCollection services)
     {
         var baseType = typeof(TextLayerRendererBase);

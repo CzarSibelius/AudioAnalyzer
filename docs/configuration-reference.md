@@ -5,9 +5,10 @@ This document describes data files and settings beside the Audio Analyzer execut
 ## Dependencies (NuGet)
 
 - **NAudio 2.2.1**: WASAPI capture/loopback and audio processing
-- **SixLabors.ImageSharp 3.1.12**: Image loading and processing for ASCII image layer (BMP, GIF, JPEG, PNG, WebP)
+- **SixLabors.ImageSharp 3.1.12**: Image loading and processing for ASCII image layer (BMP, GIF, JPEG, PNG, WebP) and in-memory BGRA raster → ASCII for the **AsciiVideo** text layer
 - **System.IO.Abstractions 22.1.0**: `IFileSystem` for presets/palettes/shows (Infrastructure) and AsciiImage / AsciiModel asset enumeration and file reads (Visualizers); production uses the real `FileSystem`, tests use `MockFileSystem`
 - **Microsoft.Extensions.DependencyInjection 10.0.3**: Console host dependency injection
+- **Microsoft.Extensions.Logging 10.0.3** / **Microsoft.Extensions.Logging.Abstractions 10.0.3**: optional file logging (ADR-0076); Abstractions referenced from Infrastructure for the file logger provider; **Platform.Windows** references both for `WindowsAsciiVideoFrameSource` `[LoggerMessage]` diagnostics
 - **Roslynator.Analyzers 4.15.0**: Code analyzers (e.g. RCS1075: no empty catch blocks, RCS1060: one file per class), enforced via `.editorconfig`
 
 ## Presets (JSON files)
@@ -17,7 +18,7 @@ TextLayers presets are stored as **JSON files** in a **`presets`** directory nex
 **Preset JSON format:**
 
 - **`Name`** (optional): Display name (e.g. `"Preset 1"`).
-- **`Config`**: TextLayersVisualizerSettings — `PaletteId` plus `Layers` array (0 up to `TextLayersLimits.MaxLayerCount` entries, each with `LayerType`, `Enabled`, `ZOrder`, `TextSnippets`, `SpeedMultiplier`, etc.). Layers that support beat reaction store it in `Custom` (e.g. `Custom.BeatReaction`); not all layer types expose beat reaction.
+- **`Config`**: TextLayersVisualizerSettings — `PaletteId` plus `Layers` array (0 up to `TextLayersLimits.MaxLayerCount` entries, each with `LayerType`, `Enabled`, `ZOrder`, `TextSnippets`, `SpeedMultiplier`, etc.). Layers that support beat reaction store it in `Custom` (e.g. `Custom.BeatReaction`); not all layer types expose beat reaction. Inside each layer’s **`Custom`** object, enum fields accept **either** JSON strings (e.g. `"ImageColors"`) **or** numeric values, and property names are matched **case-insensitively** (so `paletteSource` and `PaletteSource` both work). The app uses the same rules when saving from the S modal.
 
 Example (`presets/preset-1.json`):
 
@@ -27,6 +28,21 @@ Example (`presets/preset-1.json`):
   "Config": { "PaletteId": "default", "Layers": [...] }
 }
 ```
+
+**AsciiVideo layer `Custom` example** (inside one object in `Layers` with `"LayerType": "AsciiVideo"`):
+
+```json
+"Custom": {
+  "SourceKind": "Webcam",
+  "WebcamDeviceIndex": 0,
+  "MaxCaptureWidth": 640,
+  "MaxCaptureHeight": 480,
+  "PaletteSource": "ImageColors",
+  "FlipHorizontal": false
+}
+```
+
+For **Palette source**, use `"LayerPalette"` or `"ImageColors"` (or `0` / `1`). Use `0` for **MaxCaptureWidth** / **MaxCaptureHeight** when no resolution cap is desired. **`File`** is reserved for a future source; it is not implemented yet. Details: [visualizers/ascii-video.md](visualizers/ascii-video.md).
 
 ## Shows (JSON files)
 
@@ -110,6 +126,8 @@ The **AsciiModel** text layer loads **Wavefront OBJ** files from a folder. The a
 
 - **BPM source** (`BpmSource`, per [ADR-0066](adr/0066-bpm-source-and-ableton-link.md)): Where tempo and the beat counter come from. Values: `AudioAnalysis` (default, energy detection on the audio stream), `DemoDevice` (BPM from the active `demo:NNN` synthetic device + time-based beats), `AbletonLink` (Ableton Link session via native `link_shim.dll`). Editable from General settings hub (**BPM source** row, **Enter** to cycle). FFT/spectrum/waveform always follow the **audio input**, not Link.
 
+- **Logging** (`Logging`, per [ADR-0076](adr/0076-configurable-application-logging.md)): Optional file logging for diagnostics. **`Enabled`** (`bool`, default `false`): when `true`, log lines at or above **`MinimumLevel`** are appended to **`FilePath`**. **`FilePath`** (optional string): relative paths are under the application base directory (next to the executable); when omitted or empty, defaults to `logs/audioanalyzer.log`. **`MinimumLevel`** (string): `Trace`, `Debug`, `Information`, `Warning`, `Error`, or `Critical` (same names as `Microsoft.Extensions.Logging.LogLevel`); invalid values are treated as `Error`. Default when omitted: **`Error`**. Log files may contain paths, device names, or other environment-specific text; enable only when you accept that privacy trade-off. Restart the app after editing this section (or reload settings the same way as other `appsettings.json` changes). **ASCII video (webcam)** failures and empty-device cases are logged under category **`AudioAnalyzer.Platform.Windows.AsciiVideo.WindowsAsciiVideoFrameSource`** (use **`Warning`** or lower to see them; **`Debug`** includes resolution-cap attempts).
+
 - **UI settings** (`UiSettings`, per [ADR-0033](adr/0033-ui-principles-and-configurable-settings.md), [ADR-0071](adr/0071-ui-themes-separate-from-palettes.md), [ADR-0067](adr/0067-60fps-target-and-render-fps-overlay.md), [ADR-0072](adr/0072-delta-time-display-animation.md), [ADR-0073](adr/0073-layer-render-time-overlay.md)): App title, optional `TitleBarAppName` (short name for title bar, e.g. "aUdioNLZR"), optional `DefaultAssetFolderPath` (default base directory for AsciiImage / AsciiModel when the layer’s folder setting is empty; omit to use the app content root), optional `UiThemeId` (`themes/*.json` id — when set and the file loads, effective UI/title bar colors come from the theme; omit or use General settings **(Custom)** for inline colors), optional `TitleBarPalette` (used for base when no theme or theme has no usable fallback), UI palette (Normal, Highlighted, Dimmed, Label, optional Background), **`DefaultScrollingSpeed`** (character advance per 60 Hz reference frame; scaled by display frame delta per ADR-0072), optional **`ShowRenderFps`** (`bool`, default `false`) to show smoothed main-render FPS on the toolbar (main-loop cadence—typically **≥~60** FPS on capable hosts, independent of WASAPI buffer rate), and optional **`ShowLayerRenderTime`** (`bool`, default `false`) to show each text layer’s last measured `Draw` time in the S modal (General settings hub). Stored in `appsettings.json`. Colors support 24-bit RGB (`R`, `G`, `B`) or console color names (`Value`).
 
 - **Visualizer-specific options** live under `VisualizerSettings` in the settings file (e.g. `appsettings.json`):
@@ -121,6 +139,11 @@ Example `appsettings.json`:
 ```json
 {
   "BpmSource": "AudioAnalysis",
+  "Logging": {
+    "Enabled": false,
+    "FilePath": "logs/audioanalyzer.log",
+    "MinimumLevel": "Error"
+  },
   "UiSettings": {
     "Title": "AUDIO ANALYZER - Real-time Frequency Spectrum",
     "DefaultScrollingSpeed": 0.25,

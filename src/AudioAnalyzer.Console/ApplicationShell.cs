@@ -4,6 +4,7 @@ using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Application.Palette;
 using AudioAnalyzer.Domain;
 using AudioAnalyzer.Visualizers;
+using Microsoft.Extensions.Logging;
 
 namespace AudioAnalyzer.Console;
 
@@ -18,7 +19,7 @@ namespace AudioAnalyzer.Console;
 /// <see cref="IVisualizationOrchestrator"/> and the engine/renderer.</para>
 /// </remarks>
 [SuppressMessage("Reliability", "CA1001:Types that own disposable fields should be disposable", Justification = "Single Run/Shutdown lifecycle; _headerRefreshCts explicitly disposed in Shutdown().")]
-internal sealed class ApplicationShell
+internal sealed partial class ApplicationShell
 {
     private readonly IDeviceCaptureController _deviceController;
     private readonly IVisualizerSettingsRepository _visualizerSettingsRepo;
@@ -46,6 +47,7 @@ internal sealed class ApplicationShell
     private readonly IApplicationModeFactory _applicationModeFactory;
     private readonly AppSettings _appSettings;
     private readonly IBeatTimingConfigurator _beatTiming;
+    private readonly ILogger<ApplicationShell> _logger;
 
     private CancellationTokenSource? _headerRefreshCts;
     private volatile bool _quitAfterDump;
@@ -76,7 +78,8 @@ internal sealed class ApplicationShell
         IModeTransitionService modeTransitionService,
         IApplicationModeFactory applicationModeFactory,
         AppSettings appSettings,
-        IBeatTimingConfigurator beatTiming)
+        IBeatTimingConfigurator beatTiming,
+        ILogger<ApplicationShell> logger)
     {
         _deviceController = deviceController ?? throw new ArgumentNullException(nameof(deviceController));
         _visualizerSettingsRepo = visualizerSettingsRepo;
@@ -104,6 +107,7 @@ internal sealed class ApplicationShell
         _applicationModeFactory = applicationModeFactory ?? throw new ArgumentNullException(nameof(applicationModeFactory));
         _appSettings = appSettings ?? throw new ArgumentNullException(nameof(appSettings));
         _beatTiming = beatTiming ?? throw new ArgumentNullException(nameof(beatTiming));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     /// <summary>Runs the main loop. Does not return until the user quits.</summary>
@@ -137,7 +141,7 @@ internal sealed class ApplicationShell
                     }
                     catch (Exception ex)
                     {
-                        _ = ex; /* Header refresh failed: swallow to avoid background task crash */
+                        LogHeaderRefreshFailed(ex);
                     }
                 }
             }
@@ -226,7 +230,7 @@ internal sealed class ApplicationShell
             }
             catch (Exception ex)
             {
-                _ = ex; /* Display tick failed: swallow to avoid crashing main loop */
+                LogMainLoopDisplayTickFailed(ex);
             }
 
             // Cooperative yield: avoid busy-spin without enforcing a ~60 Hz ceiling (ADR-0067).
@@ -362,6 +366,12 @@ internal sealed class ApplicationShell
             _orchestrator.Redraw();
         }
     }
+
+    [LoggerMessage(EventId = 7640, Level = LogLevel.Error, Message = "Header refresh failed")]
+    private partial void LogHeaderRefreshFailed(Exception ex);
+
+    [LoggerMessage(EventId = 7641, Level = LogLevel.Error, Message = "Main loop display tick failed")]
+    private partial void LogMainLoopDisplayTickFailed(Exception ex);
 
     private void Shutdown()
     {

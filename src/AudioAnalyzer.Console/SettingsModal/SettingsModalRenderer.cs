@@ -25,6 +25,7 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
     private readonly UiSettings _uiSettings;
     private readonly IUiThemeResolver _uiThemeResolver;
     private readonly IPaletteRepository _paletteRepo;
+    private readonly IAsciiVideoDeviceCatalog _asciiVideoDeviceCatalog;
     private readonly IUiComponentRenderer<IUiComponent> _componentRenderer;
     private readonly ITitleBarNavigationContext _navigation;
     private readonly ITitleBarBreadcrumbFormatter _breadcrumbFormatter;
@@ -48,6 +49,7 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
         UiSettings uiSettings,
         IUiThemeResolver uiThemeResolver,
         IPaletteRepository paletteRepo,
+        IAsciiVideoDeviceCatalog asciiVideoDeviceCatalog,
         IUiComponentRenderer<IUiComponent> componentRenderer,
         ITitleBarNavigationContext navigation,
         ITitleBarBreadcrumbFormatter breadcrumbFormatter)
@@ -56,6 +58,7 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
         _uiSettings = uiSettings ?? throw new ArgumentNullException(nameof(uiSettings));
         _uiThemeResolver = uiThemeResolver ?? throw new ArgumentNullException(nameof(uiThemeResolver));
         _paletteRepo = paletteRepo ?? throw new ArgumentNullException(nameof(paletteRepo));
+        _asciiVideoDeviceCatalog = asciiVideoDeviceCatalog ?? throw new ArgumentNullException(nameof(asciiVideoDeviceCatalog));
         _componentRenderer = componentRenderer ?? throw new ArgumentNullException(nameof(componentRenderer));
         _navigation = navigation ?? throw new ArgumentNullException(nameof(navigation));
         _breadcrumbFormatter = breadcrumbFormatter ?? throw new ArgumentNullException(nameof(breadcrumbFormatter));
@@ -594,7 +597,7 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
     private List<(string Id, string Label, string DisplayValue, SettingEditMode EditMode)> GetSettingsRows(TextLayerSettings? layer)
     {
         if (layer == null) { return []; }
-        var descriptors = SettingDescriptor.BuildAll(layer, _paletteRepo);
+        var descriptors = SettingDescriptor.BuildAll(layer, _paletteRepo, _asciiVideoDeviceCatalog);
         return descriptors.Select(d => (d.Id, d.Label, d.GetDisplayValue(layer), d.EditMode)).ToList();
     }
 

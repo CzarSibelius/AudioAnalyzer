@@ -6,10 +6,17 @@
     <Nullable>enable</Nullable>
     <RootNamespace>AudioAnalyzer.Platform.Windows</RootNamespace>
     <EnablePreviewFeatures>false</EnablePreviewFeatures>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.3" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\AudioAnalyzer.Application\AudioAnalyzer.Application.csproj" />
+    <ProjectReference Include="..\AudioAnalyzer.Domain\AudioAnalyzer.Domain.csproj" />
   </ItemGroup>
 
 </Project>

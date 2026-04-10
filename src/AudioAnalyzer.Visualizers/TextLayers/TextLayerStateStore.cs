@@ -4,6 +4,7 @@ namespace AudioAnalyzer.Visualizers;
 public sealed class TextLayerStateStore
     : ITextLayerStateStore<FallingLettersLayerState>,
       ITextLayerStateStore<AsciiImageState>,
+      ITextLayerStateStore<AsciiVideoState>,
       ITextLayerStateStore<GeissBackgroundState>,
       ITextLayerStateStore<FractalZoomState>,
       ITextLayerStateStore<BeatCirclesState>,
@@ -45,6 +46,9 @@ public sealed class TextLayerStateStore
 
     AsciiImageState ITextLayerStateStore<AsciiImageState>.GetState(int layerIndex) => GetOrCreate<AsciiImageState>(layerIndex);
     void ITextLayerStateStore<AsciiImageState>.SetState(int layerIndex, AsciiImageState state) => Set(layerIndex, state);
+
+    AsciiVideoState ITextLayerStateStore<AsciiVideoState>.GetState(int layerIndex) => GetOrCreate<AsciiVideoState>(layerIndex);
+    void ITextLayerStateStore<AsciiVideoState>.SetState(int layerIndex, AsciiVideoState state) => Set(layerIndex, state);
 
     GeissBackgroundState ITextLayerStateStore<GeissBackgroundState>.GetState(int layerIndex) => GetOrCreate<GeissBackgroundState>(layerIndex);
     void ITextLayerStateStore<GeissBackgroundState>.SetState(int layerIndex, GeissBackgroundState state) => Set(layerIndex, state);

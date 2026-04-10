@@ -1,18 +1,21 @@
 using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Application.Display;
 using AudioAnalyzer.Domain;
+using Microsoft.Extensions.Logging;
 
 namespace AudioAnalyzer.Console;
 
 /// <summary>Renders the visualizer area (spectrum/layers) via the component tree. Clears the region once when needed; delegates to IVisualizer.</summary>
-internal sealed class VisualizerAreaRenderer : IUiComponentRenderer<VisualizerAreaComponent>
+internal sealed partial class VisualizerAreaRenderer : IUiComponentRenderer<VisualizerAreaComponent>
 {
     private readonly IVisualizer _visualizer;
+    private readonly ILogger<VisualizerAreaRenderer> _logger;
     private bool _visualizerAreaCleared;
 
-    public VisualizerAreaRenderer(IVisualizer visualizer)
+    public VisualizerAreaRenderer(IVisualizer visualizer, ILogger<VisualizerAreaRenderer> logger)
     {
         _visualizer = visualizer ?? throw new ArgumentNullException(nameof(visualizer));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     /// <inheritdoc />
@@ -34,7 +37,7 @@ internal sealed class VisualizerAreaRenderer : IUiComponentRenderer<VisualizerAr
 
         if (!_visualizerAreaCleared)
         {
-            ClearRegion(startRow, maxLines, width);
+            ClearRegionInternal(startRow, maxLines, width);
             _visualizerAreaCleared = true;
         }
 
@@ -46,6 +49,7 @@ internal sealed class VisualizerAreaRenderer : IUiComponentRenderer<VisualizerAr
         }
         catch (Exception ex)
         {
+            LogVisualizerRenderFailed(ex);
             string message = !string.IsNullOrWhiteSpace(ex.Message) ? ex.Message : "Visualization error";
             try
             {
@@ -54,7 +58,7 @@ internal sealed class VisualizerAreaRenderer : IUiComponentRenderer<VisualizerAr
             }
             catch (Exception writeEx)
             {
-                _ = writeEx; /* Console write failed */
+                LogVisualizerConsoleWriteFailed(writeEx);
             }
         }
 
@@ -67,7 +71,7 @@ internal sealed class VisualizerAreaRenderer : IUiComponentRenderer<VisualizerAr
         _visualizerAreaCleared = false;
     }
 
-    private static void ClearRegion(int startRow, int lineCount, int width)
+    private void ClearRegionInternal(int startRow, int lineCount, int width)
     {
         if (width <= 0 || lineCount <= 0)
         {
@@ -85,7 +89,16 @@ internal sealed class VisualizerAreaRenderer : IUiComponentRenderer<VisualizerAr
         }
         catch (Exception ex)
         {
-            _ = ex; /* Console write failed in ClearRegion */
+            LogClearRegionConsoleWriteFailed(ex);
         }
     }
+
+    [LoggerMessage(EventId = 7601, Level = LogLevel.Error, Message = "Visualizer render failed")]
+    private partial void LogVisualizerRenderFailed(Exception ex);
+
+    [LoggerMessage(EventId = 7602, Level = LogLevel.Warning, Message = "Failed to write visualizer error to console")]
+    private partial void LogVisualizerConsoleWriteFailed(Exception ex);
+
+    [LoggerMessage(EventId = 7603, Level = LogLevel.Warning, Message = "ClearRegion console write failed")]
+    private partial void LogClearRegionConsoleWriteFailed(Exception ex);
 }

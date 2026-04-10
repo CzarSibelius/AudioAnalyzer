@@ -1,10 +1,18 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace AudioAnalyzer.Domain;
 
 /// <summary>Per-layer configuration for the layered text visualizer.</summary>
 public class TextLayerSettings
 {
+    /// <summary>Serializer options for <see cref="Custom"/> so enums and property names match preset files and hand-edited JSON (<c>JsonStringEnumConverter</c>, case-insensitive names).</summary>
+    private static readonly JsonSerializerOptions s_customJsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true,
+        Converters = { new JsonStringEnumConverter() }
+    };
+
     /// <summary>Kind of layer (e.g. ScrollingColors, Marquee).</summary>
     public TextLayerType LayerType { get; set; } = TextLayerType.Marquee;
 
@@ -56,7 +64,7 @@ public class TextLayerSettings
 
         try
         {
-            var parsed = JsonSerializer.Deserialize<T>(value);
+            var parsed = JsonSerializer.Deserialize<T>(value, s_customJsonOptions);
             _customCache[key] = (parsed, value);
             return parsed;
         }
@@ -76,7 +84,7 @@ public class TextLayerSettings
             Custom = null;
             return;
         }
-        Custom = JsonSerializer.SerializeToElement(value);
+        Custom = JsonSerializer.SerializeToElement(value, s_customJsonOptions);
     }
 
     /// <summary>Cycles the layer's type to the next value (wraps). Includes None.</summary>

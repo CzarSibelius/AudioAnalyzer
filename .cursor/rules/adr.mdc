@@ -15,7 +15,7 @@ alwaysApply: true
 
 5. **Conflicts**: If a requested change would conflict with an accepted ADR, either update the ADR (e.g. supersede it with a new one) or align the implementation with the ADR; do not silently contradict documented decisions.
 
-6. **NuGet packages**: When adding or changing NuGet dependencies, follow [ADR-0013](docs/adr/0013-secure-nuget-packages.md) — avoid insecure or obsolete packages.
+6. **NuGet packages**: When adding or changing NuGet dependencies, follow [ADR-0013](docs/adr/0013-secure-nuget-packages.md) — avoid insecure or obsolete packages; follow [ADR-0075](docs/adr/0075-nuget-license-compatibility.md) — package licenses must be compatible with GPL-3.0-only distribution.
 
 7. **New visualizers**: Create new visualizer content as text layer renderers (inherit TextLayerRendererBase, implement ITextLayerRenderer&lt;TState&gt;) in TextLayersVisualizer, not as standalone IVisualizer implementations. See [ADR-0014](docs/adr/0014-visualizers-as-layers.md).
 
@@ -108,3 +108,7 @@ alwaysApply: true
 51. **BPM source and Ableton Link**: `AppSettings.BpmSource` selects **audio energy detection**, **Demo** timing, or **Ableton Link** (`IBeatTimingSource` / `BeatTimingRouter`). FFT/spectrum stay on the audio path; optional native `link_shim.dll`. See [ADR-0066](docs/adr/0066-bpm-source-and-ableton-link.md).
 
 52. **Menu selection affordance**: Selectable hub rows and vertical lists use **` ► `** / **`   `** plus full-width **background + foreground** from **`IUiThemeResolver.GetEffectiveUiPalette()`** (`Background` with fallback, `Highlighted`). Implement via **`MenuSelectionAffordance`** and shared settings-surface drawing. See [ADR-0069](docs/adr/0069-unified-menu-selection-affordance.md).
+
+53. **ASCII video / webcam layer**: Live video as ASCII uses **`TextLayerType.AsciiVideo`** (or the name chosen at implementation) and **`IAsciiVideoFrameSource`** in Application; Windows webcam capture lives in **`AudioAnalyzer.Platform.Windows`**; frames are not passed via `AudioAnalysisSnapshot` / `VisualizationFrameContext`. Capture off the render thread, latest-frame only, drop frames if behind. See [ADR-0074](docs/adr/0074-ascii-video-layer-and-frame-source.md).
+
+54. **Application logging**: Use configurable logging ([ADR-0076](docs/adr/0076-configurable-application-logging.md)) — MVP: persist captured exceptions to a configurable file (complements ADR-0012 viewport errors); prefer `Microsoft.Extensions.Logging` + DI; non-blocking I/O on hot paths; later: configurable Trace/Debug/Info levels and optional extra sinks; NuGet file providers must satisfy ADR-0075.

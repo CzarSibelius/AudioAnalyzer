@@ -28,6 +28,7 @@ public sealed class TextLayersVisualizer : IVisualizer
     private readonly VisualizerSettings _visualizerSettings;
     private readonly IFileSystem _fileSystem;
     private readonly IShowPlayToolbarInfo? _showPlayToolbarInfo;
+    private readonly IAsciiVideoFrameSource _asciiVideoFrameSource;
     /// <summary>Index of the layer whose palette P cycles. Updated when user presses 1–<see cref="TextLayersLimits.MaxLayerCount"/>.</summary>
     private int _paletteCycleLayerIndex;
 
@@ -41,6 +42,7 @@ public sealed class TextLayersVisualizer : IVisualizer
         ITextLayerStateStore stateStore,
         VisualizerSettings visualizerSettings,
         IFileSystem fileSystem,
+        IAsciiVideoFrameSource asciiVideoFrameSource,
         IShowPlayToolbarInfo? showPlayToolbarInfo = null,
         UiSettings? uiSettings = null,
         ITextLayerBoundsEditSession? boundsEditSession = null)
@@ -49,6 +51,7 @@ public sealed class TextLayersVisualizer : IVisualizer
         _paletteRepo = paletteRepo;
         _consoleWriter = consoleWriter;
         _fileSystem = fileSystem ?? throw new ArgumentNullException(nameof(fileSystem));
+        _asciiVideoFrameSource = asciiVideoFrameSource ?? throw new ArgumentNullException(nameof(asciiVideoFrameSource));
         _uiSettings = uiSettings ?? new UiSettings();
         _renderers = renderers.ToDictionary(r => r.LayerType);
         _keyHandler = keyHandler ?? throw new ArgumentNullException(nameof(keyHandler));
@@ -68,6 +71,7 @@ public sealed class TextLayersVisualizer : IVisualizer
     public void Render(VisualizationFrameContext frame, VisualizerViewport viewport)
     {
         var sortedLayers = TryGetSortedLayersSnapshot(_settings);
+        _asciiVideoFrameSource.PrepareForFrame(BuildAsciiVideoCaptureRequest(sortedLayers));
         if (sortedLayers is not { Count: > 0 })
         {
             frame.LayerRenderTimeMs = null;
@@ -358,6 +362,41 @@ public sealed class TextLayersVisualizer : IVisualizer
         {
             _layerStates.RemoveAt(_layerStates.Count - 1);
         }
+    }
+
+    /// <summary>Picks the frontmost enabled ASCII video layer (highest <see cref="TextLayerSettings.ZOrder"/>) and builds the capture request for <see cref="IAsciiVideoFrameSource"/>.</summary>
+    private static AsciiVideoCaptureRequest? BuildAsciiVideoCaptureRequest(List<TextLayerSettings>? sortedLayers)
+    {
+        if (sortedLayers is not { Count: > 0 })
+        {
+            return null;
+        }
+
+        TextLayerSettings? best = null;
+        int bestZ = int.MinValue;
+        foreach (TextLayerSettings layer in sortedLayers)
+        {
+            if (!layer.Enabled || layer.LayerType != TextLayerType.AsciiVideo)
+            {
+                continue;
+            }
+
+            if (layer.ZOrder >= bestZ)
+            {
+                bestZ = layer.ZOrder;
+                best = layer;
+            }
+        }
+
+        if (best == null)
+        {
+            return null;
+        }
+
+        var custom = best.GetCustom<AsciiVideoSettings>() ?? new AsciiVideoSettings();
+        int? maxW = custom.MaxCaptureWidth > 0 ? custom.MaxCaptureWidth : null;
+        int? maxH = custom.MaxCaptureHeight > 0 ? custom.MaxCaptureHeight : null;
+        return new AsciiVideoCaptureRequest(custom.SourceKind, custom.WebcamDeviceIndex, maxW, maxH);
     }
 
     /// <summary>Gets a snapshot of layers sorted by ZOrder, or null if config is empty or the collection was modified during copy (e.g. during show-mode switch or shutdown).</summary>

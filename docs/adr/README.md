@@ -89,6 +89,9 @@ Decisions are numbered and kept under version control so the rationale stays wit
 | [0071](0071-ui-themes-separate-from-palettes.md) | UI themes in `themes/*.json`, `UiThemeId`, authoring modal, `IUiThemeRepository` | Accepted |
 | [0072](0072-delta-time-display-animation.md) | Delta-time animation and scrolling (reference 60 Hz), `FrameDeltaSeconds`, `IDisplayFrameClock` | Accepted |
 | [0073](0073-layer-render-time-overlay.md) | Per-layer `Draw` timing in S modal, `LayerRenderTimeMs`, `ShowLayerRenderTime`, orchestrator merge for `GetFrameForUi` | Accepted |
+| [0074](0074-ascii-video-layer-and-frame-source.md) | ASCII video layer — `IAsciiVideoFrameSource`, webcam first in Platform.Windows, threading and lifecycle | Accepted |
+| [0075](0075-nuget-license-compatibility.md) | NuGet packages — license compatible with GPL-3.0-only distribution | Accepted |
+| [0076](0076-configurable-application-logging.md) | Configurable application logging — file exceptions first, extensible levels | Accepted |
 
 ## Process
 

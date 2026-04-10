@@ -2,6 +2,8 @@
 
 **Project root**: file-based repositories (`FilePresetRepository`, `FileSettingsRepository`, `FilePaletteRepository`, `FileShowRepository`, `FileUiThemeRepository`), NAudio-backed audio input (`NAudioAudioInput`, `NAudioDeviceInfo`), synthetic/demo audio (`SyntheticAudioInput`), and similar adapters that are not grouped under a dedicated subfolder yet.
 
+**`Logging/`**: `Microsoft.Extensions.Logging` file provider (`BackgroundFileLoggerProvider`, background writer) per ADR-0076.
+
 **`NowPlaying/`**: `NullNowPlayingProvider` and other infrastructure implementations of now-playing that live in this assembly.
 
 ## Optional future layout (not required)

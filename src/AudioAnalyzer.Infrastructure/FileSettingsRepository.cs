@@ -188,7 +188,23 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
             BeatCircles = file.BeatCircles,
             OscilloscopeGain = file.OscilloscopeGain,
             SelectedPaletteId = file.SelectedPaletteId,
-            UiSettings = MapToUiSettings(file.UiSettings)
+            UiSettings = MapToUiSettings(file.UiSettings),
+            Logging = MapLogging(file.Logging)
+        };
+    }
+
+    private static AppLoggingSettings MapLogging(LoggingFileDto? file)
+    {
+        if (file == null)
+        {
+            return new AppLoggingSettings();
+        }
+
+        return new AppLoggingSettings
+        {
+            Enabled = file.Enabled,
+            FilePath = string.IsNullOrWhiteSpace(file.FilePath) ? null : file.FilePath.Trim(),
+            MinimumLevel = string.IsNullOrWhiteSpace(file.MinimumLevel) ? "Error" : file.MinimumLevel.Trim()
         };
     }
 
@@ -203,6 +219,18 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
         file.OscilloscopeGain = settings.OscilloscopeGain;
         file.SelectedPaletteId = settings.SelectedPaletteId;
         file.UiSettings = MapToUiSettingsFile(settings.UiSettings);
+        file.Logging = MapToLoggingFile(settings.Logging);
+    }
+
+    private static LoggingFileDto MapToLoggingFile(AppLoggingSettings settings)
+    {
+        ArgumentNullException.ThrowIfNull(settings);
+        return new LoggingFileDto
+        {
+            Enabled = settings.Enabled,
+            FilePath = string.IsNullOrWhiteSpace(settings.FilePath) ? null : settings.FilePath.Trim(),
+            MinimumLevel = string.IsNullOrWhiteSpace(settings.MinimumLevel) ? null : settings.MinimumLevel.Trim()
+        };
     }
 
     private static UiSettings MapToUiSettings(UiSettingsFile? file)
@@ -301,6 +329,15 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
         public string? SelectedPaletteId { get; set; }
         public VisualizerSettings? VisualizerSettings { get; set; }
         public UiSettingsFile? UiSettings { get; set; }
+        public LoggingFileDto? Logging { get; set; }
+    }
+
+    /// <summary>JSON DTO for <see cref="AppLoggingSettings"/>.</summary>
+    private sealed class LoggingFileDto
+    {
+        public bool Enabled { get; set; }
+        public string? FilePath { get; set; }
+        public string? MinimumLevel { get; set; }
     }
 
     /// <summary>JSON DTO for UiSettings persistence.</summary>

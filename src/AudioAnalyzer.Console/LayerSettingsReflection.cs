@@ -43,7 +43,8 @@ internal sealed class SettingDescriptor
 
     public static IReadOnlyList<SettingDescriptor> BuildAll(
         TextLayerSettings layer,
-        IPaletteRepository paletteRepo)
+        IPaletteRepository paletteRepo,
+        IAsciiVideoDeviceCatalog? asciiVideoDeviceCatalog = null)
     {
         var list = new List<SettingDescriptor>();
 
@@ -52,7 +53,7 @@ internal sealed class SettingDescriptor
 
         if (s_customSettingsRegistry.TryGetValue(layer.LayerType, out var customType) && customType != null)
         {
-            AddCustomDescriptors(list, layer, customType);
+            AddCustomDescriptors(list, layer, customType, asciiVideoDeviceCatalog);
         }
 
         return list;
@@ -163,6 +164,7 @@ internal sealed class SettingDescriptor
     private static readonly Dictionary<TextLayerType, Type?> s_customSettingsRegistry = new()
     {
         [TextLayerType.AsciiImage] = typeof(AsciiImageSettings),
+        [TextLayerType.AsciiVideo] = typeof(AsciiVideoSettings),
         [TextLayerType.AsciiModel] = typeof(AsciiModelSettings),
         [TextLayerType.Oscilloscope] = typeof(OscilloscopeSettings),
         [TextLayerType.LlamaStyle] = typeof(LlamaStyleSettings),
@@ -180,7 +182,11 @@ internal sealed class SettingDescriptor
         [TextLayerType.FallingLetters] = typeof(FallingLettersSettings),
     };
 
-    private static void AddCustomDescriptors(List<SettingDescriptor> list, TextLayerSettings layer, Type customType)
+    private static void AddCustomDescriptors(
+        List<SettingDescriptor> list,
+        TextLayerSettings layer,
+        Type customType,
+        IAsciiVideoDeviceCatalog? asciiVideoDeviceCatalog)
     {
         var props = customType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
             .Where(p => p.CanRead && p.CanWrite && p.GetIndexParameters().Length == 0
@@ -189,6 +195,12 @@ internal sealed class SettingDescriptor
 
         foreach (var prop in props)
         {
+            if (customType == typeof(AsciiVideoSettings) && prop.Name == "WebcamDeviceIndex")
+            {
+                list.Add(CreateAsciiVideoWebcamDeviceDescriptor(prop, asciiVideoDeviceCatalog));
+                continue;
+            }
+
             var attr = prop.GetCustomAttribute<SettingAttribute>();
             var id = attr?.Id ?? prop.Name;
             var label = attr?.Label ?? PascalToLabel(prop.Name);
@@ -198,6 +210,65 @@ internal sealed class SettingDescriptor
             var cycle = CreateCustomCycle(prop, customType, layer);
             list.Add(new SettingDescriptor(id, label, editMode, getDisplay, apply, cycle));
         }
+    }
+
+    private static SettingDescriptor CreateAsciiVideoWebcamDeviceDescriptor(
+        PropertyInfo prop,
+        IAsciiVideoDeviceCatalog? catalog)
+    {
+        var attr = prop.GetCustomAttribute<SettingAttribute>();
+        var id = attr?.Id ?? prop.Name;
+        var label = attr?.Label ?? PascalToLabel(prop.Name);
+        var range = prop.GetCustomAttribute<SettingRangeAttribute>();
+
+        Func<TextLayerSettings, string> getDisplay = l =>
+        {
+            var obj = GetAsciiVideoSettings(l);
+            int idx = obj.WebcamDeviceIndex;
+            IReadOnlyList<AsciiVideoDeviceEntry> devices = catalog?.GetDevices() ?? Array.Empty<AsciiVideoDeviceEntry>();
+            if (devices.Count == 0)
+            {
+                return idx.ToString(CultureInfo.InvariantCulture);
+            }
+
+            int r = ((idx % devices.Count) + devices.Count) % devices.Count;
+            string name = devices[r].DisplayName;
+            return string.Format(CultureInfo.InvariantCulture, "{0} · {1}", idx, name);
+        };
+
+        Action<TextLayerSettings, string>? apply = CreateCustomApply(prop, typeof(AsciiVideoSettings), null!);
+
+        Action<TextLayerSettings, bool> cycle = (l, forward) =>
+        {
+            var obj = GetAsciiVideoSettings(l);
+            IReadOnlyList<AsciiVideoDeviceEntry> devices = catalog?.GetDevices() ?? Array.Empty<AsciiVideoDeviceEntry>();
+            if (devices.Count == 0)
+            {
+                if (range == null)
+                {
+                    return;
+                }
+
+                double val = obj.WebcamDeviceIndex;
+                val = forward ? Math.Min(range.Max, val + range.Step) : Math.Max(range.Min, val - range.Step);
+                obj.WebcamDeviceIndex = (int)Math.Round(val);
+                InvokeSetCustom(l, typeof(AsciiVideoSettings), obj);
+                return;
+            }
+
+            int n = devices.Count;
+            int resolved = ((obj.WebcamDeviceIndex % n) + n) % n;
+            int next = forward ? (resolved + 1) % n : (resolved - 1 + n) % n;
+            obj.WebcamDeviceIndex = next;
+            InvokeSetCustom(l, typeof(AsciiVideoSettings), obj);
+        };
+
+        return new SettingDescriptor(id, label, SettingEditMode.Cycle, getDisplay, apply, cycle);
+    }
+
+    private static AsciiVideoSettings GetAsciiVideoSettings(TextLayerSettings layer)
+    {
+        return (AsciiVideoSettings?)InvokeGetCustom(layer, typeof(AsciiVideoSettings)) ?? new AsciiVideoSettings();
     }
 
     private static SettingEditMode DeriveEditMode(Type propType, PropertyInfo prop)

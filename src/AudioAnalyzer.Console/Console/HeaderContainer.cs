@@ -2,11 +2,12 @@ using AudioAnalyzer.Application;
 using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Application.Display;
 using AudioAnalyzer.Domain;
+using Microsoft.Extensions.Logging;
 
 namespace AudioAnalyzer.Console;
 
 /// <summary>Header region: title bar; in Preset/Show modes also device/now and BPM/beat/volume rows. In General settings, only the title breadcrumb row. Implements <see cref="IUiComponent"/> and composes child <see cref="IUiComponent"/>s; renders via <see cref="IUiComponentRenderer{TComponent}"/>.</summary>
-internal sealed class HeaderContainer : IHeaderContainer, IUiComponent
+internal sealed partial class HeaderContainer : IHeaderContainer, IUiComponent
 {
     private readonly IUiComponentRenderer<IUiComponent> _componentRenderer;
     private readonly IUiStateUpdater<IUiComponent> _stateUpdater;
@@ -18,6 +19,7 @@ internal sealed class HeaderContainer : IHeaderContainer, IUiComponent
     private readonly ITitleBarContentProvider _titleBarContentProvider;
     private readonly IApplicationModeFactory _applicationModeFactory;
     private readonly IDisplayFrameClock _displayFrameClock;
+    private readonly ILogger<HeaderContainer> _logger;
 
     private readonly HorizontalRowComponent _titleRow;
     private readonly HorizontalRowComponent _row2;
@@ -41,7 +43,8 @@ internal sealed class HeaderContainer : IHeaderContainer, IUiComponent
         IUiThemeResolver uiThemeResolver,
         ITitleBarContentProvider titleBarContentProvider,
         IApplicationModeFactory applicationModeFactory,
-        IDisplayFrameClock displayFrameClock)
+        IDisplayFrameClock displayFrameClock,
+        ILogger<HeaderContainer> logger)
     {
         _componentRenderer = componentRenderer ?? throw new ArgumentNullException(nameof(componentRenderer));
         _stateUpdater = stateUpdater ?? throw new ArgumentNullException(nameof(stateUpdater));
@@ -53,6 +56,7 @@ internal sealed class HeaderContainer : IHeaderContainer, IUiComponent
         _titleBarContentProvider = titleBarContentProvider ?? throw new ArgumentNullException(nameof(titleBarContentProvider));
         _applicationModeFactory = applicationModeFactory ?? throw new ArgumentNullException(nameof(applicationModeFactory));
         _displayFrameClock = displayFrameClock ?? throw new ArgumentNullException(nameof(displayFrameClock));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
         _titleRow = new HorizontalRowComponent();
         _row2 = new HorizontalRowComponent();
@@ -77,7 +81,7 @@ internal sealed class HeaderContainer : IHeaderContainer, IUiComponent
         }
         catch (Exception ex)
         {
-            _ = ex; /* Buffer size not supported: swallow to avoid crash */
+            LogConsoleBufferResizeFailed(ex);
         }
 
         System.Console.Clear();
@@ -186,4 +190,7 @@ internal sealed class HeaderContainer : IHeaderContainer, IUiComponent
         }
         return [a, b, Math.Max(1, c)];
     }
+
+    [LoggerMessage(EventId = 7610, Level = LogLevel.Warning, Message = "Console buffer resize not supported or failed")]
+    private partial void LogConsoleBufferResizeFailed(Exception ex);
 }

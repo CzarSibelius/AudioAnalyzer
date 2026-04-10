@@ -8,6 +8,12 @@ internal sealed class ServiceConfigurationOptions
 {
     public IDisplayDimensions? DisplayDimensions { get; init; }
     public INowPlayingProvider? NowPlayingProvider { get; init; }
+
+    /// <summary>Override ASCII video frame source for tests (e.g. fake frames without a camera).</summary>
+    public IAsciiVideoFrameSource? AsciiVideoFrameSource { get; init; }
+
+    /// <summary>Override webcam device list for tests (S modal display names).</summary>
+    public IAsciiVideoDeviceCatalog? AsciiVideoDeviceCatalog { get; init; }
     public IPaletteRepository? PaletteRepository { get; init; }
     /// <summary>File system for repositories (e.g. MockFileSystem for tests). When null, uses the real file system.</summary>
     public IFileSystem? FileSystem { get; init; }

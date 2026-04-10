@@ -5,6 +5,7 @@ using AudioAnalyzer.Domain;
 using AudioAnalyzer.Infrastructure;
 using AudioAnalyzer.Visualizers;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 // Parse CLI for screen-dump automation
 int? dumpAfterSeconds = null;
@@ -65,5 +66,8 @@ if (initialName == "")
 var shell = provider.GetRequiredService<ApplicationShell>();
 var engine = provider.GetRequiredService<AnalysisEngine>();
 engine.BeatSensitivity = settings.BeatSensitivity;
+
+ILoggerFactory loggerFactory = provider.GetRequiredService<ILoggerFactory>();
+StartupLogging.LogApplicationStarted(loggerFactory.CreateLogger("AudioAnalyzer"));
 
 shell.Run(initialDeviceId, initialName, dumpAfterSeconds, dumpPath);

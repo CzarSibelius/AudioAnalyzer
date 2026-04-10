@@ -19,6 +19,7 @@ The first row is the visualizer; the rest are **layer types** within it. Press *
 | Layer (deprecated) | geiss | Geiss | [geiss.md](geiss.md) | Removed; use GeissBackground and BeatCircles layers |
 | Layer | unknownpleasures | Unknown Pleasures | [unknown-pleasures.md](unknown-pleasures.md) | Stacked waveform snapshots, beat-triggered |
 | Layer | asciiimage | ASCII Image | [ascii-image.md](ascii-image.md) | Images as ASCII art from folder; scroll/zoom; layer palette or image colors |
+| Layer | asciivideo | ASCII Video | [ascii-video.md](ascii-video.md) | Live webcam as ASCII (Windows); `IAsciiVideoFrameSource`; frontmost layer selects device |
 | Layer | asciimodel | ASCII Model | [ascii-model.md](ascii-model.md) | Wavefront OBJ as shaded ASCII; rotation, optional zoom; folder of models |
 | Layer | mirror | Mirror | [mirror.md](mirror.md) | Mirrors buffer horizontally or vertically (direction, split %, rotation); place above layers to mirror |
 | Layer | maschine | Maschine | [maschine.md](maschine.md) | Beat-enabled diagonal text cascade from configurable snippets; aligned diagonal uses accent color; loops after one line per character |

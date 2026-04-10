@@ -129,6 +129,7 @@ internal static class TestHelpers
         {
             DisplayDimensions = new FixedDisplayDimensions(80, 24),
             NowPlayingProvider = new NullNowPlayingProvider(),
+            AsciiVideoFrameSource = new FakeAsciiVideoFrameSource(),
             PaletteRepository = paletteRepo,
             FileSystem = fileSystem,
             ShowsDirectory = ShowsPath,

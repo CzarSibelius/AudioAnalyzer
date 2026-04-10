@@ -11,10 +11,12 @@ internal sealed class SettingsModalKeyHandlerConfig : IKeyHandlerConfig<Settings
     private const int NavKeyRepeatMs = 120;
     private const string Section = "Preset settings modal (S)";
     private readonly IPaletteRepository _paletteRepo;
+    private readonly IAsciiVideoDeviceCatalog _asciiVideoDeviceCatalog;
 
-    public SettingsModalKeyHandlerConfig(IPaletteRepository paletteRepo)
+    public SettingsModalKeyHandlerConfig(IPaletteRepository paletteRepo, IAsciiVideoDeviceCatalog asciiVideoDeviceCatalog)
     {
         _paletteRepo = paletteRepo ?? throw new ArgumentNullException(nameof(paletteRepo));
+        _asciiVideoDeviceCatalog = asciiVideoDeviceCatalog ?? throw new ArgumentNullException(nameof(asciiVideoDeviceCatalog));
     }
 
     private static IReadOnlyList<KeyHandling.KeyBindingEntry<SettingsModalKeyContext>> GetLayerListEntries()
@@ -695,20 +697,20 @@ internal sealed class SettingsModalKeyHandlerConfig : IKeyHandlerConfig<Settings
 
     private List<(string Id, string Label, string DisplayValue, SettingEditMode EditMode)> GetSettingsRows(TextLayerSettings layer)
     {
-        var descriptors = SettingDescriptor.BuildAll(layer, _paletteRepo);
+        var descriptors = SettingDescriptor.BuildAll(layer, _paletteRepo, _asciiVideoDeviceCatalog);
         return descriptors.Select(d => (d.Id, d.Label, d.GetDisplayValue(layer), d.EditMode)).ToList();
     }
 
     private void ApplySettingEdit(TextLayerSettings layer, string settingId, string value)
     {
-        var descriptors = SettingDescriptor.BuildAll(layer, _paletteRepo);
+        var descriptors = SettingDescriptor.BuildAll(layer, _paletteRepo, _asciiVideoDeviceCatalog);
         var d = descriptors.FirstOrDefault(x => x.Id == settingId);
         d?.ApplyEdit(layer, value);
     }
 
     private void CycleSetting(TextLayerSettings layer, string id, bool forward)
     {
-        var descriptors = SettingDescriptor.BuildAll(layer, _paletteRepo);
+        var descriptors = SettingDescriptor.BuildAll(layer, _paletteRepo, _asciiVideoDeviceCatalog);
         var d = descriptors.FirstOrDefault(x => x.Id == id);
         d?.Cycle(layer, forward);
     }

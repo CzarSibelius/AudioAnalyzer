@@ -3,6 +3,7 @@ using AudioAnalyzer.Application;
 using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Application.Display;
 using AudioAnalyzer.Domain;
+using Microsoft.Extensions.Logging;
 
 namespace AudioAnalyzer.Console;
 
@@ -17,7 +18,7 @@ namespace AudioAnalyzer.Console;
 /// <see cref="ApplicationShell"/> drives display cadence by calling <see cref="Redraw"/> / <see cref="RedrawWithFullHeader"/>
 /// each main-loop tick and on user events. The orchestrator does not decide app logic.</para>
 /// </remarks>
-internal sealed class VisualizationOrchestrator : IVisualizationOrchestrator
+internal sealed partial class VisualizationOrchestrator : IVisualizationOrchestrator
 {
     private const int MinWidth = 30;
     private const int MinHeight = 15;
@@ -40,6 +41,7 @@ internal sealed class VisualizationOrchestrator : IVisualizationOrchestrator
     private readonly UiSettings _uiSettings;
     private readonly MainRenderFpsMeter _fpsMeter;
     private readonly IDisplayFrameClock _displayFrameClock;
+    private readonly ILogger<VisualizationOrchestrator> _logger;
     private long _lastFrameTimestampTicks;
     private bool _hasFrameTimestamp;
     private double?[]? _cachedLayerRenderTimeMsForUi;
@@ -52,7 +54,8 @@ internal sealed class VisualizationOrchestrator : IVisualizationOrchestrator
         IApplicationModeHeaderProvider headerLayout,
         UiSettings uiSettings,
         MainRenderFpsMeter fpsMeter,
-        IDisplayFrameClock displayFrameClock)
+        IDisplayFrameClock displayFrameClock,
+        ILogger<VisualizationOrchestrator> logger)
     {
         _engine = engine ?? throw new ArgumentNullException(nameof(engine));
         _renderer = renderer ?? throw new ArgumentNullException(nameof(renderer));
@@ -62,6 +65,7 @@ internal sealed class VisualizationOrchestrator : IVisualizationOrchestrator
         _uiSettings = uiSettings ?? throw new ArgumentNullException(nameof(uiSettings));
         _fpsMeter = fpsMeter ?? throw new ArgumentNullException(nameof(fpsMeter));
         _displayFrameClock = displayFrameClock ?? throw new ArgumentNullException(nameof(displayFrameClock));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _displayState.Changed += (_, _) => UpdateDisplayStartRow();
         UpdateNumBandsFromDimensions();
     }
@@ -274,7 +278,7 @@ internal sealed class VisualizationOrchestrator : IVisualizationOrchestrator
             catch (Exception ex)
             {
                 _cachedLayerRenderTimeMsForUi = null;
-                _ = ex; /* Render failed: swallow to avoid crash */
+                LogVisualizationRenderFrameFailed(ex);
             }
         }
 
@@ -326,4 +330,7 @@ internal sealed class VisualizationOrchestrator : IVisualizationOrchestrator
         _lastTerminalWidth = w;
         _lastTerminalHeight = h;
     }
+
+    [LoggerMessage(EventId = 7630, Level = LogLevel.Error, Message = "Visualization render frame failed")]
+    private partial void LogVisualizationRenderFrameFailed(Exception ex);
 }
