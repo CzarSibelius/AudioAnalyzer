@@ -4,7 +4,7 @@
 
 This project is licensed under the **GNU General Public License v3.0 only** — see [LICENSE](LICENSE).
 
-The picture is drawn as **stacked text layers** in the terminal: oscilloscope, spectrum-style bars, fractal zoom, plasma-style backgrounds, fill and blend effects, marquee text, ASCII images and 3D OBJ models, and more. You switch **presets** (layer stacks and palettes) from the keyboard and can chain presets into **shows** for timed or beat-based playback.
+The picture is drawn as **stacked text layers** in the terminal: oscilloscope, spectrum-style bars, fractal zoom, plasma-style backgrounds, fill and blend effects, marquee text, ASCII images, **ASCII webcam video** (Windows), 3D OBJ models, and more. You switch **presets** (layer stacks and palettes) from the keyboard and can chain presets into **shows** for timed or beat-based playback.
 
 ## What you need
 
@@ -45,7 +45,7 @@ For bug reports or sharing what you see: press **Ctrl+Shift+E** to write a plain
 - **Audio**: Loopback, device capture, or Demo Mode; settings are saved when you change them.
 - **Layers & presets**: Up to nine layers per preset (fewer if you remove layers); add or remove layers with **Insert** / **Delete** in the **S** modal layer list; edit layer options there when in Preset editor.
 - **Shows**: Optional auto-cycling through presets (see **Tab** in the app help).
-- **Files next to the app**: `presets/`, `shows/`, `palettes/`, `themes/` (UI chrome themes), optional `**link_shim.dll`** for Ableton Link, and `appsettings.json` are documented in [docs/configuration-reference.md](docs/configuration-reference.md).
+- **Files next to the app**: `presets/`, `shows/`, `palettes/`, `themes/` (UI chrome themes), optional `**link_shim.dll`** for Ableton Link, and `appsettings.json` are documented in [docs/configuration-reference.md](docs/configuration-reference.md). Optional **file logging** (`Logging` in `appsettings.json`, off by default) records errors from the display pipeline to a log file for troubleshooting.
 
 ## License
 
