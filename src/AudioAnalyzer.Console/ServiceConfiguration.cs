@@ -110,6 +110,7 @@ internal static class ServiceConfiguration
         services.AddSingleton<ITextLayerStateStore<UnknownPleasuresState>>(sp => sp.GetRequiredService<TextLayerStateStore>());
         services.AddSingleton<ITextLayerStateStore<MaschineState>>(sp => sp.GetRequiredService<TextLayerStateStore>());
         services.AddSingleton<ITextLayerStateStore<AsciiVideoState>>(sp => sp.GetRequiredService<TextLayerStateStore>());
+        services.AddSingleton<ITextLayerStateStore<BufferDistortionState>>(sp => sp.GetRequiredService<TextLayerStateStore>());
         services.AddTextLayerRenderers();
 
         services.AddSingleton<IConsoleWriter, ConsoleWriter>();

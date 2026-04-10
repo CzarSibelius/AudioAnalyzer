@@ -22,6 +22,7 @@ The first row is the visualizer; the rest are **layer types** within it. Press *
 | Layer | asciivideo | ASCII Video | [ascii-video.md](ascii-video.md) | Live webcam as ASCII (Windows); `IAsciiVideoFrameSource`; frontmost layer selects device |
 | Layer | asciimodel | ASCII Model | [ascii-model.md](ascii-model.md) | Wavefront OBJ as shaded ASCII; rotation, optional zoom; folder of models |
 | Layer | mirror | Mirror | [mirror.md](mirror.md) | Mirrors buffer horizontally or vertically (direction, split %, rotation); place above layers to mirror |
+| Layer | bufferdistortion | Buffer distortion | [buffer-distortion.md](buffer-distortion.md) | Snapshots buffer below and redraws with plane waves or beat-spawned ripples; optional RenderBounds for cost |
 | Layer | maschine | Maschine | [maschine.md](maschine.md) | Beat-enabled diagonal text cascade from configurable snippets; aligned diagonal uses accent color; loops after one line per character |
 | Layer | fill | Fill | [fill.md](fill.md) | Full-viewport fill with configured color and fill character (block, shades, space, or custom ASCII) |
 | Layer | fractalzoom | Fractal zoom | [fractal-zoom.md](fractal-zoom.md) | Mandelbrot/Julia escape-time fractal with continuous zoom animation (performance-oriented) |

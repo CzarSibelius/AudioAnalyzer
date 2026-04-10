@@ -170,6 +170,7 @@ internal sealed class SettingDescriptor
         [TextLayerType.LlamaStyle] = typeof(LlamaStyleSettings),
         [TextLayerType.NowPlaying] = typeof(NowPlayingSettings),
         [TextLayerType.Mirror] = typeof(MirrorSettings),
+        [TextLayerType.BufferDistortion] = typeof(BufferDistortionSettings),
         [TextLayerType.Maschine] = typeof(MaschineSettings),
         [TextLayerType.Fill] = typeof(FillSettings),
         [TextLayerType.ScrollingColors] = typeof(ScrollingColorsSettings),

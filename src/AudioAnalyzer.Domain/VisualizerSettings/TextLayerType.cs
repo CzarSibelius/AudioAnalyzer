@@ -23,5 +23,6 @@ public enum TextLayerType
     Mirror,
     Maschine,
     Fill,
+    BufferDistortion,
     AsciiVideo
 }

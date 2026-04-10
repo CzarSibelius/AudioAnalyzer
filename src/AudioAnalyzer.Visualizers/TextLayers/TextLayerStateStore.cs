@@ -10,7 +10,8 @@ public sealed class TextLayerStateStore
       ITextLayerStateStore<BeatCirclesState>,
       ITextLayerStateStore<UnknownPleasuresState>,
       ITextLayerStateStore<MaschineState>,
-      ITextLayerStateStore<AsciiModelState>
+      ITextLayerStateStore<AsciiModelState>,
+      ITextLayerStateStore<BufferDistortionState>
 {
     private readonly List<object?> _stateByLayer = new();
 
@@ -67,6 +68,9 @@ public sealed class TextLayerStateStore
 
     AsciiModelState ITextLayerStateStore<AsciiModelState>.GetState(int layerIndex) => GetOrCreate<AsciiModelState>(layerIndex);
     void ITextLayerStateStore<AsciiModelState>.SetState(int layerIndex, AsciiModelState state) => Set(layerIndex, state);
+
+    BufferDistortionState ITextLayerStateStore<BufferDistortionState>.GetState(int layerIndex) => GetOrCreate<BufferDistortionState>(layerIndex);
+    void ITextLayerStateStore<BufferDistortionState>.SetState(int layerIndex, BufferDistortionState state) => Set(layerIndex, state);
 
     private T GetOrCreate<T>(int layerIndex) where T : new()
     {

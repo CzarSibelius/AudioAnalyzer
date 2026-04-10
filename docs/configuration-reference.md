@@ -44,6 +44,28 @@ Example (`presets/preset-1.json`):
 
 For **Palette source**, use `"LayerPalette"` or `"ImageColors"` (or `0` / `1`). Use `0` for **MaxCaptureWidth** / **MaxCaptureHeight** when no resolution cap is desired. **`File`** is reserved for a future source; it is not implemented yet. Details: [visualizers/ascii-video.md](visualizers/ascii-video.md).
 
+**BufferDistortion layer `Custom` example** (inside one object in `Layers` with `"LayerType": "BufferDistortion"`; place the layer **above** content to warp):
+
+```json
+"Custom": {
+  "Mode": "PlaneWaves",
+  "PlaneOrientation": "WaveAlongX",
+  "PlaneAmplitudeCells": 2,
+  "PlaneWavelengthCells": 14,
+  "PlanePhaseSpeed": 1.2,
+  "SpawnOnBeat": true,
+  "MaxRipples": 8,
+  "RippleWaveNumber": 0.9,
+  "RippleTimeSpeed": 4.0,
+  "RippleAmplitudeCells": 2,
+  "RippleDecayPerSecond": 0.45,
+  "RippleMaxAgeSeconds": 4.0,
+  "MaxDisplacementCells": 6
+}
+```
+
+Use `"Mode": "DropRipples"` for beat-spawned radial ripples (still set plane fields if you switch modes in the S modal). Details: [visualizers/buffer-distortion.md](visualizers/buffer-distortion.md).
+
 ## Shows (JSON files)
 
 Shows are stored as **JSON files** in a **`shows`** directory next to the executable. A Show is an ordered collection of presets with per-entry duration. Press **Tab** to switch to Show play; **S** in Show play to edit (add/remove entries, set duration). Duration can be in **Seconds** (wall-clock) or **Beats** (at the current BPM from the active **BPM source** — audio, demo, or Link).
