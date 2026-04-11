@@ -4,6 +4,10 @@
 
 This spec follows [ui-spec-format.md](ui-spec-format.md). Show play uses the **same four-line Toolbar** as Preset editor for screen lines **1–4** ([ui-spec-toolbar.md](ui-spec-toolbar.md), [ADR-0062](adr/0062-application-mode-classes.md)). Line 4 is the compact TextLayers row: **Show** (name), **Entry** (current index / count), optional contextual fields, **Palette** — see `TextLayersToolbarBuilder.BuildShowPlayViewports` in the Application project. The title breadcrumb uses mode segment **`sHow`** (Hackerized “Show”) and the **active preset** name from the current Show entry (`TitleBarBreadcrumbFormatter`). Regenerate the screenshot from a screen dump when a console is available ([ADR-0046](adr/0046-screen-dump-ascii-screenshot.md)).
 
+### Fullscreen (F)
+
+Same behavior as Preset editor: **F** toggles visualizer fullscreen; **S** (Show edit) uses an overlay with the visualizer drawn below. `AllowsVisualizerFullscreen` on [`ShowPlayApplicationMode`](../src/AudioAnalyzer.Console/ShowPlayApplicationMode.cs). See [ui-spec-fullscreen-visualizer.md](ui-spec-fullscreen-visualizer.md).
+
 ## Screenshot
 
 ```text

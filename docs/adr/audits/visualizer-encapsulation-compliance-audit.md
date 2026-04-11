@@ -6,17 +6,19 @@ This document records how the codebase aligns with [ADR-0004: Visualizer encapsu
 
 After the refactor described in "Recommended direction" below:
 
-| Area | Status | Notes |
-|------|--------|--------|
-| Renderer: concrete visualizer reference | **OK** | No concrete type held; all visualizers accessed via `IVisualizer` |
-| Renderer: visualizer-specific API | **OK** | `SetShowBeatCircles` / `GetShowBeatCircles` removed; palette is `SetPalette` on interface |
-| Renderer: toolbar branch on mode | **OK** | Toolbar uses `IVisualizer.GetToolbarSuffix(snapshot)`; Oscilloscope returns gain line |
-| Renderer: palette method name | **OK** | `SetPalette` on `IVisualizationRenderer`; snapshot `Palette` |
-| Console: concrete renderer + visualizer-specific calls | **OK** | Resolves only `IVisualizationRenderer`; beat circles/gain via engine |
-| Application (engine): capability-based property names | **OK** | `WaveformGain`, `ShowBeatCircles`; snapshot filled by engine |
-| Snapshot: capability-based property names | **OK** | `Palette`, `WaveformGain`, `ShowBeatCircles` |
-| Settings / repository | **OK** | Per-visualizer settings (ADR-0002); persistence only |
-| Help text (mode descriptions) | **OK** | Uses interface; enum switch is documentation only |
+
+| Area                                                   | Status | Notes                                                                                     |
+| ------------------------------------------------------ | ------ | ----------------------------------------------------------------------------------------- |
+| Renderer: concrete visualizer reference                | **OK** | No concrete type held; all visualizers accessed via `IVisualizer`                         |
+| Renderer: visualizer-specific API                      | **OK** | `SetShowBeatCircles` / `GetShowBeatCircles` removed; palette is `SetPalette` on interface |
+| Renderer: toolbar branch on mode                       | **OK** | Toolbar uses `IVisualizer.GetToolbarSuffix(snapshot)`; Oscilloscope returns gain line     |
+| Renderer: palette method name                          | **OK** | `SetPalette` on `IVisualizationRenderer`; snapshot `Palette`                              |
+| Console: concrete renderer + visualizer-specific calls | **OK** | Resolves only `IVisualizationRenderer`; beat circles/gain via engine                      |
+| Application (engine): capability-based property names  | **OK** | `WaveformGain`, `ShowBeatCircles`; snapshot filled by engine                              |
+| Snapshot: capability-based property names              | **OK** | `Palette`, `WaveformGain`, `ShowBeatCircles`                                              |
+| Settings / repository                                  | **OK** | Per-visualizer settings (ADR-0002); persistence only                                      |
+| Help text (mode descriptions)                          | **OK** | Uses interface; enum switch is documentation only                                         |
+
 
 ---
 
@@ -26,17 +28,19 @@ The following sections described the state **before** the refactor. They are kep
 
 ### Original summary table
 
-| Area | Status | Notes |
-|------|--------|--------|
-| Renderer: concrete visualizer reference | **Violation** | `_geissVisualizer` held for beat circles |
-| Renderer: visualizer-specific API | **Violation** | `SetShowBeatCircles` / `GetShowBeatCircles` |
-| Renderer: toolbar branch on mode | **Violation** | `mode == VisualizationMode.Oscilloscope` for Gain line |
-| Renderer: palette method name | **Partial** | `SetUnknownPleasuresPalette` is visualizer-specific naming |
-| Console: concrete renderer + visualizer-specific calls | **Violation** | Uses `VisualizationPaneLayout` and Geiss/Oscilloscope/palette APIs |
-| Application (engine): Oscilloscope-named property | **Violation** | `OscilloscopeGain` on engine and snapshot |
-| Snapshot: visualizer-specific property names | **Partial** | `UnknownPleasuresPalette`, `OscilloscopeGain` |
-| Settings / repository | **OK** | Per-visualizer settings (ADR-0002); no logic tied to internals |
-| Help text (mode descriptions) | **OK** | Uses interface (`GetDisplayName`, `SupportsPaletteCycling`); enum switch is documentation only |
+
+| Area                                                   | Status        | Notes                                                                                          |
+| ------------------------------------------------------ | ------------- | ---------------------------------------------------------------------------------------------- |
+| Renderer: concrete visualizer reference                | **Violation** | `_geissVisualizer` held for beat circles                                                       |
+| Renderer: visualizer-specific API                      | **Violation** | `SetShowBeatCircles` / `GetShowBeatCircles`                                                    |
+| Renderer: toolbar branch on mode                       | **Violation** | `mode == VisualizationMode.Oscilloscope` for Gain line                                         |
+| Renderer: palette method name                          | **Partial**   | `SetUnknownPleasuresPalette` is visualizer-specific naming                                     |
+| Console: concrete renderer + visualizer-specific calls | **Violation** | Uses `VisualizationPaneLayout` and Geiss/Oscilloscope/palette APIs                             |
+| Application (engine): Oscilloscope-named property      | **Violation** | `OscilloscopeGain` on engine and snapshot                                                      |
+| Snapshot: visualizer-specific property names           | **Partial**   | `UnknownPleasuresPalette`, `OscilloscopeGain`                                                  |
+| Settings / repository                                  | **OK**        | Per-visualizer settings (ADR-0002); no logic tied to internals                                 |
+| Help text (mode descriptions)                          | **OK**        | Uses interface (`GetDisplayName`, `SupportsPaletteCycling`); enum switch is documentation only |
+
 
 ---
 
@@ -132,3 +136,4 @@ The following changes were implemented to align with ADR-0004:
 3. **Palette**: `IVisualizationRenderer.SetPalette`; snapshot property `Palette`; renderer internal `_palette`. `ColorPaletteParser.DefaultPalette` used.
 4. **Console**: Resolves only `IVisualizationRenderer` (and `AnalysisEngine`). No `VisualizationPaneLayout` reference; palette via `renderer.SetPalette`, beat circles and gain via engine.
 5. **Naming**: Snapshot/engine use `Palette`, `WaveformGain`, `ShowBeatCircles`. Settings file and Domain still use `VisualizerSettings.Geiss.BeatCircles`, `VisualizerSettings.Oscilloscope.Gain`, and legacy `OscilloscopeGain` / `BeatCircles` for backward compatibility.
+

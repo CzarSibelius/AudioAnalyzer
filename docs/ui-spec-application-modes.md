@@ -8,6 +8,8 @@ Top-level **`ApplicationMode`** values ([`ApplicationMode`](../src/AudioAnalyzer
 | **Show play** | `ShowPlay` | [ui-spec-show-play-mode.md](ui-spec-show-play-mode.md) | Same [Toolbar](ui-spec-toolbar.md) layout as Preset | Visualizer from line 5; presets auto-cycle per Show ([ADR-0031](adr/0031-show-preset-collection.md)) |
 | **General settings** | `Settings` | [ui-spec-general-settings-hub.md](ui-spec-general-settings-hub.md) | 1 (title breadcrumb only) | Hub menu (**HorizontalRowComponent**); no visualizer ([ADR-0061](adr/0061-general-settings-mode.md), [ADR-0062](adr/0062-application-mode-classes.md)) |
 
+**Visualizer fullscreen (F)** — edge-to-edge layout in Preset editor and Show play, per-mode `AllowsVisualizerFullscreen`, and interaction with overlay modals: [ui-spec-fullscreen-visualizer.md](ui-spec-fullscreen-visualizer.md).
+
 **Tab** cycles: Preset editor → Show play (if at least one show has entries) → General settings → Preset editor ([README](../README.md) — **Usage** / keyboard controls).
 
 ## Settings surfaces and modals (all modes)

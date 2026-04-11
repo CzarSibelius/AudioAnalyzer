@@ -9,9 +9,7 @@ The renderer, console, and application layer need to drive multiple visualizers 
 ## Decision
 
 1. **Contain visualizer-specific logic in the visualizer**: All logic that is specific to how a given visualizer works (e.g. how it uses palette, beat reaction, gain, or any internal state) must live inside that visualizer's implementation as much as possible. Shared contracts (e.g. `IVisualizer`, `VisualizationFrameContext`, viewport) define the boundary; visualizers consume the frame context and viewport and do not expose internal behavior beyond what the interface requires.
-
 2. **Other code must not depend on visualizer internals**: The renderer, console, and application must not reference concrete visualizer types (e.g. `GeissVisualizer`) for behavior that could be expressed via the shared interface or via the snapshot. They must not branch on visualizer identity for logic that belongs inside the visualizer. Prefer extending the snapshot or the `IVisualizer` contract (e.g. optional capabilities or well-named snapshot properties) so that callers stay mode-agnostic.
-
 3. **Naming and data flow**: Snapshot and settings use mode-agnostic or capability-based naming where feasible (e.g. "palette for current mode" rather than visualizer-specific names in the long term). Data that visualizers need is passed in via the snapshot or viewport; visualizers do not rely on callers invoking visualizer-specific methods or properties.
 
 ## Consequences

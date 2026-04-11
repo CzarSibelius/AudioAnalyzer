@@ -41,7 +41,7 @@ The UI is a console-based presentation layer in the **Console** project, with sh
 
 | Component | Interface | Role |
 |-----------|------------|------|
-| **MainContentContainer** | IVisualizationRenderer | UI container for main content. Returns **HorizontalRowComponent** (toolbar: cells from visualizer GetToolbarViewports/GetToolbarSuffix) and **VisualizerAreaComponent** (or only VisualizerArea in fullscreen). Renders via IUiComponentRenderer. Implements SetPalette, SupportsPaletteCycling, HandleKey by delegating to the visualizer. ([MainContentContainer.cs](../src/AudioAnalyzer.Console/Console/MainContentContainer.cs)) |
+| **MainContentContainer** | IVisualizationRenderer | UI container for main content. Returns **HorizontalRowComponent** (toolbar: cells from visualizer GetToolbarViewports/GetToolbarSuffix) and **VisualizerAreaComponent** (or only VisualizerArea in fullscreen). In fullscreen with an overlay modal, respects **`VisualizationFrameContext.DisplayStartRow`** so the visualizer renders below the overlay, not from row 0. Renders via IUiComponentRenderer. Implements SetPalette, SupportsPaletteCycling, HandleKey by delegating to the visualizer. UI spec: [ui-spec-fullscreen-visualizer.md](ui-spec-fullscreen-visualizer.md). ([MainContentContainer.cs](../src/AudioAnalyzer.Console/Console/MainContentContainer.cs)) |
 
 ---
 

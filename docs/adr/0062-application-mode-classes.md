@@ -14,7 +14,7 @@ Top-level modes (Preset editor, Show play, General settings) previously shared o
 
 3. **Ownership**: Each mode exposes **`HeaderLineCount`**, **`AllowsVisualizerFullscreen`**, **`UsesGeneralSettingsHubKeyHandling`**, **`TryHandleVisualizerKeys`**, and **`GetMainComponents`** (toolbar row + main leaf: `VisualizerAreaComponent` or `GeneralSettingsHubAreaComponent`). Shared toolbar helpers live in **`MainContentToolbarLayout`**.
 
-4. **Orchestrator**: **`IApplicationModeHeaderProvider`** supplies header line count; **`VisualizationOrchestrator`** uses it for `VisualizationFrameContext.DisplayStartRow` each frame (with fullscreen and overlay unchanged).
+4. **Orchestrator**: **`IApplicationModeHeaderProvider`** supplies header line count; **`VisualizationOrchestrator`** uses it for `VisualizationFrameContext.DisplayStartRow` each frame (with fullscreen and overlay unchanged). When a **fullscreen** layout is active and an **overlay** modal reserves top rows (`SetOverlayActive`), `DisplayStartRow` reflects the overlay height; **`MainContentContainer`** must keep that start row for the visualizer so it does not paint over the modal.
 
 5. **Tab cycle**: **`IModeTransitionService`** (`ModeTransitionService`) centralizes Tab transitions and persistence (previously inline in `ApplicationShell`).
 

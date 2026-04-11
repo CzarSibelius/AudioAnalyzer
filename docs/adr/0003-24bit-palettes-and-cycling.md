@@ -8,12 +8,9 @@ We want to support 24-bit true color in palette-aware visualizers, store palette
 
 ## Decision
 
-1. **Unified color type (24-bit and 16-color)**: A **`PaletteColor`** type (Domain) represents either 16-color (`ConsoleColor`) or 24-bit RGB (byte R, G, B). ANSI output uses either the existing 16-color codes or the 24-bit sequence `\x1b[38;2;{r};{g};{b}m`. The snapshot and palette-aware visualizers use `IReadOnlyList<PaletteColor>?`; non-palette code continues to use `ConsoleColor` where appropriate.
-
-2. **Palettes in a directory**: Palettes are stored as **JSON files** in a **palettes directory** (e.g. next to the executable: `palettes/`). Each file has `Name` (display name) and `Colors` (array where each entry is either a string: `"#RRGGBB"` or a console color name, or an object `{ "R", "G", "B" }`). The **`PaletteDefinition`** and **`PaletteColorEntry`** types (Domain) model this format. **`IPaletteRepository`** (Application) lists and loads palettes by id (filename without extension); **`FilePaletteRepository`** (Infrastructure) implements it.
-
-3. **Selected palette and cycling**: **`AppSettings.SelectedPaletteId`** (deprecated; see [ADR-0009](0009-per-visualizer-palette.md)) originally stored a global palette id. ADR-0009 moves palette selection to per-visualizer `PaletteId`. Each palette-aware visualizer has its own palette; P cycles and saves only the current visualizer's palette.
-
+1. **Unified color type (24-bit and 16-color)**: A `**PaletteColor`** type (Domain) represents either 16-color (`ConsoleColor`) or 24-bit RGB (byte R, G, B). ANSI output uses either the existing 16-color codes or the 24-bit sequence `\x1b[38;2;{r};{g};{b}m`. The snapshot and palette-aware visualizers use `IReadOnlyList<PaletteColor>?`; non-palette code continues to use `ConsoleColor` where appropriate.
+2. **Palettes in a directory**: Palettes are stored as **JSON files** in a **palettes directory** (e.g. next to the executable: `palettes/`). Each file has `Name` (display name) and `Colors` (array where each entry is either a string: `"#RRGGBB"` or a console color name, or an object `{ "R", "G", "B" }`). The `**PaletteDefinition`** and `**PaletteColorEntry**` types (Domain) model this format. `**IPaletteRepository**` (Application) lists and loads palettes by id (filename without extension); `**FilePaletteRepository**` (Infrastructure) implements it.
+3. **Selected palette and cycling**: `**AppSettings.SelectedPaletteId`** (deprecated; see [ADR-0009](0009-per-visualizer-palette.md)) originally stored a global palette id. ADR-0009 moves palette selection to per-visualizer `PaletteId`. Each palette-aware visualizer has its own palette; P cycles and saves only the current visualizer's palette.
 4. **Backward compatibility**: If `SelectedPaletteId` is missing, the app falls back to parsing `VisualizerSettings.UnknownPleasures.Palette` (legacy `ColorPalette`) and uses that with display name "Custom". A built-in default palette (e.g. `palettes/default.json`) is shipped so there is always at least one palette.
 
 ## Consequences

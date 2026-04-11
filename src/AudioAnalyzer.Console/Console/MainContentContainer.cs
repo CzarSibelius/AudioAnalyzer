@@ -97,21 +97,28 @@ internal sealed partial class MainContentContainer : IVisualizationRenderer
             var activeMode = _applicationModeFactory.GetActiveApplicationMode();
             bool layoutFullScreen = _displayState.FullScreen && activeMode.AllowsVisualizerFullscreen;
 
-            if (layoutFullScreen)
+            // Edge-to-edge fullscreen uses row 0. When an overlay modal is open, the orchestrator sets
+            // DisplayStartRow to the overlay height — keep that so the visualizer does not paint over the modal.
+            if (layoutFullScreen && frame.DisplayStartRow == 0)
             {
                 startRow = 0;
             }
-            else
+
+            if (startRow < 0 || startRow >= frame.TerminalHeight)
             {
-                if (startRow < 0 || startRow + ToolbarLineCount >= frame.TerminalHeight)
-                {
-                    return;
-                }
+                return;
             }
 
-            int visualizerMaxLines = layoutFullScreen
+            if (!layoutFullScreen && startRow + ToolbarLineCount >= frame.TerminalHeight)
+            {
+                return;
+            }
+
+            int visualizerMaxLines = layoutFullScreen && startRow == 0
                 ? Math.Max(1, frame.TerminalHeight - 1)
-                : Math.Max(1, frame.TerminalHeight - startRow - ToolbarLineCount - 1);
+                : layoutFullScreen && startRow > 0
+                    ? Math.Max(1, frame.TerminalHeight - startRow - 1)
+                    : Math.Max(1, frame.TerminalHeight - startRow - ToolbarLineCount - 1);
 
             UiPalette palette = _uiThemeResolver.GetEffectiveUiPalette();
             var context = new RenderContext

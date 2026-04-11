@@ -4,6 +4,10 @@
 
 This spec follows [ui-spec-format.md](ui-spec-format.md). It documents the main console layout when a preset is active and the visualizer is showing layer content (e.g. ASCII image layer). **Lines 1–4** are the unified **Toolbar** region (same packed 8-column rules on each row): see [ui-spec-toolbar.md](ui-spec-toolbar.md). Layout follows [ADR-0050](adr/0050-ui-alignment-blocks-label-format.md): left-aligned UI, 8-character block sizing, and label format `Label:value` (no space after colon). Row 1 is the universal title breadcrumb ([ui-spec-title-breadcrumb.md](ui-spec-title-breadcrumb.md)). Regenerate the screenshot from a screen dump (Ctrl+Shift+E or `--dump-after N` when a console is available) so the dump matches the current build.
 
+### Fullscreen (F)
+
+**F** toggles visualizer fullscreen (header + main toolbar row hidden; visualizer from row 0). **S** and other overlay modals reserve top rows while the visualizer continues below. Per-mode flag: `AllowsVisualizerFullscreen` on [`PresetEditorApplicationMode`](../src/AudioAnalyzer.Console/PresetEditorApplicationMode.cs). Full detail: [ui-spec-fullscreen-visualizer.md](ui-spec-fullscreen-visualizer.md).
+
 ## Screenshot
 
 ```text

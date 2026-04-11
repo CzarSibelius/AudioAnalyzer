@@ -1,6 +1,6 @@
 # UI spec: Settings surfaces (shared patterns)
 
-Top-level **application modes** (full-screen layouts) are documented separately: [ui-spec-application-modes.md](ui-spec-application-modes.md).
+Top-level **application modes** (full-screen layouts) are documented separately: [ui-spec-application-modes.md](ui-spec-application-modes.md). **Visualizer fullscreen (F)** and drawing the visualizer **below** overlay modals: [ui-spec-fullscreen-visualizer.md](ui-spec-fullscreen-visualizer.md).
 
 This document ties together **General settings hub**, **device selection modal**, and **preset / layer settings modal (S)** so specs and implementation share the same vocabulary. Per-surface dumps and line-by-line references live in:
 
