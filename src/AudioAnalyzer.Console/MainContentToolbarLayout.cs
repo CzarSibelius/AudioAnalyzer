@@ -56,8 +56,14 @@ internal static class MainContentToolbarLayout
         IReadOnlyList<LabeledValueDescriptor>? segmentDescriptors = visualizer.GetToolbarViewports(context.Frame!);
         if (segmentDescriptors is { Count: > 0 })
         {
-            IReadOnlyList<int> segmentWidths = GetToolbarSegmentWidths(width, segmentDescriptors.Count);
-            return AppendFpsToolbarCellIfEnabled(uiSettings, context.Frame!, segmentDescriptors, segmentWidths);
+            int[] naturals = ToolbarSegmentPackedWidths.MeasureNaturalWidths(segmentDescriptors);
+            int[] segmentWidths = ToolbarSegmentSpreadWidths.GetSpreadWidths(segmentDescriptors, naturals, width);
+            return AppendFpsToolbarCellIfEnabled(
+                uiSettings,
+                context.Frame!,
+                segmentDescriptors,
+                segmentWidths,
+                naturalContentWidthsForFpsDonor: naturals);
         }
 
         (int cell1Width, int cell2Width) = GetToolbarCellWidths(width);
@@ -84,11 +90,14 @@ internal static class MainContentToolbarLayout
     /// <summary>
     /// When <see cref="UiSettings.ShowRenderFps"/> is true, appends an FPS value column (ADR-0067).
     /// </summary>
+    /// <param name="naturalContentWidthsForFpsDonor">When set (same length as <paramref name="widths"/>), a donor cell must satisfy
+    /// <c>widths[i] - fpsColumnWidth &gt;= naturalContentWidthsForFpsDonor[i]</c> so content is not truncated after donating width.</param>
     public static (IReadOnlyList<LabeledValueDescriptor> Descriptors, IReadOnlyList<int> Widths) AppendFpsToolbarCellIfEnabled(
         UiSettings uiSettings,
         VisualizationFrameContext frame,
         IReadOnlyList<LabeledValueDescriptor> descriptors,
-        IReadOnlyList<int> widths)
+        IReadOnlyList<int> widths,
+        IReadOnlyList<int>? naturalContentWidthsForFpsDonor = null)
     {
         if (!uiSettings.ShowRenderFps || descriptors.Count == 0 || widths.Count != descriptors.Count)
         {
@@ -99,12 +108,23 @@ internal static class MainContentToolbarLayout
         const int minRemainInDonor = 8;
         var w = new List<int>(widths);
         int donor = -1;
+        int bestSlack = int.MinValue;
+        bool useNaturalDonorRule = naturalContentWidthsForFpsDonor is { Count: var n } && n == w.Count;
         for (int i = 0; i < w.Count; i++)
         {
-            if (w[i] >= fpsColumnWidth + minRemainInDonor)
+            int contentFloor = useNaturalDonorRule
+                ? Math.Max(0, naturalContentWidthsForFpsDonor![i])
+                : minRemainInDonor;
+            if (w[i] < fpsColumnWidth + contentFloor)
             {
+                continue;
+            }
+
+            int slackAfterDonate = w[i] - fpsColumnWidth - contentFloor;
+            if (slackAfterDonate > bestSlack || (slackAfterDonate == bestSlack && i > donor))
+            {
+                bestSlack = slackAfterDonate;
                 donor = i;
-                break;
             }
         }
 
@@ -129,28 +149,6 @@ internal static class MainContentToolbarLayout
         };
         w.Add(fpsColumnWidth);
         return (d, w);
-    }
-
-    /// <summary>Distributes total width across N toolbar segments in 8-column blocks.</summary>
-    public static int[] GetToolbarSegmentWidths(int totalWidth, int segmentCount)
-    {
-        if (segmentCount <= 0)
-        {
-            return [];
-        }
-        int baseBlock = Math.Max(1, totalWidth / segmentCount / 8);
-        int baseWidth = baseBlock * 8;
-        int[] widths = new int[segmentCount];
-        for (int i = 0; i < segmentCount; i++)
-        {
-            widths[i] = baseWidth;
-        }
-        int remainder = totalWidth - (baseWidth * segmentCount);
-        if (remainder > 0 && segmentCount > 0)
-        {
-            widths[segmentCount - 1] += remainder;
-        }
-        return widths;
     }
 
     public static (int Cell1Width, int Cell2Width) GetToolbarCellWidths(int width)

@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 
 namespace AudioAnalyzer.Console;
 
-/// <summary>Header region: title bar; in Preset/Show modes also device/now and BPM/beat/volume rows. In General settings, only the title breadcrumb row. Implements <see cref="IUiComponent"/> and composes child <see cref="IUiComponent"/>s; renders via <see cref="IUiComponentRenderer{TComponent}"/>.</summary>
+/// <summary>Header region: title bar; in Preset/Show modes also the upper rows of the unified toolbar (device/now and BPM/beat/volume) using the same 8-column packed layout as the main content toolbar row (<see cref="ToolbarSegmentPackedWidths"/>). In General settings, only the title breadcrumb row. Implements <see cref="IUiComponent"/> and composes child <see cref="IUiComponent"/>s; renders via <see cref="IUiComponentRenderer{TComponent}"/>.</summary>
 internal sealed partial class HeaderContainer : IHeaderContainer, IUiComponent
 {
     private readonly IUiComponentRenderer<IUiComponent> _componentRenderer;
@@ -32,6 +32,7 @@ internal sealed partial class HeaderContainer : IHeaderContainer, IUiComponent
     private string _bpmCellValue = "";
     private string _beatCellValue = "";
     private string _volumeText = "";
+    private bool _reserveBeatSegmentLayoutWidth;
 
     public HeaderContainer(
         IUiComponentRenderer<IUiComponent> componentRenderer,
@@ -110,6 +111,7 @@ internal sealed partial class HeaderContainer : IHeaderContainer, IUiComponent
         _bpmCellValue = data.BpmCellValue ?? "";
         _beatCellValue = data.BeatCellValue ?? "";
         _volumeText = data.VolumeText ?? "";
+        _reserveBeatSegmentLayoutWidth = data.ReserveBeatSegmentLayoutWidth;
     }
 
     /// <inheritdoc />
@@ -123,8 +125,16 @@ internal sealed partial class HeaderContainer : IHeaderContainer, IUiComponent
             return [_titleRow];
         }
 
-        _row2.SetRowData(BuildRow2Viewports(), BuildRow2Widths(context.Width));
-        _row3.SetRowData(BuildRow3Viewports(), BuildRow3Widths(context.Width));
+        IReadOnlyList<LabeledValueDescriptor> row2Descriptors = BuildRow2Viewports();
+        IReadOnlyList<LabeledValueDescriptor> row3Descriptors = BuildRow3Viewports();
+        int[] row2Naturals = ToolbarSegmentPackedWidths.MeasureNaturalWidths(row2Descriptors);
+        int[] row2Widths = ToolbarSegmentSpreadWidths.GetSpreadWidths(row2Descriptors, row2Naturals, context.Width);
+        _row2.SetRowData(row2Descriptors, row2Widths);
+
+        int[] row3Naturals = ToolbarSegmentPackedWidths.MeasureNaturalWidths(row3Descriptors);
+        ApplyBeatReservedNatural(row3Descriptors, row3Naturals);
+        int[] row3Widths = ToolbarSegmentSpreadWidths.GetSpreadWidths(row3Descriptors, row3Naturals, context.Width);
+        _row3.SetRowData(row3Descriptors, row3Widths);
         return [_titleRow, _row2, _row3];
     }
 
@@ -157,13 +167,6 @@ internal sealed partial class HeaderContainer : IHeaderContainer, IUiComponent
         ];
     }
 
-    private static IReadOnlyList<int> BuildRow2Widths(int width)
-    {
-        int leftCellWidth = Math.Max(16, (width / 2 / 8) * 8);
-        int rightCellWidth = width - leftCellWidth;
-        return [leftCellWidth, rightCellWidth];
-    }
-
     private IReadOnlyList<LabeledValueDescriptor> BuildRow3Viewports()
     {
         LabeledValueDescriptor bpmDescriptor = _currentBpm >= 0
@@ -178,17 +181,24 @@ internal sealed partial class HeaderContainer : IHeaderContainer, IUiComponent
         return [bpmDescriptor, beatDescriptor, volumeDescriptor];
     }
 
-    private static IReadOnlyList<int> BuildRow3Widths(int width)
+    private void ApplyBeatReservedNatural(IReadOnlyList<LabeledValueDescriptor> descriptors, int[] naturals)
     {
-        int a = Math.Max(8, (width / 3 / 8) * 8);
-        int b = Math.Max(8, ((width - a) / 2 / 8) * 8);
-        int c = width - a - b;
-        if (c < 8 && width >= 24)
+        if (!_reserveBeatSegmentLayoutWidth || naturals.Length < 2)
         {
-            b = Math.Max(8, width - a - 8);
-            c = width - a - b;
+            return;
         }
-        return [a, b, Math.Max(1, c)];
+
+        for (int i = 0; i < descriptors.Count; i++)
+        {
+            if (!string.Equals(descriptors[i].Label, "Beat", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            int reserved = ToolbarBeatSegmentLayout.ReservedBeatSegmentDisplayWidth();
+            naturals[i] = Math.Max(naturals[i], reserved);
+            return;
+        }
     }
 
     [LoggerMessage(EventId = 7610, Level = LogLevel.Warning, Message = "Console buffer resize not supported or failed")]

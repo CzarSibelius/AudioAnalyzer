@@ -2,10 +2,10 @@
 
 Top-level **`ApplicationMode`** values ([`ApplicationMode`](../src/AudioAnalyzer.Domain/ApplicationMode.cs)) each have a dedicated UI spec with an **ASCII screenshot** (from the [screen dump](../adr/0046-screen-dump-ascii-screenshot.md)) and a **line-by-line reference**. Shared format: [ui-spec-format.md](ui-spec-format.md).
 
-| Mode | Enum | Spec | Header rows | Main area |
-|------|------|------|-------------|-----------|
-| **Preset editor** | `PresetEditor` | [ui-spec-preset-editor-mode.md](ui-spec-preset-editor-mode.md) | 3 (title + device/now + BPM/volume) | Full **TextLayers** toolbar (one digit per layer, optional contextual fields, Palette) + visualizer |
-| **Show play** | `ShowPlay` | [ui-spec-show-play-mode.md](ui-spec-show-play-mode.md) | 3 (same as preset) | Compact toolbar (**Show**, **Entry**, optional contextual fields, **Palette**) + visualizer; presets auto-cycle per Show ([ADR-0031](adr/0031-show-preset-collection.md)) |
+| Mode | Enum | Spec | Toolbar (lines 1–4) | Main area |
+|------|------|------|----------------------|-----------|
+| **Preset editor** | `PresetEditor` | [ui-spec-preset-editor-mode.md](ui-spec-preset-editor-mode.md) | [ui-spec-toolbar.md](ui-spec-toolbar.md) — rows 1–3 from `HeaderContainer`, row 4 from main content | Visualizer from line 5 |
+| **Show play** | `ShowPlay` | [ui-spec-show-play-mode.md](ui-spec-show-play-mode.md) | Same [Toolbar](ui-spec-toolbar.md) layout as Preset | Visualizer from line 5; presets auto-cycle per Show ([ADR-0031](adr/0031-show-preset-collection.md)) |
 | **General settings** | `Settings` | [ui-spec-general-settings-hub.md](ui-spec-general-settings-hub.md) | 1 (title breadcrumb only) | Hub menu (**HorizontalRowComponent**); no visualizer ([ADR-0061](adr/0061-general-settings-mode.md), [ADR-0062](adr/0062-application-mode-classes.md)) |
 
 **Tab** cycles: Preset editor → Show play (if at least one show has entries) → General settings → Preset editor ([README](../README.md) — **Usage** / keyboard controls).

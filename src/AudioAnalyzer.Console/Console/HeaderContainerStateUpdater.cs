@@ -83,7 +83,8 @@ internal sealed class HeaderContainerStateUpdater : IUiStateUpdater<HeaderContai
             Volume = volume,
             BpmCellValue = bpmCellValue,
             BeatCellValue = beatCellValue,
-            VolumeText = volumeText
+            VolumeText = volumeText,
+            ReserveBeatSegmentLayoutWidth = _appSettings.BpmSource == BpmSource.AudioAnalysis
         });
     }
 

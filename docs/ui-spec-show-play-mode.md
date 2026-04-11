@@ -2,7 +2,7 @@
 
 **Application mode:** `ApplicationMode.ShowPlay` ([`ApplicationMode`](../src/AudioAnalyzer.Domain/ApplicationMode.cs)). See the mode index: [ui-spec-application-modes.md](ui-spec-application-modes.md).
 
-This spec follows [ui-spec-format.md](ui-spec-format.md). Show play uses the **same three-row header** as Preset editor (title, device/now, BPM/beat/volume) per [ADR-0062](adr/0062-application-mode-classes.md). The **toolbar** is compact: **Show** (name), **Entry** (current index / count), **Palette** (active layer’s palette name with per-letter coloring)—see `TextLayersToolbarBuilder.BuildShowPlayViewports` in the Application project. The title breadcrumb uses mode segment **`sHow`** (Hackerized “Show”) and the **active preset** name from the current Show entry (`TitleBarBreadcrumbFormatter`). Regenerate the screenshot from a screen dump when a console is available ([ADR-0046](adr/0046-screen-dump-ascii-screenshot.md)).
+This spec follows [ui-spec-format.md](ui-spec-format.md). Show play uses the **same four-line Toolbar** as Preset editor for screen lines **1–4** ([ui-spec-toolbar.md](ui-spec-toolbar.md), [ADR-0062](adr/0062-application-mode-classes.md)). Line 4 is the compact TextLayers row: **Show** (name), **Entry** (current index / count), optional contextual fields, **Palette** — see `TextLayersToolbarBuilder.BuildShowPlayViewports` in the Application project. The title breadcrumb uses mode segment **`sHow`** (Hackerized “Show”) and the **active preset** name from the current Show entry (`TitleBarBreadcrumbFormatter`). Regenerate the screenshot from a screen dump when a console is available ([ADR-0046](adr/0046-screen-dump-ascii-screenshot.md)).
 
 ## Screenshot
 
@@ -37,10 +37,10 @@ Show:Show 1 | Entry:1/2 | Gain:2.5 | Palette:Default
 
 ## Line reference
 
-- **1** — Title bar: breadcrumb `app / sHow / preset [z]:layer` (e.g. `aUdioNLZR/sHow/pReset_1[1]:fIll`). The **preset** and **layer** segments reflect the **current Show entry** and active layer, not a separate “show name” segment on this row ([ADR-0060](adr/0060-universal-title-breadcrumb.md)).
-- **2** — Device line: same as Preset editor (`Device:value`, `Now:value` scrolling viewport).
-- **3** — BPM / Beat / Volume row: same as Preset editor (three separate labeled cells; Beat value may include `(+/-)` when audio BPM source).
-- **4** — Toolbar: **Show** (show name, ellipsis if truncated), **Entry** (`current/total` or `—` if no entries), optional **contextual** fields for the palette-cycled layer (same as Preset editor: e.g. Gain, Image file name, Model file name), **Palette** (palette name; screen dump strips ANSI). **No** per-layer **1–9** digits row in this mode; **S** opens **Show edit** ([ADR-0031](adr/0031-show-preset-collection.md)).
+- **1** — **Toolbar** row 1 — Title bar: breadcrumb `app / sHow / preset [z]:layer` (e.g. `aUdioNLZR/sHow/pReset_1[1]:fIll`). The **preset** and **layer** segments reflect the **current Show entry** and active layer ([ADR-0060](adr/0060-universal-title-breadcrumb.md)). See [ui-spec-toolbar.md](ui-spec-toolbar.md).
+- **2** — **Toolbar** row 2 — Same as Preset editor: `Device:value`, `Now:value`; spread layout ([ui-spec-toolbar.md](ui-spec-toolbar.md)).
+- **3** — **Toolbar** row 3 — Same as Preset editor: BPM / Beat / Volume; spread layout and Beat `*BEAT*` reserve when audio BPM ([ui-spec-toolbar.md](ui-spec-toolbar.md)).
+- **4** — **Toolbar** row 4 — **Show** (name, ellipsis if truncated), **Entry** (`current/total` or `—` if no entries), optional **contextual** fields, **Palette** (screen dump strips ANSI). **No** per-layer **1–9** digits in this mode; **S** opens **Show edit** ([ADR-0031](adr/0031-show-preset-collection.md)). See [ui-spec-toolbar.md](ui-spec-toolbar.md).
 - **5** — First row of visualizer viewport (layer content).
 - **6** — Visualizer content.
 - **7** — Visualizer content.
