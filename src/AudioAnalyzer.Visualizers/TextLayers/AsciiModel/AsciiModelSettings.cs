@@ -81,6 +81,11 @@ public sealed class AsciiModelSettings
     [Setting("ZoomStyle", "Zoom style")]
     public AsciiImageZoomStyle ZoomStyle { get; set; } = AsciiImageZoomStyle.Sine;
 
+    /// <summary>Charset id for legacy gradient shading (<c>charsets/*.json</c>, ADR-0080). Unset uses <see cref="CharsetIds.AsciiRampClassic"/>.</summary>
+    [Setting("CharsetId", "Charset")]
+    [CharsetSetting]
+    public string? CharsetId { get; set; }
+
     /// <summary>Skip drawing when triangle count exceeds this (performance). Default 50000.</summary>
     [Setting("MaxTriangles", "Max triangles")]
     [SettingRange(1000, 200000, 1000)]

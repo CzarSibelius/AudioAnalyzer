@@ -4,7 +4,7 @@
 
 ## Context
 
-Previously, `TextLayerSettings` had a common `BeatReaction` property (type `TextLayerBeatReaction`: None, SpeedBurst, Flash, SpawnMore, Pulse, ColorPop). Every layer saw the same enum in the S modal and in JSON, but only some layer types actually used beat reaction in their Draw logic, and each supporting layer used only a subset of the options (e.g. ScrollingColors uses SpeedBurst and ColorPop; MatrixRain uses only Flash). Layers that do not use beat reaction (BeatCircles, Mirror, Fill, Oscilloscope, UnknownPleasures, VuMeter, LlamaStyle, Maschine) still had the setting exposed, which was confusing and allowed invalid combinations.
+Previously, `TextLayerSettings` had a common `BeatReaction` property (type `TextLayerBeatReaction`: None, SpeedBurst, Flash, SpawnMore, Pulse, ColorPop). Every layer saw the same enum in the S modal and in JSON, but only some layer types actually used beat reaction in their Draw logic, and each supporting layer used only a subset of the options (e.g. ScrollingColors uses SpeedBurst and ColorPop; the old MatrixRain layer used only Flash — that behavior now lives on **FallingLetters** as `AnimationMode: ColumnRain` with `FallingLettersBeatReaction.Flash`, [ADR-0081](0081-consolidate-matrix-rain-into-falling-letters.md)). Layers that do not use beat reaction (BeatCircles, Mirror, Fill, Oscilloscope, UnknownPleasures, VuMeter, LlamaStyle, Maschine) still had the setting exposed, which was confusing and allowed invalid combinations.
 
 ## Decision
 

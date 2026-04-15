@@ -102,7 +102,7 @@ public sealed class TitleBarBreadcrumbFormatter : ITitleBarBreadcrumbFormatter
             AnsiConsole.AppendColored(sb, TextHelpers.Hackerize(_navigation.PresetSettingsFocusedSettingId!), palette.Layer);
         }
 
-        if (_navigation.PresetSettingsPalettePickerActive)
+        if (_navigation.PresetSettingsPalettePickerActive || _navigation.PresetSettingsCharsetPickerActive)
         {
             AppendSlash(sb, palette);
             AnsiConsole.AppendColored(sb, TextHelpers.Hackerize("editor"), palette.Layer);

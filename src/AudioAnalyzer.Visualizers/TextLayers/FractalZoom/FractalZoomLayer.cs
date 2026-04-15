@@ -6,12 +6,14 @@ namespace AudioAnalyzer.Visualizers;
 /// <summary>Renders a Mandelbrot or Julia escape-time fractal with continuous zoom animation.</summary>
 public sealed class FractalZoomLayer : TextLayerRendererBase, ITextLayerRenderer<FractalZoomState>
 {
-    private static readonly char[] DensityChars = [' ', '·', ':', ';', '+', '*', '#', '@', '█'];
+    private const string DefaultDensityRamp = " \u00B7:;+*#@\u2588";
     private readonly ITextLayerStateStore<FractalZoomState> _stateStore;
+    private readonly CharsetResolver _charsetResolver;
 
-    public FractalZoomLayer(ITextLayerStateStore<FractalZoomState> stateStore)
+    public FractalZoomLayer(ITextLayerStateStore<FractalZoomState> stateStore, CharsetResolver charsetResolver)
     {
         _stateStore = stateStore ?? throw new ArgumentNullException(nameof(stateStore));
+        _charsetResolver = charsetResolver ?? throw new ArgumentNullException(nameof(charsetResolver));
     }
 
     public override TextLayerType LayerType => TextLayerType.FractalZoom;
@@ -70,6 +72,7 @@ public sealed class FractalZoomLayer : TextLayerRendererBase, ITextLayerRenderer
         double norm = minDim > 0 ? minDim * 0.5 : 1.0;
 
         bool usePalette = ctx.Palette.Count > 0;
+        string ramp = _charsetResolver.ResolveByIdOrDefault(s.CharsetId, CharsetIds.DensitySoft, DefaultDensityRamp);
 
         for (int y = 0; y < h; y++)
         {
@@ -92,8 +95,8 @@ public sealed class FractalZoomLayer : TextLayerRendererBase, ITextLayerRenderer
                     t = 1.0;
                 }
 
-                int charIdx = Math.Min((int)(t * (DensityChars.Length - 1)), DensityChars.Length - 1);
-                char ch = DensityChars[charIdx];
+                int charIdx = Math.Min((int)(t * (ramp.Length - 1)), ramp.Length - 1);
+                char ch = ramp[charIdx];
 
                 PaletteColor color;
                 if (usePalette)

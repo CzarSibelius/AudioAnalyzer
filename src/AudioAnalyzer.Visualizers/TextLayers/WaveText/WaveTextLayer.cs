@@ -15,14 +15,14 @@ public sealed class WaveTextLayer : TextLayerRendererBase, ITextLayerRenderer<No
     {
         int w = ctx.Width;
         int h = ctx.Height;
-        var snippets = layer.TextSnippets?.Where(s => !string.IsNullOrEmpty(s)).ToList() ?? new List<string>();
+        var s = layer.GetCustom<WaveTextSettings>() ?? new WaveTextSettings();
+        var snippets = s.TextSnippets.Where(x => !string.IsNullOrEmpty(x)).ToList();
         string text = snippets.Count > 0 ? snippets[state.SnippetIndex % Math.Max(1, snippets.Count)] : "Wave";
         if (text.Length == 0)
         {
             text = " ";
         }
 
-        var s = layer.GetCustom<WaveTextSettings>() ?? new WaveTextSettings();
         if (s.BeatReaction == WaveTextBeatReaction.Flash && ctx.Analysis.BeatFlashActive)
         {
             state.SnippetIndex = (state.SnippetIndex + 1) % Math.Max(1, snippets.Count);

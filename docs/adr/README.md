@@ -95,6 +95,8 @@ Decisions are numbered and kept under version control so the rationale stays wit
 | [0077](0077-waveform-overview-snapshot.md) | Long mono waveform ring + decimated overview in snapshot (performance) | Accepted |
 | [0078](0078-waveform-strip-stereo-beat-marks-goertzel.md) | Waveform strip: stereo overview rings, stored beat marks, Goertzel bucket colors | Accepted |
 | [0079](0079-waveform-strip-fixed-visible-seconds.md) | Waveform strip: fixed trailing seconds across strip width (no full-ring strip mode) | Accepted |
+| [0080](0080-shared-charset-json-and-layer-charset-ids.md) | Shared charset JSON (`charsets/*.json`), `CharsetId` on layer settings, S modal charset picker | Accepted |
+| [0081](0081-consolidate-matrix-rain-into-falling-letters.md) | Remove MatrixRain; FallingLetters charset-only, `AnimationMode` (Particles / ColumnRain), `Flash` beat | Accepted |
 
 ## Process
 

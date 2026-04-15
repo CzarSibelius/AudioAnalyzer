@@ -10,4 +10,7 @@ internal enum SettingsModalFocus
 
     /// <summary>Right column shows palette list (inherit + repo palettes).</summary>
     PickingPalette,
+
+    /// <summary>Right column shows charset list (ADR-0080).</summary>
+    PickingCharset,
 }

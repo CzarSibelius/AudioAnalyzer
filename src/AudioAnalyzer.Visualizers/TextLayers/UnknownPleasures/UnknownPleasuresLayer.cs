@@ -1,3 +1,4 @@
+using AudioAnalyzer.Application;
 using AudioAnalyzer.Domain;
 
 namespace AudioAnalyzer.Visualizers;
@@ -11,13 +12,16 @@ public sealed class UnknownPleasuresLayer : TextLayerRendererBase, ITextLayerRen
     private const int SnapshotWidth = 120;
     private const int MaxSnapshots = 14;
 
-    /// <summary>ASCII gradient from light to heavy (space, dot, comma, hyphen, quote, etc.).</summary>
-    private static readonly string AsciiGradient = " .,'-_\"/~*#";
+    private const string DefaultAsciiGradient = " .,'-_\"/~*#";
     private readonly ITextLayerStateStore<UnknownPleasuresState> _stateStore;
+    private readonly CharsetResolver _charsetResolver;
 
-    public UnknownPleasuresLayer(ITextLayerStateStore<UnknownPleasuresState> stateStore)
+    public UnknownPleasuresLayer(
+        ITextLayerStateStore<UnknownPleasuresState> stateStore,
+        CharsetResolver charsetResolver)
     {
         _stateStore = stateStore ?? throw new ArgumentNullException(nameof(stateStore));
+        _charsetResolver = charsetResolver ?? throw new ArgumentNullException(nameof(charsetResolver));
     }
 
     public override TextLayerType LayerType => TextLayerType.UnknownPleasures;
@@ -40,6 +44,12 @@ public sealed class UnknownPleasuresLayer : TextLayerRendererBase, ITextLayerRen
         {
             return state;
         }
+
+        var upSettings = layer.GetCustom<UnknownPleasuresSettings>() ?? new UnknownPleasuresSettings();
+        string ramp = _charsetResolver.ResolveByIdOrDefault(
+            upSettings.CharsetId,
+            CharsetIds.UnknownPleasuresRamp,
+            DefaultAsciiGradient);
 
         var snapshot = ctx.Analysis;
         var magnitudes = snapshot.SmoothedMagnitudes ?? Array.Empty<double>();
@@ -106,7 +116,7 @@ public sealed class UnknownPleasuresLayer : TextLayerRendererBase, ITextLayerRen
                     }
 
                     double mag = pulse[src];
-                    char ch = GetCharForMagnitude(mag, line);
+                    char ch = GetCharForMagnitude(ramp, mag, line);
                     ctx.SetLocal(c, rowIndex, ch, color);
                 }
                 rowIndex++;
@@ -150,13 +160,18 @@ public sealed class UnknownPleasuresLayer : TextLayerRendererBase, ITextLayerRen
         }
     }
 
-    private static char GetCharForMagnitude(double mag, int line)
+    private static char GetCharForMagnitude(string ramp, double mag, int line)
     {
+        if (ramp.Length < 2)
+        {
+            return ramp.Length == 1 ? ramp[0] : ' ';
+        }
+
         if (line == 0)
         {
             if (mag >= 2.0 / 3.0)
             {
-                return AsciiGradient[Math.Min(1 + (int)((mag - 2.0 / 3.0) * 3 * (AsciiGradient.Length - 2)), AsciiGradient.Length - 1)];
+                return ramp[Math.Min(1 + (int)((mag - 2.0 / 3.0) * 3 * (ramp.Length - 2)), ramp.Length - 1)];
             }
             return ' ';
         }
@@ -165,7 +180,7 @@ public sealed class UnknownPleasuresLayer : TextLayerRendererBase, ITextLayerRen
         {
             if (mag >= 1.0 / 3.0 && mag < 2.0 / 3.0)
             {
-                return AsciiGradient[Math.Min(1 + (int)((mag - 1.0 / 3.0) * 1.5 * (AsciiGradient.Length - 2)), AsciiGradient.Length - 1)];
+                return ramp[Math.Min(1 + (int)((mag - 1.0 / 3.0) * 1.5 * (ramp.Length - 2)), ramp.Length - 1)];
             }
             return ' ';
         }
@@ -176,8 +191,8 @@ public sealed class UnknownPleasuresLayer : TextLayerRendererBase, ITextLayerRen
             return ' ';
         }
 
-        int idx = 1 + (int)(mag * (AsciiGradient.Length - 2));
-        idx = Math.Clamp(idx, 1, AsciiGradient.Length - 1);
-        return AsciiGradient[idx];
+        int idx = 1 + (int)(mag * (ramp.Length - 2));
+        idx = Math.Clamp(idx, 1, ramp.Length - 1);
+        return ramp[idx];
     }
 }

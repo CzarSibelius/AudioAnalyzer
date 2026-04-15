@@ -16,6 +16,19 @@ public sealed class LayerSettingsReflectionAsciiVideoDeviceTests
         public PaletteDefinition? GetById(string id) => null;
     }
 
+    private sealed class StubCharsetRepo : ICharsetRepository
+    {
+        public IReadOnlyList<CharsetInfo> GetAll() => [];
+
+        public CharsetDefinition? GetById(string id) => null;
+
+        public void Save(string id, CharsetDefinition definition)
+        {
+        }
+
+        public string Create(CharsetDefinition definition) => "charset-1";
+    }
+
     private sealed class StubDeviceCatalog : IAsciiVideoDeviceCatalog
     {
         private readonly IReadOnlyList<AsciiVideoDeviceEntry> _entries;
@@ -42,7 +55,7 @@ public sealed class LayerSettingsReflectionAsciiVideoDeviceTests
             new AsciiVideoDeviceEntry(1, "USB HD Webcam")
         ]);
 
-        IReadOnlyList<AudioAnalyzer.Console.SettingDescriptor> descriptors = AudioAnalyzer.Console.SettingDescriptor.BuildAll(layer, new StubPaletteRepo(), catalog);
+        IReadOnlyList<AudioAnalyzer.Console.SettingDescriptor> descriptors = AudioAnalyzer.Console.SettingDescriptor.BuildAll(layer, new StubPaletteRepo(), catalog, new StubCharsetRepo());
         AudioAnalyzer.Console.SettingDescriptor? row = descriptors.FirstOrDefault(d => d.Id == "WebcamDeviceIndex");
         Assert.NotNull(row);
         string display = row!.GetDisplayValue(layer);
@@ -63,7 +76,7 @@ public sealed class LayerSettingsReflectionAsciiVideoDeviceTests
         layer.SetCustom(new AsciiVideoSettings { WebcamDeviceIndex = 3 });
 
         var catalog = new StubDeviceCatalog([]);
-        IReadOnlyList<AudioAnalyzer.Console.SettingDescriptor> descriptors = AudioAnalyzer.Console.SettingDescriptor.BuildAll(layer, new StubPaletteRepo(), catalog);
+        IReadOnlyList<AudioAnalyzer.Console.SettingDescriptor> descriptors = AudioAnalyzer.Console.SettingDescriptor.BuildAll(layer, new StubPaletteRepo(), catalog, new StubCharsetRepo());
         AudioAnalyzer.Console.SettingDescriptor row = descriptors.First(d => d.Id == "WebcamDeviceIndex");
         Assert.Equal("3", row.GetDisplayValue(layer));
     }

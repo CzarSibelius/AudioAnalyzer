@@ -20,6 +20,9 @@ public sealed class AsciiVideoState
     /// <summary>Palette mode used for cache.</summary>
     public AsciiImagePaletteSource CachedPaletteSource { get; set; }
 
+    /// <summary>Effective charset id used when <see cref="CachedFrame"/> was built (ADR-0080).</summary>
+    public string? CachedCharsetId { get; set; }
+
     /// <summary>
     /// <see cref="Environment.TickCount64"/> when we began waiting for the first frame while the webcam session is active; 0 when not tracking.
     /// </summary>

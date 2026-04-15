@@ -4,7 +4,7 @@ using AudioAnalyzer.Domain;
 
 namespace AudioAnalyzer.Visualizers;
 
-/// <summary>Renders the currently playing media (Artist - Title) from the system. Falls back to TextSnippets when no session.</summary>
+/// <summary>Renders the currently playing media (Artist - Title) from the system. Falls back to <see cref="NowPlayingSettings.TextSnippets"/> when no session.</summary>
 public sealed class NowPlayingLayer : TextLayerRendererBase, ITextLayerRenderer<NoLayerState>
 {
     private readonly INowPlayingProvider _nowPlayingProvider;
@@ -24,7 +24,8 @@ public sealed class NowPlayingLayer : TextLayerRendererBase, ITextLayerRenderer<
         int w = ctx.Width;
         int h = ctx.Height;
         string? nowPlaying = _nowPlayingProvider.GetNowPlaying()?.ToDisplayString()?.Trim();
-        var snippets = layer.TextSnippets?.Where(s => !string.IsNullOrEmpty(s)).ToList() ?? new List<string>();
+        var settings = layer.GetCustom<NowPlayingSettings>() ?? new NowPlayingSettings();
+        var snippets = settings.TextSnippets.Where(s => !string.IsNullOrEmpty(s)).ToList();
         string text = !string.IsNullOrEmpty(nowPlaying)
             ? nowPlaying
             : snippets.Count > 0
@@ -35,7 +36,6 @@ public sealed class NowPlayingLayer : TextLayerRendererBase, ITextLayerRenderer<
             text = " ";
         }
 
-        var settings = layer.GetCustom<NowPlayingSettings>() ?? new NowPlayingSettings();
         double speed = layer.SpeedMultiplier * ctx.SpeedBurst * 0.8;
         if (settings.BeatReaction == NowPlayingBeatReaction.SpeedBurst && ctx.Analysis.BeatFlashActive)
         {

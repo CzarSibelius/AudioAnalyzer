@@ -1,3 +1,4 @@
+using AudioAnalyzer.Application;
 using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Domain;
 
@@ -10,12 +11,17 @@ public sealed class AsciiVideoLayer : TextLayerRendererBase, ITextLayerRenderer<
 
     private readonly IAsciiVideoFrameSource _frameSource;
     private readonly ITextLayerStateStore<AsciiVideoState> _stateStore;
+    private readonly CharsetResolver _charsetResolver;
 
     /// <summary>Initializes a new instance of the <see cref="AsciiVideoLayer"/> class.</summary>
-    public AsciiVideoLayer(IAsciiVideoFrameSource frameSource, ITextLayerStateStore<AsciiVideoState> stateStore)
+    public AsciiVideoLayer(
+        IAsciiVideoFrameSource frameSource,
+        ITextLayerStateStore<AsciiVideoState> stateStore,
+        CharsetResolver charsetResolver)
     {
         _frameSource = frameSource ?? throw new ArgumentNullException(nameof(frameSource));
         _stateStore = stateStore ?? throw new ArgumentNullException(nameof(stateStore));
+        _charsetResolver = charsetResolver ?? throw new ArgumentNullException(nameof(charsetResolver));
     }
 
     /// <inheritdoc />
@@ -56,12 +62,14 @@ public sealed class AsciiVideoLayer : TextLayerRendererBase, ITextLayerRenderer<
         bool includeRgb = s.PaletteSource == AsciiImagePaletteSource.ImageColors;
         int convertW = w * 2;
         int convertH = h * 2;
+        string ramp = _charsetResolver.ResolveByIdOrDefault(s.CharsetId, CharsetIds.AsciiRampClassic, " .:-=+*#%@");
 
         if (videoState.CachedFrame == null
             || videoState.CachedSequence != snap.Sequence
             || videoState.CachedConvertWidth != convertW
             || videoState.CachedConvertHeight != convertH
-            || videoState.CachedPaletteSource != s.PaletteSource)
+            || videoState.CachedPaletteSource != s.PaletteSource
+            || !string.Equals(videoState.CachedCharsetId, ramp, StringComparison.Ordinal))
         {
             videoState.CachedFrame = AsciiRasterConverter.FromBgra(
                 snap.BgraPixels,
@@ -69,11 +77,13 @@ public sealed class AsciiVideoLayer : TextLayerRendererBase, ITextLayerRenderer<
                 snap.Height,
                 convertW,
                 convertH,
-                includeRgb);
+                includeRgb,
+                ramp);
             videoState.CachedSequence = snap.Sequence;
             videoState.CachedConvertWidth = convertW;
             videoState.CachedConvertHeight = convertH;
             videoState.CachedPaletteSource = s.PaletteSource;
+            videoState.CachedCharsetId = ramp;
         }
 
         if (videoState.CachedFrame == null)

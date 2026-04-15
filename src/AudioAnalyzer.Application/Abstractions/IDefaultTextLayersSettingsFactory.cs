@@ -17,6 +17,6 @@ public interface IDefaultTextLayersSettingsFactory
     /// Default Marquee row for new layers (historically used when padding to <see cref="TextLayersLimits.MaxLayerCount"/>; also S modal **Insert** per ADR-0070).
     /// </summary>
     /// <param name="zOrder">Draw order for the new layer.</param>
-    /// <param name="displayLayerNumber">1-based label for <see cref="TextLayerSettings.TextSnippets"/> (e.g. "Layer 3").</param>
+    /// <param name="displayLayerNumber">1-based label used as the default marquee snippet (e.g. "Layer 3").</param>
     TextLayerSettings CreatePaddingMarqueeLayer(int zOrder, int displayLayerNumber);
 }

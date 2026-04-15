@@ -25,4 +25,10 @@ internal sealed class ServiceConfigurationOptions
 
     /// <summary>Override UI theme repository for tests.</summary>
     public IUiThemeRepository? UiThemeRepository { get; init; }
+
+    /// <summary>Override charset repository for tests.</summary>
+    public ICharsetRepository? CharsetRepository { get; init; }
+
+    /// <summary>Charsets directory when using a custom file system (e.g. tests).</summary>
+    public string? CharsetsDirectory { get; init; }
 }

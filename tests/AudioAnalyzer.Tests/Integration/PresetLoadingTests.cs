@@ -53,10 +53,13 @@ public sealed class PresetLoadingTests
             LayerType = TextLayerType.Marquee,
             Enabled = true,
             ZOrder = 0,
-            TextSnippets = ["Round-trip test"],
             SpeedMultiplier = 1.2
         };
-        marqueeLayer.SetCustom(new MarqueeSettings { BeatReaction = MarqueeBeatReaction.None });
+        marqueeLayer.SetCustom(new MarqueeSettings
+        {
+            TextSnippets = ["Round-trip test"],
+            BeatReaction = MarqueeBeatReaction.None
+        });
 
         var config = new TextLayersVisualizerSettings
         {
@@ -72,7 +75,9 @@ public sealed class PresetLoadingTests
         Assert.Equal("RoundTrip", loaded.Name);
         Assert.Single(loaded.Config.Layers);
         Assert.Equal(TextLayerType.Marquee, loaded.Config.Layers[0].LayerType);
-        Assert.Equal(["Round-trip test"], loaded.Config.Layers[0].TextSnippets);
+        var roundTripMarquee = loaded.Config.Layers[0].GetCustom<MarqueeSettings>();
+        Assert.NotNull(roundTripMarquee);
+        Assert.Equal(["Round-trip test"], roundTripMarquee!.TextSnippets);
         Assert.Equal(1.2, loaded.Config.Layers[0].SpeedMultiplier);
     }
 

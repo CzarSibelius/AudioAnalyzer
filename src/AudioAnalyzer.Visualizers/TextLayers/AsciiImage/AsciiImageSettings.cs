@@ -25,6 +25,11 @@ public sealed class AsciiImageSettings
     [Setting("PaletteSource", "Palette source")]
     public AsciiImagePaletteSource PaletteSource { get; set; } = AsciiImagePaletteSource.LayerPalette;
 
+    /// <summary>Charset id for luminance→glyph mapping (<c>charsets/*.json</c>, ADR-0080). Unset uses <see cref="CharsetIds.AsciiRampClassic"/>.</summary>
+    [Setting("CharsetId", "Charset")]
+    [CharsetSetting]
+    public string? CharsetId { get; set; }
+
     /// <summary>Minimum zoom scale (0.5–1.0). Default 0.85.</summary>
     [Setting("ZoomMin", "Zoom min")]
     [SettingRange(0.5, 1.0, 0.05)]

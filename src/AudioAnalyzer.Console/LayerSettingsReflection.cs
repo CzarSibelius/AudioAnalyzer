@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Reflection;
 using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Domain;
@@ -44,7 +46,8 @@ internal sealed class SettingDescriptor
     public static IReadOnlyList<SettingDescriptor> BuildAll(
         TextLayerSettings layer,
         IPaletteRepository paletteRepo,
-        IAsciiVideoDeviceCatalog? asciiVideoDeviceCatalog = null)
+        IAsciiVideoDeviceCatalog? asciiVideoDeviceCatalog,
+        ICharsetRepository charsetRepo)
     {
         var list = new List<SettingDescriptor>();
 
@@ -53,7 +56,7 @@ internal sealed class SettingDescriptor
 
         if (s_customSettingsRegistry.TryGetValue(layer.LayerType, out var customType) && customType != null)
         {
-            AddCustomDescriptors(list, layer, customType, asciiVideoDeviceCatalog);
+            AddCustomDescriptors(list, layer, customType, asciiVideoDeviceCatalog, charsetRepo);
         }
 
         return list;
@@ -63,7 +66,7 @@ internal sealed class SettingDescriptor
         ["Custom", "_customCache", "RenderBounds"];
 
     private static readonly string[] s_commonPropOrder =
-        ["Enabled", "LayerType", "ZOrder", "SpeedMultiplier", "ColorIndex", "PaletteId", "TextSnippets"];
+        ["Enabled", "LayerType", "ZOrder", "SpeedMultiplier", "ColorIndex", "PaletteId"];
 
     private static void AddCommonDescriptors(
         List<SettingDescriptor> list,
@@ -80,7 +83,6 @@ internal sealed class SettingDescriptor
             if (!props.TryGetValue(propName, out var prop)) { continue; }
 
             if (propName == "LayerType") { AddLayerTypeDescriptor(list); continue; }
-            if (propName == "TextSnippets") { AddSnippetsDescriptor(list); continue; }
             if (propName == "PaletteId") { AddPaletteDescriptor(list, paletteRepo); continue; }
 
             var (id, label) = propName switch
@@ -130,17 +132,6 @@ internal sealed class SettingDescriptor
             }));
     }
 
-    private static void AddSnippetsDescriptor(List<SettingDescriptor> list)
-    {
-        list.Add(new SettingDescriptor(
-            "Snippets", "Snippets", SettingEditMode.TextEdit,
-            l => l.TextSnippets is { Count: > 0 }
-                ? string.Join(", ", l.TextSnippets.Take(4)) + (l.TextSnippets.Count > 4 ? "..." : "")
-                : "(none)",
-            (l, v) => l.TextSnippets = v.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList(),
-            null));
-    }
-
     private static void AddRenderBoundsDescriptor(List<SettingDescriptor> list)
     {
         list.Add(new SettingDescriptor(
@@ -172,10 +163,10 @@ internal sealed class SettingDescriptor
         [TextLayerType.NowPlaying] = typeof(NowPlayingSettings),
         [TextLayerType.Mirror] = typeof(MirrorSettings),
         [TextLayerType.BufferDistortion] = typeof(BufferDistortionSettings),
+        [TextLayerType.UnknownPleasures] = typeof(UnknownPleasuresSettings),
         [TextLayerType.Maschine] = typeof(MaschineSettings),
         [TextLayerType.Fill] = typeof(FillSettings),
         [TextLayerType.ScrollingColors] = typeof(ScrollingColorsSettings),
-        [TextLayerType.MatrixRain] = typeof(MatrixRainSettings),
         [TextLayerType.WaveText] = typeof(WaveTextSettings),
         [TextLayerType.GeissBackground] = typeof(GeissBackgroundSettings),
         [TextLayerType.FractalZoom] = typeof(FractalZoomSettings),
@@ -188,7 +179,8 @@ internal sealed class SettingDescriptor
         List<SettingDescriptor> list,
         TextLayerSettings layer,
         Type customType,
-        IAsciiVideoDeviceCatalog? asciiVideoDeviceCatalog)
+        IAsciiVideoDeviceCatalog? asciiVideoDeviceCatalog,
+        ICharsetRepository charsetRepo)
     {
         var props = customType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
             .Where(p => p.CanRead && p.CanWrite && p.GetIndexParameters().Length == 0
@@ -200,6 +192,12 @@ internal sealed class SettingDescriptor
             if (customType == typeof(AsciiVideoSettings) && prop.Name == "WebcamDeviceIndex")
             {
                 list.Add(CreateAsciiVideoWebcamDeviceDescriptor(prop, asciiVideoDeviceCatalog));
+                continue;
+            }
+
+            if (prop.GetCustomAttribute<CharsetSettingAttribute>() != null)
+            {
+                list.Add(CreateCharsetSettingDescriptor(prop, customType, charsetRepo));
                 continue;
             }
 
@@ -268,6 +266,154 @@ internal sealed class SettingDescriptor
         return new SettingDescriptor(id, label, SettingEditMode.Cycle, getDisplay, apply, cycle);
     }
 
+    private static SettingDescriptor CreateCharsetSettingDescriptor(
+        PropertyInfo prop,
+        Type customType,
+        ICharsetRepository charsetRepo)
+    {
+        ArgumentNullException.ThrowIfNull(charsetRepo);
+
+        var attr = prop.GetCustomAttribute<SettingAttribute>();
+        var id = attr?.Id ?? prop.Name;
+        var label = attr?.Label ?? PascalToLabel(prop.Name);
+
+        Func<TextLayerSettings, string> getDisplay = l =>
+        {
+            var obj = InvokeGetCustom(l, customType) ?? Activator.CreateInstance(customType);
+            if (obj == null)
+            {
+                return "(none)";
+            }
+
+            var cur = prop.GetValue(obj) as string;
+            if (string.IsNullOrWhiteSpace(cur))
+            {
+                return SummarizeCharsetId(charsetRepo, GetDefaultCharsetIdForCustomType(customType));
+            }
+
+            return SummarizeCharsetId(charsetRepo, cur!);
+        };
+
+        Action<TextLayerSettings, string>? apply = CreateCustomApply(prop, customType, null!);
+        Action<TextLayerSettings, bool>? cycle = (l, forward) =>
+        {
+            int count = SettingsSurfacesCharsetDrawing.GetEntryCount(charsetRepo, includeLegacySnippetsRow: false);
+            if (count <= 0)
+            {
+                return;
+            }
+
+            var obj = InvokeGetCustom(l, customType) ?? Activator.CreateInstance(customType);
+            if (obj == null)
+            {
+                return;
+            }
+
+            var cur = prop.GetValue(obj) as string;
+            int idx = SettingsSurfacesCharsetDrawing.FindIndexForCharsetId(
+                charsetRepo,
+                includeLegacySnippetsRow: false,
+                cur,
+                GetDefaultCharsetIdForCustomType(customType));
+            idx = forward ? (idx + 1) % count : (idx - 1 + count) % count;
+            SettingsSurfacesCharsetDrawing.ApplySelectionIndex(
+                charsetRepo,
+                includeLegacySnippetsRow: false,
+                idx,
+                v => prop.SetValue(obj, v));
+            InvokeSetCustom(l, customType, obj);
+        };
+
+        return new SettingDescriptor(id, label, SettingEditMode.CharsetPicker, getDisplay, apply, cycle);
+    }
+
+    private static string SummarizeCharsetId(ICharsetRepository repo, string id)
+    {
+        var def = repo.GetById(id);
+        string? name = def?.Name?.Trim();
+        return string.IsNullOrEmpty(name) ? id : string.Format(CultureInfo.InvariantCulture, "{0} — {1}", id, name);
+    }
+
+    internal static string GetDefaultCharsetIdForLayer(TextLayerSettings layer)
+    {
+        if (!s_customSettingsRegistry.TryGetValue(layer.LayerType, out Type? ct) || ct == null)
+        {
+            return CharsetIds.AsciiRampClassic;
+        }
+
+        return GetDefaultCharsetIdForCustomType(ct);
+    }
+
+    internal static string GetDefaultCharsetIdForCustomType(Type customType)
+    {
+        if (customType == typeof(FractalZoomSettings) || customType == typeof(GeissBackgroundSettings))
+        {
+            return CharsetIds.DensitySoft;
+        }
+
+        if (customType == typeof(UnknownPleasuresSettings))
+        {
+            return CharsetIds.UnknownPleasuresRamp;
+        }
+
+        if (customType == typeof(FallingLettersSettings))
+        {
+            return CharsetIds.Digits;
+        }
+
+        return CharsetIds.AsciiRampClassic;
+    }
+
+    /// <summary>Writes the layer&apos;s <c>CharsetId</c> custom property when present (ADR-0080).</summary>
+    internal static void ApplyCharsetIdToLayer(TextLayerSettings layer, string? charsetId)
+    {
+        if (!s_customSettingsRegistry.TryGetValue(layer.LayerType, out Type? ct) || ct == null)
+        {
+            return;
+        }
+
+        var prop = ct.GetProperty("CharsetId");
+        if (prop?.GetCustomAttribute<CharsetSettingAttribute>() == null)
+        {
+            return;
+        }
+
+        var obj = InvokeGetCustom(layer, ct) ?? Activator.CreateInstance(ct);
+        if (obj == null)
+        {
+            return;
+        }
+
+        prop.SetValue(obj, charsetId);
+        InvokeSetCustom(layer, ct, obj);
+    }
+
+    /// <summary>Reads raw <c>CharsetId</c> for the layer when the type supports it.</summary>
+    internal static bool TryReadCharsetId(TextLayerSettings layer, out string? charsetId, out bool includeLegacyPicker)
+    {
+        charsetId = null;
+        includeLegacyPicker = false;
+        if (!s_customSettingsRegistry.TryGetValue(layer.LayerType, out Type? ct) || ct == null)
+        {
+            return false;
+        }
+
+        var prop = ct.GetProperty("CharsetId");
+        if (prop?.GetCustomAttribute<CharsetSettingAttribute>() == null)
+        {
+            return false;
+        }
+
+        var obj = InvokeGetCustom(layer, ct) ?? Activator.CreateInstance(ct);
+        if (obj == null)
+        {
+            return false;
+        }
+
+        charsetId = prop.GetValue(obj) as string;
+        return true;
+    }
+
     private static AsciiVideoSettings GetAsciiVideoSettings(TextLayerSettings layer)
     {
         return (AsciiVideoSettings?)InvokeGetCustom(layer, typeof(AsciiVideoSettings)) ?? new AsciiVideoSettings();
@@ -275,6 +421,11 @@ internal sealed class SettingDescriptor
 
     private static SettingEditMode DeriveEditMode(Type propType, PropertyInfo prop)
     {
+        if (prop.GetCustomAttribute<CharsetSettingAttribute>() != null)
+        {
+            return SettingEditMode.CharsetPicker;
+        }
+
         if (prop.GetCustomAttribute<SettingChoicesAttribute>() != null)
         {
             return SettingEditMode.Cycle;
@@ -361,6 +512,11 @@ internal sealed class SettingDescriptor
             var v = prop.GetValue(obj);
             if (v == null) { return "(none)"; }
             if (prop.PropertyType == typeof(double)) { return ((double)v).ToString("F1", CultureInfo.InvariantCulture); }
+            if (prop.PropertyType == typeof(List<string>) && v is List<string> list)
+            {
+                if (list.Count == 0) { return "(none)"; }
+                return string.Join(", ", list.Take(4)) + (list.Count > 4 ? "..." : "");
+            }
             return v.ToString() ?? "";
         };
     }
@@ -372,6 +528,15 @@ internal sealed class SettingDescriptor
         {
             var obj = InvokeGetCustom(l, customType) ?? Activator.CreateInstance(customType);
             if (obj == null) { return; }
+            if (prop.PropertyType == typeof(List<string>))
+            {
+                var parsedList = string.IsNullOrWhiteSpace(v) || v == "(none)"
+                    ? new List<string>()
+                    : v.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+                prop.SetValue(obj, parsedList);
+                InvokeSetCustom(l, customType, obj);
+                return;
+            }
             object? parsed;
             if (prop.PropertyType == typeof(string))
             {
@@ -436,6 +601,35 @@ internal sealed class SettingDescriptor
                 InvokeSetCustom(l, customType, obj);
             }
         };
+    }
+
+    /// <summary>Comma-separated snippet text for S modal edit (full list; the settings row display may truncate).</summary>
+    internal static string GetFullSnippetsEditText(TextLayerSettings layer)
+    {
+        if (!s_customSettingsRegistry.TryGetValue(layer.LayerType, out Type? ct) || ct is null)
+        {
+            return "";
+        }
+
+        var prop = ct.GetProperty("TextSnippets", BindingFlags.Public | BindingFlags.Instance);
+        if (prop?.PropertyType != typeof(List<string>))
+        {
+            return "";
+        }
+
+        var obj = InvokeGetCustom(layer, ct) ?? Activator.CreateInstance(ct);
+        if (obj == null)
+        {
+            return "";
+        }
+
+        var list = prop.GetValue(obj) as List<string>;
+        if (list == null || list.Count == 0)
+        {
+            return "";
+        }
+
+        return string.Join(", ", list);
     }
 
     private static object? ParseValue(Type targetType, string value, SettingRangeAttribute? range)

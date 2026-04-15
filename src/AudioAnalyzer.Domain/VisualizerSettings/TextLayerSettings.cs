@@ -22,9 +22,6 @@ public class TextLayerSettings
     /// <summary>Draw order; lower values are drawn first (back).</summary>
     public int ZOrder { get; set; }
 
-    /// <summary>Text snippets used when the layer type is text-based. Can be empty for non-text layers.</summary>
-    public List<string> TextSnippets { get; set; } = new();
-
     /// <summary>Speed multiplier (e.g. scroll speed). Default 1.0.</summary>
     public double SpeedMultiplier { get; set; } = 1.0;
 
@@ -111,7 +108,6 @@ public class TextLayerSettings
             LayerType = LayerType,
             Enabled = Enabled,
             ZOrder = ZOrder,
-            TextSnippets = new List<string>(TextSnippets),
             SpeedMultiplier = SpeedMultiplier,
             ColorIndex = ColorIndex,
             PaletteId = PaletteId,

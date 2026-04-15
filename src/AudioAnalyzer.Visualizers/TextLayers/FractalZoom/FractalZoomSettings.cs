@@ -51,4 +51,9 @@ public sealed class FractalZoomSettings
     /// <summary>How a beat affects this layer.</summary>
     [Setting("BeatReaction", "Beat reaction")]
     public FractalZoomBeatReaction BeatReaction { get; set; } = FractalZoomBeatReaction.None;
+
+    /// <summary>Charset id for escape-time density glyphs (<c>charsets/*.json</c>, ADR-0080). Unset uses <see cref="CharsetIds.DensitySoft"/>.</summary>
+    [Setting("CharsetId", "Charset")]
+    [CharsetSetting]
+    public string? CharsetId { get; set; }
 }

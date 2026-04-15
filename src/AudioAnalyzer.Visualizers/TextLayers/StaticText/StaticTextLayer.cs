@@ -14,14 +14,14 @@ public sealed class StaticTextLayer : TextLayerRendererBase, ITextLayerRenderer<
     {
         int w = ctx.Width;
         int h = ctx.Height;
-        var snippets = layer.TextSnippets?.Where(s => !string.IsNullOrEmpty(s)).ToList() ?? new List<string>();
+        var s = layer.GetCustom<StaticTextSettings>() ?? new StaticTextSettings();
+        var snippets = s.TextSnippets.Where(x => !string.IsNullOrEmpty(x)).ToList();
         string text = snippets.Count > 0 ? snippets[state.SnippetIndex % Math.Max(1, snippets.Count)] : "Static";
         if (text.Length == 0)
         {
             text = " ";
         }
 
-        var s = layer.GetCustom<StaticTextSettings>() ?? new StaticTextSettings();
         if (s.BeatReaction == StaticTextBeatReaction.Flash && ctx.Analysis.BeatFlashActive)
         {
             state.SnippetIndex = (state.SnippetIndex + 1) % Math.Max(1, snippets.Count);

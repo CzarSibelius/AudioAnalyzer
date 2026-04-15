@@ -13,6 +13,9 @@ internal sealed class TitleBarNavigationContext : ITitleBarNavigationContext
     public bool PresetSettingsPalettePickerActive { get; set; }
 
     /// <inheritdoc />
+    public bool PresetSettingsCharsetPickerActive { get; set; }
+
+    /// <inheritdoc />
     public int? PresetSettingsLayerOneBased { get; set; }
 
     /// <inheritdoc />

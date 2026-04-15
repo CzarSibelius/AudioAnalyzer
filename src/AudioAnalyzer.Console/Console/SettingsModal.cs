@@ -114,6 +114,7 @@ internal sealed class SettingsModal : ISettingsModal
                 saveSettings();
                 _navigation.View = TitleBarViewKind.Main;
                 _navigation.PresetSettingsPalettePickerActive = false;
+                _navigation.PresetSettingsCharsetPickerActive = false;
                 _navigation.PresetSettingsLayerOneBased = null;
                 _navigation.PresetSettingsLayerTypeRaw = null;
                 _navigation.PresetSettingsFocusedSettingId = null;

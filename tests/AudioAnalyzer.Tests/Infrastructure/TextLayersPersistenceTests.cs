@@ -43,7 +43,7 @@ public sealed class TextLayersPersistenceTests
     public void LoadVisualizerSettings_CapsLayersAboveMax()
     {
         var layerObjects = Enumerable.Range(0, 12).Select(i =>
-            $"{{ \"LayerType\": \"StaticText\", \"Enabled\": true, \"ZOrder\": {i}, \"TextSnippets\": [\"x\"], \"Custom\": {{ \"BeatReaction\": \"None\" }} }}");
+            $"{{ \"LayerType\": \"StaticText\", \"Enabled\": true, \"ZOrder\": {i}, \"Custom\": {{ \"BeatReaction\": \"None\", \"TextSnippets\": [\"x\"] }} }}");
         var layersJson = string.Join(",", layerObjects);
         var presetJson = "{\n  \"Name\": \"Many\",\n  \"Config\": { \"Layers\": [" + layersJson + "] }\n}";
         var appSettingsJson = """

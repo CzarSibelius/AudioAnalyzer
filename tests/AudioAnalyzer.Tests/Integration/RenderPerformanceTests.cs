@@ -82,7 +82,6 @@ public sealed class RenderPerformanceTests
                         LayerType = "AsciiModel",
                         Enabled = true,
                         ZOrder = 0,
-                        TextSnippets = Array.Empty<string>(),
                         SpeedMultiplier = 1.0,
                         Custom = new
                         {

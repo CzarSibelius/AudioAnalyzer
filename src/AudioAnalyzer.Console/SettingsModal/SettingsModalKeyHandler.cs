@@ -12,11 +12,16 @@ internal sealed class SettingsModalKeyHandlerConfig : IKeyHandlerConfig<Settings
     private const string Section = "Preset settings modal (S)";
     private readonly IPaletteRepository _paletteRepo;
     private readonly IAsciiVideoDeviceCatalog _asciiVideoDeviceCatalog;
+    private readonly ICharsetRepository _charsetRepo;
 
-    public SettingsModalKeyHandlerConfig(IPaletteRepository paletteRepo, IAsciiVideoDeviceCatalog asciiVideoDeviceCatalog)
+    public SettingsModalKeyHandlerConfig(
+        IPaletteRepository paletteRepo,
+        IAsciiVideoDeviceCatalog asciiVideoDeviceCatalog,
+        ICharsetRepository charsetRepo)
     {
         _paletteRepo = paletteRepo ?? throw new ArgumentNullException(nameof(paletteRepo));
         _asciiVideoDeviceCatalog = asciiVideoDeviceCatalog ?? throw new ArgumentNullException(nameof(asciiVideoDeviceCatalog));
+        _charsetRepo = charsetRepo ?? throw new ArgumentNullException(nameof(charsetRepo));
     }
 
     private static IReadOnlyList<KeyHandling.KeyBindingEntry<SettingsModalKeyContext>> GetLayerListEntries()
@@ -496,6 +501,58 @@ internal sealed class SettingsModalKeyHandlerConfig : IKeyHandlerConfig<Settings
             return false;
         }
 
+        if (state.Focus == SettingsModalFocus.PickingCharset && selectedLayer != null)
+        {
+            bool includeLegacy = state.CharsetPickerIncludeLegacySnippetsRow;
+            int count = SettingsSurfacesCharsetDrawing.GetEntryCount(_charsetRepo, includeLegacy);
+            if (count <= 0)
+            {
+                state.Focus = SettingsModalFocus.SettingsList;
+                return false;
+            }
+
+            if (key.Key == ConsoleKey.Escape)
+            {
+                SettingDescriptor.ApplyCharsetIdToLayer(selectedLayer, state.CharsetPickerOriginalCharsetId);
+                state.CharsetPickerOriginalCharsetId = null;
+                state.Focus = SettingsModalFocus.SettingsList;
+                return false;
+            }
+
+            if (key.Key == ConsoleKey.Enter)
+            {
+                context.SaveSettings();
+                state.CharsetPickerOriginalCharsetId = null;
+                state.Focus = SettingsModalFocus.SettingsList;
+                return false;
+            }
+
+            bool moveUpC = key.Key == ConsoleKey.UpArrow || key.Key == ConsoleKey.Subtract || key.Key == ConsoleKey.OemMinus;
+            bool moveDownC = key.Key == ConsoleKey.DownArrow || key.Key == ConsoleKey.Add || key.Key == ConsoleKey.OemPlus;
+            if (moveUpC || moveDownC)
+            {
+                int idx = state.CharsetPickerSelectedIndex;
+                if (moveUpC)
+                {
+                    idx = Math.Max(0, idx - 1);
+                }
+                else
+                {
+                    idx = Math.Min(count - 1, idx + 1);
+                }
+
+                state.CharsetPickerSelectedIndex = idx;
+                SettingsSurfacesCharsetDrawing.ApplySelectionIndex(
+                    _charsetRepo,
+                    includeLegacy,
+                    idx,
+                    id => SettingDescriptor.ApplyCharsetIdToLayer(selectedLayer, id));
+                return false;
+            }
+
+            return false;
+        }
+
         if (state.Focus == SettingsModalFocus.EditingSetting && state.LeftPanelPresetSelected && state.SelectedSettingIndex < settingsRows.Count)
         {
             var row = settingsRows[state.SelectedSettingIndex];
@@ -597,6 +654,46 @@ internal sealed class SettingsModalKeyHandlerConfig : IKeyHandlerConfig<Settings
                         return false;
                     }
                 }
+                else if (!state.LeftPanelPresetSelected && selectedLayer != null && row.EditMode == SettingEditMode.CharsetPicker)
+                {
+                    int cCount = SettingsSurfacesCharsetDrawing.GetEntryCount(
+                        _charsetRepo,
+                        selectedLayer.LayerType is TextLayerType.FallingLetters);
+                    if (key.Key == ConsoleKey.Enter)
+                    {
+                        if (cCount <= 0)
+                        {
+                            return false;
+                        }
+
+                        if (!SettingDescriptor.TryReadCharsetId(selectedLayer, out string? curC, out bool includeLegacyC))
+                        {
+                            return false;
+                        }
+
+                        state.CharsetPickerOriginalCharsetId = curC;
+                        state.CharsetPickerIncludeLegacySnippetsRow = includeLegacyC;
+                        state.CharsetPickerSelectedIndex = SettingsSurfacesCharsetDrawing.FindIndexForCharsetId(
+                            _charsetRepo,
+                            includeLegacyC,
+                            curC,
+                            SettingDescriptor.GetDefaultCharsetIdForLayer(selectedLayer));
+                        SettingsSurfacesCharsetDrawing.ApplySelectionIndex(
+                            _charsetRepo,
+                            includeLegacyC,
+                            state.CharsetPickerSelectedIndex,
+                            id => SettingDescriptor.ApplyCharsetIdToLayer(selectedLayer, id));
+                        state.Focus = SettingsModalFocus.PickingCharset;
+                        return false;
+                    }
+
+                    if (cycleForward || cycleBackward)
+                    {
+                        CycleSetting(selectedLayer, row.Id, cycleForward);
+                        NotifyDrawOrderChanged(context, state, selectedLayer);
+                        return false;
+                    }
+                }
                 else if (!state.LeftPanelPresetSelected && selectedLayer != null && row.EditMode == SettingEditMode.Cycle && (cycleForward || cycleBackward))
                 {
                     CycleSetting(selectedLayer, row.Id, cycleForward);
@@ -614,7 +711,7 @@ internal sealed class SettingsModalKeyHandlerConfig : IKeyHandlerConfig<Settings
                 if (!state.LeftPanelPresetSelected && selectedLayer != null && key.Key == ConsoleKey.Enter && row.EditMode == SettingEditMode.TextEdit)
                 {
                     state.EditingBuffer = row.Id == "Snippets"
-                        ? (selectedLayer.TextSnippets is { Count: > 0 } ? string.Join(", ", selectedLayer.TextSnippets) : "")
+                        ? SettingDescriptor.GetFullSnippetsEditText(selectedLayer)
                         : row.Id == "ImagePath"
                             ? ((selectedLayer.GetCustom<AsciiImageSettings>() ?? new AsciiImageSettings()).ImageFolderPath ?? "")
                         : row.Id == "ModelPath"
@@ -713,20 +810,20 @@ internal sealed class SettingsModalKeyHandlerConfig : IKeyHandlerConfig<Settings
 
     private List<(string Id, string Label, string DisplayValue, SettingEditMode EditMode)> GetSettingsRows(TextLayerSettings layer)
     {
-        var descriptors = SettingDescriptor.BuildAll(layer, _paletteRepo, _asciiVideoDeviceCatalog);
+        var descriptors = SettingDescriptor.BuildAll(layer, _paletteRepo, _asciiVideoDeviceCatalog, _charsetRepo);
         return descriptors.Select(d => (d.Id, d.Label, d.GetDisplayValue(layer), d.EditMode)).ToList();
     }
 
     private void ApplySettingEdit(TextLayerSettings layer, string settingId, string value)
     {
-        var descriptors = SettingDescriptor.BuildAll(layer, _paletteRepo, _asciiVideoDeviceCatalog);
+        var descriptors = SettingDescriptor.BuildAll(layer, _paletteRepo, _asciiVideoDeviceCatalog, _charsetRepo);
         var d = descriptors.FirstOrDefault(x => x.Id == settingId);
         d?.ApplyEdit(layer, value);
     }
 
     private void CycleSetting(TextLayerSettings layer, string id, bool forward)
     {
-        var descriptors = SettingDescriptor.BuildAll(layer, _paletteRepo, _asciiVideoDeviceCatalog);
+        var descriptors = SettingDescriptor.BuildAll(layer, _paletteRepo, _asciiVideoDeviceCatalog, _charsetRepo);
         var d = descriptors.FirstOrDefault(x => x.Id == id);
         d?.Cycle(layer, forward);
     }

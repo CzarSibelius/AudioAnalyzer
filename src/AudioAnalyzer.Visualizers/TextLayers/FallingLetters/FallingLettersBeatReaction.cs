@@ -5,5 +5,8 @@ public enum FallingLettersBeatReaction
 {
     None,
     SpawnMore,
-    SpeedBurst
+    SpeedBurst,
+
+    /// <summary>Discrete phase nudge on beat (column rain); particles get a spawn-phase jitter.</summary>
+    Flash
 }

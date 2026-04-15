@@ -10,13 +10,19 @@ public sealed class AsciiImageLayer : TextLayerRendererBase, ITextLayerRenderer<
     private readonly ITextLayerStateStore<AsciiImageState> _stateStore;
     private readonly UiSettings _uiSettings;
     private readonly IFileSystem _fileSystem;
+    private readonly CharsetResolver _charsetResolver;
 
     /// <summary>Initializes a new instance of the <see cref="AsciiImageLayer"/> class.</summary>
-    public AsciiImageLayer(ITextLayerStateStore<AsciiImageState> stateStore, UiSettings uiSettings, IFileSystem fileSystem)
+    public AsciiImageLayer(
+        ITextLayerStateStore<AsciiImageState> stateStore,
+        UiSettings uiSettings,
+        IFileSystem fileSystem,
+        CharsetResolver charsetResolver)
     {
         _stateStore = stateStore ?? throw new ArgumentNullException(nameof(stateStore));
         _uiSettings = uiSettings ?? throw new ArgumentNullException(nameof(uiSettings));
         _fileSystem = fileSystem ?? throw new ArgumentNullException(nameof(fileSystem));
+        _charsetResolver = charsetResolver ?? throw new ArgumentNullException(nameof(charsetResolver));
     }
 
     public override TextLayerType LayerType => TextLayerType.AsciiImage;
@@ -46,13 +52,20 @@ public sealed class AsciiImageLayer : TextLayerRendererBase, ITextLayerRenderer<
         int convertW = w * 2;
         int convertH = h * 2;
         bool includeRgb = s.PaletteSource == AsciiImagePaletteSource.ImageColors;
-        if (asciiState.CachedFrame == null || asciiState.CachedPath != imagePath || asciiState.CachedWidth != convertW || asciiState.CachedHeight != convertH || asciiState.CachedPaletteSource != s.PaletteSource)
+        string ramp = _charsetResolver.ResolveByIdOrDefault(s.CharsetId, CharsetIds.AsciiRampClassic, " .:-=+*#%@");
+        if (asciiState.CachedFrame == null
+            || asciiState.CachedPath != imagePath
+            || asciiState.CachedWidth != convertW
+            || asciiState.CachedHeight != convertH
+            || asciiState.CachedPaletteSource != s.PaletteSource
+            || !string.Equals(asciiState.CachedCharsetId, ramp, StringComparison.Ordinal))
         {
-            asciiState.CachedFrame = AsciiImageConverter.Convert(_fileSystem, imagePath, convertW, convertH, includeRgb);
+            asciiState.CachedFrame = AsciiImageConverter.Convert(_fileSystem, imagePath, convertW, convertH, includeRgb, ramp);
             asciiState.CachedPath = imagePath;
             asciiState.CachedWidth = convertW;
             asciiState.CachedHeight = convertH;
             asciiState.CachedPaletteSource = s.PaletteSource;
+            asciiState.CachedCharsetId = ramp;
         }
 
         if (asciiState.CachedFrame == null)

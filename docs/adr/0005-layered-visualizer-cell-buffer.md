@@ -12,7 +12,7 @@ We want a new visualization mode that composites multiple independent layers (e.
 
 2. **Per-layer config**: Layer list and per-layer settings (type, ZOrder, text snippets, beat reaction, speed, color index) live in **`VisualizerSettings.TextLayers`** (Domain). Config is passed into the visualizer via **`AnalysisSnapshot.TextLayersConfig`**; the renderer sets this only when the current mode is TextLayers. Layers are independent and configurable one at a time via the settings file (e.g. `appsettings.json`).
 
-3. **Layer types and beat reactions**: Supported layer types (e.g. ScrollingColors, Marquee, FallingLetters, MatrixRain, WaveText, StaticText) are defined in Domain (`TextLayerType`). Beat reactions are per-layer: each layer type that supports beat reaction has its own enum and stores it in Custom (see [ADR-0055](0055-layer-specific-beat-reaction.md)). The visualizer encapsulates all drawing and state (marquee offset, falling particles, etc.); no new public interfaces are required.
+3. **Layer types and beat reactions**: Supported layer types (e.g. ScrollingColors, Marquee, FallingLetters, WaveText, StaticText) are defined in Domain (`TextLayerType`). Beat reactions are per-layer: each layer type that supports beat reaction has its own enum and stores it in Custom (see [ADR-0055](0055-layer-specific-beat-reaction.md)). The visualizer encapsulates all drawing and state (marquee offset, falling particles, etc.); no new public interfaces are required.
 
 ## Consequences
 

@@ -12,13 +12,19 @@ public sealed class AsciiModelLayer : TextLayerRendererBase, ITextLayerRenderer<
     private readonly ITextLayerStateStore<AsciiModelState> _stateStore;
     private readonly UiSettings _uiSettings;
     private readonly IFileSystem _fileSystem;
+    private readonly CharsetResolver _charsetResolver;
 
     /// <summary>Initializes a new instance of the <see cref="AsciiModelLayer"/> class.</summary>
-    public AsciiModelLayer(ITextLayerStateStore<AsciiModelState> stateStore, UiSettings uiSettings, IFileSystem fileSystem)
+    public AsciiModelLayer(
+        ITextLayerStateStore<AsciiModelState> stateStore,
+        UiSettings uiSettings,
+        IFileSystem fileSystem,
+        CharsetResolver charsetResolver)
     {
         _stateStore = stateStore ?? throw new ArgumentNullException(nameof(stateStore));
         _uiSettings = uiSettings ?? throw new ArgumentNullException(nameof(uiSettings));
         _fileSystem = fileSystem ?? throw new ArgumentNullException(nameof(fileSystem));
+        _charsetResolver = charsetResolver ?? throw new ArgumentNullException(nameof(charsetResolver));
     }
 
     /// <inheritdoc />
@@ -110,6 +116,8 @@ public sealed class AsciiModelLayer : TextLayerRendererBase, ITextLayerRenderer<
             s.LightAzimuthDegrees,
             s.LightElevationDegrees);
 
+        string ramp = _charsetResolver.ResolveByIdOrDefault(s.CharsetId, CharsetIds.AsciiRampClassic, " .:-=+*#%@");
+
         AsciiModelRasterizer.Render(
             ctx.Buffer,
             ctx.Palette,
@@ -125,6 +133,7 @@ public sealed class AsciiModelLayer : TextLayerRendererBase, ITextLayerRenderer<
             (float)s.Ambient,
             ctx.BufferOriginX,
             ctx.BufferOriginY,
+            ramp,
             m);
 
         return state;

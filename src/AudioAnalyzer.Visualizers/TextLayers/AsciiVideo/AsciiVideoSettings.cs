@@ -29,6 +29,11 @@ public sealed class AsciiVideoSettings
     [Setting("PaletteSource", "Palette source")]
     public AsciiImagePaletteSource PaletteSource { get; set; } = AsciiImagePaletteSource.LayerPalette;
 
+    /// <summary>Charset id for luminance→glyph mapping (<c>charsets/*.json</c>, ADR-0080). Unset uses <see cref="CharsetIds.AsciiRampClassic"/>.</summary>
+    [Setting("CharsetId", "Charset")]
+    [CharsetSetting]
+    public string? CharsetId { get; set; }
+
     /// <summary>When true, mirrors the frame left–right in the layer viewport.</summary>
     [Setting("FlipHorizontal", "Flip horizontal")]
     public bool FlipHorizontal { get; set; }

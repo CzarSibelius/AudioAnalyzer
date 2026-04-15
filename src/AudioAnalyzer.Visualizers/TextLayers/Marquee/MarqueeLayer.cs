@@ -15,7 +15,8 @@ public sealed class MarqueeLayer : TextLayerRendererBase, ITextLayerRenderer<NoL
     {
         int w = ctx.Width;
         int h = ctx.Height;
-        var snippets = layer.TextSnippets?.Where(s => !string.IsNullOrEmpty(s)).ToList() ?? new List<string>();
+        var s = layer.GetCustom<MarqueeSettings>() ?? new MarqueeSettings();
+        var snippets = s.TextSnippets.Where(x => !string.IsNullOrEmpty(x)).ToList();
         string text = snippets.Count > 0
             ? snippets[state.SnippetIndex % Math.Max(1, snippets.Count)]
             : "  Layered text  ";
@@ -24,7 +25,6 @@ public sealed class MarqueeLayer : TextLayerRendererBase, ITextLayerRenderer<NoL
             text = " ";
         }
 
-        var s = layer.GetCustom<MarqueeSettings>() ?? new MarqueeSettings();
         double speed = layer.SpeedMultiplier * ctx.SpeedBurst * 0.8;
         if (s.BeatReaction == MarqueeBeatReaction.SpeedBurst && ctx.Analysis.BeatFlashActive)
         {

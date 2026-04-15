@@ -34,7 +34,8 @@ public sealed class MaschineLayer : TextLayerRendererBase, ITextLayerRenderer<Ma
             return state;
         }
 
-        var snippets = layer.TextSnippets?.Where(s => !string.IsNullOrEmpty(s)).ToList() ?? new List<string>();
+        var maschineSettings = layer.GetCustom<MaschineSettings>() ?? new MaschineSettings();
+        var snippets = maschineSettings.TextSnippets.Where(s => !string.IsNullOrEmpty(s)).ToList();
         if (snippets.Count == 0)
         {
             return state;
@@ -74,13 +75,12 @@ public sealed class MaschineLayer : TextLayerRendererBase, ITextLayerRenderer<Ma
             return state;
         }
 
-        var settings = layer.GetCustom<MaschineSettings>() ?? new MaschineSettings();
         var normalColor = palette[Math.Max(0, layer.ColorIndex % palette.Count)];
-        var accentColor = palette[Math.Max(0, settings.AccentColorIndex % palette.Count)];
+        var accentColor = palette[Math.Max(0, maschineSettings.AccentColorIndex % palette.Count)];
 
         // Aligned diagonal (first char of line 0, second of line 1, ...) stays at viewport center.
         int baseCol = w / 2;
-        int accentColumn = settings.AccentColumnMode == MaschineAccentColumnMode.Fixed
+        int accentColumn = maschineSettings.AccentColumnMode == MaschineAccentColumnMode.Fixed
             ? baseCol
             : baseCol + (phase % Math.Max(1, textDisplayWidth));
 

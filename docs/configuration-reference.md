@@ -18,7 +18,7 @@ TextLayers presets are stored as **JSON files** in a **`presets`** directory nex
 **Preset JSON format:**
 
 - **`Name`** (optional): Display name (e.g. `"Preset 1"`).
-- **`Config`**: TextLayersVisualizerSettings — `PaletteId` plus `Layers` array (0 up to `TextLayersLimits.MaxLayerCount` entries, each with `LayerType`, `Enabled`, `ZOrder`, `TextSnippets`, `SpeedMultiplier`, etc.). Layers that support beat reaction store it in `Custom` (e.g. `Custom.BeatReaction`); not all layer types expose beat reaction. Inside each layer’s **`Custom`** object, enum fields accept **either** JSON strings (e.g. `"ImageColors"`) **or** numeric values, and property names are matched **case-insensitively** (so `paletteSource` and `PaletteSource` both work). The app uses the same rules when saving from the S modal.
+- **`Config`**: TextLayersVisualizerSettings — `PaletteId` plus `Layers` array (0 up to `TextLayersLimits.MaxLayerCount` entries, each with `LayerType`, `Enabled`, `ZOrder`, `SpeedMultiplier`, `ColorIndex`, `PaletteId`, optional `RenderBounds`, and `Custom`). Phrase lists live in **`Custom.TextSnippets`** only for layer types that use whole phrases (Marquee, WaveText, StaticText, NowPlaying, Maschine). **FallingLetters** uses **`CharsetId`** (and optional `AnimationMode`) for its glyph pool, not `TextSnippets` ([ADR-0081](adr/0081-consolidate-matrix-rain-into-falling-letters.md)). A **root-level** `"TextSnippets"` property on a layer object is **not** read (ignored by the serializer); move values into `Custom` per [ADR-0029](adr/0029-no-settings-migration.md). Layers that support beat reaction store it in `Custom` (e.g. `Custom.BeatReaction`); not all layer types expose beat reaction. Inside each layer’s **`Custom`** object, enum fields accept **either** JSON strings (e.g. `"ImageColors"`) **or** numeric values, and property names are matched **case-insensitively** (so `paletteSource` and `PaletteSource` both work). The app uses the same rules when saving from the S modal.
 
 Example (`presets/preset-1.json`):
 
@@ -125,6 +125,22 @@ Example with 24-bit colors:
   "Colors": ["#FF6B35", "#F7C59F", "#2A9D8F", "#264653", "#E9C46A"]
 }
 ```
+
+## Charsets (JSON files)
+
+Reusable **ordered character sequences** for text layers (luminance ramps, density glyphs, random glyph pools) live in **`charsets/*.json`** next to the executable (see [ADR-0080](adr/0080-shared-charset-json-and-layer-charset-ids.md)). Id = filename without extension. The S modal **Charset** row opens a list (like palettes). **FallingLetters** defaults to the **`digits`** charset when `CharsetId` is unset ([ADR-0081](adr/0081-consolidate-matrix-rain-into-falling-letters.md)).
+
+**Charsets vs `Custom.TextSnippets` (normative):**
+
+- **Charsets** — when the layer **picks one character at a time** for rendering (ramps, density, random glyphs). Use `CharsetId` in the layer’s Custom settings and/or shared `charsets/*.json` files.
+- **`Custom.TextSnippets`** — when the layer needs a **whole phrase** (or several phrases): Marquee, WaveText, StaticText, NowPlaying (fallback), Maschine.
+
+**Charset JSON format:**
+
+- **`Name`** (optional): display name in lists.
+- **`Characters`** (required): a single JSON string, the ordered sequence of characters (including spaces when meaningful). Empty values are invalid; length is capped when loading/saving.
+
+The app ships **`ascii-ramp-classic`**, **`density-soft`**, **`unknown-pleasures-ramp`**, **`english-alphabet`**, **`finnish-alphabet`**, **`digits`**, **`hex`**, and **`hex-lowercase`**. Add more `.json` files in `charsets/` to extend the list.
 
 ## UI themes (JSON files)
 

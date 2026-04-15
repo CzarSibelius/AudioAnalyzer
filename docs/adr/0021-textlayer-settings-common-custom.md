@@ -9,14 +9,10 @@
 ## Decision
 
 1. **Common + Custom structure**: `TextLayerSettings` (Domain) has only **common properties** plus a `Custom` property (JsonElement) for layer-specific settings. Other components (TextLayersVisualizer, Program.cs, persistence) treat Custom as opaque: they copy and persist it but do not deserialize or interpret it.
-
-2. **Per-layer *Settings.cs**: Each layer that needs custom settings defines its own type in the Visualizers project next to the layer (e.g. `LlamaStyle/LlamaStyleSettings.cs`). Only the owning layer references these types.
-
+2. **Per-layer Settings.cs*: Each layer that needs custom settings defines its own type in the Visualizers project next to the layer (e.g. `LlamaStyle/LlamaStyleSettings.cs`). Only the owning layer references these types.
 3. **GetCustom / SetCustom pattern**: `TextLayerSettings` provides `GetCustom<T>()` and `SetCustom<T>()` so layers can deserialize Custom to their typed settings. Layers call `layer.GetCustom<LlamaStyleSettings>() ?? new LlamaStyleSettings()` in Draw; components that mutate settings (e.g. HandleKey for Oscilloscope gain) call `GetCustom`, mutate, then `SetCustom`.
-
 4. **Legacy migration (removed)**: Previously, `[JsonExtensionData]` and `MigrateExtensionDataToCustom()` migrated legacy top-level properties into Custom. Per [ADR-0029](0029-no-settings-migration.md), migration has been removed; incompatible settings are backed up and reset.
-
-5. **Layer settings**: Layers receive `TextLayerSettings` and resolve their own settings type via `GetCustom<TSettings>()`. The renderer contract is on TextLayerRendererBase; the state type is on ITextLayerRenderer&lt;TState&gt; (ADR-0044).
+5. **Layer settings**: Layers receive `TextLayerSettings` and resolve their own settings type via `GetCustom<TSettings>()`. The renderer contract is on TextLayerRendererBase; the state type is on ITextLayerRenderer (ADR-0044).
 
 ## Consequences
 

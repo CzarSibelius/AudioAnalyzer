@@ -47,6 +47,10 @@ internal static class ServiceConfiguration
         services.AddSingleton<IUiThemeRepository>(_ =>
             options?.UiThemeRepository
             ?? new FileUiThemeRepository(options?.FileSystem ?? new FileSystem(), options?.ThemesDirectory));
+        services.AddSingleton<ICharsetRepository>(_ =>
+            options?.CharsetRepository
+            ?? new FileCharsetRepository(options?.FileSystem ?? new FileSystem(), options?.CharsetsDirectory));
+        services.AddSingleton<CharsetResolver>();
         services.AddSingleton<IUiThemeResolver, UiThemeResolver>();
         services.AddSingleton<IPresetRepository>(presetRepo);
         services.AddSingleton<IFileSystem>(_ => options?.FileSystem ?? new FileSystem());

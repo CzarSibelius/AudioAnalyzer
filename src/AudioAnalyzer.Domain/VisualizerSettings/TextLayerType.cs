@@ -7,7 +7,6 @@ public enum TextLayerType
     ScrollingColors,
     Marquee,
     FallingLetters,
-    MatrixRain,
     WaveText,
     StaticText,
     AsciiImage,

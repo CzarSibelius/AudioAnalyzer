@@ -33,6 +33,7 @@
     <None Include="palettes\*.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="presets\*.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="themes\*.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="charsets\*.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="models\**\*" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 

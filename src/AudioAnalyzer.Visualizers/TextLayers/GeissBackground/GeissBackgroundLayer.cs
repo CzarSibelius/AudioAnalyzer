@@ -1,5 +1,4 @@
 using AudioAnalyzer.Application;
-using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Domain;
 
 namespace AudioAnalyzer.Visualizers;
@@ -7,12 +6,14 @@ namespace AudioAnalyzer.Visualizers;
 /// <summary>Renders the Geiss plasma-style background layer.</summary>
 public sealed class GeissBackgroundLayer : TextLayerRendererBase, ITextLayerRenderer<GeissBackgroundState>
 {
-    private static readonly char[] PlasmaChars = [' ', '·', ':', ';', '+', '*', '#', '@', '█'];
+    private const string DefaultPlasmaRamp = " \u00B7:;+*#@\u2588";
     private readonly ITextLayerStateStore<GeissBackgroundState> _stateStore;
+    private readonly CharsetResolver _charsetResolver;
 
-    public GeissBackgroundLayer(ITextLayerStateStore<GeissBackgroundState> stateStore)
+    public GeissBackgroundLayer(ITextLayerStateStore<GeissBackgroundState> stateStore, CharsetResolver charsetResolver)
     {
         _stateStore = stateStore ?? throw new ArgumentNullException(nameof(stateStore));
+        _charsetResolver = charsetResolver ?? throw new ArgumentNullException(nameof(charsetResolver));
     }
 
     public override TextLayerType LayerType => TextLayerType.GeissBackground;
@@ -56,6 +57,7 @@ public sealed class GeissBackgroundLayer : TextLayerRendererBase, ITextLayerRend
         var s = layer.GetCustom<GeissBackgroundSettings>() ?? new GeissBackgroundSettings();
         bool usePalette = ctx.Palette.Count > 0;
         double plasmaBoost = (s.BeatReaction == GeissBackgroundBeatReaction.Flash && snapshot.BeatFlashActive) ? 0.3 : 0;
+        string ramp = _charsetResolver.ResolveByIdOrDefault(s.CharsetId, CharsetIds.DensitySoft, DefaultPlasmaRamp);
 
         for (int y = 0; y < h; y++)
         {
@@ -80,7 +82,7 @@ public sealed class GeissBackgroundLayer : TextLayerRendererBase, ITextLayerRend
                 {
                     hue += 1.0;
                 }
-                char ch = PlasmaChars[Math.Min((int)(plasma * (PlasmaChars.Length - 1)), PlasmaChars.Length - 1)];
+                char ch = ramp[Math.Min((int)(plasma * (ramp.Length - 1)), ramp.Length - 1)];
 
                 PaletteColor color;
                 if (usePalette)

@@ -33,6 +33,15 @@ internal sealed class SettingsModalState
     /// <summary>Palette id when the picker opened; Esc restores it (Enter saves the previewed choice). Used for layer or preset default palette.</summary>
     public string? PalettePickerOriginalPaletteId { get; set; }
 
+    /// <summary>Selected row in the charset picker (0 = legacy snippets row when present, else first charset).</summary>
+    public int CharsetPickerSelectedIndex { get; set; }
+
+    /// <summary>Layer <c>CharsetId</c> when the charset picker opened; Esc restores it.</summary>
+    public string? CharsetPickerOriginalCharsetId { get; set; }
+
+    /// <summary>When true, row 0 in the charset picker is legacy TextSnippets mode (reserved; currently unused).</summary>
+    public bool CharsetPickerIncludeLegacySnippetsRow { get; set; }
+
     /// <summary>Last navigation key for rate limiting.</summary>
     public ConsoleKey? LastNavKey { get; set; }
 

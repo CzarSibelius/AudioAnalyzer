@@ -10,8 +10,11 @@ public interface ITitleBarNavigationContext
     /// <summary>Active UI surface for breadcrumb path shaping.</summary>
     TitleBarViewKind View { get; set; }
 
-    /// <summary>When <see cref="View"/> is <see cref="TitleBarViewKind.PresetSettingsModal"/> and a focused setting segment is shown, true appends <c>/editor</c> after that segment (palette picker open).</summary>
+    /// <summary>When <see cref="View"/> is <see cref="TitleBarViewKind.PresetSettingsModal"/> and a focused setting segment is shown, true appends <c>/editor</c> after that segment (palette list open).</summary>
     bool PresetSettingsPalettePickerActive { get; set; }
+
+    /// <summary>When preset settings modal shows the charset list, true appends <c>/editor</c> after the focused setting segment (same breadcrumb affordance as palette; ADR-0080).</summary>
+    bool PresetSettingsCharsetPickerActive { get; set; }
 
     /// <summary>When in preset settings modal, 1-based index of the focused layer (list order), or null if none.</summary>
     int? PresetSettingsLayerOneBased { get; set; }

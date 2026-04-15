@@ -12,6 +12,7 @@ public sealed class TitleBarBreadcrumbFormatterTests
     {
         public TitleBarViewKind View { get; set; }
         public bool PresetSettingsPalettePickerActive { get; set; }
+        public bool PresetSettingsCharsetPickerActive { get; set; }
         public int? PresetSettingsLayerOneBased { get; set; }
         public string? PresetSettingsLayerTypeRaw { get; set; }
         public string? PresetSettingsFocusedSettingId { get; set; }

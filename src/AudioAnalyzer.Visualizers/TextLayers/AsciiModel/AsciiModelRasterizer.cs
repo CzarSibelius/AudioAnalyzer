@@ -7,8 +7,7 @@ namespace AudioAnalyzer.Visualizers;
 /// <summary>Projects a triangle mesh to the cell buffer with z-buffering and Lambert shading to ASCII characters.</summary>
 public static class AsciiModelRasterizer
 {
-    /// <summary>ASCII gradient from dark to light (legacy mode; matches <see cref="AsciiImageConverter"/>).</summary>
-    private const string AsciiGradient = " .:-=+*#%@";
+    private const string DefaultAsciiGradient = " .:-=+*#%@";
 
     /// <summary>Terminal cells are taller than wide; multiply projected X by this so models are not stretched vertically in the terminal.</summary>
     private const float CellAspectX = 2f;
@@ -31,6 +30,7 @@ public static class AsciiModelRasterizer
     /// <param name="ambient">Ambient term in [0,1].</param>
     /// <param name="bufferOriginX">Optional buffer X offset.</param>
     /// <param name="bufferOriginY">Optional buffer Y offset.</param>
+    /// <param name="luminanceRampChars">Legacy gradient ramp; when null/empty, uses the classic default.</param>
     /// <param name="rasterScratch">When non-null, reuses z/luminance and world-space buffers from per-layer state to avoid per-frame allocations.</param>
     public static void Render(
         ViewportCellBuffer buffer,
@@ -47,11 +47,18 @@ public static class AsciiModelRasterizer
         float ambient,
         int bufferOriginX = 0,
         int bufferOriginY = 0,
+        string? luminanceRampChars = null,
         AsciiModelState? rasterScratch = null)
     {
         if (width <= 0 || height <= 0 || palette.Count == 0)
         {
             return;
+        }
+
+        string ramp = string.IsNullOrEmpty(luminanceRampChars) ? DefaultAsciiGradient : luminanceRampChars;
+        if (ramp.Length < 1)
+        {
+            ramp = DefaultAsciiGradient;
         }
 
         Vector3 lightDir = lightDirectionWorld;
@@ -68,7 +75,7 @@ public static class AsciiModelRasterizer
 
         if (renderMode == AsciiModelRenderMode.LegacyGradient)
         {
-            RenderLegacy(buffer, palette, colorBase, width, height, mesh, rotation, cameraDistanceScale, lightDir, ambientClamped, bufferOriginX, bufferOriginY, rasterScratch);
+            RenderLegacy(buffer, palette, colorBase, width, height, mesh, rotation, cameraDistanceScale, lightDir, ambientClamped, bufferOriginX, bufferOriginY, ramp, rasterScratch);
         }
         else
         {
@@ -89,6 +96,7 @@ public static class AsciiModelRasterizer
         float ambient,
         int bufferOriginX,
         int bufferOriginY,
+        string ramp,
         AsciiModelState? rasterScratch)
     {
         float zOffset = (float)(2.0 / Math.Max(0.25, cameraDistanceScale));
@@ -136,8 +144,8 @@ public static class AsciiModelRasterizer
             float nd = Math.Clamp(Vector3.Dot(nw, lightDir), 0f, 1f);
             float intensity = AsciiModelLighting.CombineDiffuseAndAmbient(nd, ambient);
             byte bright = (byte)(intensity * 255);
-            int g = (bright * (AsciiGradient.Length - 1)) / 255;
-            char asciiChar = AsciiGradient[g];
+            int g = (bright * (ramp.Length - 1)) / 255;
+            char asciiChar = ramp[g];
 
             FillTriangleCells(
                 buffer,

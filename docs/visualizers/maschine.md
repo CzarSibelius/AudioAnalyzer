@@ -2,7 +2,7 @@
 
 ## Description
 
-Beat-enabled text layer that displays one selected snippet in a diagonal cascade. On each beat a new line of the text is drawn below the previous; each line is offset one character to the left so the first character of the first line aligns with the second character of the second line, forming a stepped diagonal. Characters in the same column (the aligned diagonal) use a configurable accent color; the rest use the normal palette color. After enough beats to show one line per character of the snippet, the cycle loops and the snippet can advance to the next in the list. Uses the layer's palette and **TextSnippets**.
+Beat-enabled text layer that displays one selected snippet in a diagonal cascade. On each beat a new line of the text is drawn below the previous; each line is offset one character to the left so the first character of the first line aligns with the second character of the second line, forming a stepped diagonal. Characters in the same column (the aligned diagonal) use a configurable accent color; the rest use the normal palette color. After enough beats to show one line per character of the snippet, the cycle loops and the snippet can advance to the next in the list. Uses the layer's palette and **`Custom.TextSnippets`** (`MaschineSettings`).
 
 ## Snapshot usage
 
@@ -12,10 +12,10 @@ Beat-enabled text layer that displays one selected snippet in a diagonal cascade
 ## Settings
 
 - **Schema**: `TextLayerSettings` when `LayerType` is `Maschine`; layer-specific options in **Custom** (`MaschineSettings`).
-- **TextSnippets** (common): List of text snippets; one is chosen per cycle (round-robin when the cycle loops).
 - **ColorIndex** (common): Palette index for normal text color.
 - **PaletteId** (common): Id of the color palette. **P** when this layer is selected cycles and saves.
-- **Custom**:
+- **Custom** (`MaschineSettings`):
+  - **TextSnippets** (string[]): One phrase per diagonal cycle; round-robin when the cycle loops.
   - **AccentColorIndex** (int, 0–31): Palette index for the aligned diagonal. Default 1.
   - **AccentColumnMode** (Fixed | Moving): Fixed = accent on the leftmost column of the cascade; Moving = accent column advances with beat phase so the highlight shifts each beat. Default Moving.
 

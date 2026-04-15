@@ -25,6 +25,7 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
     private readonly UiSettings _uiSettings;
     private readonly IUiThemeResolver _uiThemeResolver;
     private readonly IPaletteRepository _paletteRepo;
+    private readonly ICharsetRepository _charsetRepo;
     private readonly IAsciiVideoDeviceCatalog _asciiVideoDeviceCatalog;
     private readonly IUiComponentRenderer<IUiComponent> _componentRenderer;
     private readonly ITitleBarNavigationContext _navigation;
@@ -49,6 +50,7 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
         UiSettings uiSettings,
         IUiThemeResolver uiThemeResolver,
         IPaletteRepository paletteRepo,
+        ICharsetRepository charsetRepo,
         IAsciiVideoDeviceCatalog asciiVideoDeviceCatalog,
         IUiComponentRenderer<IUiComponent> componentRenderer,
         ITitleBarNavigationContext navigation,
@@ -58,6 +60,7 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
         _uiSettings = uiSettings ?? throw new ArgumentNullException(nameof(uiSettings));
         _uiThemeResolver = uiThemeResolver ?? throw new ArgumentNullException(nameof(uiThemeResolver));
         _paletteRepo = paletteRepo ?? throw new ArgumentNullException(nameof(paletteRepo));
+        _charsetRepo = charsetRepo ?? throw new ArgumentNullException(nameof(charsetRepo));
         _asciiVideoDeviceCatalog = asciiVideoDeviceCatalog ?? throw new ArgumentNullException(nameof(asciiVideoDeviceCatalog));
         _componentRenderer = componentRenderer ?? throw new ArgumentNullException(nameof(componentRenderer));
         _navigation = navigation ?? throw new ArgumentNullException(nameof(navigation));
@@ -84,6 +87,7 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
         {
             _navigation.View = TitleBarViewKind.PresetSettingsModal;
             _navigation.PresetSettingsPalettePickerActive = state.Focus == SettingsModalFocus.PickingPalette;
+            _navigation.PresetSettingsCharsetPickerActive = state.Focus == SettingsModalFocus.PickingCharset;
             var textLayers = _visualizerSettings.TextLayers ?? new TextLayersVisualizerSettings();
             var selectedLayer = !state.LeftPanelPresetSelected && sortedLayers.Count > 0 && state.SelectedLayerIndex < sortedLayers.Count
                 ? sortedLayers[state.SelectedLayerIndex]
@@ -215,6 +219,19 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
                     frame.Analysis,
                     includeInheritFirst: !state.PalettePickerForPresetDefault);
             }
+            else if (state.Focus == SettingsModalFocus.PickingCharset && selectedLayer != null)
+            {
+                SettingsSurfacesCharsetDrawing.DrawPicker(
+                    _charsetRepo,
+                    state,
+                    LeftColWidth,
+                    RightColumnContentStartRow,
+                    SettingsVisibleRows,
+                    rightColWidth,
+                    selBg,
+                    selFg,
+                    state.CharsetPickerIncludeLegacySnippetsRow);
+            }
             else if (showPresetPanel)
             {
                 var presetSettingsRows = PresetSettingsModalRows.Build(_visualizerSettings, textLayers, _paletteRepo);
@@ -274,6 +291,17 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
                         continue;
                     }
 
+                    if (row.EditMode == SettingEditMode.CharsetPicker && !showBuffer)
+                    {
+                        System.Console.Write(SettingsSurfacesCharsetDrawing.FormatCharsetSettingRow(
+                            row.DisplayValue,
+                            rightColWidth,
+                            rowSelected,
+                            selBg,
+                            selFg));
+                        continue;
+                    }
+
                     string aff = MenuSelectionAffordance.GetPrefix(rowSelected);
                     string labelWithColon = string.IsNullOrEmpty(row.Label) ? "" : row.Label + ":";
                     string lineText = $"{aff}{labelWithColon}{(showBuffer ? state.EditingBuffer + "_" : row.DisplayValue)}";
@@ -289,7 +317,7 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
                 System.Console.Write(new string(' ', LeftColWidth + 1));
             }
 
-            if (showPresetPanel && state.Focus != SettingsModalFocus.PickingPalette)
+            if (showPresetPanel && state.Focus != SettingsModalFocus.PickingPalette && state.Focus != SettingsModalFocus.PickingCharset)
             {
                 _lastIdlePresetDefaultPalettePhase = GetPalettePhaseForPresetDefault(textLayers, frame);
             }
@@ -298,7 +326,7 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
                 _lastIdlePresetDefaultPalettePhase = int.MinValue;
             }
 
-            if (showLayerPanel && state.Focus != SettingsModalFocus.PickingPalette)
+            if (showLayerPanel && state.Focus != SettingsModalFocus.PickingPalette && state.Focus != SettingsModalFocus.PickingCharset)
             {
                 _lastIdlePalettePhase = GetPalettePhaseForLayer(selectedLayer!, frame);
             }
@@ -307,7 +335,7 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
                 _lastIdlePalettePhase = int.MinValue;
             }
 
-            if (state.Focus == SettingsModalFocus.PickingPalette)
+            if (state.Focus == SettingsModalFocus.PickingPalette || state.Focus == SettingsModalFocus.PickingCharset)
             {
                 SyncPickerIdleTracking(frame);
             }
@@ -359,6 +387,11 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
         if (state.Focus == SettingsModalFocus.PickingPalette)
         {
             TryRedrawPalettePickerForIdle(state, width, frame);
+            return;
+        }
+
+        if (state.Focus == SettingsModalFocus.PickingCharset)
+        {
             return;
         }
 
@@ -590,6 +623,7 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
         return state.Renaming ? "  Type new name, Enter to save, Esc to cancel"
             : state.Focus == SettingsModalFocus.EditingSetting ? "  Type value, Enter or \u2191\u2193 confirm, Esc cancel"
             : state.Focus == SettingsModalFocus.PickingPalette ? "  \u2191\u2193 or +/- preview, Enter save, Esc discard"
+            : state.Focus == SettingsModalFocus.PickingCharset ? "  \u2191\u2193 or +/- preview, Enter save, Esc discard"
             : state.Focus == SettingsModalFocus.SettingsList ? "  \u2191\u2193 select, Enter or +/- cycle (Enter = palette list on Palette), Enter edit strings, \u2190 or Esc back"
             : "  1-9 layer, Ins add, Del remove, \u2191\u2192 Preset or layers, \u2190\u2192 type, Ctrl+\u2191\u2193 move, Enter settings, Shift+1-9 toggle, R rename, N preset, Esc close";
     }
@@ -597,7 +631,7 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
     private List<(string Id, string Label, string DisplayValue, SettingEditMode EditMode)> GetSettingsRows(TextLayerSettings? layer)
     {
         if (layer == null) { return []; }
-        var descriptors = SettingDescriptor.BuildAll(layer, _paletteRepo, _asciiVideoDeviceCatalog);
+        var descriptors = SettingDescriptor.BuildAll(layer, _paletteRepo, _asciiVideoDeviceCatalog, _charsetRepo);
         return descriptors.Select(d => (d.Id, d.Label, d.GetDisplayValue(layer), d.EditMode)).ToList();
     }
 
@@ -605,7 +639,8 @@ internal sealed class SettingsModalRenderer : ISettingsModalRenderer
     {
         if (state.Focus != SettingsModalFocus.SettingsList
             && state.Focus != SettingsModalFocus.EditingSetting
-            && state.Focus != SettingsModalFocus.PickingPalette)
+            && state.Focus != SettingsModalFocus.PickingPalette
+            && state.Focus != SettingsModalFocus.PickingCharset)
         {
             return null;
         }

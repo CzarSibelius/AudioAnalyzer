@@ -15,4 +15,7 @@ public sealed class AsciiImageState
     public int CachedWidth { get; set; }
     public int CachedHeight { get; set; }
     public AsciiImagePaletteSource CachedPaletteSource { get; set; }
+
+    /// <summary>Effective charset id used when <see cref="CachedFrame"/> was built (ADR-0080).</summary>
+    public string? CachedCharsetId { get; set; }
 }

@@ -50,7 +50,6 @@ public sealed class LayerRenderingTests
               "LayerType": "{{layerType}}",
               "Enabled": true,
               "ZOrder": 0,
-              "TextSnippets": ["Test"],
               "SpeedMultiplier": 1.0
             }
             """;

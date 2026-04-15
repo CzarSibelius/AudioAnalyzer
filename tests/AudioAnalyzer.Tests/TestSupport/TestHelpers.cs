@@ -78,7 +78,7 @@ internal static class TestHelpers
               "Config": {
                 "Layers": [
                   { "LayerType": "GeissBackground", "Enabled": true, "ZOrder": 0, "SpeedMultiplier": 1.0, "Custom": { "BeatReaction": "Flash" } },
-                  { "LayerType": "StaticText", "Enabled": true, "ZOrder": 1, "TextSnippets": ["Test"], "Custom": { "BeatReaction": "None" } }
+                  { "LayerType": "StaticText", "Enabled": true, "ZOrder": 1, "Custom": { "BeatReaction": "None", "TextSnippets": ["Test"] } }
                 ]
               }
             }

@@ -20,7 +20,7 @@ The main display loop can exceed ~60 FPS (ADR-0067). Text layers and toolbar/hea
 
 6. **UI scrolling**: `IScrollingTextEngine` advances offset by `speedPerReferenceFrame * ScaleForReference60(frameDeltaSeconds)`. `UiSettings.DefaultScrollingSpeed` remains the stored value; documentation describes it as character advance per **reference** frame at 60 Hz.
 
-7. **MatrixRain stochastic column phase**: The `colPhase += Random` step remains **per draw** (not scaled by `dt`) so column desynchronization stays a discrete per-frame effect; document here as intentional.
+7. **FallingLetters column rain (former MatrixRain)**: On **Flash** beat, the discrete `colPhase += Random` nudge remains **per draw** (not scaled by `dt`) so column desynchronization stays a discrete per-frame effect; document here as intentional ([ADR-0081](0081-consolidate-matrix-rain-into-falling-letters.md)).
 
 ## Consequences
 
