@@ -4,10 +4,74 @@
 
 Place new test files under `tests/AudioAnalyzer.Tests/` so folders mirror the production project and path (for example `Application/Display/` for code under `src/AudioAnalyzer.Application/Display/`). Shared helpers belong in `TestSupport/` (or `Common/`); cross-assembly tests with no single primary SUT may use `Integration/`. See [ADR-0064](../adr/0064-test-project-mirrors-production-layout.md).
 
+## Unit vs integration tests
+
+**Not a unit test** if the test: talks to a **database**; uses the **network**; touches the **real host file system** (`File.*`, `Directory.*`, or a real-disk `System.IO.Abstractions.IFileSystem`). **Does not** count as file I/O: **`MockFileSystem`** and other in-memory fakes. **Unit tests** must also be able to run **in parallel** with other unit tests (no hidden global exclusivity) and must **not** require manual environment setup (editing real config on disk, secrets, special drivers) beyond `dotnet test`.
+
+**Integration tests** live under `tests/AudioAnalyzer.Tests/Integration/` with namespace **`AudioAnalyzer.Tests.Integration`**. They may be slower or broader (full DI render, preset round-trips, performance thresholds). **Prefer** `MockFileSystem` and fakes in integration tests too when the goal is not specifically to prove real OS or hardware behavior.
+
+**I/O hardening (production and tests):** Prefer injecting **`IFileSystem`** (and small test seams such as content providers) so tests assert behavior against **`MockFileSystem`** instead of temp directories on disk.
+
+**Parallelism:** If a test truly cannot run in parallel with others, place it under `Integration/`, disable parallelization for that case with an xUnit **`[Collection("…")]`** (or equivalent), and document why in the test class summary.
+
+### Running a subset (agents / local iteration)
+
+- **Unit tests only** (exclude `AudioAnalyzer.Tests.Integration` namespace):  
+  `dotnet test tests\AudioAnalyzer.Tests\AudioAnalyzer.Tests.csproj --filter "FullyQualifiedName!~AudioAnalyzer.Tests.Integration"`
+- **Integration tests only**:  
+  `dotnet test tests\AudioAnalyzer.Tests\AudioAnalyzer.Tests.csproj --filter "FullyQualifiedName~AudioAnalyzer.Tests.Integration"`
+- **Full suite** (before completing work; matches CI):  
+  `dotnet test tests\AudioAnalyzer.Tests\AudioAnalyzer.Tests.csproj`  
+  or `dotnet test .\AudioAnalyzer.sln`
+
+During tight edit loops, run **unit only** often; before finishing, run the **full** suite at least once.
+
+## Slow test reports (TRX and JUnit)
+
+To find slow tests (triage production code vs test setup), emit **VSTest TRX** (per-test `duration` in XML) and **JUnit XML** (Ant-style `testcase` `time` attributes). The test project references **JunitXml.TestLogger** 8.0.0 (MIT; compatible with GPL-3.0-only distribution per [ADR-0075](../adr/0075-nuget-license-compatibility.md)). TRX is built into the test SDK; no extra package.
+
+From the repo root (paths are under the test project’s `TestResults/` folder):
+
+```powershell
+dotnet test .\tests\AudioAnalyzer.Tests\AudioAnalyzer.Tests.csproj `
+  --logger "trx;LogFileName=tests.trx" `
+  --logger "junit;LogFilePath=TestResults/junit.xml"
+```
+
+Outputs (typical):
+
+- `tests/AudioAnalyzer.Tests/TestResults/tests.trx` — open in Visual Studio Test Explorer or parse XML (`UnitTestResult` → `duration`, `testName`).
+- `tests/AudioAnalyzer.Tests/TestResults/junit.xml` — for tools and actions that consume JUnit (e.g. GitHub Checks summaries).
+
+**CI:** [.github/workflows/build.yml](../../.github/workflows/build.yml) runs the same loggers, uploads **`test-reports`** artifacts, and publishes a **Test results** check via [EnricoMi/publish-unit-test-result-action](https://github.com/EnricoMi/publish-unit-test-result-action) (timing tables in the Actions / Checks UI). Download the artifact for offline analysis.
+
+Use `LogFileName=tests.trx` (not `TestResults\tests.trx`) for TRX so the file is not nested under `TestResults\TestResults\`.
+
+**Sorted table (local):** After producing `tests.trx`, run [`scripts/Summarize-TrxTestDurations.ps1`](../../scripts/Summarize-TrxTestDurations.ps1) to write `slow-tests.csv` and `slow-tests.md` next to the TRX. Very long per-test durations often come from tests that hammer code under a single coarse lock (parallel tasks still serialize); use the sorted list to spot that pattern.
+
+### Slow test diagnosis workflow (agents)
+
+When `dotnet test` becomes unexpectedly slow (CI or local), **do not guess**—measure, then fix the right layer.
+
+1. **Isolate test time from build time**  
+   Run `dotnet build .\AudioAnalyzer.sln -warnaserror`, then `dotnet test … --no-build` with the TRX/JUnit loggers above. A long run that includes compile is often MSBuild/JIT, not individual tests.
+
+2. **Find the outliers**  
+   Open `tests.trx` `<Times start` / `finish` for wall clock, then sort `UnitTestResult` by `@duration`, or run `Summarize-TrxTestDurations.ps1` and read `slow-tests.md`. If **one** test accounts for most wall time, fix that test (or the code it stresses) first.
+
+3. **Interpret common patterns**  
+   - **One test, multi-minute duration, uses `Task.Run` + shared lock:** Often **lock convoy** (each critical section does heavy work; “parallel” tasks serialize). Fix by **lowering iteration counts**, using **smaller/cheaper inputs**, or **alternating** calls in one thread if the goal is interleaving, not false parallelism—see `AnalysisEngineTests.ProcessAudio_and_GetSnapshot_concurrent_stress_remain_consistent` history.  
+   - **`Thread.Sleep` / `Task.Delay` in tests:** Prefer **virtual time**, tight waits on signals, or **smaller delays**; each fixed sleep adds up across the suite.  
+   - **Integration tests rebuilding full DI per `[Theory]` row:** Reuse a **fixture** or shared builder when safe; override **platform services** in [`TestHelpers.BuildTestServiceProvider`](../../tests/AudioAnalyzer.Tests/TestSupport/TestHelpers.cs) (e.g. `NullAsciiVideoDeviceCatalog`, `NullNowPlayingProvider`, `MockFileSystem`) so tests never hit **real WinRT, NAudio enumeration, or disk** unless that is the SUT.  
+   - **Wall clock ≫ sum of per-test durations:** Investigate **host/adapters**, **deadlocks**, or **serial** collections—not only test bodies.
+
+4. **Fix and verify**  
+   After changes, run the **full** suite again with TRX; confirm top entries dropped and total duration is acceptable. Keep assertions meaningful (still thread-safe, still catches regressions); do not only weaken tests to go green.
+
 ## Verification checklist (after making changes)
 
 1. Run `dotnet build .\AudioAnalyzer.sln` — must succeed with 0 warnings.
-2. Run `dotnet test tests\AudioAnalyzer.Tests\AudioAnalyzer.Tests.csproj` — all tests must pass.
+2. Run `dotnet test tests\AudioAnalyzer.Tests\AudioAnalyzer.Tests.csproj` — all tests must pass (full suite).
 3. Optionally run `dotnet format .\AudioAnalyzer.sln --verify-no-changes` to verify formatting.
 
 ## Test suite overview
@@ -25,7 +89,7 @@ Coverage includes:
 - **Preset loading**: Preset load/save round-trip and render-with-preset.
 - **Smoke**: Multiple frames render without exception.
 
-Integration tests and several performance cases use **System.IO.Abstractions.TestingHelpers** (`MockFileSystem`) for the app `IFileSystem`, so presets/palettes and AsciiImage/AsciiModel assets can share the same virtual tree without disk I/O. Some unit tests still use `new FileSystem()` with a temp directory when exercising real OS path behavior.
+Integration tests and several performance cases use **System.IO.Abstractions.TestingHelpers** (`MockFileSystem`) for the app `IFileSystem`, so presets/palettes and AsciiImage/AsciiModel assets can share the same virtual tree without disk I/O. **Unit** tests under mirrored paths should **not** use real-disk `File` / `Directory` or `new FileSystem()` for test data; use **`MockFileSystem`** (or path-only assertions where the API does not touch disk).
 
 ## When modifying UI/display
 

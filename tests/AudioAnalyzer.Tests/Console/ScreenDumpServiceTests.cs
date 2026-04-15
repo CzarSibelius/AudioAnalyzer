@@ -1,3 +1,4 @@
+using System.IO.Abstractions.TestingHelpers;
 using AudioAnalyzer.Console;
 using Xunit;
 
@@ -6,45 +7,50 @@ namespace AudioAnalyzer.Tests.Console;
 /// <summary>Tests for screen dump (ASCII screenshot) functionality.</summary>
 public sealed class ScreenDumpServiceTests
 {
-    [Fact]
-    public void DumpToFile_WithWritableDirectory_ReturnsNullOrValidPath()
+    private sealed class FixedScreenDumpContentProvider : IScreenDumpContentProvider
     {
-        var service = new ScreenDumpService();
-        string dir = Path.Combine(Path.GetTempPath(), "AudioAnalyzer-ScreenDumpTest-" + Guid.NewGuid().ToString("N")[..8]);
+        private readonly string? _content;
 
-        try
-        {
-            string? path = service.DumpToFile(stripAnsi: true, directory: dir);
+        public FixedScreenDumpContentProvider(string? content) => _content = content;
 
-            // In test environment we may have no console (null) or a real console (path)
-            if (path != null)
-            {
-                Assert.True(File.Exists(path), "Dump file should exist when path is returned");
-                Assert.True(new FileInfo(path).Length >= 0, "Dump file may be empty or contain content");
-            }
-        }
-        finally
-        {
-            if (Directory.Exists(dir))
-            {
-                try
-                {
-                    Directory.Delete(dir, recursive: true);
-                }
-                catch (Exception ex)
-                {
-                    _ = ex; /* best-effort: temp dir cleanup may fail if locked */
-                }
-            }
-        }
+        public string? ReadVisibleConsoleContent() => _content;
     }
 
     [Fact]
-    public void DumpToFile_DefaultParameters_DoesNotThrow()
+    public void DumpToFile_WithContent_WritesToMockFileSystem()
     {
-        var service = new ScreenDumpService();
+        var fs = new MockFileSystem();
+        var service = new ScreenDumpService(fs, new FixedScreenDumpContentProvider("line1"));
+        const string dir = @"D:\screen-dump-test";
+
+        string? path = service.DumpToFile(stripAnsi: true, directory: dir);
+
+        Assert.NotNull(path);
+        Assert.True(fs.File.Exists(path), "Dump file should exist in mock FS when path is returned");
+        Assert.Equal("line1", fs.File.ReadAllText(path!));
+    }
+
+    [Fact]
+    public void DumpToFile_StripsAnsiSequences()
+    {
+        var fs = new MockFileSystem();
+        var service = new ScreenDumpService(fs, new FixedScreenDumpContentProvider("\x1b[31mZ\x1b[0m"));
+        const string dir = @"D:\screen-dump-ansi";
+
+        string? path = service.DumpToFile(stripAnsi: true, directory: dir);
+
+        Assert.NotNull(path);
+        Assert.Equal("Z", fs.File.ReadAllText(path!));
+    }
+
+    [Fact]
+    public void DumpToFile_NoContent_ReturnsNull_DoesNotThrow()
+    {
+        var fs = new MockFileSystem();
+        var service = new ScreenDumpService(fs, new FixedScreenDumpContentProvider(null));
+
         string? path = service.DumpToFile();
-        // Contract: returns null when no console or failure; otherwise path to file
-        Assert.True(path == null || File.Exists(path));
+
+        Assert.Null(path);
     }
 }

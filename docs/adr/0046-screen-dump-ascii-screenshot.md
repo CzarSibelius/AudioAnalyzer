@@ -9,10 +9,10 @@ Users and AI agents need a way to capture the current terminal screen as text fo
 ## Decision
 
 - **Feature**: A screen-dump feature that writes the visible console content to a timestamped text file (ASCII screenshot). Default output is plain ASCII (ANSI escape sequences stripped) so pastes and AI chats stay readable.
-- **Capture**: On Windows, capture is implemented by reading the console screen buffer via P/Invoke (`ReadConsoleOutputCharacterW`, `GetConsoleScreenBufferInfo`). This captures exactly what is on screen without changing the render path. On non-Windows or API failure, the service returns null (graceful degradation).
+- **Capture**: On Windows, capture is implemented by **`IScreenDumpContentProvider`** (default: `WindowsConsoleScreenDumpContentProvider`), which reads the console screen buffer via P/Invoke (`ReadConsoleOutputCharacterW`, `GetConsoleScreenBufferInfo`). This captures exactly what is on screen without changing the render path. On non-Windows or API failure, the provider returns null (graceful degradation).
 - **Interactive**: Ctrl+Shift+E triggers a dump (terminal-friendly; avoids Windows/terminal shortcuts such as Print Screen, Ctrl+Shift+D, or Ctrl+Shift+S which may pause output). The file is written to a `screen-dumps` directory next to the executable as `screen-{yyyyMMdd-HHmmss}.txt`.
 - **Automation**: CLI options `--dump-after N` and `--dump-path <dir>` allow scripts or AI agents to run the app for N seconds, dump the screen, then exit. When `--dump-after` is used and no device was saved, the app uses Demo Mode so the device-selection modal is skipped.
-- **Implementation**: Console project owns the feature. `IScreenDumpService` defines `DumpToFile(bool stripAnsi, string? directory)`; `ScreenDumpService` implements it. The main loop key handler calls the service on Ctrl+Shift+E; `ApplicationShell.Run` accepts optional dump-after parameters and starts a background task that dumps then quits.
+- **Implementation**: Console project owns the feature. `IScreenDumpService` defines `DumpToFile(bool stripAnsi, string? directory)`; `ScreenDumpService` implements it using **`IFileSystem`** for directory creation and file writes (same abstraction as the rest of the app) plus **`IScreenDumpContentProvider`** for buffer text. The main loop key handler calls the service on Ctrl+Shift+E; `ApplicationShell.Run` accepts optional dump-after parameters and starts a background task that dumps then quits.
 
 ## Consequences
 

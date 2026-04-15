@@ -9,6 +9,9 @@ on:
 jobs:
   build:
     runs-on: windows-latest
+    permissions:
+      contents: read
+      checks: write
     steps:
       - uses: actions/checkout@v4
 
@@ -26,4 +29,27 @@ jobs:
           DOTNET_CLI_TELEMETRY_OPTOUT: 1
 
       - name: Test
-        run: dotnet test ./AudioAnalyzer.sln --no-build -warnaserror
+        run: >-
+          dotnet test ./AudioAnalyzer.sln --no-build -warnaserror
+          --logger "trx;LogFileName=tests.trx"
+          --logger "junit;LogFilePath=TestResults/junit.xml"
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: |
+            **/TestResults/tests.trx
+            **/TestResults/junit.xml
+          if-no-files-found: warn
+
+      - name: Publish test results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: always()
+        with:
+          files: |
+            **/TestResults/tests.trx
+            **/TestResults/junit.xml
+          check_name: Test results
+          comment_mode: off

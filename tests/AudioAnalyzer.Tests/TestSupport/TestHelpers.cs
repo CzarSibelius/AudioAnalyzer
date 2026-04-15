@@ -4,6 +4,7 @@ using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Console;
 using AudioAnalyzer.Domain;
 using AudioAnalyzer.Infrastructure;
+using AudioAnalyzer.Infrastructure.AsciiVideo;
 using AudioAnalyzer.Infrastructure.NowPlaying;
 using AudioAnalyzer.Visualizers;
 using Microsoft.Extensions.DependencyInjection;
@@ -130,6 +131,7 @@ internal static class TestHelpers
             DisplayDimensions = new FixedDisplayDimensions(80, 24),
             NowPlayingProvider = new NullNowPlayingProvider(),
             AsciiVideoFrameSource = new FakeAsciiVideoFrameSource(),
+            AsciiVideoDeviceCatalog = new NullAsciiVideoDeviceCatalog(),
             PaletteRepository = paletteRepo,
             FileSystem = fileSystem,
             ShowsDirectory = ShowsPath,

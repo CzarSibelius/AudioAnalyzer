@@ -26,16 +26,8 @@ public sealed class LayerAssetFolderTests
     public void ResolveGlobalBase_custom_path_is_full_path()
     {
         string temp = Path.Combine(Path.GetTempPath(), "layer-asset-base-" + Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(temp);
-        try
-        {
-            var ui = new UiSettings { DefaultAssetFolderPath = temp };
-            Assert.Equal(Path.GetFullPath(temp), LayerAssetFolder.ResolveGlobalBase(ui));
-        }
-        finally
-        {
-            TryDeleteDir(temp);
-        }
+        var ui = new UiSettings { DefaultAssetFolderPath = temp };
+        Assert.Equal(Path.GetFullPath(temp), LayerAssetFolder.ResolveGlobalBase(ui));
     }
 
     [Fact]
@@ -52,48 +44,16 @@ public sealed class LayerAssetFolderTests
     public void ResolveEffectiveFolder_relative_layer_combines_with_global_base()
     {
         string temp = Path.Combine(Path.GetTempPath(), "layer-asset-rel-" + Guid.NewGuid().ToString("N"));
-        string sub = Path.Combine(temp, "assets");
-        Directory.CreateDirectory(sub);
-        try
-        {
-            var ui = new UiSettings { DefaultAssetFolderPath = temp };
-            string expected = Path.GetFullPath(Path.Combine(temp, "assets"));
-            Assert.Equal(expected, LayerAssetFolder.ResolveEffectiveFolder("assets", ui));
-        }
-        finally
-        {
-            TryDeleteDir(temp);
-        }
+        var ui = new UiSettings { DefaultAssetFolderPath = temp };
+        string expected = Path.GetFullPath(Path.Combine(temp, "assets"));
+        Assert.Equal(expected, LayerAssetFolder.ResolveEffectiveFolder("assets", ui));
     }
 
     [Fact]
     public void ResolveEffectiveFolder_rooted_layer_ignores_global_base()
     {
         string temp = Path.Combine(Path.GetTempPath(), "layer-asset-rooted-" + Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(temp);
-        try
-        {
-            var ui = new UiSettings { DefaultAssetFolderPath = Path.GetTempPath() };
-            Assert.Equal(Path.GetFullPath(temp), LayerAssetFolder.ResolveEffectiveFolder(temp, ui));
-        }
-        finally
-        {
-            TryDeleteDir(temp);
-        }
-    }
-
-    private static void TryDeleteDir(string dir)
-    {
-        try
-        {
-            if (Directory.Exists(dir))
-            {
-                Directory.Delete(dir, recursive: true);
-            }
-        }
-        catch (IOException)
-        {
-            // Best-effort cleanup.
-        }
+        var ui = new UiSettings { DefaultAssetFolderPath = Path.GetTempPath() };
+        Assert.Equal(Path.GetFullPath(temp), LayerAssetFolder.ResolveEffectiveFolder(temp, ui));
     }
 }

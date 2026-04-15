@@ -11,6 +11,11 @@ This document describes data files and settings beside the Audio Analyzer execut
 - **Microsoft.Extensions.Logging 10.0.3** / **Microsoft.Extensions.Logging.Abstractions 10.0.3**: optional file logging (ADR-0076); Abstractions referenced from Infrastructure for the file logger provider; **Platform.Windows** references both for `WindowsAsciiVideoFrameSource` `[LoggerMessage]` diagnostics
 - **Roslynator.Analyzers 4.15.0**: Code analyzers (e.g. RCS1075: no empty catch blocks, RCS1060: one file per class), enforced via `.editorconfig`
 
+**Test project only (not shipped with the app):**
+
+- **Microsoft.NET.Test.Sdk 17.14.0**: VSTest host; built-in **TRX** logger for per-test durations (`--logger "trx;LogFileName=…"`).
+- **JunitXml.TestLogger 8.0.0**: JUnit XML report for CI and parsers (`--logger "junit;LogFilePath=…"`). See [docs/agents/testing-and-verification.md](agents/testing-and-verification.md#slow-test-reports-trx-and-junit).
+
 ## Presets (JSON files)
 
 TextLayers presets are stored as **JSON files** in a **`presets`** directory next to the executable (e.g. `presets/` in the same folder as the .exe). Each file is one preset. The app ships with **`presets/fill-blendover-demo.json`**, a small example of Fill **BlendOver** over an oscilloscope (see [visualizers/fill.md](visualizers/fill.md) Troubleshooting). Press **V** to cycle presets; **S** to edit (R rename, N new preset). Presets are created automatically on first run.

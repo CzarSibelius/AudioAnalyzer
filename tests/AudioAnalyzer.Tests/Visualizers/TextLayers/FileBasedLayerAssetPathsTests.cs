@@ -1,4 +1,3 @@
-using System.IO.Abstractions;
 using System.IO.Abstractions.TestingHelpers;
 using AudioAnalyzer.Domain;
 using AudioAnalyzer.Visualizers;
@@ -9,8 +8,6 @@ namespace AudioAnalyzer.Tests.Visualizers.TextLayers;
 /// <summary>Tests for <see cref="FileBasedLayerAssetPaths"/> selection helpers.</summary>
 public sealed class FileBasedLayerAssetPathsTests
 {
-    private static readonly IFileSystem s_realFs = new FileSystem();
-
     [Fact]
     public void ResolveIndexByFileName_empty_list_returns_zero()
     {
@@ -65,53 +62,43 @@ public sealed class FileBasedLayerAssetPathsTests
     [Fact]
     public void TryAdvanceDirectoryAssetSelection_ascii_image_updates_custom()
     {
-        string dir = Path.Combine(Path.GetTempPath(), "aa-adv-img-" + Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(dir);
-        try
+        const string dir = @"V:\adv-img";
+        var fs = new MockFileSystem(new Dictionary<string, MockFileData>(StringComparer.OrdinalIgnoreCase)
         {
-            File.WriteAllText(Path.Combine(dir, "a.png"), "x");
-            File.WriteAllText(Path.Combine(dir, "b.png"), "x");
+            [Path.Combine(dir, "a.png")] = new MockFileData("x"),
+            [Path.Combine(dir, "b.png")] = new MockFileData("x")
+        });
 
-            var layer = new TextLayerSettings { LayerType = TextLayerType.AsciiImage };
-            layer.SetCustom(new AsciiImageSettings { ImageFolderPath = dir });
+        var layer = new TextLayerSettings { LayerType = TextLayerType.AsciiImage };
+        layer.SetCustom(new AsciiImageSettings { ImageFolderPath = dir });
 
-            Assert.True(FileBasedLayerAssetPaths.TryAdvanceDirectoryAssetSelection(layer, null, s_realFs));
-            var s = layer.GetCustom<AsciiImageSettings>();
-            Assert.NotNull(s);
-            Assert.Equal("b.png", s.SelectedImageFileName);
+        Assert.True(FileBasedLayerAssetPaths.TryAdvanceDirectoryAssetSelection(layer, null, fs));
+        var s = layer.GetCustom<AsciiImageSettings>();
+        Assert.NotNull(s);
+        Assert.Equal("b.png", s.SelectedImageFileName);
 
-            Assert.True(FileBasedLayerAssetPaths.TryAdvanceDirectoryAssetSelection(layer, null, s_realFs));
-            s = layer.GetCustom<AsciiImageSettings>();
-            Assert.Equal("a.png", s!.SelectedImageFileName);
-        }
-        finally
-        {
-            TryDeleteTestDir(dir);
-        }
+        Assert.True(FileBasedLayerAssetPaths.TryAdvanceDirectoryAssetSelection(layer, null, fs));
+        s = layer.GetCustom<AsciiImageSettings>();
+        Assert.Equal("a.png", s!.SelectedImageFileName);
     }
 
     [Fact]
     public void TryAdvanceDirectoryAssetSelection_ascii_model_updates_custom()
     {
-        string dir = Path.Combine(Path.GetTempPath(), "aa-adv-obj-" + Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(dir);
-        try
+        const string dir = @"V:\adv-obj";
+        var fs = new MockFileSystem(new Dictionary<string, MockFileData>(StringComparer.OrdinalIgnoreCase)
         {
-            File.WriteAllText(Path.Combine(dir, "m1.obj"), "x");
-            File.WriteAllText(Path.Combine(dir, "m2.obj"), "x");
+            [Path.Combine(dir, "m1.obj")] = new MockFileData("x"),
+            [Path.Combine(dir, "m2.obj")] = new MockFileData("x")
+        });
 
-            var layer = new TextLayerSettings { LayerType = TextLayerType.AsciiModel };
-            layer.SetCustom(new AsciiModelSettings { ModelFolderPath = dir });
+        var layer = new TextLayerSettings { LayerType = TextLayerType.AsciiModel };
+        layer.SetCustom(new AsciiModelSettings { ModelFolderPath = dir });
 
-            Assert.True(FileBasedLayerAssetPaths.TryAdvanceDirectoryAssetSelection(layer, null, s_realFs));
-            var s = layer.GetCustom<AsciiModelSettings>();
-            Assert.NotNull(s);
-            Assert.Equal("m2.obj", s.SelectedModelFileName);
-        }
-        finally
-        {
-            TryDeleteTestDir(dir);
-        }
+        Assert.True(FileBasedLayerAssetPaths.TryAdvanceDirectoryAssetSelection(layer, null, fs));
+        var s = layer.GetCustom<AsciiModelSettings>();
+        Assert.NotNull(s);
+        Assert.Equal("m2.obj", s.SelectedModelFileName);
     }
 
     [Fact]
@@ -133,23 +120,7 @@ public sealed class FileBasedLayerAssetPathsTests
     public void TryAdvanceDirectoryAssetSelection_wrong_type_returns_false()
     {
         var layer = new TextLayerSettings { LayerType = TextLayerType.Marquee };
-        Assert.False(FileBasedLayerAssetPaths.TryAdvanceDirectoryAssetSelection(layer, null, s_realFs));
-    }
-
-    private static void TryDeleteTestDir(string dir)
-    {
-        if (!Directory.Exists(dir))
-        {
-            return;
-        }
-
-        try
-        {
-            Directory.Delete(dir, recursive: true);
-        }
-        catch (IOException)
-        {
-            // Best-effort cleanup.
-        }
+        var fs = new MockFileSystem();
+        Assert.False(FileBasedLayerAssetPaths.TryAdvanceDirectoryAssetSelection(layer, null, fs));
     }
 }

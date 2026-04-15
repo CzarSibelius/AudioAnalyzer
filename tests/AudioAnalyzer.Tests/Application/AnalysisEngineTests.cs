@@ -27,7 +27,9 @@ public sealed class AnalysisEngineTests
 
     /// <summary>
     /// <see cref="AnalysisEngine.ProcessAudio"/> may run on the capture thread while the UI thread calls
-    /// <see cref="AnalysisEngine.GetSnapshot"/>; this stress ensures no exceptions and consistent band array sizing.
+    /// <see cref="AnalysisEngine.GetSnapshot"/>. Both paths take the same lock for the full method body, so very large
+    /// iteration counts mostly serialize and burn minutes without adding coverage; this uses enough interleaving to
+    /// guard exceptions and consistent array sizing without pathological runtime.
     /// </summary>
     [Fact]
     public async Task ProcessAudio_and_GetSnapshot_concurrent_stress_remain_consistent()
@@ -37,10 +39,11 @@ public sealed class AnalysisEngineTests
 
         var format = new AudioFormat { SampleRate = 48_000, BitsPerSample = 16, Channels = 1 };
         var buffer = new byte[16_384];
+        const int iterations = 80;
 
         Task audio = Task.Run(() =>
         {
-            for (int i = 0; i < 2_000; i++)
+            for (int i = 0; i < iterations; i++)
             {
                 engine.ProcessAudio(buffer, buffer.Length, format);
             }
@@ -48,7 +51,7 @@ public sealed class AnalysisEngineTests
 
         Task ui = Task.Run(() =>
         {
-            for (int i = 0; i < 2_000; i++)
+            for (int i = 0; i < iterations; i++)
             {
                 AudioAnalysisSnapshot s = engine.GetSnapshot();
                 Assert.Equal(s.NumBands, s.SmoothedMagnitudes.Length);

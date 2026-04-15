@@ -123,3 +123,6 @@ StyleCopReport.xml
 # Ableton Link vendored source (clone per native/README.md) and shim build output
 native/third_party/link/
 native/link-shim/build/
+
+# VSTest output (TRX, JUnit XML from dotnet test --logger)
+**/TestResults/

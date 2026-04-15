@@ -6,7 +6,9 @@
 
 - **Package manager / runtime**: .NET 10.0 SDK; NuGet for packages. No npm.
 - **Build**: `dotnet build .\AudioAnalyzer.sln` — must succeed with **0 warnings**. Use PowerShell on Windows; do not use Unix shell utilities in commands.
-- **Tests**: `dotnet test tests\AudioAnalyzer.Tests\AudioAnalyzer.Tests.csproj`
+- **Tests**: `dotnet test tests\AudioAnalyzer.Tests\AudioAnalyzer.Tests.csproj` (full suite). **Unit tests only** (faster iteration):  
+  `dotnet test tests\AudioAnalyzer.Tests\AudioAnalyzer.Tests.csproj --filter "FullyQualifiedName!~AudioAnalyzer.Tests.Integration"`  
+  Run the full suite before completing work; see [docs/agents/testing-and-verification.md](docs/agents/testing-and-verification.md#unit-vs-integration-tests). **Per-test timing (TRX / JUnit)** for slow-test triage: [Slow test reports](docs/agents/testing-and-verification.md#slow-test-reports-trx-and-junit). If the suite slows down again, follow [Slow test diagnosis workflow (agents)](docs/agents/testing-and-verification.md#slow-test-diagnosis-workflow-agents) (measure with TRX, then fix outliers—lock convoy, sleeps, real I/O, repeated DI).
 - **Performance changes**: Verify the optimization with a unit or integration test (or a justified tighter perf regression threshold); see [docs/agents/testing-and-verification.md](docs/agents/testing-and-verification.md#performance-optimizations-agents).
 - **Format check**: `dotnet format .\AudioAnalyzer.sln --verify-no-changes` (or `dotnet format .\AudioAnalyzer.sln` to fix)
 

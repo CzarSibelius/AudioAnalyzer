@@ -32,7 +32,24 @@ The solution uses multiple production projects under `src/AudioAnalyzer.*` with 
 
 - **Namespaces**: Prefer aligning C# `namespace` with the folder path under the test project (for example `AudioAnalyzer.Tests.Application.Display` for files under `Application/Display/`). This is encouraged when adding or moving tests; it is not a substitute for the folder mirror rule.
 
+### Unit vs integration classification
+
+Policy detail: [docs/agents/testing-and-verification.md](../agents/testing-and-verification.md).
+
+- **Unit tests** (default under the mirror paths above): fast, deterministic, safe to run repeatedly during development. They must **not** use a real database, real network, or **real host file system** I/O (`File.*`, `Directory.*`, or a real-disk `IFileSystem`). Prefer **`MockFileSystem`** (or fakes) and path-only checks when exercising file-oriented code. They must be able to run **in parallel** with other unit tests (no global exclusive resources unless isolated via an explicit xUnit collection). They must **not** require manual environment edits to run.
+
+- **Integration tests**: live under **`tests/AudioAnalyzer.Tests/Integration/`** with namespace **`AudioAnalyzer.Tests.Integration`** (optional extra suffix segments if mirroring under `Integration/`, e.g. `Integration/Visualizers/...`). Use for cross-assembly / full-pipeline checks, performance budgets, preset+render smoke, or any test that still needs **real** I/O, real console/OS APIs, or **cannot** run in parallel with other tests without coordination. Prefer mocks where the scenario does not specifically require proving real OS behavior.
+
+- **Run commands** (single test project unchanged): agents may run **unit only** with  
+  `dotnet test tests\AudioAnalyzer.Tests\AudioAnalyzer.Tests.csproj --filter "FullyQualifiedName!~AudioAnalyzer.Tests.Integration"`  
+  and the **full** suite (including integration) with unfiltered `dotnet test`. CI should continue to run the **full** suite.
+
+- **Exception to mirror-only placement**: A test whose primary SUT lives under a mirrored path but **must** use real disk, network, or DB belongs under **`Integration/`** (optionally `Integration/<Suffix>/...` mirroring production) with the integration namespace—not under the unit mirror tree.
+
+- **Optional later split**: A second test `.csproj` would require an explicit ADR update; until then, keep one test project.
+
 ## Consequences
 
 - **New and moved tests** must follow the mirror layout and exceptions above.
 - Navigating from production code to tests (and vice versa) is predictable: same relative path under `src/AudioAnalyzer.<Suffix>/` vs `tests/AudioAnalyzer.Tests/<Suffix>/`.
+- **Unit vs integration** placement and filters are part of the test layout contract; see [testing and verification](../agents/testing-and-verification.md).

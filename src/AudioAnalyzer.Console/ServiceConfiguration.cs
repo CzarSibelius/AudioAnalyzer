@@ -260,6 +260,7 @@ internal static class ServiceConfiguration
         services.AddSingleton<IKeyHandlerConfig<MainLoopKeyContext>, MainLoopKeyHandlerConfig>();
         services.AddSingleton<IDeviceCaptureController, DeviceCaptureController>();
         services.AddSingleton<IAppSettingsPersistence, AppSettingsPersistence>();
+        services.AddSingleton<IScreenDumpContentProvider, WindowsConsoleScreenDumpContentProvider>();
         services.AddSingleton<IScreenDumpService, ScreenDumpService>();
         services.AddSingleton<ApplicationShell>();
 
