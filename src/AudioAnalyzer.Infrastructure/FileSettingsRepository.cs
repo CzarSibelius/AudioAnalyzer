@@ -183,6 +183,7 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
         {
             InputMode = file.InputMode ?? "loopback",
             DeviceName = file.DeviceName,
+            MaxAudioHistorySeconds = ClampMaxAudioHistorySeconds(file.MaxAudioHistorySeconds),
             BpmSource = file.BpmSource,
             BeatSensitivity = file.BeatSensitivity,
             BeatCircles = file.BeatCircles,
@@ -213,6 +214,7 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
         file.InputMode = settings.InputMode;
         file.DeviceName = settings.DeviceName;
         file.VisualizationMode = "textlayers";
+        file.MaxAudioHistorySeconds = ClampMaxAudioHistorySeconds(settings.MaxAudioHistorySeconds);
         file.BpmSource = settings.BpmSource;
         file.BeatSensitivity = settings.BeatSensitivity;
         file.BeatCircles = settings.BeatCircles;
@@ -317,11 +319,22 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
     }
 
     /// <summary>Internal DTO for JSON serialization. Holds both app-level and visualizer settings.</summary>
+    private static double ClampMaxAudioHistorySeconds(double value)
+    {
+        if (double.IsNaN(value) || double.IsInfinity(value))
+        {
+            return 60.0;
+        }
+
+        return Math.Clamp(value, 5.0, 180.0);
+    }
+
     private sealed class SettingsFile
     {
         public string InputMode { get; set; } = "loopback";
         public string? DeviceName { get; set; }
         public string VisualizationMode { get; set; } = "textlayers";
+        public double MaxAudioHistorySeconds { get; set; } = 60.0;
         public BpmSource BpmSource { get; set; } = BpmSource.AudioAnalysis;
         public double BeatSensitivity { get; set; } = 1.3;
         public bool BeatCircles { get; set; } = true;

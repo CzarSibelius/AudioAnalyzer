@@ -77,4 +77,7 @@ internal sealed class MainLoopKeyContext : IKeyHandlerContext
 
     /// <summary>Persisted app settings (BPM source for +/- beat sensitivity guard).</summary>
     public required AppSettings AppSettings { get; init; }
+
+    /// <summary>Clears engine waveform retention and all in-memory text-layer caches (Ctrl+R in Preset editor / Show play).</summary>
+    public required Action PerformFullLayerRuntimeReset { get; init; }
 }

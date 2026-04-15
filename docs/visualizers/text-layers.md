@@ -13,6 +13,8 @@ flowchart TB
     L9 --> O
 ```
 
+
+
 ## Description
 
 Composites multiple independent layers (e.g. ScrollingColors, Marquee, FallingLetters) with configurable text snippets and beat-reactive behavior. Uses a viewport-sized cell buffer for z-order compositing; layers are drawn in ascending ZOrder (lower = back).
@@ -24,7 +26,8 @@ Composites multiple independent layers (e.g. ScrollingColors, Marquee, FallingLe
 - `BeatCount` — used for beat reactions
 - `BeatFlashActive` — triggers SpeedBurst, Flash, SpawnMore, Pulse, ColorPop when true
 - `SmoothedMagnitudes`, `TargetMaxMagnitude` — used by GeissBackground, BeatCircles, and UnknownPleasures for bass/treble intensity, plasma modulation, and pulse lines
-- `Waveform`, `WaveformPosition`, `WaveformSize` — used by Oscilloscope layer for time-domain waveform
+- `Waveform`, `WaveformPosition`, `WaveformSize` — used by **Oscilloscope** (512-sample scope) and as **fallback** for **Waveform strip** when overview is empty
+- `WaveformOverviewMin` / `WaveformOverviewMax` / `WaveformOverviewBandLow` / `WaveformOverviewBandMid` / `WaveformOverviewBandHigh`, `WaveformOverviewLength`, `WaveformOverviewSpanSeconds` — decimated long-history overview for **Waveform strip** ([ADR-0077](../adr/0077-waveform-overview-snapshot.md))
 - `FrameDeltaSeconds` — wall time since the previous full main render; layers scale continuous motion with `DisplayAnimationTiming.ScaleForReference60` so speed stays consistent when FPS varies ([ADR-0072](../adr/0072-delta-time-display-animation.md))
 - NowPlaying layer injects INowPlayingProvider directly; see implementation notes below
 - AsciiVideo layer injects IAsciiVideoFrameSource; frames are not part of the analysis snapshot ([ADR-0074](../adr/0074-ascii-video-layer-and-frame-source.md))
@@ -32,7 +35,7 @@ Composites multiple independent layers (e.g. ScrollingColors, Marquee, FallingLe
 
 ## Presets
 
-A **Preset** is a named TextLayers configuration (9 layers + PaletteId). Users can maintain multiple presets and switch with **V** (Preset editor mode). The active preset's config is the live editing buffer (`TextLayers`). Presets are stored as individual JSON files in the **`presets`** directory (like palettes). See [ADR-0019](../adr/0019-preset-textlayers-configuration.md) and [ADR-0022](../adr/0022-presets-in-own-files.md).
+A **Preset** is a named TextLayers configuration (9 layers + PaletteId). Users can maintain multiple presets and switch with **V** (Preset editor mode). The active preset's config is the live editing buffer (`TextLayers`). Presets are stored as individual JSON files in the `**presets`** directory (like palettes). See [ADR-0019](../adr/0019-preset-textlayers-configuration.md) and [ADR-0022](../adr/0022-presets-in-own-files.md).
 
 - **V** — Cycle to next preset (Preset editor only; toolbar shows "Preset: {name} (V)")
 - **Tab** — Switch between Preset editor and Show play
@@ -52,12 +55,13 @@ A **Show** is an ordered collection of presets with per-entry duration. In **Sho
 - **TextLayers.PaletteId** (string, optional): Default palette id for layers that do not have their own. Fallback when a layer's `PaletteId` is null/empty.
 - **TextLayers.Layers** (array): Each layer has:
   - Common: `LayerType`, `Enabled`, `ZOrder`, `TextSnippets`, `SpeedMultiplier`, `ColorIndex`, `PaletteId`
-  - Optional **`RenderBounds`**: `{ "X", "Y", "Width", "Height" }` (0–1, relative to the visualizer viewport). **Omit or null** = full viewport. Outside the rectangle, lower layers show through. When set, each layer draws in **layer-local** cell coordinates matching that rectangle (centers, waveforms, and gradients use the clipped size, not the full terminal viewport). See [ADR-0058](../adr/0058-layer-render-bounds.md).
-  - `Custom`: Layer-specific settings as a JSON object. Only the owning layer deserializes it. **Beat reaction** is layer-specific: only layers that support it have a `BeatReaction` property in Custom (with a layer-specific enum). Layers that do not use beat reaction (BeatCircles, Mirror, BufferDistortion, Fill, Oscilloscope, UnknownPleasures, VuMeter, LlamaStyle, Maschine) have no BeatReaction. See [ADR-0055](../adr/0055-layer-specific-beat-reaction.md). Per [ADR-0021](../adr/0021-textlayer-settings-common-custom.md):
+  - Optional `**RenderBounds`**: `{ "X", "Y", "Width", "Height" }` (0–1, relative to the visualizer viewport). **Omit or null** = full viewport. Outside the rectangle, lower layers show through. When set, each layer draws in **layer-local** cell coordinates matching that rectangle (centers, waveforms, and gradients use the clipped size, not the full terminal viewport). See [ADR-0058](../adr/0058-layer-render-bounds.md).
+  - `Custom`: Layer-specific settings as a JSON object. Only the owning layer deserializes it. **Beat reaction** is layer-specific: only layers that support it have a `BeatReaction` property in Custom (with a layer-specific enum). Layers that do not use beat reaction (BeatCircles, Mirror, BufferDistortion, Fill, Oscilloscope, WaveformStrip, UnknownPleasures, VuMeter, LlamaStyle, Maschine) have no BeatReaction. See [ADR-0055](../adr/0055-layer-specific-beat-reaction.md). Per [ADR-0021](../adr/0021-textlayer-settings-common-custom.md):
     - AsciiImage: `BeatReaction` (None/SpeedBurst/Flash/Pulse), `ImageFolderPath`, `Movement` (None/Scroll/Zoom/Both), `PaletteSource` (LayerPalette/ImageColors), `ZoomMin`, `ZoomMax`, `ZoomSpeed`, `ZoomStyle` (Sine/Breathe/PingPong), `ScrollRatioY`
     - AsciiVideo: `SourceKind` (Webcam/File — File not implemented), `WebcamDeviceIndex`, `MaxCaptureWidth`, `MaxCaptureHeight` (0 = no cap), `PaletteSource` (LayerPalette/ImageColors), `FlipHorizontal`
     - AsciiModel: `BeatReaction` (None/SpeedBurst/Flash), `ModelFolderPath`, `RotationAxis` (Y/Xyz), `RotationDirection` (Clockwise/CounterClockwise), `RotationSpeed`, `EnableZoom`, `ZoomMin`, `ZoomMax`, `ZoomSpeed`, `ZoomStyle` (Sine/Breathe/PingPong), `MaxTriangles`
     - Oscilloscope: `Gain` (1.0–10.0), `Filled` (bool)
+    - WaveformStrip: `Gain` (1.0–10.0), `Filled` (bool), `ColorMode` (`PaletteDistance` | `SpectralApprox` | `SpectralGoertzel`), `StereoLayout` (`Mono` | `StereoStacked`), `FixedVisibleSeconds` (1–120), `BeatsPerBar` (1–16), `BeatGridOffsetColumns` (−16…16), `ShowBeatGrid`, `ShowBeatMarkers`, `ShowTimeLabel` (bools) — see [waveform-strip.md](waveform-strip.md)
     - LlamaStyle: `ShowVolumeBar`, `ShowRowLabels`, `ShowFrequencyLabels` (bool); `ColorScheme` ("Winamp"|"Spectrum"); `PeakMarkerStyle` ("Blocks"|"DoubleLine"); `BarWidth` (2|3)
     - NowPlaying: `BeatReaction` (None/SpeedBurst/Flash/Pulse), `VerticalPosition` ("Top"|"Center"|"Bottom")
     - ScrollingColors: `BeatReaction` (None/SpeedBurst/ColorPop)
@@ -75,16 +79,17 @@ A **Show** is an ordered collection of presets with per-entry duration. In **Sho
 
 ## Key bindings
 
+- **Ctrl+R** — **Full layer reset** (Preset editor and Show play only; not General settings): clears **global** retained waveform / overview / scope buffers in `AnalysisEngine`, **all** slots in the shared `TextLayerStateStore`, and per-layer draw offsets/snippet indices in `TextLayersVisualizer`. Does **not** change preset JSON on disk. Any preset you load afterward starts from empty runtime caches. The ASCII video frame source has no explicit buffer discard yet; the latest frame may persist until the next capture cycle.
 - **V** — Cycle to next preset (toolbar shows active preset name).
 - **P** — Cycle the color palette of the **active layer** (the layer last selected with 1–9). Saved to that layer's settings.
 - **S** — Open preset settings modal (title shows preset name; two-column: layer list on left, selected layer settings on right). The help line at the top auto-scrolls when it exceeds terminal width. Left panel: 1–9 select layer, ↑/↓ select, Ctrl+↑/↓ reorder layer (move up/down), ←/→ change layer type, Enter move to settings panel, Space toggle enabled for selected layer, Shift+1–9 toggle enabled by slot, R rename preset, N new preset. Right panel: ↑/↓ select setting (list scrolls when there are more settings than fit on screen), Enter or +/- cycle settings with discrete values (enums, numbers, etc.) — **Palette** uses **+/-** to cycle and **Enter** to open a **palette list** (inherit + all palettes; ↑/↓ or +/- to **preview** on the layer, **Enter** to **save**, **Esc** to **discard** without saving), Enter to edit free-form strings (Snippets, Image path, Model folder), **Enter on “Render region”** closes the modal and starts **live visual bounds editing** (arrows move, Shift+arrows resize, Enter confirm, Esc cancel; border highlight on the visualizer). Enter or ↑/↓ confirm string edits, ←/Esc back to layer list, ESC close. Cycle vs text-edit is derived from the setting type (EditMode). The S modal is the canonical UI for editing layer settings per [ADR-0023](../adr/0023-settings-modal-layer-editing.md).
 - **1–9** — Select the corresponding layer as active (no type change). Key 1 = layer 1 (back), key 9 = layer 9 (front). Number keys and numpad keys work.
 - **←/→** (Left/Right arrow) — Cycle layer type (includes None) when in layer list. Changes persist to the active preset file.
-- **Ctrl+↑/↓** — In the S modal layer list, move the selected layer up or down (reorder). Changes persist to the active preset file.
+- **Ctrl+↑/↓** — In the S modal layer list, move the selected layer up or down (reorder). Changes persist to the active preset file. Reorder and **ZOrder** changes from the modal refresh the live sorted-layer cache and remap per-slot runtime state so compositing and animation slots stay aligned with the new draw order.
 - **Shift+1–9** — Toggle the corresponding layer enabled/disabled. Disabled layers are not rendered. Changes persist to the active preset file.
 - **I** — Cycle to the next picture (AsciiImage) or next `.obj` file (AsciiModel) when at least one such layer exists.
-- **[ / ]** — Adjust gain (1.0–10.0) when the selected layer is Oscilloscope.
-- Toolbar: shows **one digit per layer** in stack order (`1`…`n`, up to max layers); **palette-cycled** layer digit uses highlight color, disabled layers use dimmed, other enabled layers use normal; no digits for slots that do not exist. Key hints (1–9 select, ←→ type, Shift+1–9 toggle); optional contextual fields for the palette-cycled layer (e.g. `Gain` for Oscilloscope, `Image` / `Model` file name for AsciiImage / AsciiModel, matching the asset chosen by **I** / snippet index); `Palette` for the active layer; dynamic help lists **I** when AsciiImage or AsciiModel layers exist
+- **[ / ]** — Adjust gain (1.0–10.0) when the selected layer is Oscilloscope or Waveform strip.
+- Toolbar: shows **one digit per layer** in stack order (`1`…`n`, up to max layers); **palette-cycled** layer digit uses highlight color, disabled layers use dimmed, other enabled layers use normal; no digits for slots that do not exist. Key hints (1–9 select, ←→ type, Shift+1–9 toggle); optional contextual fields for the palette-cycled layer (e.g. `Gain` for Oscilloscope or Waveform strip, `Image` / `Model` file name for AsciiImage / AsciiModel, matching the asset chosen by **I** / snippet index); `Palette` for the active layer; dynamic help lists **I** when AsciiImage or AsciiModel layers exist
 
 ## Viewport constraints
 
@@ -103,6 +108,7 @@ A **Show** is an ordered collection of presets with per-entry duration. In **Sho
 - **GeissBackground layer**: Psychedelic plasma-style background; sine-based plasma with bass/treble modulation; uses SmoothedMagnitudes and TargetMaxMagnitude; Flash beat reaction boosts plasma intensity; palette or GetGeissColor fallback.
 - **BeatCircles layer**: Expanding circles spawned on beat; draws only circle pixels (transparent elsewhere); uses BeatCount, SmoothedMagnitudes for maxRadius; up to 5 circles; aspect ratio 2.0 for elliptical appearance.
 - **Oscilloscope layer**: Time-domain waveform; uses Waveform, WaveformPosition, WaveformSize; per-layer Gain (1.0–10.0) and Filled (bool); [ ] adjusts gain when layer is selected; per-layer palette (distance from center maps to palette index); `oscilloscope` palette provides classic gradient.
+- **Waveform strip layer**: Same snapshot waveform as Oscilloscope for scope fallback; prefers long-history overview when present; uses the **full layer draw height** (see `RenderBounds`); Gain and Filled in Custom; [ ] adjusts gain when layer is selected. See [waveform-strip.md](waveform-strip.md).
 - **AsciiImage layer**: Reads images (BMP, GIF, JPEG, PNG, WebP) from `ImageFolderPath`, converts to ASCII via grayscale-to-character mapping; supports scroll, zoom, or both via `AsciiImageMovement`; configurable zoom range (ZoomMin/Max), speed, style (Sine/Breathe/PingPong) and scroll ratio (ScrollRatioY); color source: layer palette (brightness gradient) or per-pixel image colors (ImageColors); Flash beat reaction cycles to next image. Depends on SixLabors.ImageSharp.
 - **AsciiModel layer**: Loads Wavefront OBJ files from `ModelFolderPath` (see [ascii-model.md](ascii-model.md)); perspective projection, z-buffered triangle raster, Lambert shading to ASCII ramp; rotation (Y or Xyz) and optional zoom; `MaxTriangles` guard; Flash advances to next file. No extra NuGet packages.
 - **UnknownPleasures layer**: Stacked waveform snapshots; bottom line realtime, others beat-triggered; uses SmoothedMagnitudes, NumBands, TargetMaxMagnitude, BeatCount; per-layer palette.
@@ -112,3 +118,4 @@ A **Show** is an ordered collection of presets with per-entry duration. In **Sho
 - **AsciiVideo layer**: Live video as ASCII via IAsciiVideoFrameSource; Windows webcam implementation in Platform.Windows. TextLayersVisualizer calls PrepareForFrame once per render from the frontmost enabled AsciiVideo layer. See [ascii-video.md](ascii-video.md), [ADR-0074](../adr/0074-ascii-video-layer-and-frame-source.md).
 - **Beat reactions**: Per-layer; only layers that support beat reaction expose it (in Custom). Options vary by layer: e.g. SpeedBurst (faster), Flash (advance/change), SpawnMore (spawn particles), Pulse (amplitude/color change), ColorPop (color offset). See [ADR-0055](../adr/0055-layer-specific-beat-reaction.md).
 - **References**: [ADR-0004](../adr/0004-visualizer-encapsulation.md), [ADR-0005](../adr/0005-layered-visualizer-cell-buffer.md), [ADR-0021](../adr/0021-textlayer-settings-common-custom.md), [ADR-0023](../adr/0023-settings-modal-layer-editing.md), [ADR-0025](../adr/0025-reflection-based-layer-settings.md), [ADR-0058](../adr/0058-layer-render-bounds.md).
+

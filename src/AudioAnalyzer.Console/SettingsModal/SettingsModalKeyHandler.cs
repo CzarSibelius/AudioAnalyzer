@@ -77,7 +77,7 @@ internal sealed class SettingsModalKeyHandlerConfig : IKeyHandlerConfig<Settings
                         (a.ZOrder, b.ZOrder) = (b.ZOrder, a.ZOrder);
                         context.SortedLayers = context.TextLayers.Layers?.OrderBy(l => l.ZOrder).ToList() ?? [];
                         state.SelectedLayerIndex--;
-                        context.SaveSettings();
+                        context.NotifyLayersStructureChanged();
                         return false;
                     }
 
@@ -88,7 +88,7 @@ internal sealed class SettingsModalKeyHandlerConfig : IKeyHandlerConfig<Settings
                         (a.ZOrder, b.ZOrder) = (b.ZOrder, a.ZOrder);
                         context.SortedLayers = context.TextLayers.Layers?.OrderBy(l => l.ZOrder).ToList() ?? [];
                         state.SelectedLayerIndex++;
-                        context.SaveSettings();
+                        context.NotifyLayersStructureChanged();
                         return false;
                     }
 
@@ -521,7 +521,7 @@ internal sealed class SettingsModalKeyHandlerConfig : IKeyHandlerConfig<Settings
                 (key.Key == ConsoleKey.Enter || key.Key == ConsoleKey.UpArrow || key.Key == ConsoleKey.DownArrow))
             {
                 ApplySettingEdit(selectedLayer, row.Id, state.EditingBuffer);
-                context.SaveSettings();
+                NotifyDrawOrderChanged(context, state, selectedLayer);
                 state.Focus = SettingsModalFocus.SettingsList;
                 return false;
             }
@@ -531,7 +531,7 @@ internal sealed class SettingsModalKeyHandlerConfig : IKeyHandlerConfig<Settings
             if (row.EditMode == SettingEditMode.Cycle && (key.Key == ConsoleKey.LeftArrow || key.Key == ConsoleKey.RightArrow || key.Key == ConsoleKey.Enter))
             {
                 CycleSetting(selectedLayer, row.Id, key.Key == ConsoleKey.RightArrow || key.Key == ConsoleKey.Enter);
-                context.SaveSettings();
+                NotifyDrawOrderChanged(context, state, selectedLayer);
                 state.Focus = SettingsModalFocus.SettingsList;
                 return false;
             }
@@ -593,14 +593,14 @@ internal sealed class SettingsModalKeyHandlerConfig : IKeyHandlerConfig<Settings
                     if (cycleForward || cycleBackward)
                     {
                         CycleSetting(selectedLayer, row.Id, cycleForward);
-                        context.SaveSettings();
+                        NotifyDrawOrderChanged(context, state, selectedLayer);
                         return false;
                     }
                 }
                 else if (!state.LeftPanelPresetSelected && selectedLayer != null && row.EditMode == SettingEditMode.Cycle && (cycleForward || cycleBackward))
                 {
                     CycleSetting(selectedLayer, row.Id, cycleForward);
-                    context.SaveSettings();
+                    NotifyDrawOrderChanged(context, state, selectedLayer);
                     return false;
                 }
 
@@ -664,6 +664,22 @@ internal sealed class SettingsModalKeyHandlerConfig : IKeyHandlerConfig<Settings
         }
 
         saveSettings();
+    }
+
+    /// <summary>Invalidates sorted-layer cache, persists, and keeps the layer list selection on the same <see cref="TextLayerSettings"/> instance after ZOrder may have changed.</summary>
+    private static void NotifyDrawOrderChanged(SettingsModalKeyContext context, SettingsModalState state, TextLayerSettings? layerToKeepSelected)
+    {
+        context.NotifyLayersStructureChanged();
+        if (layerToKeepSelected == null)
+        {
+            return;
+        }
+
+        int idx = context.SortedLayers.FindIndex(l => ReferenceEquals(l, layerToKeepSelected));
+        if (idx >= 0)
+        {
+            state.SelectedLayerIndex = idx;
+        }
     }
 
     private void CyclePresetPalette(TextLayersVisualizerSettings textLayers, bool forward)

@@ -14,6 +14,8 @@ internal sealed class ShowPlaybackController
     private readonly IShowRepository _showRepo;
     private readonly IPresetRepository _presetRepo;
     private readonly AnalysisEngine _engine;
+    /// <summary>Deferred resolve avoids a DI cycle: <see cref="TextLayersVisualizer"/> needs <see cref="IShowPlayToolbarInfo"/>, which needs this controller.</summary>
+    private readonly Lazy<IVisualizer> _visualizer;
 
     private DateTime _entryStartTime = DateTime.UtcNow;
     private int _beatCountAtEntry;
@@ -23,12 +25,14 @@ internal sealed class ShowPlaybackController
         VisualizerSettings visualizerSettings,
         IShowRepository showRepo,
         IPresetRepository presetRepo,
-        AnalysisEngine engine)
+        AnalysisEngine engine,
+        Lazy<IVisualizer> visualizer)
     {
         _visualizerSettings = visualizerSettings ?? throw new ArgumentNullException(nameof(visualizerSettings));
         _showRepo = showRepo ?? throw new ArgumentNullException(nameof(showRepo));
         _presetRepo = presetRepo ?? throw new ArgumentNullException(nameof(presetRepo));
         _engine = engine ?? throw new ArgumentNullException(nameof(engine));
+        _visualizer = visualizer ?? throw new ArgumentNullException(nameof(visualizer));
     }
 
     /// <summary>Advances to the next preset if current entry duration has elapsed. Call each frame during Show play.</summary>
@@ -96,6 +100,7 @@ internal sealed class ShowPlaybackController
             _visualizerSettings.ActivePresetId = preset.Id;
             _visualizerSettings.TextLayers ??= new TextLayersVisualizerSettings();
             _visualizerSettings.TextLayers.CopyFrom(preset.Config);
+            _visualizer.Value.OnTextLayersStructureChanged();
             _entryStartTime = DateTime.UtcNow;
             _beatCountAtEntry = _engine.BeatCount;
         }
@@ -128,6 +133,7 @@ internal sealed class ShowPlaybackController
             _visualizerSettings.ActivePresetId = preset.Id;
             _visualizerSettings.TextLayers ??= new TextLayersVisualizerSettings();
             _visualizerSettings.TextLayers.CopyFrom(preset.Config);
+            _visualizer.Value.OnTextLayersStructureChanged();
             _entryStartTime = DateTime.UtcNow;
             _beatCountAtEntry = _engine.BeatCount;
         }

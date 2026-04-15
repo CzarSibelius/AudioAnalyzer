@@ -17,6 +17,7 @@ internal sealed class GeneralSettingsHubAreaRenderer : IUiComponentRenderer<Gene
     private readonly HorizontalRowComponent _audioMenuRow = new();
     private readonly HorizontalRowComponent _bpmSourceMenuRow = new();
     private readonly HorizontalRowComponent _appNameMenuRow = new();
+    private readonly HorizontalRowComponent _maxAudioHistoryMenuRow = new();
     private readonly HorizontalRowComponent _defaultAssetMenuRow = new();
     private readonly HorizontalRowComponent _themeMenuRow = new();
     private readonly HorizontalRowComponent _showRenderFpsMenuRow = new();
@@ -116,6 +117,20 @@ internal sealed class GeneralSettingsHubAreaRenderer : IUiComponentRenderer<Gene
                     preformattedAnsi: true)
             ],
             [width]);
+        _maxAudioHistoryMenuRow.SetRowData(
+            [
+                new LabeledValueDescriptor(
+                    "",
+                    () => new AnsiText(GeneralSettingsHubMenuLines.FormatMaxAudioHistorySecondsLine(
+                        _state,
+                        palette,
+                        analysis,
+                        beatColors,
+                        _appSettings,
+                        width)),
+                    preformattedAnsi: true)
+            ],
+            [width]);
         _defaultAssetMenuRow.SetRowData(
             [
                 new LabeledValueDescriptor(
@@ -164,8 +179,10 @@ internal sealed class GeneralSettingsHubAreaRenderer : IUiComponentRenderer<Gene
         rowContext.StartRow = startRow + 4;
         _horizontalRowRenderer.Render(_appNameMenuRow, rowContext);
         rowContext.StartRow = startRow + 5;
-        _horizontalRowRenderer.Render(_defaultAssetMenuRow, rowContext);
+        _horizontalRowRenderer.Render(_maxAudioHistoryMenuRow, rowContext);
         rowContext.StartRow = startRow + 6;
+        _horizontalRowRenderer.Render(_defaultAssetMenuRow, rowContext);
+        rowContext.StartRow = startRow + 7;
         _horizontalRowRenderer.Render(_themeMenuRow, rowContext);
         _showRenderFpsMenuRow.SetRowData(
             [
@@ -181,7 +198,7 @@ internal sealed class GeneralSettingsHubAreaRenderer : IUiComponentRenderer<Gene
                     preformattedAnsi: true)
             ],
             [width]);
-        rowContext.StartRow = startRow + 7;
+        rowContext.StartRow = startRow + 8;
         _horizontalRowRenderer.Render(_showRenderFpsMenuRow, rowContext);
         _showLayerRenderTimeMenuRow.SetRowData(
             [
@@ -197,7 +214,7 @@ internal sealed class GeneralSettingsHubAreaRenderer : IUiComponentRenderer<Gene
                     preformattedAnsi: true)
             ],
             [width]);
-        rowContext.StartRow = startRow + 8;
+        rowContext.StartRow = startRow + 9;
         _horizontalRowRenderer.Render(_showLayerRenderTimeMenuRow, rowContext);
 
         if (_state.EditMode != GeneralSettingsHubEditMode.None)

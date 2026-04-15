@@ -7,6 +7,7 @@
 - **Package manager / runtime**: .NET 10.0 SDK; NuGet for packages. No npm.
 - **Build**: `dotnet build .\AudioAnalyzer.sln` — must succeed with **0 warnings**. Use PowerShell on Windows; do not use Unix shell utilities in commands.
 - **Tests**: `dotnet test tests\AudioAnalyzer.Tests\AudioAnalyzer.Tests.csproj`
+- **Performance changes**: Verify the optimization with a unit or integration test (or a justified tighter perf regression threshold); see [docs/agents/testing-and-verification.md](docs/agents/testing-and-verification.md#performance-optimizations-agents).
 - **Format check**: `dotnet format .\AudioAnalyzer.sln --verify-no-changes` (or `dotnet format .\AudioAnalyzer.sln` to fix)
 
 Before changing architecture, persistence, or user-facing behavior, read the relevant ADRs and align implementation with them: **[docs/adr/README.md](docs/adr/README.md)**.

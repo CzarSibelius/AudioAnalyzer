@@ -66,6 +66,16 @@ For **Palette source**, use `"LayerPalette"` or `"ImageColors"` (or `0` / `1`). 
 
 Use `"Mode": "DropRipples"` for beat-spawned radial ripples (still set plane fields if you switch modes in the S modal). Details: [visualizers/buffer-distortion.md](visualizers/buffer-distortion.md).
 
+**Waveform strip layer `Custom`** (`"LayerType": "WaveformStrip"`; see [visualizers/waveform-strip.md](visualizers/waveform-strip.md), [ADR-0079](adr/0079-waveform-strip-fixed-visible-seconds.md)):
+
+- **`FixedVisibleSeconds`**: number (default **15**; clamped **1–120** when loaded) — trailing wall seconds mapped across the strip. Preset JSON may still contain a removed **`OverviewTimeMode`** key; it is ignored on deserialize.
+
+```json
+"Custom": {
+  "FixedVisibleSeconds": 12
+}
+```
+
 ## Shows (JSON files)
 
 Shows are stored as **JSON files** in a **`shows`** directory next to the executable. A Show is an ordered collection of presets with per-entry duration. Press **Tab** to switch to Show play; **S** in Show play to edit (add/remove entries, set duration). Duration can be in **Seconds** (wall-clock) or **Beats** (at the current BPM from the active **BPM source** — audio, demo, or Link).
@@ -148,6 +158,8 @@ The **AsciiModel** text layer loads **Wavefront OBJ** files from a folder. The a
 
 - **BPM source** (`BpmSource`, per [ADR-0066](adr/0066-bpm-source-and-ableton-link.md)): Where tempo and the beat counter come from. Values: `AudioAnalysis` (default, energy detection on the audio stream), `DemoDevice` (BPM from the active `demo:NNN` synthetic device + time-based beats), `AbletonLink` (Ableton Link session via native `link_shim.dll`). Editable from General settings hub (**BPM source** row, **Enter** to cycle). FFT/spectrum/waveform always follow the **audio input**, not Link.
 
+- **Max audio history** (`MaxAudioHistorySeconds`, per [ADR-0077](adr/0077-waveform-overview-snapshot.md)): How many seconds of **mono** waveform the engine retains for the decimated **waveform strip** overview. Clamped to **5–180** when loaded or saved. Default **60**. The internal ring size is `seconds × sample rate` capped at **5,000,000** samples (~20 MB float buffer at the cap). Changing the value in General settings (**Max audio history** row: **+**/**−**, **Enter** to type seconds) resizes the ring and persists settings. The oscilloscope still uses a **512-sample** scope window from the same stream.
+
 - **Logging** (`Logging`, per [ADR-0076](adr/0076-configurable-application-logging.md)): Optional file logging for diagnostics. **`Enabled`** (`bool`, default `false`): when `true`, log lines at or above **`MinimumLevel`** are appended to **`FilePath`**. **`FilePath`** (optional string): relative paths are under the application base directory (next to the executable); when omitted or empty, defaults to `logs/audioanalyzer.log`. **`MinimumLevel`** (string): `Trace`, `Debug`, `Information`, `Warning`, `Error`, or `Critical` (same names as `Microsoft.Extensions.Logging.LogLevel`); invalid values are treated as `Error`. Default when omitted: **`Error`**. Log files may contain paths, device names, or other environment-specific text; enable only when you accept that privacy trade-off. Restart the app after editing this section (or reload settings the same way as other `appsettings.json` changes). **ASCII video (webcam)** failures and empty-device cases are logged under category **`AudioAnalyzer.Platform.Windows.AsciiVideo.WindowsAsciiVideoFrameSource`** (use **`Warning`** or lower to see them; **`Debug`** includes resolution-cap attempts).
 
 - **UI settings** (`UiSettings`, per [ADR-0033](adr/0033-ui-principles-and-configurable-settings.md), [ADR-0071](adr/0071-ui-themes-separate-from-palettes.md), [ADR-0067](adr/0067-60fps-target-and-render-fps-overlay.md), [ADR-0072](adr/0072-delta-time-display-animation.md), [ADR-0073](adr/0073-layer-render-time-overlay.md)): App title, optional `TitleBarAppName` (short name for title bar, e.g. "aUdioNLZR"), optional `DefaultAssetFolderPath` (default base directory for AsciiImage / AsciiModel when the layer’s folder setting is empty; omit to use the app content root), optional `UiThemeId` (`themes/*.json` id — when set and the file loads, effective UI/title bar colors come from the theme; omit or use General settings **(Custom)** for inline colors), optional `TitleBarPalette` (used for base when no theme or theme has no usable fallback), UI palette (Normal, Highlighted, Dimmed, Label, optional Background), **`DefaultScrollingSpeed`** (character advance per 60 Hz reference frame; scaled by display frame delta per ADR-0072), optional **`ShowRenderFps`** (`bool`, default `false`) to show smoothed main-render FPS on the toolbar (main-loop cadence—typically **≥~60** FPS on capable hosts, independent of WASAPI buffer rate), and optional **`ShowLayerRenderTime`** (`bool`, default `false`) to show each text layer’s last measured `Draw` time in the S modal (General settings hub). Stored in `appsettings.json`. Colors support 24-bit RGB (`R`, `G`, `B`) or console color names (`Value`).
@@ -161,6 +173,7 @@ Example `appsettings.json`:
 ```json
 {
   "BpmSource": "AudioAnalysis",
+  "MaxAudioHistorySeconds": 60,
   "Logging": {
     "Enabled": false,
     "FilePath": "logs/audioanalyzer.log",

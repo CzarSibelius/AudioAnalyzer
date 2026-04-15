@@ -11,4 +11,13 @@ public interface ITextLayerStateStore
 
     /// <summary>Removes the slot at <paramref name="sortedLayerIndex"/> and shifts higher indices down (after a layer is removed from the sorted list).</summary>
     void RemoveSlotAt(int sortedLayerIndex);
+
+    /// <summary>
+    /// Reorders in-memory slots when the sorted draw order changes without add/remove (e.g. ZOrder swap).
+    /// <paramref name="oldIndexByNewSlot"/> has length <c>n</c>; new slot <c>j</c> receives the state that was at old index <c>oldIndexByNewSlot[j]</c>.
+    /// </summary>
+    void ApplySlotPermutation(IReadOnlyList<int> oldIndexByNewSlot);
+
+    /// <summary>Clears all per-slot state (e.g. Ctrl+R full layer reset). Next draw recreates state per layer type.</summary>
+    void ClearAllSlots();
 }

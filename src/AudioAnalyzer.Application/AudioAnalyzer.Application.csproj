@@ -8,6 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="AudioAnalyzer.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\AudioAnalyzer.Domain\AudioAnalyzer.Domain.csproj" />
   </ItemGroup>
 

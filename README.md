@@ -64,4 +64,5 @@ For bug reports or sharing what you see: press **Ctrl+Shift+E** to write a plain
 - **Demo Mode** is useful to explore visuals without playing music.
 - Meaningful spectrum and level readouts need signal on the chosen input (or Demo Mode).
 - In **General settings**, enable **Show render FPS** (or set `ShowRenderFps` in `appsettings.json`) to show smoothed full main-render frame rate on the toolbar (main-loop cadence—typically **≥~60** FPS on capable hosts, not audio callback rate); see [ADR-0067](docs/adr/0067-60fps-target-and-render-fps-overlay.md).
+- **Max audio history** (General settings hub, **+**/**−** or **Enter** to type) sets how many seconds of mono waveform feed the **waveform strip** overview (default 60, clamped 5–180; stereo stacked mode keeps a matching **right** channel ring, so waveform memory is about **double** while enabled; see [docs/configuration-reference.md](docs/configuration-reference.md), [ADR-0077](docs/adr/0077-waveform-overview-snapshot.md), [ADR-0078](docs/adr/0078-waveform-strip-stereo-beat-marks-goertzel.md)).
 

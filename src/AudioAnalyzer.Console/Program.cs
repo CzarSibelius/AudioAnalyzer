@@ -66,6 +66,7 @@ if (initialName == "")
 var shell = provider.GetRequiredService<ApplicationShell>();
 var engine = provider.GetRequiredService<AnalysisEngine>();
 engine.BeatSensitivity = settings.BeatSensitivity;
+provider.GetRequiredService<IWaveformHistoryConfigurator>().ApplyMaxHistorySeconds(settings.MaxAudioHistorySeconds, null);
 
 ILoggerFactory loggerFactory = provider.GetRequiredService<ILoggerFactory>();
 StartupLogging.LogApplicationStarted(loggerFactory.CreateLogger("AudioAnalyzer"));

@@ -16,94 +16,109 @@ See original analysis for context. Agents: mark `[x]` when a task is implemented
 ## Phase 1: ApplicationShell (17 deps → ~7)
 
 ### 1.1 IHeaderDrawer
-- [x] Add `IHeaderDrawer` interface in Abstractions (DrawMain, DrawHeaderOnly)
-- [x] Implement `HeaderDrawer` that encapsulates viewports, title bar, engine state, UiSettings
-- [x] Register in ServiceConfiguration; inject into ApplicationShell
-- [x] Replace all `ConsoleHeader.DrawMain(...)` calls with `_headerDrawer.DrawMain()`
-- [x] Remove duplicated header argument lists from ApplicationShell
+
+- Add `IHeaderDrawer` interface in Abstractions (DrawMain, DrawHeaderOnly)
+- Implement `HeaderDrawer` that encapsulates viewports, title bar, engine state, UiSettings
+- Register in ServiceConfiguration; inject into ApplicationShell
+- Replace all `ConsoleHeader.DrawMain(...)` calls with `_headerDrawer.DrawMain()`
+- Remove duplicated header argument lists from ApplicationShell
 
 ### 1.2 Key handlers / dispatcher
-- [x] Add `IKeyHandler<MainLoopKeyContext>` (Handle(key, context)) and `MainLoopKeyContext`
-- [x] Implement `MainLoopKeyHandler` with switch for Tab, V, S, D, H, +/-, P, F, Escape
-- [x] Register IKeyHandler&lt;MainLoopKeyContext&gt;; inject into ApplicationShell
-- [x] Replace switch(key.Key) in ApplicationShell with `_keyHandler.Handle(key, ctx)`
+
+- Add `IKeyHandler<MainLoopKeyContext>` (Handle(key, context)) and `MainLoopKeyContext`
+- Implement `MainLoopKeyHandler` with switch for Tab, V, S, D, H, +/-, P, F, Escape
+- Register IKeyHandler; inject into ApplicationShell
+- Replace switch(key.Key) in ApplicationShell with `_keyHandler.Handle(key, ctx)`
 
 ### 1.3 Device lifecycle
-- [x] Add `IDeviceCaptureController` interface (StartCapture, StopCapture, RestartCapture, Shutdown)
-- [x] Implement DeviceCaptureController with _currentInput, _deviceLock, per ADR-0018
-- [x] Inject IDeviceCaptureController into ApplicationShell; remove direct IAudioInput handling
+
+- Add `IDeviceCaptureController` interface (StartCapture, StopCapture, RestartCapture, Shutdown)
+- Implement DeviceCaptureController with _currentInput, _deviceLock, per ADR-0018
+- Inject IDeviceCaptureController into ApplicationShell; remove direct IAudioInput handling
 
 ### 1.4 Settings persistence
-- [x] Add `IAppSettingsPersistence` interface with Save()
-- [x] Implement AppSettingsPersistence pulling from engine, visualizerSettings, settings; use settingsRepo, visualizerSettingsRepo
-- [x] Inject into ApplicationShell; replace SaveSettings() with _settingsPersistence.Save()
+
+- Add `IAppSettingsPersistence` interface with Save()
+- Implement AppSettingsPersistence pulling from engine, visualizerSettings, settings; use settingsRepo, visualizerSettingsRepo
+- Inject into ApplicationShell; replace SaveSettings() with _settingsPersistence.Save()
 
 ---
 
 ## Phase 2: AnalysisEngine (~518 lines)
 
 ### 2.1 Beat detection
-- [x] Add `IBeatDetector` interface (ProcessFrame, DecayFlashFrame, CurrentBpm, BeatFlashActive, BeatCount, BeatSensitivity)
-- [x] Implement BeatDetector; move energy history, beat times, BPM estimation, threshold, flash state
-- [x] Register and inject into AnalysisEngine; call _beatDetector.ProcessFrame, read properties for snapshot/header
+
+- Add `IBeatDetector` interface (ProcessFrame, DecayFlashFrame, CurrentBpm, BeatFlashActive, BeatCount, BeatSensitivity)
+- Implement BeatDetector; move energy history, beat times, BPM estimation, threshold, flash state
+- Register and inject into AnalysisEngine; call _beatDetector.ProcessFrame, read properties for snapshot/header
 
 ### 2.2 Volume analysis
-- [x] Add `IVolumeAnalyzer` interface (ProcessFrame, Volume, LeftChannel, RightChannel, LeftPeakHold, RightPeakHold)
-- [x] Implement VolumeAnalyzer; move left/right channel, peaks, peak hold
-- [x] Inject into AnalysisEngine; delegate per-frame volume processing
+
+- Add `IVolumeAnalyzer` interface (ProcessFrame, Volume, LeftChannel, RightChannel, LeftPeakHold, RightPeakHold)
+- Implement VolumeAnalyzer; move left/right channel, peaks, peak hold
+- Inject into AnalysisEngine; delegate per-frame volume processing
 
 ### 2.3 FFT band pipeline
-- [x] Add `IFftBandProcessor` with Process(fftBuffer, sampleRate, numBands), SmoothedMagnitudes, PeakHold
-- [x] Implement FftBandProcessor; move band creation, smoothing, peak hold from AnalysisEngine
-- [x] Inject into AnalysisEngine; window+FFT in engine, feed buffer to processor
+
+- Add `IFftBandProcessor` with Process(fftBuffer, sampleRate, numBands), SmoothedMagnitudes, PeakHold
+- Implement FftBandProcessor; move band creation, smoothing, peak hold from AnalysisEngine
+- Inject into AnalysisEngine; window+FFT in engine, feed buffer to processor
 
 ### 2.4 Engine as coordinator
-- [x] AnalysisEngine delegates to volume, beat, FFT; fills snapshot; calls renderer
-- [x] AnalysisEngine analysis-only: ProcessAudio only does analysis, returns results via GetSnapshot(); display/rendering moved to IVisualizationOrchestrator (VisualizationOrchestrator)
-- [ ] Profile ProcessAudio if desired (ADR-0030, ADR-0040); extraction used DI per ADR-0040
+
+- AnalysisEngine delegates to volume, beat, FFT; fills snapshot; calls renderer
+- AnalysisEngine analysis-only: ProcessAudio only does analysis, returns results via GetSnapshot(); display/rendering moved to IVisualizationOrchestrator (VisualizationOrchestrator)
+- Profile ProcessAudio if desired (ADR-0030, ADR-0040); extraction used DI per ADR-0040
 
 ---
 
 ## Phase 3: SettingsModal (~376 lines)
 
 ### 3.1 Settings modal state
-- [x] Extract SettingsModalState (focus enum, selected indices, buffers, renaming)
-- [x] Replace scattered locals in Show() with state object; make transitions explicit
+
+- Extract SettingsModalState (focus enum, selected indices, buffers, renaming)
+- Replace scattered locals in Show() with state object; make transitions explicit
 
 ### 3.2 Settings modal renderer
-- [x] Add ISettingsModalRenderer (or equivalent) with Draw(state, palette, dimensions, layers/settings rows)
-- [x] Move DrawSettingsContent logic into renderer; SettingsModal calls _renderer.Draw(state)
+
+- Add ISettingsModalRenderer (or equivalent) with Draw(state, palette, dimensions, layers/settings rows)
+- Move DrawSettingsContent logic into renderer; SettingsModal calls _renderer.Draw(state)
 
 ### 3.3 Settings modal key handler
-- [x] Add IKeyHandler&lt;SettingsModalKeyContext&gt; with Handle(key, context)
-- [x] Move layer selection, type cycling, preset rename/create, setting edit logic into handler
-- [x] SettingsModal: read key → handler updates state → modal reacts (redraw, close)
+
+- Add IKeyHandler with Handle(key, context)
+- Move layer selection, type cycling, preset rename/create, setting edit logic into handler
+- SettingsModal: read key → handler updates state → modal reacts (redraw, close)
 
 ### 3.4 Optional: panel components
-- [ ] If renderer or handler grows: extract ILayerListPanel, ISettingsListPanel
+
+- If renderer or handler grows: extract ILayerListPanel, ISettingsListPanel
 
 ---
 
 ## Phase 4: TextLayersVisualizer
 
 ### 4.1 Key handler
-- [x] Add TextLayersKeyContext and IKeyHandler&lt;TextLayersKeyContext&gt; (Handle(key, context))
-- [x] Implement TextLayersKeyHandler (P, [ ], I, Left/Right, 1–9, Shift+1–9)
-- [x] Register and inject into TextLayersVisualizer; HandleKey delegates to handler
+
+- Add TextLayersKeyContext and IKeyHandler (Handle(key, context))
+- Implement TextLayersKeyHandler (P, [ ], I, Left/Right, 1–9, Shift+1–9)
+- Register and inject into TextLayersVisualizer; HandleKey delegates to handler
 
 ### 4.2 Toolbar builder
-- [x] Add TextLayersToolbarContext and ITextLayersToolbarBuilder (BuildSuffix(context))
-- [x] Implement TextLayersToolbarBuilder; GetToolbarSuffix delegates to builder
-- [x] Register and inject into TextLayersVisualizer
-- [x] Moved toolbar builder (interface, context, implementation) to **Application** as general UI; visualizer only supplies context (including OscilloscopeGain).
+
+- Add TextLayersToolbarContext and ITextLayersToolbarBuilder (BuildSuffix(context))
+- Implement TextLayersToolbarBuilder; GetToolbarSuffix delegates to builder
+- Register and inject into TextLayersVisualizer
+- Moved toolbar builder (interface, context, implementation) to **Application** as general UI; visualizer only supplies context (including OscilloscopeGain).
 
 ### 4.3 Optional: palette resolver / layer state
-- [ ] If desired: extract ITextLayersPaletteResolver; per-layer state holder
+
+- If desired: extract ITextLayersPaletteResolver; per-layer state holder
 
 ---
 
 ## Documentation
 
-- [x] Add ADR (e.g. 0041-god-object-refactoring-strategy.md) documenting the extraction strategy
-- [x] Update docs/adr/README.md and .cursor/rules/adr.mdc to reference the ADR
-- [ ] Update README.md if user-facing behavior or setup changes
+- Add ADR (e.g. 0041-god-object-refactoring-strategy.md) documenting the extraction strategy
+- Update docs/adr/README.md and .cursor/rules/adr.mdc to reference the ADR
+- Update README.md if user-facing behavior or setup changes

@@ -15,4 +15,7 @@ public interface IVisualizationRenderer
 
     /// <summary>Handles visualizer-specific key bindings (e.g. 1–<see cref="TextLayersLimits.MaxLayerCount"/> for TextLayers). Returns true if the key was consumed.</summary>
     bool HandleKey(ConsoleKeyInfo key);
+
+    /// <summary>Call when the text layer list may have been replaced (e.g. preset cycle, show entry). Lets the visualizer drop cached per-frame state.</summary>
+    void NotifyTextLayersStructureChanged();
 }

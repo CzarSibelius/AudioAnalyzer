@@ -11,7 +11,8 @@ public sealed class TextLayerStateStore
       ITextLayerStateStore<UnknownPleasuresState>,
       ITextLayerStateStore<MaschineState>,
       ITextLayerStateStore<AsciiModelState>,
-      ITextLayerStateStore<BufferDistortionState>
+      ITextLayerStateStore<BufferDistortionState>,
+      ITextLayerStateStore<WaveformStripLayerState>
 {
     private readonly List<object?> _stateByLayer = new();
 
@@ -42,6 +43,32 @@ public sealed class TextLayerStateStore
         _stateByLayer.RemoveAt(sortedLayerIndex);
     }
 
+    /// <inheritdoc />
+    public void ApplySlotPermutation(IReadOnlyList<int> oldIndexByNewSlot)
+    {
+        int n = oldIndexByNewSlot.Count;
+        if (n == 0)
+        {
+            return;
+        }
+
+        EnsureCapacity(n);
+        var copy = new object?[n];
+        for (int i = 0; i < n; i++)
+        {
+            copy[i] = i < _stateByLayer.Count ? _stateByLayer[i] : null;
+        }
+
+        for (int j = 0; j < n; j++)
+        {
+            int src = oldIndexByNewSlot[j];
+            _stateByLayer[j] = (uint)src < (uint)copy.Length ? copy[src] : null;
+        }
+    }
+
+    /// <inheritdoc />
+    public void ClearAllSlots() => _stateByLayer.Clear();
+
     FallingLettersLayerState ITextLayerStateStore<FallingLettersLayerState>.GetState(int layerIndex) => GetOrCreate<FallingLettersLayerState>(layerIndex);
     void ITextLayerStateStore<FallingLettersLayerState>.SetState(int layerIndex, FallingLettersLayerState state) => Set(layerIndex, state);
 
@@ -71,6 +98,9 @@ public sealed class TextLayerStateStore
 
     BufferDistortionState ITextLayerStateStore<BufferDistortionState>.GetState(int layerIndex) => GetOrCreate<BufferDistortionState>(layerIndex);
     void ITextLayerStateStore<BufferDistortionState>.SetState(int layerIndex, BufferDistortionState state) => Set(layerIndex, state);
+
+    WaveformStripLayerState ITextLayerStateStore<WaveformStripLayerState>.GetState(int layerIndex) => GetOrCreate<WaveformStripLayerState>(layerIndex);
+    void ITextLayerStateStore<WaveformStripLayerState>.SetState(int layerIndex, WaveformStripLayerState state) => Set(layerIndex, state);
 
     private T GetOrCreate<T>(int layerIndex) where T : new()
     {

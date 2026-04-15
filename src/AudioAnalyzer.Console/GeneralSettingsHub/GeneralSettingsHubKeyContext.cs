@@ -50,4 +50,7 @@ internal sealed class GeneralSettingsHubKeyContext : IKeyHandlerContext
 
     /// <summary>Re-applies beat timing after <see cref="AppSettings.BpmSource"/> changes.</summary>
     public required Action ApplyBeatTimingFromSettings { get; init; }
+
+    /// <summary>Resizes the waveform history ring when <see cref="AppSettings.MaxAudioHistorySeconds"/> changes.</summary>
+    public required IWaveformHistoryConfigurator WaveformHistoryConfigurator { get; init; }
 }

@@ -21,6 +21,7 @@ public static class LayerToolbarContextualRows
         return layer.LayerType switch
         {
             TextLayerType.Oscilloscope => ResolveOscilloscope(layer),
+            TextLayerType.WaveformStrip => ResolveWaveformStrip(layer),
             TextLayerType.AsciiImage => ResolveAsciiImage(layer, snippetIndex, uiSettings, fileSystem),
             TextLayerType.AsciiModel => ResolveAsciiModel(layer, snippetIndex, uiSettings, fileSystem),
             _ => s_empty
@@ -30,6 +31,13 @@ public static class LayerToolbarContextualRows
     private static IReadOnlyList<LayerToolbarContextualRow> ResolveOscilloscope(TextLayerSettings layer)
     {
         double gain = layer.GetCustom<OscilloscopeSettings>()?.Gain ?? 2.5;
+        string value = gain.ToString("F1", CultureInfo.InvariantCulture);
+        return [new LayerToolbarContextualRow("Gain", value)];
+    }
+
+    private static IReadOnlyList<LayerToolbarContextualRow> ResolveWaveformStrip(TextLayerSettings layer)
+    {
+        double gain = layer.GetCustom<WaveformStripSettings>()?.Gain ?? 2.5;
         string value = gain.ToString("F1", CultureInfo.InvariantCulture);
         return [new LayerToolbarContextualRow("Gain", value)];
     }

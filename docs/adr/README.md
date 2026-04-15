@@ -92,6 +92,9 @@ Decisions are numbered and kept under version control so the rationale stays wit
 | [0074](0074-ascii-video-layer-and-frame-source.md) | ASCII video layer — `IAsciiVideoFrameSource`, webcam first in Platform.Windows, threading and lifecycle | Accepted |
 | [0075](0075-nuget-license-compatibility.md) | NuGet packages — license compatible with GPL-3.0-only distribution | Accepted |
 | [0076](0076-configurable-application-logging.md) | Configurable application logging — file exceptions first, extensible levels | Accepted |
+| [0077](0077-waveform-overview-snapshot.md) | Long mono waveform ring + decimated overview in snapshot (performance) | Accepted |
+| [0078](0078-waveform-strip-stereo-beat-marks-goertzel.md) | Waveform strip: stereo overview rings, stored beat marks, Goertzel bucket colors | Accepted |
+| [0079](0079-waveform-strip-fixed-visible-seconds.md) | Waveform strip: fixed trailing seconds across strip width (no full-ring strip mode) | Accepted |
 
 ## Process
 

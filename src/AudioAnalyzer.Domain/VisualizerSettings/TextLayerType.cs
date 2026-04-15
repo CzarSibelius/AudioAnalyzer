@@ -24,5 +24,6 @@ public enum TextLayerType
     Maschine,
     Fill,
     BufferDistortion,
-    AsciiVideo
+    AsciiVideo,
+    WaveformStrip
 }

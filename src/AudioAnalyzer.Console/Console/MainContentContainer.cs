@@ -83,6 +83,9 @@ internal sealed partial class MainContentContainer : IVisualizationRenderer
     }
 
     /// <inheritdoc />
+    public void NotifyTextLayersStructureChanged() => _visualizer.OnTextLayersStructureChanged();
+
+    /// <inheritdoc />
     public void Render(VisualizationFrameContext frame)
     {
         try

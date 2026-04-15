@@ -1,3 +1,4 @@
+using System.Threading;
 using AudioAnalyzer.Application;
 using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Application.Fft;
@@ -74,5 +75,34 @@ public sealed class AnalysisEngineTests
         Assert.NotSame(a.SmoothedMagnitudes, b.SmoothedMagnitudes);
         Assert.NotSame(a.PeakHold, b.PeakHold);
         Assert.NotSame(a.Waveform, b.Waveform);
+    }
+
+    /// <summary>
+    /// Overview is rebuilt on the same ~50 ms gate as the scope display buffer; after enough wall time and audio,
+    /// snapshots expose 8192 buckets without cloning the full history ring (see ADR-0077).
+    /// </summary>
+    [Fact]
+    public void GetSnapshot_after_display_tick_includes_decimated_overview_arrays()
+    {
+        var engine = new AnalysisEngine(new StubBeatTiming(), new VolumeAnalyzer(), new FftBandProcessor());
+        engine.SetNumBands(8);
+        engine.ApplyMaxHistorySeconds(10, 48_000);
+        var format = new AudioFormat { SampleRate = 48_000, BitsPerSample = 16, Channels = 1 };
+        var buffer = new byte[4096];
+
+        Thread.Sleep(100);
+        engine.ProcessAudio(buffer, buffer.Length, format);
+
+        AudioAnalysisSnapshot s = engine.GetSnapshot();
+        Assert.Equal(512, s.WaveformSize);
+        Assert.Equal(512, s.Waveform.Length);
+        Assert.Equal(8192, s.WaveformOverviewLength);
+        Assert.True(s.WaveformOverviewSpanSeconds > 0);
+        Assert.Equal(8192, s.WaveformOverviewMin.Length);
+        Assert.Equal(8192, s.WaveformOverviewMax.Length);
+
+        AudioAnalysisSnapshot t = engine.GetSnapshot();
+        Assert.NotSame(s.WaveformOverviewMin, t.WaveformOverviewMin);
+        Assert.NotSame(s.Waveform, t.Waveform);
     }
 }

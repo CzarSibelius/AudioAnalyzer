@@ -1,3 +1,4 @@
+using System;
 using System.Text;
 using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Application.Display;
@@ -15,7 +16,9 @@ public sealed class ViewportCellBuffer
     private int _height;
     private char[] _chars = [];
     private PaletteColor[] _colors = [];
-    private string?[] _lastWrittenByRow = [];
+    /// <summary>Last flushed cell content per row (parallel to the cell buffer); used to skip ANSI assembly and string allocation when a row is unchanged.</summary>
+    private char[] _lastFlushedChars = [];
+    private PaletteColor[] _lastFlushedColors = [];
     private readonly StringBuilder _sb = new();
     private readonly List<ClipRect> _clipStack = [];
 
@@ -44,7 +47,8 @@ public sealed class ViewportCellBuffer
         int size = width * height;
         _chars = new char[size];
         _colors = new PaletteColor[size];
-        _lastWrittenByRow = new string?[height];
+        _lastFlushedChars = new char[size];
+        _lastFlushedColors = new PaletteColor[size];
     }
 
     /// <summary>Fills the buffer with space and the given default color.</summary>
@@ -138,9 +142,11 @@ public sealed class ViewportCellBuffer
 
         ArgumentNullException.ThrowIfNull(writer);
 
-        if (_lastWrittenByRow.Length != _height)
+        if (_lastFlushedChars.Length != _width * _height || _lastFlushedColors.Length != _width * _height)
         {
-            _lastWrittenByRow = new string?[_height];
+            int size = _width * _height;
+            _lastFlushedChars = new char[size];
+            _lastFlushedColors = new PaletteColor[size];
         }
 
         int capacity = _width * 32;
@@ -149,23 +155,32 @@ public sealed class ViewportCellBuffer
             _sb.Capacity = capacity;
         }
 
+        ReadOnlySpan<char> curChars = _chars;
+        ReadOnlySpan<PaletteColor> curColors = _colors;
+        Span<char> prevChars = _lastFlushedChars;
+        Span<PaletteColor> prevColors = _lastFlushedColors;
         for (int y = 0; y < _height; y++)
         {
-            _sb.Clear();
-            for (int x = 0; x < _width; x++)
-            {
-                int i = y * _width + x;
-                AnsiConsole.AppendColored(_sb, _chars[i], _colors[i]);
-            }
-
-            string line = _sb.ToString();
-            if (line == _lastWrittenByRow[y])
+            int rowStart = y * _width;
+            ReadOnlySpan<char> rowC = curChars.Slice(rowStart, _width);
+            ReadOnlySpan<PaletteColor> rowCol = curColors.Slice(rowStart, _width);
+            if (rowC.SequenceEqual(prevChars.Slice(rowStart, _width))
+                && rowCol.SequenceEqual(prevColors.Slice(rowStart, _width)))
             {
                 continue;
             }
 
-            _lastWrittenByRow[y] = line;
+            _sb.Clear();
+            for (int x = 0; x < _width; x++)
+            {
+                int i = rowStart + x;
+                AnsiConsole.AppendColored(_sb, _chars[i], _colors[i]);
+            }
+
+            string line = _sb.ToString();
             writer.WriteLine(startRow + y, line);
+            rowC.CopyTo(prevChars.Slice(rowStart, _width));
+            rowCol.CopyTo(prevColors.Slice(rowStart, _width));
         }
     }
 

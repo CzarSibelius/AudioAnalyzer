@@ -167,6 +167,7 @@ internal sealed class SettingDescriptor
         [TextLayerType.AsciiVideo] = typeof(AsciiVideoSettings),
         [TextLayerType.AsciiModel] = typeof(AsciiModelSettings),
         [TextLayerType.Oscilloscope] = typeof(OscilloscopeSettings),
+        [TextLayerType.WaveformStrip] = typeof(WaveformStripSettings),
         [TextLayerType.LlamaStyle] = typeof(LlamaStyleSettings),
         [TextLayerType.NowPlaying] = typeof(NowPlayingSettings),
         [TextLayerType.Mirror] = typeof(MirrorSettings),

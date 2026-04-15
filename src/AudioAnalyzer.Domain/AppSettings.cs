@@ -22,6 +22,11 @@ public class AppSettings
     public double BeatSensitivity { get; set; } = 1.3;
 
     /// <summary>
+    /// Maximum mono waveform history kept for overview / Waveform strip (seconds). Clamped at load and when saving (e.g. 5–180). Default 60.
+    /// </summary>
+    public double MaxAudioHistorySeconds { get; set; } = 60.0;
+
+    /// <summary>
     /// Source for BPM, beat count, and beat flash. Default: energy detection on audio.
     /// </summary>
     public BpmSource BpmSource { get; set; } = BpmSource.AudioAnalysis;

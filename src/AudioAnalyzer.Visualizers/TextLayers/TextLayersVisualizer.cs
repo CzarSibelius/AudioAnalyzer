@@ -12,7 +12,7 @@ namespace AudioAnalyzer.Visualizers;
 /// Layered text visualizer: composites multiple independent layers (e.g. ScrollingColors, Marquee)
 /// with configurable text snippets and beat-reactive behavior. Uses a cell buffer for z-order compositing.
 /// </summary>
-public sealed class TextLayersVisualizer : IVisualizer
+public sealed class TextLayersVisualizer : IVisualizer, IFullLayerRuntimeReset
 {
     public bool SupportsPaletteCycling => true;
 
@@ -31,6 +31,18 @@ public sealed class TextLayersVisualizer : IVisualizer
     private readonly IAsciiVideoFrameSource _asciiVideoFrameSource;
     /// <summary>Index of the layer whose palette P cycles. Updated when user presses 1–<see cref="TextLayersLimits.MaxLayerCount"/>.</summary>
     private int _paletteCycleLayerIndex;
+
+    /// <inheritdoc />
+    public void ResetAllRuntimeState()
+    {
+        for (int i = 0; i < _layerStates.Count; i++)
+        {
+            _layerStates[i] = (0, 0);
+        }
+
+        _lastBeatCount = -1;
+        _sortedLayersSnapshotCache = null;
+    }
 
     public TextLayersVisualizer(
         TextLayersVisualizerSettings? settings,
@@ -67,6 +79,8 @@ public sealed class TextLayersVisualizer : IVisualizer
     private readonly List<(double Offset, int SnippetIndex)> _layerStates = new();
     private readonly double?[] _layerRenderTimeScratch = new double?[TextLayersLimits.MaxLayerCount];
     private int _lastBeatCount = -1;
+    /// <summary>Layers sorted by ZOrder for the current settings reference; cleared in <see cref="OnTextLayersStructureChanged"/> and when callers use <see cref="IVisualizer.OnTextLayersStructureChanged"/> after preset/show loads.</summary>
+    private List<TextLayerSettings>? _sortedLayersSnapshotCache;
 
     public void Render(VisualizationFrameContext frame, VisualizerViewport viewport)
     {
@@ -355,13 +369,87 @@ public sealed class TextLayersVisualizer : IVisualizer
     /// <inheritdoc />
     public void OnTextLayersStructureChanged()
     {
-        var sortedLayers = TryGetSortedLayersSnapshot(_settings);
-        int n = sortedLayers?.Count ?? 0;
+        var stale = _sortedLayersSnapshotCache;
+        var fresh = BuildSortedLayersCopy(_settings);
+        int n = fresh?.Count ?? 0;
+
+        if (stale is { Count: var staleCount }
+            && fresh is not null
+            && staleCount == fresh.Count
+            && staleCount > 0
+            && TryBuildLayerOrderPermutation(stale, fresh, out int[] perm))
+        {
+            PermuteLayerLocalScrollStates(perm);
+            _stateStore.ApplySlotPermutation(perm);
+        }
+
+        _sortedLayersSnapshotCache = null;
         _paletteCycleLayerIndex = n == 0 ? 0 : Math.Clamp(_paletteCycleLayerIndex, 0, n - 1);
         while (_layerStates.Count > n)
         {
             _layerStates.RemoveAt(_layerStates.Count - 1);
         }
+    }
+
+    private void PermuteLayerLocalScrollStates(int[] oldIndexByNewSlot)
+    {
+        int n = oldIndexByNewSlot.Length;
+        while (_layerStates.Count < n)
+        {
+            _layerStates.Add((0, 0));
+        }
+
+        var copy = new List<(double Offset, int SnippetIndex)>(n);
+        for (int i = 0; i < n; i++)
+        {
+            copy.Add(i < _layerStates.Count ? _layerStates[i] : (0, 0));
+        }
+
+        for (int j = 0; j < n; j++)
+        {
+            int src = oldIndexByNewSlot[j];
+            _layerStates[j] = (uint)src < (uint)copy.Count ? copy[src] : (0, 0);
+        }
+    }
+
+    private static bool TryBuildLayerOrderPermutation(
+        List<TextLayerSettings> staleOrder,
+        List<TextLayerSettings> freshOrder,
+        out int[] oldIndexByNewSlot)
+    {
+        int n = staleOrder.Count;
+        if (n != freshOrder.Count || n == 0)
+        {
+            oldIndexByNewSlot = [];
+            return false;
+        }
+
+        oldIndexByNewSlot = new int[n];
+        var usedOld = new bool[n];
+        for (int j = 0; j < n; j++)
+        {
+            TextLayerSettings want = freshOrder[j];
+            int found = -1;
+            for (int i = 0; i < n; i++)
+            {
+                if (ReferenceEquals(staleOrder[i], want))
+                {
+                    found = i;
+                    break;
+                }
+            }
+
+            if (found < 0 || usedOld[found])
+            {
+                oldIndexByNewSlot = [];
+                return false;
+            }
+
+            usedOld[found] = true;
+            oldIndexByNewSlot[j] = found;
+        }
+
+        return true;
     }
 
     /// <summary>Picks the frontmost enabled ASCII video layer (highest <see cref="TextLayerSettings.ZOrder"/>) and builds the capture request for <see cref="IAsciiVideoFrameSource"/>.</summary>
@@ -399,17 +487,40 @@ public sealed class TextLayersVisualizer : IVisualizer
         return new AsciiVideoCaptureRequest(custom.SourceKind, custom.WebcamDeviceIndex, maxW, maxH);
     }
 
-    /// <summary>Gets a snapshot of layers sorted by ZOrder, or null if config is empty or the collection was modified during copy (e.g. during show-mode switch or shutdown).</summary>
-    private static List<TextLayerSettings>? TryGetSortedLayersSnapshot(TextLayersVisualizerSettings? config)
+    /// <summary>Gets layers sorted by ZOrder for rendering, or null if config is empty or the collection was modified during copy (e.g. during show-mode switch or shutdown).</summary>
+    private List<TextLayerSettings>? TryGetSortedLayersSnapshot(TextLayersVisualizerSettings? config)
     {
         if (config?.Layers is not { Count: > 0 })
         {
             return null;
         }
+
+        if (ReferenceEquals(config, _settings) && _sortedLayersSnapshotCache != null)
+        {
+            return _sortedLayersSnapshotCache;
+        }
+
+        List<TextLayerSettings>? snapshot = BuildSortedLayersCopy(config);
+        if (snapshot != null && ReferenceEquals(config, _settings))
+        {
+            _sortedLayersSnapshotCache = snapshot;
+        }
+
+        return snapshot;
+    }
+
+    private static List<TextLayerSettings>? BuildSortedLayersCopy(TextLayersVisualizerSettings? config)
+    {
+        if (config?.Layers is not { Count: > 0 })
+        {
+            return null;
+        }
+
         try
         {
             var snapshot = new List<TextLayerSettings>(config.Layers);
-            return snapshot.OrderBy(l => l.ZOrder).ToList();
+            snapshot.Sort(static (a, b) => a.ZOrder.CompareTo(b.ZOrder));
+            return snapshot;
         }
         catch (ArgumentException)
         {

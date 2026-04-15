@@ -33,6 +33,27 @@ public sealed class LayerToolbarContextualRowsTests
     }
 
     [Fact]
+    public void WaveformStrip_uses_default_gain_when_no_custom()
+    {
+        var layer = new TextLayerSettings { LayerType = TextLayerType.WaveformStrip };
+        IReadOnlyList<LayerToolbarContextualRow> rows = LayerToolbarContextualRows.Resolve(layer, 0, s_realFs);
+        Assert.Single(rows);
+        Assert.Equal("Gain", rows[0].Label);
+        Assert.Equal("2.5", rows[0].Value);
+    }
+
+    [Fact]
+    public void WaveformStrip_respects_custom_gain()
+    {
+        var layer = new TextLayerSettings { LayerType = TextLayerType.WaveformStrip };
+        layer.SetCustom(new WaveformStripSettings { Gain = 6.0 });
+        IReadOnlyList<LayerToolbarContextualRow> rows = LayerToolbarContextualRows.Resolve(layer, 0, s_realFs);
+        Assert.Single(rows);
+        Assert.Equal("Gain", rows[0].Label);
+        Assert.Equal("6.0", rows[0].Value);
+    }
+
+    [Fact]
     public void Marquee_returns_empty()
     {
         var layer = new TextLayerSettings { LayerType = TextLayerType.Marquee };

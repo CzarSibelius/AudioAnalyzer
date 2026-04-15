@@ -59,18 +59,27 @@ public sealed class TextLayersKeyHandlerConfig : IKeyHandlerConfig<TextLayersKey
                     var sortedLayers = context.SortedLayers;
                     int layerIndex = Math.Clamp(context.PaletteCycleLayerIndex, 0, sortedLayers.Count - 1);
                     var layer = sortedLayers[layerIndex];
-                    if (layer.LayerType != TextLayerType.Oscilloscope)
-                    {
-                        return false;
-                    }
-                    var osc = layer.GetCustom<OscilloscopeSettings>() ?? new OscilloscopeSettings();
                     double delta = key.Key is ConsoleKey.Oem6 ? 0.5 : -0.5;
-                    osc.Gain = Math.Clamp(osc.Gain + delta, 1.0, 10.0);
-                    layer.SetCustom(osc);
-                    return true;
+                    if (layer.LayerType == TextLayerType.Oscilloscope)
+                    {
+                        var osc = layer.GetCustom<OscilloscopeSettings>() ?? new OscilloscopeSettings();
+                        osc.Gain = Math.Clamp(osc.Gain + delta, 1.0, 10.0);
+                        layer.SetCustom(osc);
+                        return true;
+                    }
+
+                    if (layer.LayerType == TextLayerType.WaveformStrip)
+                    {
+                        var strip = layer.GetCustom<WaveformStripSettings>() ?? new WaveformStripSettings();
+                        strip.Gain = Math.Clamp(strip.Gain + delta, 1.0, 10.0);
+                        layer.SetCustom(strip);
+                        return true;
+                    }
+
+                    return false;
                 },
                 Key: "[ / ]",
-                Description: "Adjust oscilloscope gain (when Oscilloscope layer selected)",
+                Description: "Adjust gain (Oscilloscope / Waveform strip when that layer is selected)",
                 Section),
             new BindingEntry(
                 Matches: k => k.Key == ConsoleKey.I,

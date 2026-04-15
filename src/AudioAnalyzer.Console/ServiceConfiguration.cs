@@ -111,6 +111,7 @@ internal static class ServiceConfiguration
         services.AddSingleton<ITextLayerStateStore<MaschineState>>(sp => sp.GetRequiredService<TextLayerStateStore>());
         services.AddSingleton<ITextLayerStateStore<AsciiVideoState>>(sp => sp.GetRequiredService<TextLayerStateStore>());
         services.AddSingleton<ITextLayerStateStore<BufferDistortionState>>(sp => sp.GetRequiredService<TextLayerStateStore>());
+        services.AddSingleton<ITextLayerStateStore<WaveformStripLayerState>>(sp => sp.GetRequiredService<TextLayerStateStore>());
         services.AddTextLayerRenderers();
 
         services.AddSingleton<IConsoleWriter, ConsoleWriter>();
@@ -141,6 +142,7 @@ internal static class ServiceConfiguration
             sp.GetRequiredService<IShowPlayToolbarInfo>(),
             sp.GetRequiredService<UiSettings>(),
             sp.GetRequiredService<ITextLayerBoundsEditSession>()));
+        services.AddSingleton<IFullLayerRuntimeReset>(sp => (IFullLayerRuntimeReset)sp.GetRequiredService<IVisualizer>());
 
         services.AddSingleton<IDisplayState, DisplayState>();
         services.AddSingleton<IUiComponentRenderer<ScrollingTextComponent>, ScrollingTextComponentRenderer>();
@@ -194,7 +196,15 @@ internal static class ServiceConfiguration
         services.AddSingleton<IBeatTimingConfigurator>(sp => sp.GetRequiredService<BeatTimingRouter>());
         services.AddSingleton<IVolumeAnalyzer, VolumeAnalyzer>();
         services.AddSingleton<IFftBandProcessor, FftBandProcessor>();
-        services.AddSingleton<AnalysisEngine>();
+        services.AddSingleton<IWaveformOverviewRebuildPolicy, VisualizerSettingsWaveformOverviewRebuildPolicy>();
+        services.AddSingleton<AnalysisEngine>(sp => new AnalysisEngine(
+            sp.GetRequiredService<IBeatTimingSource>(),
+            sp.GetRequiredService<IVolumeAnalyzer>(),
+            sp.GetRequiredService<IFftBandProcessor>(),
+            sp.GetRequiredService<IWaveformOverviewRebuildPolicy>()));
+        services.AddSingleton<IWaveformHistoryConfigurator>(sp => sp.GetRequiredService<AnalysisEngine>());
+        services.AddSingleton<IWaveformRetainedHistoryReset>(sp => sp.GetRequiredService<AnalysisEngine>());
+        services.AddSingleton<ILayerRuntimeResetCoordinator, LayerRuntimeResetCoordinator>();
         services.AddSingleton<MainRenderFpsMeter>();
         services.AddSingleton<IDisplayFrameClock, DisplayFrameClock>();
         services.AddSingleton<IVisualizationOrchestrator>(sp =>
@@ -208,7 +218,12 @@ internal static class ServiceConfiguration
                 sp.GetRequiredService<MainRenderFpsMeter>(),
                 sp.GetRequiredService<IDisplayFrameClock>(),
                 sp.GetRequiredService<ILogger<VisualizationOrchestrator>>()));
-        services.AddSingleton<ShowPlaybackController>();
+        services.AddSingleton(sp => new ShowPlaybackController(
+            sp.GetRequiredService<VisualizerSettings>(),
+            sp.GetRequiredService<IShowRepository>(),
+            sp.GetRequiredService<IPresetRepository>(),
+            sp.GetRequiredService<AnalysisEngine>(),
+            new Lazy<IVisualizer>(() => sp.GetRequiredService<IVisualizer>())));
         services.AddSingleton<IScrollingTextEngine, ScrollingTextEngine>();
         services.AddSingleton<IScrollingTextViewportFactory, ScrollingTextViewportFactory>();
         services.AddSingleton<IUiComponentRenderer<VisualizerAreaComponent>>(sp =>

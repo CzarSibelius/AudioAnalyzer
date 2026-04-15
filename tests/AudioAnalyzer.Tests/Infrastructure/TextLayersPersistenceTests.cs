@@ -64,4 +64,33 @@ public sealed class TextLayersPersistenceTests
 
         Assert.Equal(TextLayersLimits.MaxLayerCount, vs.TextLayers?.Layers?.Count ?? 0);
     }
+
+    [Fact]
+    public void LoadAppSettings_ClampsMaxAudioHistorySeconds()
+    {
+        var presetJson = """
+            {
+              "Name": "Empty",
+              "Config": { "Layers": [] }
+            }
+            """;
+        var appSettingsJson = """
+            {
+              "MaxAudioHistorySeconds": 2,
+              "VisualizerSettings": {
+                "ActivePresetId": "preset-1"
+              }
+            }
+            """;
+        var fs = TestHelpers.CreateMockFileSystemWithPreset(presetJson, new Dictionary<string, MockFileData>(StringComparer.OrdinalIgnoreCase)
+        {
+            [TestHelpers.SettingsPath] = new MockFileData(appSettingsJson)
+        });
+        var presetRepo = new FilePresetRepository(fs, TestHelpers.PresetsPath);
+        var repo = new FileSettingsRepository(fs, presetRepo, new DefaultTextLayersSettingsFactory(), TestHelpers.SettingsPath);
+
+        AppSettings settings = repo.LoadAppSettings();
+
+        Assert.Equal(5.0, settings.MaxAudioHistorySeconds);
+    }
 }

@@ -47,6 +47,8 @@ internal sealed partial class ApplicationShell
     private readonly IApplicationModeFactory _applicationModeFactory;
     private readonly AppSettings _appSettings;
     private readonly IBeatTimingConfigurator _beatTiming;
+    private readonly IWaveformHistoryConfigurator _waveformHistoryConfigurator;
+    private readonly ILayerRuntimeResetCoordinator _layerRuntimeResetCoordinator;
     private readonly ILogger<ApplicationShell> _logger;
 
     private CancellationTokenSource? _headerRefreshCts;
@@ -79,6 +81,8 @@ internal sealed partial class ApplicationShell
         IApplicationModeFactory applicationModeFactory,
         AppSettings appSettings,
         IBeatTimingConfigurator beatTiming,
+        IWaveformHistoryConfigurator waveformHistoryConfigurator,
+        ILayerRuntimeResetCoordinator layerRuntimeResetCoordinator,
         ILogger<ApplicationShell> logger)
     {
         _deviceController = deviceController ?? throw new ArgumentNullException(nameof(deviceController));
@@ -107,6 +111,8 @@ internal sealed partial class ApplicationShell
         _applicationModeFactory = applicationModeFactory ?? throw new ArgumentNullException(nameof(applicationModeFactory));
         _appSettings = appSettings ?? throw new ArgumentNullException(nameof(appSettings));
         _beatTiming = beatTiming ?? throw new ArgumentNullException(nameof(beatTiming));
+        _waveformHistoryConfigurator = waveformHistoryConfigurator ?? throw new ArgumentNullException(nameof(waveformHistoryConfigurator));
+        _layerRuntimeResetCoordinator = layerRuntimeResetCoordinator ?? throw new ArgumentNullException(nameof(layerRuntimeResetCoordinator));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -266,7 +272,8 @@ internal sealed partial class ApplicationShell
             GetApplicationMode = () => _visualizerSettings.ApplicationMode,
             OnPaletteCycle = CyclePalette,
             DumpScreen = () => _screenDumpService.DumpToFile(),
-            AppSettings = _appSettings
+            AppSettings = _appSettings,
+            PerformFullLayerRuntimeReset = () => _layerRuntimeResetCoordinator.ResetAllLayerRuntimeCaches()
         };
     }
 
@@ -289,7 +296,8 @@ internal sealed partial class ApplicationShell
             Orchestrator = _orchestrator,
             AppSettings = _appSettings,
             ApplyBeatTimingFromSettings = () =>
-                _beatTiming.ApplyFromSettings(_appSettings.BpmSource, _deviceController.CurrentDeviceId)
+                _beatTiming.ApplyFromSettings(_appSettings.BpmSource, _deviceController.CurrentDeviceId),
+            WaveformHistoryConfigurator = _waveformHistoryConfigurator
         };
     }
 
@@ -320,6 +328,7 @@ internal sealed partial class ApplicationShell
         _visualizerSettings.ActivePresetId = nextPreset.Id;
         _visualizerSettings.TextLayers ??= new TextLayersVisualizerSettings();
         _visualizerSettings.TextLayers.CopyFrom(nextPreset.Config);
+        _renderer.NotifyTextLayersStructureChanged();
     }
 
     private void CyclePalette()

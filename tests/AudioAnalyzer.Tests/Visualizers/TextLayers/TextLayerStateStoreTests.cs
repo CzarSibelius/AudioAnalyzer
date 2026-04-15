@@ -30,4 +30,36 @@ public sealed class TextLayerStateStoreTests
         store.RemoveSlotAt(5);
         store.RemoveSlotAt(-1);
     }
+
+    [Fact]
+    public void ApplySlotPermutation_RemapsSlotsByOldIndices()
+    {
+        var store = new TextLayerStateStore();
+        store.EnsureCapacity(2);
+        ITextLayerStateStore<BeatCirclesState> typed = store;
+        typed.GetState(0).LastBeatCount = 11;
+        typed.GetState(1).LastBeatCount = 22;
+
+        store.ApplySlotPermutation([1, 0]);
+
+        Assert.Equal(22, typed.GetState(0).LastBeatCount);
+        Assert.Equal(11, typed.GetState(1).LastBeatCount);
+    }
+
+    [Fact]
+    public void ClearAllSlots_RemovesPriorStateSoNextGetState_IsNew()
+    {
+        var store = new TextLayerStateStore();
+        store.EnsureCapacity(2);
+        ITextLayerStateStore<BeatCirclesState> typed = store;
+        BeatCirclesState a = typed.GetState(0);
+        a.LastBeatCount = 42;
+
+        store.ClearAllSlots();
+        store.EnsureCapacity(2);
+
+        BeatCirclesState b = typed.GetState(0);
+        Assert.NotSame(a, b);
+        Assert.Equal(-1, b.LastBeatCount);
+    }
 }

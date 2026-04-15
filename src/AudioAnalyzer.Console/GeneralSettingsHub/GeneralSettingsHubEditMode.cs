@@ -10,5 +10,8 @@ internal enum GeneralSettingsHubEditMode
     ApplicationName,
 
     /// <summary>Editing default asset folder path.</summary>
-    DefaultAssetFolder
+    DefaultAssetFolder,
+
+    /// <summary>Editing max audio history (seconds) as text.</summary>
+    MaxAudioHistorySeconds
 }

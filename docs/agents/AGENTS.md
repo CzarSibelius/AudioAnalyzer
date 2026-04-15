@@ -8,7 +8,7 @@ This folder holds agent instructions grouped by topic. The root [AGENTS.md](../.
 | [documentation.md](documentation.md) | When to update README, configuration-reference.md, visualizer specs, UI specs, deferred work |
 | [ui-and-console.md](ui-and-console.md) | UI specs, viewport, key handling, alignment, user controls |
 | [visualizers.md](visualizers.md) | Viewport contract, new layers, layer settings, visualizer specs |
-| [testing-and-verification.md](testing-and-verification.md) | Build/test/format checklist, screen dump, display and audio testing |
+| [testing-and-verification.md](testing-and-verification.md) | Build/test/format checklist, screen dump, display and audio testing, optimization verification (tests / regression thresholds) |
 | [git-workflow.md](git-workflow.md) | Commit timing and messages |
 | [architecture-overview.md](architecture-overview.md) | Reference: components, data flow, colors, debugging tips |
 | [known-bugs-and-todos.md](known-bugs-and-todos.md) | Known product bugs and small TODOs (backlog for humans and agents) |

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Globalization;
 using System.Text;
 using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Application.Display;
@@ -48,7 +49,7 @@ internal static class GeneralSettingsHubMenuLines
         int rowDisplayWidth)
     {
         string deviceDisplay = FormatSettingValue(deviceNameRaw);
-        if (state.SelectedIndex == 0)
+        if (state.SelectedIndex == GeneralSettingsHubMenuRows.Audio)
         {
             var (selBg, selFg) = MenuSelectionAffordance.GetSelectionColors(palette);
             string inner = MenuSelectionAffordance.GetPrefix(true) + "Audio input devices (D):" + deviceDisplay;
@@ -76,7 +77,7 @@ internal static class GeneralSettingsHubMenuLines
             BpmSource.AbletonLink => "Ableton Link",
             _ => source.ToString()
         };
-        if (state.SelectedIndex == 1)
+        if (state.SelectedIndex == GeneralSettingsHubMenuRows.BpmSource)
         {
             var (selBg, selFg) = MenuSelectionAffordance.GetSelectionColors(palette);
             string inner = MenuSelectionAffordance.GetPrefix(true) + "BPM source (Enter):" + value;
@@ -97,7 +98,7 @@ internal static class GeneralSettingsHubMenuLines
         string appDisplay,
         int rowDisplayWidth)
     {
-        if (state.SelectedIndex == 2)
+        if (state.SelectedIndex == GeneralSettingsHubMenuRows.ApplicationName)
         {
             var (selBg, selFg) = MenuSelectionAffordance.GetSelectionColors(palette);
             string inner = MenuSelectionAffordance.GetPrefix(true) + "Application name:" + appDisplay;
@@ -106,6 +107,28 @@ internal static class GeneralSettingsHubMenuLines
 
         var sb = new StringBuilder();
         AppendMenuLineUnselected(sb, palette, analysis, beatColors, "Application name", appDisplay);
+        return sb.ToString();
+    }
+
+    /// <summary>Formats the max mono waveform history row (seconds).</summary>
+    public static string FormatMaxAudioHistorySecondsLine(
+        GeneralSettingsHubState state,
+        UiPalette palette,
+        AudioAnalysisSnapshot analysis,
+        IReadOnlyList<PaletteColor> beatColors,
+        AppSettings appSettings,
+        int rowDisplayWidth)
+    {
+        string value = appSettings.MaxAudioHistorySeconds.ToString("F0", CultureInfo.InvariantCulture) + " s";
+        if (state.SelectedIndex == GeneralSettingsHubMenuRows.MaxAudioHistorySeconds)
+        {
+            var (selBg, selFg) = MenuSelectionAffordance.GetSelectionColors(palette);
+            string inner = MenuSelectionAffordance.GetPrefix(true) + "Max audio history (+/− Enter):" + value;
+            return MenuSelectionAffordance.FormatAnsiSelectableRow(true, inner, rowDisplayWidth, selBg, selFg);
+        }
+
+        var sb = new StringBuilder();
+        AppendMenuLineUnselected(sb, palette, analysis, beatColors, "Max audio history (+/− Enter)", value);
         return sb.ToString();
     }
 
@@ -118,7 +141,7 @@ internal static class GeneralSettingsHubMenuLines
         string themeDisplay,
         int rowDisplayWidth)
     {
-        if (state.SelectedIndex == 4)
+        if (state.SelectedIndex == GeneralSettingsHubMenuRows.UiTheme)
         {
             var (selBg, selFg) = MenuSelectionAffordance.GetSelectionColors(palette);
             string inner = MenuSelectionAffordance.GetPrefix(true) + "UI theme (T):" + themeDisplay;
@@ -140,7 +163,7 @@ internal static class GeneralSettingsHubMenuLines
         int rowDisplayWidth)
     {
         string value = uiSettings.ShowRenderFps ? "On" : "Off";
-        if (state.SelectedIndex == 5)
+        if (state.SelectedIndex == GeneralSettingsHubMenuRows.ShowRenderFps)
         {
             var (selBg, selFg) = MenuSelectionAffordance.GetSelectionColors(palette);
             string inner = MenuSelectionAffordance.GetPrefix(true) + "Show render FPS (Enter):" + value;
@@ -162,7 +185,7 @@ internal static class GeneralSettingsHubMenuLines
         int rowDisplayWidth)
     {
         string value = uiSettings.ShowLayerRenderTime ? "On" : "Off";
-        if (state.SelectedIndex == 6)
+        if (state.SelectedIndex == GeneralSettingsHubMenuRows.ShowLayerRenderTime)
         {
             var (selBg, selFg) = MenuSelectionAffordance.GetSelectionColors(palette);
             string inner = MenuSelectionAffordance.GetPrefix(true) + "Show layer render time (Enter):" + value;
@@ -186,7 +209,7 @@ internal static class GeneralSettingsHubMenuLines
         string valueDisplay = string.IsNullOrWhiteSpace(uiSettings.DefaultAssetFolderPath)
             ? "(App base)"
             : FormatSettingValue(uiSettings.DefaultAssetFolderPath);
-        if (state.SelectedIndex == 3)
+        if (state.SelectedIndex == GeneralSettingsHubMenuRows.DefaultAssetFolder)
         {
             var (selBg, selFg) = MenuSelectionAffordance.GetSelectionColors(palette);
             string inner = MenuSelectionAffordance.GetPrefix(true) + "Default asset folder:" + valueDisplay;

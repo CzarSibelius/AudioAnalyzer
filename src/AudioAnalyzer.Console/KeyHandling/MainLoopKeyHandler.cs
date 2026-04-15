@@ -4,7 +4,7 @@ using KeyHandling = AudioAnalyzer.Console.KeyHandling;
 
 namespace AudioAnalyzer.Console;
 
-/// <summary>Config for main loop keys: Tab, V, S, D, H, +/-, P, F, Ctrl+Shift+E (screen dump), Escape.</summary>
+/// <summary>Config for main loop keys: Tab, V, S, D, H, +/-, P, F, Ctrl+R (full layer reset), Ctrl+Shift+E (screen dump), Escape.</summary>
 internal sealed class MainLoopKeyHandlerConfig : IKeyHandlerConfig<MainLoopKeyContext>
 {
     private const string Section = "Keyboard controls";
@@ -219,6 +219,33 @@ internal sealed class MainLoopKeyHandlerConfig : IKeyHandlerConfig<MainLoopKeyCo
                 },
                 Key: "F",
                 Description: "Toggle full screen (visualizer only)",
+                Section),
+            new KeyHandling.KeyBindingEntry<MainLoopKeyContext>(
+                Matches: static k =>
+                    k.Key == ConsoleKey.R
+                    && k.Modifiers.HasFlag(ConsoleModifiers.Control)
+                    && (k.Modifiers & (ConsoleModifiers.Shift | ConsoleModifiers.Alt)) == 0,
+                Action: (_, ctx) =>
+                {
+                    if (ctx.GetApplicationMode() == ApplicationMode.Settings)
+                    {
+                        return false;
+                    }
+
+                    ctx.PerformFullLayerRuntimeReset();
+                    if (!ctx.DisplayState.FullScreen)
+                    {
+                        ctx.Orchestrator.RedrawWithFullHeader();
+                    }
+                    else
+                    {
+                        ctx.Orchestrator.Redraw();
+                    }
+
+                    return true;
+                },
+                Key: "Ctrl+R",
+                Description: "Full layer reset (clear waveform history and all layer runtime caches)",
                 Section),
             new KeyHandling.KeyBindingEntry<MainLoopKeyContext>(
                 Matches: k => k.Key == ConsoleKey.E && k.Modifiers.HasFlag(ConsoleModifiers.Control) && k.Modifiers.HasFlag(ConsoleModifiers.Shift),

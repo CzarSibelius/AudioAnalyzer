@@ -23,7 +23,7 @@ The application is a real-time console audio visualizer. It processes audio and 
    - For key polling, keep `Thread.Sleep` intervals reasonable (e.g. 20–50 ms); avoid polling faster than human input needs.
    - Prefer event-driven updates where platform APIs support it (e.g. GSMTC `MediaPropertiesChanged`).
 
-4. **Measurement**: When optimizing, prefer profiling (e.g. `dotnet-trace`, perf counters) over guesswork. Document benchmark results if they drive a design change.
+4. **Measurement**: When optimizing, prefer profiling (e.g. `dotnet-trace`, perf counters) over guesswork. Document benchmark results if they drive a design change. Complement profiling with a **unit or integration test** that guards the claimed win (time budget, allocations, or stricter regression threshold)—see [docs/agents/testing-and-verification.md](../../docs/agents/testing-and-verification.md#performance-optimizations-agents).
 
 ## Consequences
 

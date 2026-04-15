@@ -1,25 +1,24 @@
+using System.Globalization;
 using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Domain;
 using KeyHandling = AudioAnalyzer.Console.KeyHandling;
 
 namespace AudioAnalyzer.Console;
 
-/// <summary>Keyboard handling for the General Settings hub: menu navigation, device picker, BPM source, application name and default asset folder edits.</summary>
+/// <summary>Keyboard handling for the General Settings hub: menu navigation, device picker, BPM source, app settings, and text edits.</summary>
 internal sealed class GeneralSettingsHubKeyHandlerConfig : IKeyHandlerConfig<GeneralSettingsHubKeyContext>
 {
     private const string Section = "General settings hub";
 
-    private const int MenuAudio = 0;
-    private const int MenuBpmSource = 1;
-    private const int MenuAppName = 2;
-    private const int MenuDefaultAssetFolder = 3;
-    private const int MenuTheme = 4;
-    private const int MenuShowRenderFps = 5;
-    private const int MenuShowLayerRenderTime = 6;
-    private const int MenuCount = 7;
-
     private static IReadOnlyList<KeyHandling.KeyBindingEntry<GeneralSettingsHubKeyContext>> GetEntries() =>
     [
+        new KeyHandling.KeyBindingEntry<GeneralSettingsHubKeyContext>(
+            Matches: static k => k.Key is ConsoleKey.Add or ConsoleKey.OemPlus or ConsoleKey.Subtract or ConsoleKey.OemMinus,
+            Action: static (k, ctx) => TryStepMaxAudioHistorySeconds(ctx, k),
+            Key: "+ / -",
+            Description: "Adjust max audio history (seconds) when that row is selected",
+            Section,
+            ApplicableMode: ApplicationMode.Settings),
         new KeyHandling.KeyBindingEntry<GeneralSettingsHubKeyContext>(
             Matches: static k => k.Key is ConsoleKey.UpArrow,
             Action: static (_, ctx) => MoveSelection(ctx, -1),
@@ -50,6 +49,52 @@ internal sealed class GeneralSettingsHubKeyHandlerConfig : IKeyHandlerConfig<Gen
             ApplicableMode: ApplicationMode.Settings),
     ];
 
+    private static bool TryStepMaxAudioHistorySeconds(GeneralSettingsHubKeyContext ctx, ConsoleKeyInfo key)
+    {
+        if (ctx.State.EditMode != GeneralSettingsHubEditMode.None
+            || ctx.State.SelectedIndex != GeneralSettingsHubMenuRows.MaxAudioHistorySeconds)
+        {
+            return false;
+        }
+
+        bool increase = key.Key is ConsoleKey.Add or ConsoleKey.OemPlus;
+        bool decrease = key.Key is ConsoleKey.Subtract or ConsoleKey.OemMinus;
+        if (!increase && !decrease)
+        {
+            return false;
+        }
+
+        double delta = increase ? 5.0 : -5.0;
+        double next = ClampHistorySeconds(ctx.AppSettings.MaxAudioHistorySeconds + delta);
+        ctx.AppSettings.MaxAudioHistorySeconds = next;
+        ctx.WaveformHistoryConfigurator.ApplyMaxHistorySeconds(next, null);
+        ctx.SaveSettings();
+        RedrawGeneralHub(ctx);
+        return true;
+    }
+
+    private static double ClampHistorySeconds(double seconds)
+    {
+        if (double.IsNaN(seconds) || double.IsInfinity(seconds))
+        {
+            return 60.0;
+        }
+
+        return Math.Clamp(seconds, 5.0, 180.0);
+    }
+
+    private static void RedrawGeneralHub(GeneralSettingsHubKeyContext ctx)
+    {
+        if (!ctx.DisplayState.FullScreen)
+        {
+            ctx.Orchestrator.RedrawWithFullHeader();
+        }
+        else
+        {
+            ctx.Orchestrator.Redraw();
+        }
+    }
+
     private static bool MoveSelection(GeneralSettingsHubKeyContext ctx, int delta)
     {
         if (ctx.State.EditMode != GeneralSettingsHubEditMode.None)
@@ -57,7 +102,7 @@ internal sealed class GeneralSettingsHubKeyHandlerConfig : IKeyHandlerConfig<Gen
             return false;
         }
 
-        ctx.State.SelectedIndex = (ctx.State.SelectedIndex + delta + MenuCount) % MenuCount;
+        ctx.State.SelectedIndex = (ctx.State.SelectedIndex + delta + GeneralSettingsHubMenuRows.Count) % GeneralSettingsHubMenuRows.Count;
         return true;
     }
 
@@ -65,13 +110,14 @@ internal sealed class GeneralSettingsHubKeyHandlerConfig : IKeyHandlerConfig<Gen
     {
         return ctx.State.SelectedIndex switch
         {
-            MenuAudio => OpenDevicePicker(ctx),
-            MenuBpmSource => CycleBpmSource(ctx),
-            MenuAppName => StartApplicationNameEdit(ctx),
-            MenuDefaultAssetFolder => StartDefaultAssetFolderEdit(ctx),
-            MenuTheme => OpenThemePicker(ctx),
-            MenuShowRenderFps => ToggleShowRenderFps(ctx),
-            MenuShowLayerRenderTime => ToggleShowLayerRenderTime(ctx),
+            GeneralSettingsHubMenuRows.Audio => OpenDevicePicker(ctx),
+            GeneralSettingsHubMenuRows.BpmSource => CycleBpmSource(ctx),
+            GeneralSettingsHubMenuRows.ApplicationName => StartApplicationNameEdit(ctx),
+            GeneralSettingsHubMenuRows.MaxAudioHistorySeconds => StartMaxAudioHistorySecondsEdit(ctx),
+            GeneralSettingsHubMenuRows.DefaultAssetFolder => StartDefaultAssetFolderEdit(ctx),
+            GeneralSettingsHubMenuRows.UiTheme => OpenThemePicker(ctx),
+            GeneralSettingsHubMenuRows.ShowRenderFps => ToggleShowRenderFps(ctx),
+            GeneralSettingsHubMenuRows.ShowLayerRenderTime => ToggleShowLayerRenderTime(ctx),
             _ => false
         };
     }
@@ -105,7 +151,7 @@ internal sealed class GeneralSettingsHubKeyHandlerConfig : IKeyHandlerConfig<Gen
             return false;
         }
 
-        if (ctx.State.SelectedIndex != MenuTheme)
+        if (ctx.State.SelectedIndex != GeneralSettingsHubMenuRows.UiTheme)
         {
             return false;
         }
@@ -117,6 +163,13 @@ internal sealed class GeneralSettingsHubKeyHandlerConfig : IKeyHandlerConfig<Gen
     {
         ctx.State.EditMode = GeneralSettingsHubEditMode.ApplicationName;
         ctx.State.RenameBuffer = ctx.UiSettings.TitleBarAppName?.Trim() ?? "";
+        return true;
+    }
+
+    private static bool StartMaxAudioHistorySecondsEdit(GeneralSettingsHubKeyContext ctx)
+    {
+        ctx.State.EditMode = GeneralSettingsHubEditMode.MaxAudioHistorySeconds;
+        ctx.State.RenameBuffer = ctx.AppSettings.MaxAudioHistorySeconds.ToString("F0", CultureInfo.InvariantCulture);
         return true;
     }
 
@@ -146,15 +199,7 @@ internal sealed class GeneralSettingsHubKeyHandlerConfig : IKeyHandlerConfig<Gen
     private static bool OpenThemePicker(GeneralSettingsHubKeyContext ctx)
     {
         ctx.UiThemeSelectionModal.Show(ctx.SetModalOpen, ctx.GetAudioAnalysisSnapshot, ctx.SaveSettings);
-        if (!ctx.DisplayState.FullScreen)
-        {
-            ctx.Orchestrator.RedrawWithFullHeader();
-        }
-        else
-        {
-            ctx.Orchestrator.Redraw();
-        }
-
+        RedrawGeneralHub(ctx);
         return true;
     }
 
@@ -200,6 +245,20 @@ internal sealed class GeneralSettingsHubKeyHandlerConfig : IKeyHandlerConfig<Gen
                         ? null
                         : ctx.State.RenameBuffer.Trim();
                     break;
+                case GeneralSettingsHubEditMode.MaxAudioHistorySeconds:
+                    if (!double.TryParse(
+                            ctx.State.RenameBuffer.Trim(),
+                            NumberStyles.Float,
+                            CultureInfo.InvariantCulture,
+                            out double parsed))
+                    {
+                        return false;
+                    }
+
+                    double clamped = ClampHistorySeconds(parsed);
+                    ctx.AppSettings.MaxAudioHistorySeconds = clamped;
+                    ctx.WaveformHistoryConfigurator.ApplyMaxHistorySeconds(clamped, null);
+                    break;
                 default:
                     return false;
             }
@@ -207,6 +266,7 @@ internal sealed class GeneralSettingsHubKeyHandlerConfig : IKeyHandlerConfig<Gen
             ctx.State.EditMode = GeneralSettingsHubEditMode.None;
             ctx.State.RenameBuffer = "";
             ctx.SaveSettings();
+            RedrawGeneralHub(ctx);
             return true;
         }
 

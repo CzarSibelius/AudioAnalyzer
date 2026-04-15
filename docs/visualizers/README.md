@@ -4,28 +4,31 @@ This directory contains per-layer and TextLayers reference documentation: behavi
 
 ## Architecture
 
-The app has **one visualizer**: `TextLayersVisualizer` (implements `IVisualizer`). All visual content — oscilloscope, VU meters, spectrum bars, plasma backgrounds, beat circles, etc. — comes from configurable text layer renderers (classes inheriting `TextLayerRendererBase`). Users compose views by adding layers to presets; **V** cycles presets, **S** edits layer settings. See [ADR-0014](../adr/0014-visualizers-as-layers.md).
+The app has **one visualizer**: `TextLayersVisualizer` (implements `IVisualizer`). All visual content — oscilloscope, VU meters, spectrum bars, plasma backgrounds, beat circles, etc. — comes from configurable text layer renderers (classes inheriting `TextLayerRendererBase`). Users compose views by adding layers to presets; **V** cycles presets, **S** edits layer settings. **Ctrl+R** (Preset editor / Show play) performs a **full layer reset**: clears global waveform retention in the analysis engine and all in-memory layer caches (does not change preset JSON). See [ADR-0014](../adr/0014-visualizers-as-layers.md) and [text-layers.md](text-layers.md) Key bindings.
 
 ## Index
 
 The first row is the visualizer; the rest are **layer types** within it. Press **←/→** to set a layer's type.
 
-| Kind | TechnicalName | Display Name | Spec | Description |
-|------|---------------|--------------|------|--------------|
-| Visualizer | textlayers | Layered text | [text-layers.md](text-layers.md) | Presets (V to cycle); multiple configurable layers (GeissBackground, BeatCircles, Oscilloscope, VuMeter, LlamaStyle, UnknownPleasures, etc.) with beat reactions |
-| Layer | oscilloscope | Oscilloscope | [oscilloscope.md](oscilloscope.md) | Time-domain waveform; gain adjustable with [ ] when selected |
-| Layer | vumeter | VU Meter | [vu-meter-layer.md](vu-meter-layer.md) | Stereo channel levels and balance |
-| Layer | llamastyle | Llama Style | [llama-style.md](llama-style.md) | Classic spectrum bars with configurable options (volume bar, labels, color scheme) |
-| Layer (deprecated) | geiss | Geiss | [geiss.md](geiss.md) | Removed; use GeissBackground and BeatCircles layers |
-| Layer | unknownpleasures | Unknown Pleasures | [unknown-pleasures.md](unknown-pleasures.md) | Stacked waveform snapshots, beat-triggered |
-| Layer | asciiimage | ASCII Image | [ascii-image.md](ascii-image.md) | Images as ASCII art from folder; scroll/zoom; layer palette or image colors |
-| Layer | asciivideo | ASCII Video | [ascii-video.md](ascii-video.md) | Live webcam as ASCII (Windows); `IAsciiVideoFrameSource`; frontmost layer selects device |
-| Layer | asciimodel | ASCII Model | [ascii-model.md](ascii-model.md) | Wavefront OBJ as shaded ASCII; rotation, optional zoom; folder of models |
-| Layer | mirror | Mirror | [mirror.md](mirror.md) | Mirrors buffer horizontally or vertically (direction, split %, rotation); place above layers to mirror |
-| Layer | bufferdistortion | Buffer distortion | [buffer-distortion.md](buffer-distortion.md) | Snapshots buffer below and redraws with plane waves or beat-spawned ripples; optional RenderBounds for cost |
-| Layer | maschine | Maschine | [maschine.md](maschine.md) | Beat-enabled diagonal text cascade from configurable snippets; aligned diagonal uses accent color; loops after one line per character |
-| Layer | fill | Fill | [fill.md](fill.md) | Full-viewport fill with configured color and fill character (block, shades, space, or custom ASCII) |
-| Layer | fractalzoom | Fractal zoom | [fractal-zoom.md](fractal-zoom.md) | Mandelbrot/Julia escape-time fractal with continuous zoom animation (performance-oriented) |
+
+| Kind               | TechnicalName    | Display Name      | Spec                                         | Description                                                                                                                                                                               |
+| ------------------ | ---------------- | ----------------- | -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Visualizer         | textlayers       | Layered text      | [text-layers.md](text-layers.md)             | Presets (V to cycle); multiple configurable layers (GeissBackground, BeatCircles, Oscilloscope, Waveform strip, VuMeter, LlamaStyle, UnknownPleasures, etc.) with beat reactions          |
+| Layer              | oscilloscope     | Oscilloscope      | [oscilloscope.md](oscilloscope.md)           | Time-domain waveform; gain adjustable with [ ] when selected                                                                                                                              |
+| Layer              | waveformstrip    | Waveform strip    | [waveform-strip.md](waveform-strip.md)       | Full-height long-history overview (optional stacked L/R); heuristic or Goertzel spectral color; beat grid from stored beat marks (BPM fallback); bar markers; gain with [ ] when selected |
+| Layer              | vumeter          | VU Meter          | [vu-meter-layer.md](vu-meter-layer.md)       | Stereo channel levels and balance                                                                                                                                                         |
+| Layer              | llamastyle       | Llama Style       | [llama-style.md](llama-style.md)             | Classic spectrum bars with configurable options (volume bar, labels, color scheme)                                                                                                        |
+| Layer (deprecated) | geiss            | Geiss             | [geiss.md](geiss.md)                         | Removed; use GeissBackground and BeatCircles layers                                                                                                                                       |
+| Layer              | unknownpleasures | Unknown Pleasures | [unknown-pleasures.md](unknown-pleasures.md) | Stacked waveform snapshots, beat-triggered                                                                                                                                                |
+| Layer              | asciiimage       | ASCII Image       | [ascii-image.md](ascii-image.md)             | Images as ASCII art from folder; scroll/zoom; layer palette or image colors                                                                                                               |
+| Layer              | asciivideo       | ASCII Video       | [ascii-video.md](ascii-video.md)             | Live webcam as ASCII (Windows); `IAsciiVideoFrameSource`; frontmost layer selects device                                                                                                  |
+| Layer              | asciimodel       | ASCII Model       | [ascii-model.md](ascii-model.md)             | Wavefront OBJ as shaded ASCII; rotation, optional zoom; folder of models                                                                                                                  |
+| Layer              | mirror           | Mirror            | [mirror.md](mirror.md)                       | Mirrors buffer horizontally or vertically (direction, split %, rotation); place above layers to mirror                                                                                    |
+| Layer              | bufferdistortion | Buffer distortion | [buffer-distortion.md](buffer-distortion.md) | Snapshots buffer below and redraws with plane waves or beat-spawned ripples; optional RenderBounds for cost                                                                               |
+| Layer              | maschine         | Maschine          | [maschine.md](maschine.md)                   | Beat-enabled diagonal text cascade from configurable snippets; aligned diagonal uses accent color; loops after one line per character                                                     |
+| Layer              | fill             | Fill              | [fill.md](fill.md)                           | Full-viewport fill with configured color and fill character (block, shades, space, or custom ASCII)                                                                                       |
+| Layer              | fractalzoom      | Fractal zoom      | [fractal-zoom.md](fractal-zoom.md)           | Mandelbrot/Julia escape-time fractal with continuous zoom animation (performance-oriented)                                                                                                |
+
 
 ## Implementation layout
 
@@ -35,7 +38,7 @@ All visual content lives in `src/AudioAnalyzer.Visualizers/TextLayers/<LayerName
 
 When adding or changing visualizer content:
 
-1. **Add layers, not standalone visualizers** — new content must be a text layer renderer (inherit TextLayerRendererBase, implement ITextLayerRenderer&lt;TState&gt;), not a new IVisualizer. See [ADR-0014](../adr/0014-visualizers-as-layers.md).
+1. **Add layers, not standalone visualizers** — new content must be a text layer renderer (inherit TextLayerRendererBase, implement ITextLayerRenderer), not a new IVisualizer. See [ADR-0014](../adr/0014-visualizers-as-layers.md).
 2. **Read the relevant spec** in `docs/visualizers/` and the index above.
 3. **Follow the viewport rule**: `.cursor/rules/visualizers-viewport.mdc` — respect viewport bounds.
 4. **Follow ADRs**: [ADR-0004](../adr/0004-visualizer-encapsulation.md) (encapsulation), [ADR-0005](../adr/0005-layered-visualizer-cell-buffer.md) (TextLayers cell buffer), [ADR-0008](../adr/0008-visualizer-settings-di.md) (settings via constructor injection).
