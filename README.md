@@ -1,68 +1,48 @@
 # Audio Analyzer
 
-**Audio Analyzer** is a Windows console app that listens to audio—what is playing on the PC (loopback), a chosen capture device, or a built-in **Demo Mode** when you want visuals without real audio—and shows real-time level and spectrum analysis. It uses FFT and beat/BPM from your choice of **source**: energy detection on the audio stream, fixed tempo for Demo mode, or **[Ableton Link](https://ableton.github.io/link/)** when you build and drop `**link_shim.dll`** next to the executable (same LAN as Rekordbox or other Link apps; Link and the shim are **GPL-2.0+** — see [docs/adr/0066-bpm-source-and-ableton-link.md](docs/adr/0066-bpm-source-and-ableton-link.md) and [NOTICE](NOTICE)). **Official releases from this repository do not ship** `link_shim.dll`; build it locally if you want Link mode. Spectrum and levels always follow the **audio input**; only tempo/beat counters follow Link or Demo when you select that in **General settings**.
+Turn what you are listening to—or a demo feed—into **live terminal art**: stacked **text layers** (spectrum bars, oscilloscope, fractals, fills and blends, marquee text, ASCII art, **ASCII webcam** on Windows, 3D OBJ, and more), driven in real time from your audio. Switch **presets** from the keyboard, chain them in **shows** for timed or beat-based sets, and use the console as a distinctive layer for listening at your desk, a venue screen, or a stream.
 
-This project is licensed under the **GNU General Public License v3.0 only** — see [LICENSE](LICENSE).
+> **Content warning:** This project is **100% vibe coded.** If something feels suspiciously *correct*, treat it as a happy accident—**H** in-app and [docs/adr/](docs/adr/README.md) are your spirit guides.
 
-The picture is drawn as **stacked text layers** in the terminal: oscilloscope, spectrum-style bars, fractal zoom, plasma-style backgrounds, fill and blend effects, marquee text, ASCII images, **ASCII webcam video** (Windows), 3D OBJ models, and more. You switch **presets** (layer stacks and palettes) from the keyboard and can chain presets into **shows** for timed or beat-based playback.
+## Who it's for
 
-## What you need
+- **Listeners** — See levels, spectrum, and beat feedback for music playing on the PC; pick loopback or a device, tune presets, or use **Demo Mode** when you just want the visuals.
+- **VJs** — Readable, keyboard-driven terminal visuals for live contexts; **shows** automate preset flow; optional **Ableton Link** (locally built `link_shim.dll`) can align tempo with other Link apps on the LAN.
+- **Streamers (e.g. DJ sets)** — Capture the console in OBS or similar as a distinctive layer in the stream layout.
 
-- **Windows** (WASAPI loopback/capture)
-- **[.NET 10](https://dotnet.microsoft.com/download)** SDK or later
-- NuGet packages restore automatically when you build (no separate install step)
+Deeper personas, typical setups, and **non-goals**: [docs/product-audience.md](docs/product-audience.md).
 
-## How to run
+## Why it stands out
 
-### Visual Studio
+- **Terminal-native** — High-contrast, text-first visuals you can run in a standard Windows console.
+- **Deeply configurable** — Layers, palettes, optional UI themes, presets, and shows without leaving the keyboard-driven workflow.
+- **Honest about the signal** — Analysis follows your chosen input (or Demo); optional Link/Demo tempo for counters is a deliberate choice, not a hidden substitute for the waveform.
 
-1. Open `AudioAnalyzer.sln`
-2. Set **AudioAnalyzer.Console** as the startup project and run (F5)
+## Tempo and sync (short)
 
-### Command line
+FFT, levels, and spectrum follow your **audio input**. Beat/BPM can follow **energy detection** on that stream, **Demo Mode** timing, or **[Ableton Link](https://ableton.github.io/link/)** when you build and drop **`link_shim.dll`** next to the executable. **Official releases from this repository do not ship** `link_shim.dll`. Choose the BPM source in **General settings**.
 
-From the folder that contains `AudioAnalyzer.sln`:
+## Requirements and limitations
 
-```bash
-dotnet build
-dotnet run --project src/AudioAnalyzer.Console/AudioAnalyzer.Console.csproj
-```
+- **Windows** (WASAPI loopback/capture).
+- **[.NET 10](https://dotnet.microsoft.com/download)** SDK or later if you build from source; NuGet restore happens on build.
 
-On Windows you can use: `src\AudioAnalyzer.Console\AudioAnalyzer.Console.csproj`
-
-## First run
-
-1. If no input was saved yet, pick **Demo Mode**, **loopback** (system output), or a **capture device** (↑/↓, Enter to confirm, Esc to cancel).
-2. Play audio—or stay on Demo Mode—to see the display react.
-3. Press **H** for **in-app help**; shortcuts depend on whether you are in Preset editor, Show play, or General settings.
-
-## Screen capture
-
-For bug reports or sharing what you see: press **Ctrl+Shift+E** to write a plain-text snapshot under `screen-dumps` next to the executable. You can also run with `--dump-after N` (seconds, then exit) and optional `--dump-path <dir>`.
-
-## At a glance
-
-- **Audio**: Loopback, device capture, or Demo Mode; settings are saved when you change them.
-- **Layers & presets**: Up to nine layers per preset (fewer if you remove layers); add or remove layers with **Insert** / **Delete** in the **S** modal layer list; edit layer options there when in Preset editor.
-- **Shows**: Optional auto-cycling through presets (see **Tab** in the app help).
-- **Files next to the app**: `presets/`, `shows/`, `palettes/`, `themes/` (UI chrome themes), optional `**link_shim.dll`** for Ableton Link, and `appsettings.json` are documented in [docs/configuration-reference.md](docs/configuration-reference.md). Optional **file logging** (`Logging` in `appsettings.json`, off by default) records errors from the display pipeline to a log file for troubleshooting.
+The app is **not** a DAW, DJ deck, video compositor (no NDI/Spout), or cross-platform product — see **Out of scope** in [docs/product-audience.md](docs/product-audience.md).
 
 ## License
 
-- **Audio Analyzer** (this repository): [GNU GPL v3.0 only](LICENSE) (SPDX: `GPL-3.0-only`).
-- **Ableton Link** and `**link_shim`**: GPL-2.0+ when you build or distribute those components — [NOTICE](NOTICE), [ADR-0066](docs/adr/0066-bpm-source-and-ableton-link.md).
+- **Audio Analyzer** (this repository): [GNU General Public License v3.0 only](LICENSE) (SPDX: `GPL-3.0-only`).
+- **Ableton Link** and the optional **`link_shim.dll`** native shim (GPL-2.0+ when you build or distribute those components): see [NOTICE](NOTICE) and [docs/adr/0066-bpm-source-and-ableton-link.md](docs/adr/0066-bpm-source-and-ableton-link.md).
+
+## Build and run from source
+
+Step-by-step build, first launch, and in-depth tips: **[docs/getting-started.md](docs/getting-started.md)**.
+
+Contributors and AI-assisted workflows (tests, format, project layout): [AGENTS.md](AGENTS.md) and [docs/agents/AGENTS.md](docs/agents/AGENTS.md).
 
 ## More documentation
 
-- **Developing or automating the repo**: [AGENTS.md](AGENTS.md) and [docs/agents/AGENTS.md](docs/agents/AGENTS.md)
-- **JSON formats and settings**: [docs/configuration-reference.md](docs/configuration-reference.md)
+- **Getting started** (build, run, first session): [docs/getting-started.md](docs/getting-started.md)
+- **Audience and non-goals**: [docs/product-audience.md](docs/product-audience.md)
+- **JSON, `appsettings.json`, folders next to the app**: [docs/configuration-reference.md](docs/configuration-reference.md)
 - **Architecture decisions**: [docs/adr/README.md](docs/adr/README.md)
-
-## Tips
-
-- Use **loopback** to visualize system playback; use a **capture device** for microphone or other inputs.
-- **Demo Mode** is useful to explore visuals without playing music.
-- Meaningful spectrum and level readouts need signal on the chosen input (or Demo Mode).
-- In **General settings**, enable **Show render FPS** (or set `ShowRenderFps` in `appsettings.json`) to show smoothed full main-render frame rate on the toolbar (main-loop cadence—typically **≥~60** FPS on capable hosts, not audio callback rate); see [ADR-0067](docs/adr/0067-60fps-target-and-render-fps-overlay.md).
-- **Max audio history** (General settings hub, **+**/**−** or **Enter** to type) sets how many seconds of mono waveform feed the **waveform strip** overview (default 60, clamped 5–180; stereo stacked mode keeps a matching **right** channel ring, so waveform memory is about **double** while enabled; see [docs/configuration-reference.md](docs/configuration-reference.md), [ADR-0077](docs/adr/0077-waveform-overview-snapshot.md), [ADR-0078](docs/adr/0078-waveform-strip-stereo-beat-marks-goertzel.md)).
-

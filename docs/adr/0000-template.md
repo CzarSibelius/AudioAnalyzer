@@ -15,3 +15,4 @@ What do we decide to do? State the decision clearly so that implementers and age
 - What are the trade-offs?
 - What must code or UX do (or avoid) as a result?
 - Optional: link to files or areas that are affected.
+

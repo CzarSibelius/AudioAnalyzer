@@ -9,9 +9,7 @@ Single-line UI rows (header title, header Device/Now and BPM/Volume, toolbar, se
 ## Decision
 
 1. **All single-line viewport rows use HorizontalRowComponent.** Header (title row, row 2, row 3) and the settings modal hint line are implemented as **HorizontalRowComponent** with **ScrollingTextComponent** children. Data is set each frame via **SetRowData(viewports, widths)**; each child is updated via **SetFromViewport**. Rendered by **HorizontalRowComponentRenderer** and **ScrollingTextComponentRenderer**.
-
 2. **LabeledRowComponent and ILabeledRowRenderer are removed.** They are no longer used. Viewport data and layout semantics are unchanged; only the component type and renderer are unified.
-
 3. **Settings modal hint is in the component tree.** The settings overlay draws the hint line by building a small **IUiComponent** tree (CompositeComponent with one HorizontalRowComponent), setting the hint row data, and calling **IUiComponentRenderer.Render** with an overlay-scoped RenderContext (ADR-0053). No standalone **ILabeledRowRenderer.RenderRow** call.
 
 ## Consequences

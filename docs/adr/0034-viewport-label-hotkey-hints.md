@@ -10,7 +10,7 @@ Labeled UI regions (header cells, toolbar cells) display `label:value`. An earli
 
 ## Decision (historical — superseded)
 
-The original ADR required **"Label(K):"** when a feature had a hotkey and optional hotkey parameters on viewport APIs. That approach was superseded: UI labels use **`Label:`** only; bindings are documented in the dynamic help screen.
+The original ADR required **"Label(K):"** when a feature had a hotkey and optional hotkey parameters on viewport APIs. That approach was superseded: UI labels use `**Label:`** only; bindings are documented in the dynamic help screen.
 
 ## Consequences (current)
 

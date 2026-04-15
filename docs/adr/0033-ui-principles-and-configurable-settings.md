@@ -9,23 +9,18 @@ UI components (header, toolbar, modals, layer numbers) use hardcoded colors, tit
 ## Decision
 
 1. **Use existing components**: Prefer existing components (e.g. `ScrollingTextViewport`, `StaticTextViewport.TruncateWithEllipsis`) when possible. See [ADR-0020](0020-ui-text-components-scrolling-and-ellipsis.md).
-
 2. **UI settings in appsettings**: UI has its own configurable settings stored in the same `appsettings.json` file (no separate file). Settings include app title, UI palette, and default scrolling speed.
-
 3. **UI palette structure**: Semantic slots that may differ from visualizer palettes (named slots vs indexed array):
-   - **Normal** — default UI text
-   - **Highlighted** — active/selected UI elements (e.g. selected layer number, now-playing)
-   - **Dimmed** — disabled or low-emphasis text
-   - **Label** — labels and headers (e.g. "Device:", "Now:")
-   - **Background** (optional) — for future use (modals, etc.)
-
-4. **No separators between viewports**: Do not add separators (e.g. ` | ` or ` │ `) between UI viewports. The "label + value" styling with correct UI palette colors (Label, Normal, Highlighted, Dimmed) provides sufficient visual separation.
-
+  - **Normal** — default UI text
+  - **Highlighted** — active/selected UI elements (e.g. selected layer number, now-playing)
+  - **Dimmed** — disabled or low-emphasis text
+  - **Label** — labels and headers (e.g. "Device:", "Now:")
+  - **Background** (optional) — for future use (modals, etc.)
+4. **No separators between viewports**: Do not add separators (e.g. `|` or `│`) between UI viewports. The "label + value" styling with correct UI palette colors (Label, Normal, Highlighted, Dimmed) provides sufficient visual separation.
 5. **Component behavior**:
-   - `ScrollingTextViewport.RenderWithLabel`: label uses Label color, dynamic text uses Normal color when palette is provided. Labels are formatted as `Label:` only (no hotkey suffix in the label); key discovery is via the help modal — see [ADR-0034](0034-viewport-label-hotkey-hints.md) (superseded original; current: no label hotkey API).
-   - Layer numbers (1–9) in toolbar use Highlighted (active), Dimmed (disabled), Normal (inactive).
-   - Default scrolling speed for all scrolling components comes from UI settings.
-
+  - `ScrollingTextViewport.RenderWithLabel`: label uses Label color, dynamic text uses Normal color when palette is provided. Labels are formatted as `Label:` only (no hotkey suffix in the label); key discovery is via the help modal — see [ADR-0034](0034-viewport-label-hotkey-hints.md) (superseded original; current: no label hotkey API).
+  - Layer numbers (1–9) in toolbar use Highlighted (active), Dimmed (disabled), Normal (inactive).
+  - Default scrolling speed for all scrolling components comes from UI settings.
 6. **Persistence**: `UiSettings` lives under app-level config; per [ADR-0010](0010-appsettings-visualizer-settings-separation.md) and [ADR-0029](0029-no-settings-migration.md), no migration — incompatible files get backup and reset.
 
 ## Consequences

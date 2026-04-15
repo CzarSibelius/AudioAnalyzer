@@ -9,9 +9,7 @@ ADR-0052 introduced the IUiComponent tree and IUiComponentRenderer for header an
 ## Decision
 
 1. **All UI is built from IUiComponent and rendered via IUiComponentRenderer.** Any new screen, region, or overlay content must be expressed as a tree of IUiComponent nodes and rendered by calling IUiComponentRenderer with an appropriate RenderContext. No new ad-hoc draw actions or custom "draw" interfaces for new UI.
-
 2. **Modals are in scope.** Modal *content* (what is drawn inside the overlay) is UI and therefore follows the same rule: it is described as an IUiComponent tree. The modal *runner* (ModalSystem per ADR-0006) still owns overlay region, input capture, and callbacks. The modal's draw callback is implemented by: building a root component (e.g. CompositeComponent) for the overlay content, building a RenderContext for the overlay (e.g. StartRow = 0, MaxLines = overlayRowCount, Width = console width, plus any modal-specific data on context or component), and calling IUiComponentRenderer.Render(root, context). No change to ModalSystem's signature is required: it continues to accept `Action drawContent`; that action is what invokes the component renderer.
-
 3. **Existing modals.** Current implementations (SettingsModalRenderer, HelpModal, DeviceSelectionModal, ShowEditModal) may remain as-is until migrated. New modal content and any new modals must use the component tree. Migration of existing modals is incremental (can be done in follow-up work).
 
 ## Consequences

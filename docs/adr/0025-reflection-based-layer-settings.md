@@ -9,17 +9,13 @@ The S settings modal (per [ADR-0023](0023-settings-modal-layer-editing.md)) disp
 ## Decision
 
 1. **Reflection-based discovery**: Layer settings are discovered via reflection on `TextLayerSettings` (common properties) and layer-specific `*Settings` types (custom properties). A registry maps `TextLayerType` to custom settings type (AsciiImageSettings, OscilloscopeSettings, LlamaStyleSettings).
-
 2. **Type-to-EditMode rules**: `SettingEditMode` is derived from property type and optional attributes:
-   - `bool`, `Enum` → Cycle
-   - `int`, `double` → Cycle (with `[SettingRange]` for min/max/step)
-   - `string` → TextEdit (unless `[SettingChoices]` overrides to Cycle)
-   - `List<string>` → TextEdit (comma-separated)
-
+  - `bool`, `Enum` → Cycle
+  - `int`, `double` → Cycle (with `[SettingRange]` for min/max/step)
+  - `string` → TextEdit (unless `[SettingChoices]` overrides to Cycle)
+  - `List<string>` → TextEdit (comma-separated)
 3. **Attributes for overrides**: Use `[SettingChoices("A","B")]` for string properties with fixed choices (e.g. ColorScheme, PeakMarkerStyle); `[SettingRange(min, max, step)]` for numeric bounds; `[Setting(id, label)]` for display name overrides.
-
-4. **Explicit handling for special cases**: Palette uses **`PalettePicker`**: `+/-` cycles through `IPaletteRepository` like `Cycle`; **Enter** opens a scrollable palette list (inherit + all palettes). In the list, navigation **previews** the palette on the layer; **Enter** **persists** (SaveSettings); **Esc** **restores** the pre-open `PaletteId` without persisting. LayerType (uses TextLayerSettings.CycleTypeForward/Backward), and Snippets (List&lt;string&gt; with custom display/edit) remain explicitly handled; they require external context or non-standard behavior that reflection cannot infer.
-
+4. **Explicit handling for special cases**: Palette uses `**PalettePicker`**: `+/-` cycles through `IPaletteRepository` like `Cycle`; **Enter** opens a scrollable palette list (inherit + all palettes). In the list, navigation **previews** the palette on the layer; **Enter** **persists** (SaveSettings); **Esc** **restores** the pre-open `PaletteId` without persisting. LayerType (uses TextLayerSettings.CycleTypeForward/Backward), and Snippets (List with custom display/edit) remain explicitly handled; they require external context or non-standard behavior that reflection cannot infer.
 5. **SettingDescriptor**: A single descriptor abstraction holds Id, Label, EditMode, GetDisplayValue, ApplyEdit, and Cycle. ApplySettingEdit and CycleSetting delegate to descriptor lookup by Id.
 
 ## Consequences

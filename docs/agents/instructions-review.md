@@ -56,4 +56,4 @@ docs/
   ui-components.md         # Existing (if present)
 ```
 
-Root: **README.md** (human-focused: what the app is, how to run). Root **AGENTS.md**: build/test/format, link to docs/adr/README.md, and table of links to docs/agents/*. **docs/agents/AGENTS.md**: same topic index inside the agents folder (with **docs/agents/README.md** stub for folder landing).
+Root: **README.md** (human-focused: what the app is, audience, prerequisites, limitations; link **docs/getting-started.md** for build/run and first session). Root **AGENTS.md**: build/test/format, link to docs/adr/README.md, and table of links to docs/agents/*. **docs/agents/AGENTS.md**: same topic index inside the agents folder (with **docs/agents/README.md** stub for folder landing).

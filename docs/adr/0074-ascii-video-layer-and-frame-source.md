@@ -25,11 +25,11 @@ The codebase already splits **Windows-specific** integrations from Application a
 
 1. Add a `**TextLayerType`** value named for **video/ASCII**, not webcam-only (e.g. `**AsciiVideo`**), so presets and UI stay stable when `SourceKind` grows.
 2. Layer-specific settings live in `*Settings.cs` next to the layer ([ADR-0021](0021-textlayer-settings-common-custom.md)), discovered via reflection ([ADR-0025](0025-reflection-based-layer-settings.md)). At minimum:
-  - `**SourceKind**`: e.g. `Webcam` first; reserve values such as `File` for later.
+  - `**SourceKind`**: e.g. `Webcam` first; reserve values such as `File` for later.
   - **Webcam**: device **index** or stable **id** string (implementation-defined mapping).
   - Optional **capture resolution** cap (downscale before ASCII mapping).
   - Charset / contrast / palette options **aligned with existing ASCII layers** where practical (reuse patterns from `AsciiImage` where it reduces duplication).
-3. The **layer renderer** (in Visualizers) implements **draw logic** and injects `**IAsciiVideoFrameSource`** (and `**ITextLayerStateStore<TState>**` if buffers, scroll, or caching need per-layer state per [ADR-0043](0043-textlayer-state-store.md)). It does **not** embed Windows APIs or camera SDKs.
+3. The **layer renderer** (in Visualizers) implements **draw logic** and injects `**IAsciiVideoFrameSource`** (and `**ITextLayerStateStore<TState>`** if buffers, scroll, or caching need per-layer state per [ADR-0043](0043-textlayer-state-store.md)). It does **not** embed Windows APIs or camera SDKs.
 
 ### 3. Threading and frame freshness
 
@@ -59,4 +59,3 @@ The codebase already splits **Windows-specific** integrations from Application a
 ## References
 
 - [ADR-0014](0014-visualizers-as-layers.md), [ADR-0021](0021-textlayer-settings-common-custom.md), [ADR-0024](0024-analysissnapshot-frame-context.md), [ADR-0025](0025-reflection-based-layer-settings.md), [ADR-0028](0028-layer-dependency-injection.md), [ADR-0030](0030-performance-priority.md), [ADR-0043](0043-textlayer-state-store.md), [ADR-0044](0044-textlayer-renderer-generic-state-type.md), [ADR-0067](0067-60fps-target-and-render-fps-overlay.md), [ADR-0013](0013-secure-nuget-packages.md)
-

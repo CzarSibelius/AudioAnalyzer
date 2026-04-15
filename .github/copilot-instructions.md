@@ -11,6 +11,6 @@
 
 - **Windows / PowerShell**: Do not use Unix utilities (`head`, `grep`, …) in shell examples; use PowerShell (e.g. `Select-Object -First N`).
 - **Layout**: New or moved code follows **`docs/agents/project-structure/`**; tests mirror production per **ADR-0064**.
-- **Audience**: Human docs in **`README.md`**; agent docs in **`AGENTS.md`** and **`docs/agents/`** — see **ADR-0068** above.
+- **Audience**: Human docs in **`README.md`** (product/audience summary) and **`docs/getting-started.md`** (build, run, first session); agent docs in **`AGENTS.md`** and **`docs/agents/`** — see **ADR-0068** above.
 
 Do not restore long verification checklists, ADR enumerations, or legacy architecture notes here; update **`AGENTS.md`**, **`docs/agents/`**, or **`.cursor/rules/`** instead.

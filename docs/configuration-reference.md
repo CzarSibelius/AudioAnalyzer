@@ -1,6 +1,6 @@
 # Configuration reference
 
-This document describes data files and settings beside the Audio Analyzer executable: dependency versions (for support and reproducibility), JSON formats for presets, shows, and palettes, sample assets, and `appsettings.json`. For a short project intro and how to run the app, see the root [README.md](../README.md).
+This document describes data files and settings beside the Audio Analyzer executable: dependency versions (for support and reproducibility), JSON formats for presets, shows, and palettes, sample assets, and `appsettings.json`. For a short project intro see the root [README.md](../README.md); for build, run, and first launch from source see [getting-started.md](getting-started.md).
 
 ## Dependencies (NuGet)
 

@@ -9,11 +9,8 @@ The application has a fixed maximum of 9 text layers: keys 1–9 select or toggl
 ## Decision
 
 1. **Single global constant**: The maximum number of text layers is **9** and is defined by a single global constant: `TextLayersLimits.MaxLayerCount` in the Domain layer (application configuration in code).
-
 2. **Not user-editable**: The value is **not** read from or written to `appsettings.json` and is **not** exposed in the settings UI. Users cannot change it.
-
 3. **Code and docs use the constant**: All code that refers to the layer count limit (padding, default config, UI cap) uses `TextLayersLimits.MaxLayerCount`. Comments and documentation that mention "9 layers" or "keys 1–9" reference the constant (e.g. "keys 1–9 (MaxLayerCount layers)" or "see TextLayersLimits.MaxLayerCount"). New code (key handlers, UI that assumes 1–9) must use this constant.
-
 4. **Optional cap when loading**: When loading or applying presets, the application may cap the number of layers to `MaxLayerCount` so that config or legacy data with more than 9 layers does not exceed the limit.
 
 ## Consequences
