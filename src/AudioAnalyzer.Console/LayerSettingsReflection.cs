@@ -173,6 +173,7 @@ internal sealed class SettingDescriptor
         [TextLayerType.Marquee] = typeof(MarqueeSettings),
         [TextLayerType.StaticText] = typeof(StaticTextSettings),
         [TextLayerType.FallingLetters] = typeof(FallingLettersSettings),
+        [TextLayerType.Starfield] = typeof(StarfieldSettings),
     };
 
     private static void AddCustomDescriptors(

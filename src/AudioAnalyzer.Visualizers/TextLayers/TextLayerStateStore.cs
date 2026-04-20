@@ -12,7 +12,8 @@ public sealed class TextLayerStateStore
       ITextLayerStateStore<MaschineState>,
       ITextLayerStateStore<AsciiModelState>,
       ITextLayerStateStore<BufferDistortionState>,
-      ITextLayerStateStore<WaveformStripLayerState>
+      ITextLayerStateStore<WaveformStripLayerState>,
+      ITextLayerStateStore<StarfieldLayerState>
 {
     private readonly List<object?> _stateByLayer = new();
 
@@ -101,6 +102,9 @@ public sealed class TextLayerStateStore
 
     WaveformStripLayerState ITextLayerStateStore<WaveformStripLayerState>.GetState(int layerIndex) => GetOrCreate<WaveformStripLayerState>(layerIndex);
     void ITextLayerStateStore<WaveformStripLayerState>.SetState(int layerIndex, WaveformStripLayerState state) => Set(layerIndex, state);
+
+    StarfieldLayerState ITextLayerStateStore<StarfieldLayerState>.GetState(int layerIndex) => GetOrCreate<StarfieldLayerState>(layerIndex);
+    void ITextLayerStateStore<StarfieldLayerState>.SetState(int layerIndex, StarfieldLayerState state) => Set(layerIndex, state);
 
     private T GetOrCreate<T>(int layerIndex) where T : new()
     {

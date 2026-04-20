@@ -5,6 +5,7 @@ public enum TextLayerType
 {
     None,
     ScrollingColors,
+    Starfield,
     Marquee,
     FallingLetters,
     WaveText,

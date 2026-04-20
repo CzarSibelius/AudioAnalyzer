@@ -20,7 +20,7 @@ Deeper personas, typical setups, and **non-goals**: [docs/product-audience.md](d
 
 ## Tempo and sync (short)
 
-FFT, levels, and spectrum follow your **audio input**. Beat/BPM can follow **energy detection** on that stream, **Demo Mode** timing, or **[Ableton Link](https://ableton.github.io/link/)** when you build and drop **`link_shim.dll`** next to the executable. **Official releases from this repository do not ship** `link_shim.dll`. Choose the BPM source in **General settings**.
+FFT, levels, and spectrum follow your **audio input**. Beat/BPM can follow **energy detection** on that stream, **Demo Mode** timing, or **[Ableton Link](https://ableton.github.io/link/)** when you build and drop `**link_shim.dll`** next to the executable. **Official releases from this repository do not ship** `link_shim.dll`. Choose the BPM source in **General settings**.
 
 ## Requirements and limitations
 
@@ -32,7 +32,7 @@ The app is **not** a DAW, DJ deck, video compositor (no NDI/Spout), or cross-pla
 ## License
 
 - **Audio Analyzer** (this repository): [GNU General Public License v3.0 only](LICENSE) (SPDX: `GPL-3.0-only`).
-- **Ableton Link** and the optional **`link_shim.dll`** native shim (GPL-2.0+ when you build or distribute those components): see [NOTICE](NOTICE) and [docs/adr/0066-bpm-source-and-ableton-link.md](docs/adr/0066-bpm-source-and-ableton-link.md).
+- **Ableton Link** and the optional `**link_shim.dll`** native shim (GPL-2.0+ when you build or distribute those components): see [NOTICE](NOTICE) and [docs/adr/0066-bpm-source-and-ableton-link.md](docs/adr/0066-bpm-source-and-ableton-link.md).
 
 ## Build and run from source
 
@@ -46,3 +46,4 @@ Contributors and AI-assisted workflows (tests, format, project layout): [AGENTS.
 - **Audience and non-goals**: [docs/product-audience.md](docs/product-audience.md)
 - **JSON, `appsettings.json`, folders next to the app**: [docs/configuration-reference.md](docs/configuration-reference.md)
 - **Architecture decisions**: [docs/adr/README.md](docs/adr/README.md)
+

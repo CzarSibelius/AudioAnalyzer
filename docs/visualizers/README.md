@@ -28,6 +28,7 @@ The first row is the visualizer; the rest are **layer types** within it. Press *
 | Layer              | maschine         | Maschine          | [maschine.md](maschine.md)                   | Beat-enabled diagonal text cascade from configurable snippets; aligned diagonal uses accent color; loops after one line per character                                                     |
 | Layer              | fill             | Fill              | [fill.md](fill.md)                           | Full-viewport fill with configured color and fill character (block, shades, space, or custom ASCII)                                                                                       |
 | Layer              | fractalzoom      | Fractal zoom      | [fractal-zoom.md](fractal-zoom.md)           | Mandelbrot/Julia escape-time fractal with continuous zoom animation (performance-oriented)                                                                                                |
+| Layer              | starfield        | Starfield         | [starfield.md](starfield.md)                 | Pseudo-3D perspective starfield (charset glyphs); configurable depth, drift, tumble, beat reaction ([ADR-0082](../adr/0082-starfield-text-layer.md))                                         |
 
 
 ## Implementation layout

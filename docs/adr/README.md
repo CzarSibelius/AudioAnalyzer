@@ -98,6 +98,7 @@ Decisions are numbered and kept under version control so the rationale stays wit
 | [0079](0079-waveform-strip-fixed-visible-seconds.md)         | Waveform strip: fixed trailing seconds across strip width (no full-ring strip mode)                                                              | Accepted   |
 | [0080](0080-shared-charset-json-and-layer-charset-ids.md)    | Shared charset JSON (`charsets/*.json`), `CharsetId` on layer settings, S modal charset picker                                                   | Accepted   |
 | [0081](0081-consolidate-matrix-rain-into-falling-letters.md) | Remove MatrixRain; FallingLetters charset-only, `AnimationMode` (Particles / ColumnRain), `Flash` beat                                           | Accepted   |
+| [0082](0082-starfield-text-layer.md)                         | Starfield text layer — pseudo-3D perspective starfield, state store, perf cap, charset glyphs                                                    | Accepted   |
 
 
 ## Process

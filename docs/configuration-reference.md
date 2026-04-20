@@ -71,6 +71,33 @@ For **Palette source**, use `"LayerPalette"` or `"ImageColors"` (or `0` / `1`). 
 
 Use `"Mode": "DropRipples"` for beat-spawned radial ripples (still set plane fields if you switch modes in the S modal). Details: [visualizers/buffer-distortion.md](visualizers/buffer-distortion.md).
 
+**Starfield layer `Custom` example** (`"LayerType": "Starfield"`; see [visualizers/starfield.md](visualizers/starfield.md), [ADR-0082](adr/0082-starfield-text-layer.md)):
+
+```json
+"Custom": {
+  "StarCount": 280,
+  "BaseSpeed": 1.0,
+  "TravelSeconds": 36,
+  "CenterDriftX": 0,
+  "CenterDriftY": 0,
+  "ViewCenterOffsetX": 0,
+  "ViewCenterOffsetY": 0,
+  "TumbleRadiansPerSecond": 0.06,
+  "SpreadX": 2.5,
+  "SpreadY": 2.5,
+  "FocalLength": 32,
+  "ZNear": 0.35,
+  "ZFar": 95,
+  "CellAspect": 2.0,
+  "DepthShading": "DepthGradient",
+  "BeatReaction": "SpeedBurst",
+  "FixedRandomSeed": -1,
+  "CharsetId": null
+}
+```
+
+Set **`FixedRandomSeed`** to a non-negative integer for reproducible spawn patterns after a full field reinit (resize, count change, or seed change). **`StarCount`** is clamped at runtime to a hard maximum (1000) regardless of JSON.
+
 **Waveform strip layer `Custom`** (`"LayerType": "WaveformStrip"`; see [visualizers/waveform-strip.md](visualizers/waveform-strip.md), [ADR-0079](adr/0079-waveform-strip-fixed-visible-seconds.md)):
 
 - **`FixedVisibleSeconds`**: number (default **15**; clamped **1–120** when loaded) — trailing wall seconds mapped across the strip. Preset JSON may still contain a removed **`OverviewTimeMode`** key; it is ignored on deserialize.

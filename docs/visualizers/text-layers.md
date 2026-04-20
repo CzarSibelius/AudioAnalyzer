@@ -52,7 +52,7 @@ A **Show** is an ordered collection of presets with per-entry duration. In **Sho
 
 ### Charsets vs TextSnippets ([ADR-0080](../adr/0080-shared-charset-json-and-layer-charset-ids.md))
 
-- **Charsets** (`CharsetId` + `charsets/*.json`): use when the layer **selects one character at a time** for rendering (ASCII ramp, plasma/fractal density steps, Matrix-style glyph pool, etc.).
+- **Charsets** (`CharsetId` + `charsets/*.json`): use when the layer **selects one character at a time** for rendering (ASCII ramp, plasma/fractal density steps, Matrix-style glyph pool, Starfield star glyphs, etc.).
 - **`Custom.TextSnippets`** (array of strings, only on layers that consume phrases): use when the layer needs a **whole phrase** (or multiple phrases)—Marquee, WaveText, StaticText, NowPlaying (fallback), Maschine, etc. Do not use snippets as a charset pool. **FallingLetters** uses **`CharsetId`** only for its glyph pool ([ADR-0081](../adr/0081-consolidate-matrix-rain-into-falling-letters.md)).
 
 - **Schema**: Presets live in `presets/*.json`; `VisualizerSettings.ActivePresetId` references the active preset; `VisualizerSettings.Presets` and `TextLayers` are populated at runtime from preset files.
@@ -70,6 +70,7 @@ A **Show** is an ordered collection of presets with per-entry duration. In **Sho
     - LlamaStyle: `ShowVolumeBar`, `ShowRowLabels`, `ShowFrequencyLabels` (bool); `ColorScheme` ("Winamp"|"Spectrum"); `PeakMarkerStyle` ("Blocks"|"DoubleLine"); `BarWidth` (2|3)
     - NowPlaying: `TextSnippets` (fallback when no session), `BeatReaction` (None/SpeedBurst/Flash/Pulse), `VerticalPosition` ("Top"|"Center"|"Bottom")
     - ScrollingColors: `BeatReaction` (None/SpeedBurst/ColorPop)
+    - Starfield: `StarCount`, `BaseSpeed`, `TravelSeconds` (depth crossing time at BaseSpeed 1), `CenterDriftX`, `CenterDriftY`, `ViewCenterOffsetX`, `ViewCenterOffsetY`, `TumbleRadiansPerSecond`, `SpreadX`, `SpreadY`, `FocalLength`, `ZNear`, `ZFar`, `CellAspect`, `DepthShading` (Flat/DepthGradient), `BeatReaction` (None/SpeedBurst/Flash), `FixedRandomSeed` (−1 = non-deterministic spawns), optional `CharsetId` (unset → `density-soft`) — see [starfield.md](starfield.md), [ADR-0082](../adr/0082-starfield-text-layer.md)
     - WaveText: `TextSnippets`, `BeatReaction` (None/Flash/Pulse)
     - GeissBackground: `BeatReaction` (None/Flash), optional `CharsetId` (density glyphs; unset → `density-soft`)
     - FractalZoom: `FractalMode` (Mandelbrot/Julia), `JuliaRe`, `JuliaIm`, `MaxIterations`, `LogScaleMin`, `LogScaleMax`, `Dwell` (Linear/Mild/Strong), `OrbitStep`, `ZoomSpeed`, `BeatReaction` (None/Flash/SpeedBurst), optional `CharsetId` (unset → `density-soft`)
