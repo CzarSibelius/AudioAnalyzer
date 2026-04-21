@@ -13,7 +13,9 @@ public sealed class TextLayerStateStore
       ITextLayerStateStore<AsciiModelState>,
       ITextLayerStateStore<BufferDistortionState>,
       ITextLayerStateStore<WaveformStripLayerState>,
-      ITextLayerStateStore<StarfieldLayerState>
+      ITextLayerStateStore<StarfieldLayerState>,
+      ITextLayerStateStore<MandalaRingPulseState>,
+      ITextLayerStateStore<HypnoSpiralState>
 {
     private readonly List<object?> _stateByLayer = new();
 
@@ -105,6 +107,12 @@ public sealed class TextLayerStateStore
 
     StarfieldLayerState ITextLayerStateStore<StarfieldLayerState>.GetState(int layerIndex) => GetOrCreate<StarfieldLayerState>(layerIndex);
     void ITextLayerStateStore<StarfieldLayerState>.SetState(int layerIndex, StarfieldLayerState state) => Set(layerIndex, state);
+
+    MandalaRingPulseState ITextLayerStateStore<MandalaRingPulseState>.GetState(int layerIndex) => GetOrCreate<MandalaRingPulseState>(layerIndex);
+    void ITextLayerStateStore<MandalaRingPulseState>.SetState(int layerIndex, MandalaRingPulseState state) => Set(layerIndex, state);
+
+    HypnoSpiralState ITextLayerStateStore<HypnoSpiralState>.GetState(int layerIndex) => GetOrCreate<HypnoSpiralState>(layerIndex);
+    void ITextLayerStateStore<HypnoSpiralState>.SetState(int layerIndex, HypnoSpiralState state) => Set(layerIndex, state);
 
     private T GetOrCreate<T>(int layerIndex) where T : new()
     {

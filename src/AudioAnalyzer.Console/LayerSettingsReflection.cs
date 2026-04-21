@@ -174,6 +174,8 @@ internal sealed class SettingDescriptor
         [TextLayerType.StaticText] = typeof(StaticTextSettings),
         [TextLayerType.FallingLetters] = typeof(FallingLettersSettings),
         [TextLayerType.Starfield] = typeof(StarfieldSettings),
+        [TextLayerType.MandalaRingPulse] = typeof(MandalaRingPulseSettings),
+        [TextLayerType.HypnoSpiral] = typeof(HypnoSpiralSettings),
     };
 
     private static void AddCustomDescriptors(

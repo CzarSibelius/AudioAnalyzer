@@ -1,6 +1,6 @@
 # Audio Analyzer
 
-Turn what you are listening to—or a demo feed—into **live terminal art**: stacked **text layers** (spectrum bars, oscilloscope, fractals, fills and blends, marquee text, ASCII art, **ASCII webcam** on Windows, 3D OBJ, and more), driven in real time from your audio. Switch **presets** from the keyboard, chain them in **shows** for timed or beat-based sets, and use the console as a distinctive layer for listening at your desk, a venue screen, or a stream.
+Turn what you are listening to—or a demo feed—into **live terminal art**: stacked **text layers** (spectrum bars, oscilloscope, fractals, mandala ring pulse, hypno spiral, fills and blends, marquee text, ASCII art, **ASCII webcam** on Windows, 3D OBJ, and more), driven in real time from your audio. Switch **presets** from the keyboard, chain them in **shows** for timed or beat-based sets, and use the console as a distinctive layer for listening at your desk, a venue screen, or a stream.
 
 > **Content warning:** This project is **100% vibe coded.** If something feels suspiciously *correct*, treat it as a happy accident—**H** in-app and [docs/adr/](docs/adr/README.md) are your spirit guides.
 

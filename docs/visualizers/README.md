@@ -29,6 +29,8 @@ The first row is the visualizer; the rest are **layer types** within it. Press *
 | Layer              | fill             | Fill              | [fill.md](fill.md)                           | Full-viewport fill with configured color and fill character (block, shades, space, or custom ASCII)                                                                                       |
 | Layer              | fractalzoom      | Fractal zoom      | [fractal-zoom.md](fractal-zoom.md)           | Mandelbrot/Julia escape-time fractal with continuous zoom animation (performance-oriented)                                                                                                |
 | Layer              | starfield        | Starfield         | [starfield.md](starfield.md)                 | Pseudo-3D perspective starfield (charset glyphs); configurable depth, drift, tumble, beat reaction ([ADR-0082](../adr/0082-starfield-text-layer.md))                                         |
+| Layer              | mandalaringpulse | Mandala ring pulse | [mandala-ring-pulse.md](mandala-ring-pulse.md) | Concentric mandala rings (optional spokes); tempo pulses + spectrum-thickness mix; beat reaction |
+| Layer              | hypnospiral      | Hypno spiral      | [hypno-spiral.md](hypno-spiral.md)           | Dual-phase log-radius spiral moiré; BPM-locked twist; density charset |
 
 
 ## Implementation layout

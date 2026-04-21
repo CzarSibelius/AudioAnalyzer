@@ -82,6 +82,8 @@ A **Show** is an ordered collection of presets with per-entry duration. In **Sho
     - Maschine: `TextSnippets` (one phrase per diagonal cycle), `AccentColorIndex` (int), `AccentColumnMode` (Fixed|Moving)
     - Fill: `FillType` (FullBlock, HalfBlockUpper, HalfBlockLower, LightShade, MediumShade, DarkShade, Space, Custom), `CustomChar` (string, used when FillType is Custom)
     - UnknownPleasures: optional `CharsetId` (peak pulse character ramp; unset → `unknown-pleasures-ramp`)
+    - MandalaRingPulse: `Pattern` (`ConcentricRings` | `RingAndSpoke`), `RingCount` (3–16), `Symmetry` (3–16), `PulsesPerBeat` (1–8), `PulseDepth` (0–0.45), `AngularMotion` (0–3), `EnergyMix` (0–1), `BeatReaction` (`None` | `SpeedBurst` | `Flash`) — see [mandala-ring-pulse.md](mandala-ring-pulse.md)
+    - HypnoSpiral: `ArmCount` (2–24), `LogPitch` (2–22), `RevolutionsPerBeat` (0.125–6), `MoireMix` (0–1), `MoirePhase` (0–6.283), `MoireDetune` (0.92–1.08), `MoireDriftSpeed` (0–1.5), `BeatReaction` (`None` | `SpeedBurst` | `Flash`), optional `CharsetId` (unset → `density-soft`) — see [hypno-spiral.md](hypno-spiral.md)
 
 ## Key bindings
 

@@ -25,5 +25,7 @@ public enum TextLayerType
     Fill,
     BufferDistortion,
     AsciiVideo,
-    WaveformStrip
+    WaveformStrip,
+    MandalaRingPulse,
+    HypnoSpiral
 }

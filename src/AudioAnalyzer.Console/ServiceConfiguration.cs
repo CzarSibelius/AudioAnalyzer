@@ -117,6 +117,8 @@ internal static class ServiceConfiguration
         services.AddSingleton<ITextLayerStateStore<BufferDistortionState>>(sp => sp.GetRequiredService<TextLayerStateStore>());
         services.AddSingleton<ITextLayerStateStore<WaveformStripLayerState>>(sp => sp.GetRequiredService<TextLayerStateStore>());
         services.AddSingleton<ITextLayerStateStore<StarfieldLayerState>>(sp => sp.GetRequiredService<TextLayerStateStore>());
+        services.AddSingleton<ITextLayerStateStore<MandalaRingPulseState>>(sp => sp.GetRequiredService<TextLayerStateStore>());
+        services.AddSingleton<ITextLayerStateStore<HypnoSpiralState>>(sp => sp.GetRequiredService<TextLayerStateStore>());
         services.AddTextLayerRenderers();
 
         services.AddSingleton<IConsoleWriter, ConsoleWriter>();
