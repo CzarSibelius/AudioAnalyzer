@@ -11,4 +11,13 @@ public sealed class FractalZoomState
 
     /// <summary>Slow view rotation (radians).</summary>
     public double ViewRotation { get; set; }
+
+    /// <summary>Increments on each zoom phase wrap when illusory infinite zoom is enabled; drives re-seed anchors.</summary>
+    public int SegmentIndex { get; set; }
+
+    /// <summary>Added to preset Julia re when in Julia mode (from re-seed).</summary>
+    public double JuliaOffsetRe { get; set; }
+
+    /// <summary>Added to preset Julia im when in Julia mode (from re-seed).</summary>
+    public double JuliaOffsetIm { get; set; }
 }

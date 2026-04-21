@@ -45,6 +45,9 @@ internal sealed class MainLoopKeyContext : IKeyHandlerContext
     /// <summary>Cycles to the next preset.</summary>
     public required Action OnPresetCycle { get; init; }
 
+    /// <summary>Cycles to the previous preset (display-name order).</summary>
+    public required Action OnPresetCyclePrevious { get; init; }
+
     /// <summary>Settings modal for Preset editor (layer/preset editing).</summary>
     public required ISettingsModal SettingsModal { get; init; }
 
@@ -80,4 +83,16 @@ internal sealed class MainLoopKeyContext : IKeyHandlerContext
 
     /// <summary>Clears engine waveform retention and all in-memory text-layer caches (Ctrl+R in Preset editor / Show play).</summary>
     public required Action PerformFullLayerRuntimeReset { get; init; }
+
+    /// <summary>Layer picker overlay (L in Preset editor).</summary>
+    public required ILayerPickerModal LayerPickerModal { get; init; }
+
+    /// <summary>Main visualization renderer (layer picker applies selection here).</summary>
+    public required IVisualizationRenderer VisualizationRenderer { get; init; }
+
+    /// <summary>Current visualizer (active layer index).</summary>
+    public required IVisualizer Visualizer { get; init; }
+
+    /// <summary>In-memory visualizer settings (TextLayers for picker list).</summary>
+    public required VisualizerSettings VisualizerSettings { get; init; }
 }

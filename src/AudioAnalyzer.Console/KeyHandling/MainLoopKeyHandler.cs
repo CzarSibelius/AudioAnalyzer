@@ -8,8 +8,16 @@ namespace AudioAnalyzer.Console;
 internal sealed class MainLoopKeyHandlerConfig : IKeyHandlerConfig<MainLoopKeyContext>
 {
     private const string Section = "Keyboard controls";
+    private readonly IPresetEditorCanvasLayerStackService _canvasLayerStack;
+    private readonly Lazy<IReadOnlyList<KeyHandling.KeyBindingEntry<MainLoopKeyContext>>> _entries;
 
-    private static IReadOnlyList<KeyHandling.KeyBindingEntry<MainLoopKeyContext>> GetEntries()
+    public MainLoopKeyHandlerConfig(IPresetEditorCanvasLayerStackService canvasLayerStack)
+    {
+        _canvasLayerStack = canvasLayerStack ?? throw new ArgumentNullException(nameof(canvasLayerStack));
+        _entries = new Lazy<IReadOnlyList<KeyHandling.KeyBindingEntry<MainLoopKeyContext>>>(BuildEntries);
+    }
+
+    private IReadOnlyList<KeyHandling.KeyBindingEntry<MainLoopKeyContext>> BuildEntries()
     {
         return
         [
@@ -32,7 +40,33 @@ internal sealed class MainLoopKeyHandlerConfig : IKeyHandlerConfig<MainLoopKeyCo
                 Description: "Switch between Preset editor, Show play, and General settings",
                 Section),
             new KeyHandling.KeyBindingEntry<MainLoopKeyContext>(
-                Matches: k => k.Key == ConsoleKey.V,
+                Matches: KeyHandling.ConsoleShiftLetterV.IsShiftVChord,
+                Action: (_, ctx) =>
+                {
+                    if (ctx.GetApplicationMode() != ApplicationMode.PresetEditor)
+                    {
+                        return true;
+                    }
+
+                    ctx.OnPresetCyclePrevious();
+                    ctx.SaveSettings();
+                    if (!ctx.DisplayState.FullScreen)
+                    {
+                        ctx.Orchestrator.RedrawWithFullHeader();
+                    }
+                    else
+                    {
+                        ctx.Orchestrator.Redraw();
+                    }
+
+                    return true;
+                },
+                Key: "Shift+V",
+                Description: "Cycle to previous preset by name (Preset editor only)",
+                Section,
+                ApplicableMode: ApplicationMode.PresetEditor),
+            new KeyHandling.KeyBindingEntry<MainLoopKeyContext>(
+                Matches: KeyHandling.ConsoleShiftLetterV.IsPlainPresetVChord,
                 Action: (_, ctx) =>
                 {
                     if (ctx.GetApplicationMode() == ApplicationMode.PresetEditor)
@@ -51,7 +85,100 @@ internal sealed class MainLoopKeyHandlerConfig : IKeyHandlerConfig<MainLoopKeyCo
                     return true;
                 },
                 Key: "V",
-                Description: "Cycle to next preset (Preset editor only)",
+                Description: "Cycle to next preset by name (Preset editor only; not Shift+V)",
+                Section,
+                ApplicableMode: ApplicationMode.PresetEditor),
+            new KeyHandling.KeyBindingEntry<MainLoopKeyContext>(
+                Matches: k => k.Key == ConsoleKey.L && (k.Modifiers & (ConsoleModifiers.Shift | ConsoleModifiers.Control | ConsoleModifiers.Alt)) == 0,
+                Action: (_, ctx) =>
+                {
+                    if (ctx.GetApplicationMode() != ApplicationMode.PresetEditor)
+                    {
+                        return false;
+                    }
+
+                    ctx.LayerPickerModal.Show(
+                        ctx.ConsoleLock,
+                        ctx.SetModalOpen,
+                        ctx.VisualizationRenderer,
+                        ctx.VisualizerSettings,
+                        ctx.Visualizer,
+                        () =>
+                        {
+                            ctx.SaveSettings();
+                            if (!ctx.DisplayState.FullScreen)
+                            {
+                                ctx.Orchestrator.RedrawWithFullHeader();
+                            }
+                            else
+                            {
+                                ctx.Orchestrator.Redraw();
+                            }
+                        });
+                    return true;
+                },
+                Key: "L",
+                Description: "Open layer type picker for active slot (Preset editor only)",
+                Section,
+                ApplicableMode: ApplicationMode.PresetEditor),
+            new KeyHandling.KeyBindingEntry<MainLoopKeyContext>(
+                Matches: k => k.Key == ConsoleKey.Insert && (k.Modifiers & (ConsoleModifiers.Shift | ConsoleModifiers.Control | ConsoleModifiers.Alt)) == 0,
+                Action: (_, ctx) =>
+                {
+                    if (ctx.GetApplicationMode() != ApplicationMode.PresetEditor)
+                    {
+                        return false;
+                    }
+
+                    if (!_canvasLayerStack.TryInsertLayer(ctx.VisualizerSettings, ctx.Visualizer))
+                    {
+                        return true;
+                    }
+
+                    ctx.SaveSettings();
+                    if (!ctx.DisplayState.FullScreen)
+                    {
+                        ctx.Orchestrator.RedrawWithFullHeader();
+                    }
+                    else
+                    {
+                        ctx.Orchestrator.Redraw();
+                    }
+
+                    return true;
+                },
+                Key: "Insert",
+                Description: "Add text layer (Preset editor, S closed; same rules as S modal)",
+                Section,
+                ApplicableMode: ApplicationMode.PresetEditor),
+            new KeyHandling.KeyBindingEntry<MainLoopKeyContext>(
+                Matches: k => k.Key == ConsoleKey.Delete && (k.Modifiers & (ConsoleModifiers.Shift | ConsoleModifiers.Control | ConsoleModifiers.Alt)) == 0,
+                Action: (_, ctx) =>
+                {
+                    if (ctx.GetApplicationMode() != ApplicationMode.PresetEditor)
+                    {
+                        return false;
+                    }
+
+                    if (!_canvasLayerStack.TryDeleteActiveLayer(ctx.VisualizerSettings, ctx.Visualizer))
+                    {
+                        return true;
+                    }
+
+                    ctx.SaveSettings();
+                    if (!ctx.DisplayState.FullScreen)
+                    {
+                        ctx.Orchestrator.RedrawWithFullHeader();
+                    }
+                    else
+                    {
+                        ctx.Orchestrator.Redraw();
+                    }
+
+                    return true;
+                },
+                Key: "Delete",
+                Description: "Remove active layer slot (Preset editor, S closed; same rules as S modal)",
                 Section,
                 ApplicableMode: ApplicationMode.PresetEditor),
             new KeyHandling.KeyBindingEntry<MainLoopKeyContext>(
@@ -75,7 +202,7 @@ internal sealed class MainLoopKeyHandlerConfig : IKeyHandlerConfig<MainLoopKeyCo
 
                     if (mode == ApplicationMode.PresetEditor)
                     {
-                        ctx.SettingsModal.Show(ctx.ConsoleLock, ctx.SaveSettings);
+                        ctx.SettingsModal.Show(ctx.ConsoleLock, ctx.SaveSettings, ctx.SetModalOpen);
                     }
                     else
                     {
@@ -260,17 +387,14 @@ internal sealed class MainLoopKeyHandlerConfig : IKeyHandlerConfig<MainLoopKeyCo
         ];
     }
 
-    private static readonly Lazy<IReadOnlyList<KeyHandling.KeyBindingEntry<MainLoopKeyContext>>> s_entries =
-        new(GetEntries);
-
     /// <inheritdoc />
     public IReadOnlyList<KeyBinding> GetBindings() =>
-        s_entries.Value.Select(e => e.ToKeyBinding()).ToList();
+        _entries.Value.Select(e => e.ToKeyBinding()).ToList();
 
     /// <inheritdoc />
     public bool Handle(ConsoleKeyInfo key, MainLoopKeyContext ctx)
     {
-        foreach (var entry in s_entries.Value)
+        foreach (var entry in _entries.Value)
         {
             if (entry.Matches(key))
             {

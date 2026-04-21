@@ -50,6 +50,8 @@ internal sealed partial class ApplicationShell
     private readonly IWaveformHistoryConfigurator _waveformHistoryConfigurator;
     private readonly ILayerRuntimeResetCoordinator _layerRuntimeResetCoordinator;
     private readonly ILogger<ApplicationShell> _logger;
+    private readonly ILayerPickerModal _layerPickerModal;
+    private readonly IVisualizer _visualizer;
 
     private CancellationTokenSource? _headerRefreshCts;
     private volatile bool _quitAfterDump;
@@ -83,7 +85,9 @@ internal sealed partial class ApplicationShell
         IBeatTimingConfigurator beatTiming,
         IWaveformHistoryConfigurator waveformHistoryConfigurator,
         ILayerRuntimeResetCoordinator layerRuntimeResetCoordinator,
-        ILogger<ApplicationShell> logger)
+        ILogger<ApplicationShell> logger,
+        ILayerPickerModal layerPickerModal,
+        IVisualizer visualizer)
     {
         _deviceController = deviceController ?? throw new ArgumentNullException(nameof(deviceController));
         _visualizerSettingsRepo = visualizerSettingsRepo;
@@ -114,6 +118,8 @@ internal sealed partial class ApplicationShell
         _waveformHistoryConfigurator = waveformHistoryConfigurator ?? throw new ArgumentNullException(nameof(waveformHistoryConfigurator));
         _layerRuntimeResetCoordinator = layerRuntimeResetCoordinator ?? throw new ArgumentNullException(nameof(layerRuntimeResetCoordinator));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _layerPickerModal = layerPickerModal ?? throw new ArgumentNullException(nameof(layerPickerModal));
+        _visualizer = visualizer ?? throw new ArgumentNullException(nameof(visualizer));
     }
 
     /// <summary>Runs the main loop. Does not return until the user quits.</summary>
@@ -262,6 +268,7 @@ internal sealed partial class ApplicationShell
             HeaderContainer = _headerContainer,
             OnModeSwitch = () => _modeTransitionService.CycleToNextMode(),
             OnPresetCycle = CycleToNextPreset,
+            OnPresetCyclePrevious = CycleToPreviousPreset,
             SettingsModal = _settingsModal,
             ShowEditModal = _showEditModal,
             StopCapture = _deviceController.StopCapture,
@@ -273,7 +280,11 @@ internal sealed partial class ApplicationShell
             OnPaletteCycle = CyclePalette,
             DumpScreen = () => _screenDumpService.DumpToFile(),
             AppSettings = _appSettings,
-            PerformFullLayerRuntimeReset = () => _layerRuntimeResetCoordinator.ResetAllLayerRuntimeCaches()
+            PerformFullLayerRuntimeReset = () => _layerRuntimeResetCoordinator.ResetAllLayerRuntimeCaches(),
+            LayerPickerModal = _layerPickerModal,
+            VisualizationRenderer = _renderer,
+            Visualizer = _visualizer,
+            VisualizerSettings = _visualizerSettings
         };
     }
 
@@ -301,33 +312,34 @@ internal sealed partial class ApplicationShell
         };
     }
 
-    private void CycleToNextPreset()
+    private void CycleToNextPreset() =>
+        ApplyActivePresetFromRepository(
+            PresetNavigationOrder.GetNextPresetIdByDisplayName(
+                _visualizerSettings.Presets,
+                _visualizerSettings.ActivePresetId));
+
+    private void CycleToPreviousPreset() =>
+        ApplyActivePresetFromRepository(
+            PresetNavigationOrder.GetPreviousPresetIdByDisplayName(
+                _visualizerSettings.Presets,
+                _visualizerSettings.ActivePresetId));
+
+    private void ApplyActivePresetFromRepository(string? presetId)
     {
-        if (_visualizerSettings.Presets is not { Count: > 0 })
+        if (_visualizerSettings.Presets is not { Count: > 0 } || string.IsNullOrEmpty(presetId))
         {
             return;
         }
 
-        int currentIndex = 0;
-        for (int i = 0; i < _visualizerSettings.Presets.Count; i++)
-        {
-            if (string.Equals(_visualizerSettings.Presets[i].Id, _visualizerSettings.ActivePresetId, StringComparison.OrdinalIgnoreCase))
-            {
-                currentIndex = i;
-                break;
-            }
-        }
-
-        int nextIndex = (currentIndex + 1) % _visualizerSettings.Presets.Count;
-        var nextPresetInfo = _visualizerSettings.Presets[nextIndex];
-        var nextPreset = _presetRepository.GetById(nextPresetInfo.Id);
-        if (nextPreset == null)
+        var preset = _presetRepository.GetById(presetId);
+        if (preset == null)
         {
             return;
         }
-        _visualizerSettings.ActivePresetId = nextPreset.Id;
+
+        _visualizerSettings.ActivePresetId = preset.Id;
         _visualizerSettings.TextLayers ??= new TextLayersVisualizerSettings();
-        _visualizerSettings.TextLayers.CopyFrom(nextPreset.Config);
+        _visualizerSettings.TextLayers.CopyFrom(preset.Config);
         _renderer.NotifyTextLayersStructureChanged();
     }
 

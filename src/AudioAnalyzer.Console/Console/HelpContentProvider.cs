@@ -21,7 +21,10 @@ internal sealed class HelpContentProvider : IHelpContentProvider
     private readonly IKeyHandlerConfig<ShowEditModalKeyContext> _showEditConfig;
     private readonly IKeyHandlerConfig<GeneralSettingsHubKeyContext> _generalSettingsHubConfig;
     private readonly IKeyHandlerConfig<TextLayersKeyContext> _textLayersConfig;
+    private readonly IKeyHandlerConfig<LayerPickerKeyContext> _layerPickerConfig;
     private readonly ITextLayerBoundsEditSession _boundsEditSession;
+
+    private const string SectionLayerPicker = "Layer picker";
 
     public HelpContentProvider(
         IKeyHandlerConfig<MainLoopKeyContext> mainLoopConfig,
@@ -30,6 +33,7 @@ internal sealed class HelpContentProvider : IHelpContentProvider
         IKeyHandlerConfig<ShowEditModalKeyContext> showEditConfig,
         IKeyHandlerConfig<GeneralSettingsHubKeyContext> generalSettingsHubConfig,
         IKeyHandlerConfig<TextLayersKeyContext> textLayersConfig,
+        IKeyHandlerConfig<LayerPickerKeyContext> layerPickerConfig,
         ITextLayerBoundsEditSession boundsEditSession)
     {
         _mainLoopConfig = mainLoopConfig ?? throw new ArgumentNullException(nameof(mainLoopConfig));
@@ -38,6 +42,7 @@ internal sealed class HelpContentProvider : IHelpContentProvider
         _showEditConfig = showEditConfig ?? throw new ArgumentNullException(nameof(showEditConfig));
         _generalSettingsHubConfig = generalSettingsHubConfig ?? throw new ArgumentNullException(nameof(generalSettingsHubConfig));
         _textLayersConfig = textLayersConfig ?? throw new ArgumentNullException(nameof(textLayersConfig));
+        _layerPickerConfig = layerPickerConfig ?? throw new ArgumentNullException(nameof(layerPickerConfig));
         _boundsEditSession = boundsEditSession ?? throw new ArgumentNullException(nameof(boundsEditSession));
     }
 
@@ -51,6 +56,7 @@ internal sealed class HelpContentProvider : IHelpContentProvider
         allBindings.AddRange(_showEditConfig.GetBindings());
         allBindings.AddRange(_generalSettingsHubConfig.GetBindings());
         allBindings.AddRange(_textLayersConfig.GetBindings());
+        allBindings.AddRange(_layerPickerConfig.GetBindings());
 
         var bySection = new Dictionary<string, List<KeyBinding>>(StringComparer.Ordinal);
         foreach (var b in allBindings)
@@ -79,6 +85,11 @@ internal sealed class HelpContentProvider : IHelpContentProvider
         if (currentMode != ApplicationMode.Settings)
         {
             sectionOrder.Add(SectionLayeredText);
+        }
+
+        if (currentMode == ApplicationMode.PresetEditor)
+        {
+            sectionOrder.Add(SectionLayerPicker);
         }
 
         sectionOrder.Add(modalSection);

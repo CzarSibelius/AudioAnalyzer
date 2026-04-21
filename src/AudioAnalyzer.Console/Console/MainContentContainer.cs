@@ -86,6 +86,14 @@ internal sealed partial class MainContentContainer : IVisualizationRenderer
     public void NotifyTextLayersStructureChanged() => _visualizer.OnTextLayersStructureChanged();
 
     /// <inheritdoc />
+    public void SetActiveSortedLayerIndex(int sortedZOrderSlotIndex) =>
+        _visualizer.SetActiveSortedLayerIndex(sortedZOrderSlotIndex);
+
+    /// <inheritdoc />
+    public void ApplyLayerTypeToActiveSortedSlot(TextLayerType newType) =>
+        _visualizer.ApplyLayerTypeToActiveSortedSlot(newType);
+
+    /// <inheritdoc />
     public void Render(VisualizationFrameContext frame)
     {
         try

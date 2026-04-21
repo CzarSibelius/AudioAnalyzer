@@ -85,7 +85,7 @@ internal sealed class HelpModal : IHelpModal
 
         System.Console.WriteLine(labelCode + "  PRESETS & SHOWS" + reset);
         System.Console.WriteLine("  ─────────────────────────────────────");
-        System.Console.WriteLine("  Preset editor: Each preset is a TextLayers config (up to " + TextLayersLimits.MaxLayerCount + " layers + palette). V cycles.");
+        System.Console.WriteLine("  Preset editor: Each preset is a TextLayers config (up to " + TextLayersLimits.MaxLayerCount + " layers + palette). V / Shift+V cycle presets forward/back by display name; L opens the layer type picker for the active 1–9 slot.");
         System.Console.WriteLine("  Show play: Auto-cycles presets with per-entry duration (seconds or beats). Tab to switch.");
         System.Console.WriteLine();
         System.Console.WriteLine(dimmedCode + "  Press any key to return..." + reset);

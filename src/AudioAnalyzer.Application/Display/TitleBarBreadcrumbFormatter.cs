@@ -39,6 +39,7 @@ public sealed class TitleBarBreadcrumbFormatter : ITitleBarBreadcrumbFormatter
             TitleBarViewKind.ShowEditModal => BuildPresetScopedSuffix(palette, "showedit"),
             TitleBarViewKind.HelpModal => BuildPresetScopedSuffix(palette, "help"),
             TitleBarViewKind.DeviceAudioInputModal => BuildDeviceAudioInput(palette),
+            TitleBarViewKind.LayerPickerModal => BuildPresetScopedSuffix(palette, "layers"),
             TitleBarViewKind.SettingsHub => BuildSettingsHub(palette),
             _ => BuildMainView(palette)
         };

@@ -5,6 +5,7 @@ This folder holds agent instructions grouped by topic. The root [AGENTS.md](../.
 
 | File                                                           | Purpose                                                                                                                        |
 | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| [agentic-personas.md](agentic-personas.md)                   | Session-scoped Lead / Dev / Critic personas (Cursor skills under `.cursor/skills/`)                                            |
 | [csharp-and-static-analysis.md](csharp-and-static-analysis.md) | C# style, no empty catch, braces, XML docs, one file per class, linter and build                                               |
 | [documentation.md](documentation.md)                           | When to update README, getting-started.md, configuration-reference.md, visualizer specs, UI specs, deferred work               |
 | [ui-and-console.md](ui-and-console.md)                         | UI specs, viewport, key handling, alignment, user controls                                                                     |

@@ -36,4 +36,7 @@ internal sealed class SettingsModalKeyContext : IKeyHandlerContext
 
     /// <summary>When set, Enter on the "Render region" row starts live visual bounds editing and closes the modal.</summary>
     public Action<int>? RequestVisualBoundsEdit { get; init; }
+
+    /// <summary>When set, opens the layer type picker for the selected layer row (Preset editor S modal, LayerList focus).</summary>
+    public Action? OpenLayerTypePickerFromS { get; init; }
 }

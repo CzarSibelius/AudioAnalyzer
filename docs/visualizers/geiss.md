@@ -1,14 +1,6 @@
-# Geiss (deprecated — use TextLayers)
+﻿# Visualizer spec (stub): geiss.md
 
-## Status
+**Moved.** Canonical **The Spec** (Blueprint + Contract): [../../specs/text-layers-visualizer/layers/geiss/spec.md](../../specs/text-layers-visualizer/layers/geiss/spec.md)
 
-**Removed.** The standalone Geiss `IVisualizer` mode has been removed. Geiss-style content is available as layers in **Layered text** (`TextLayersVisualizer`):
+Do not edit this stub except to fix the link if the canonical path changes.
 
-- **GeissBackground** — Psychedelic plasma-style background; sine-based plasma with bass/treble modulation.
-- **BeatCircles** — Expanding circles spawned on beat.
-
-In the app (Layered text mode only), add or select a layer and cycle its type with **←/→** to `GeissBackground` or `BeatCircles`. See [text-layers.md](text-layers.md) for layer configuration and key bindings.
-
-## References
-
-- [ADR-0014](../adr/0014-visualizers-as-layers.md) — Visualizers as layers; migration from standalone modes.

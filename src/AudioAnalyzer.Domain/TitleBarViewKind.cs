@@ -20,6 +20,9 @@ public enum TitleBarViewKind
     /// <summary>Audio input device selection.</summary>
     DeviceAudioInputModal,
 
+    /// <summary>Layer picker overlay (L) in Preset editor.</summary>
+    LayerPickerModal,
+
     /// <summary>Reserved for a future full-screen settings hub (<see cref="ApplicationMode.Settings"/>).</summary>
     SettingsHub
 }

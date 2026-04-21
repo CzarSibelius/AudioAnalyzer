@@ -509,23 +509,40 @@ public sealed class TextLayersVisualizer : IVisualizer, IFullLayerRuntimeReset
         return snapshot;
     }
 
-    private static List<TextLayerSettings>? BuildSortedLayersCopy(TextLayersVisualizerSettings? config)
+    private static List<TextLayerSettings>? BuildSortedLayersCopy(TextLayersVisualizerSettings? config) =>
+        TextLayersSortedLayers.BuildSortedByZOrderCopy(config);
+
+    /// <inheritdoc />
+    public void SetActiveSortedLayerIndex(int sortedZOrderSlotIndex)
     {
-        if (config?.Layers is not { Count: > 0 })
+        var sortedLayers = TryGetSortedLayersSnapshot(_settings);
+        if (sortedLayers is not { Count: > 0 })
         {
-            return null;
+            return;
         }
 
-        try
+        _paletteCycleLayerIndex = Math.Clamp(sortedZOrderSlotIndex, 0, sortedLayers.Count - 1);
+    }
+
+    /// <inheritdoc />
+    public void ApplyLayerTypeToActiveSortedSlot(TextLayerType newType)
+    {
+        var sortedLayers = TryGetSortedLayersSnapshot(_settings);
+        if (sortedLayers is not { Count: > 0 })
         {
-            var snapshot = new List<TextLayerSettings>(config.Layers);
-            snapshot.Sort(static (a, b) => a.ZOrder.CompareTo(b.ZOrder));
-            return snapshot;
+            return;
         }
-        catch (ArgumentException)
+
+        int layerIndex = Math.Clamp(_paletteCycleLayerIndex, 0, sortedLayers.Count - 1);
+        var layer = sortedLayers[layerIndex];
+        var previousType = layer.LayerType;
+        if (previousType == newType)
         {
-            return null;
+            return;
         }
+
+        layer.LayerType = newType;
+        ClearLayerStateWhenSwitching(layerIndex, previousType);
     }
 
     private static string ToSnakeCase(string value)
@@ -549,7 +566,8 @@ public sealed class TextLayersVisualizer : IVisualizer, IFullLayerRuntimeReset
 
     /// <summary>
     /// Handles keys 1–<see cref="TextLayersLimits.MaxLayerCount"/> to select the active layer; Left/Right to cycle the active layer's type;
-    /// Shift+1–<see cref="TextLayersLimits.MaxLayerCount"/> to toggle layer enabled/disabled; I to cycle to the next asset in AsciiImage / AsciiModel layers.
+    /// Shift+1–<see cref="TextLayersLimits.MaxLayerCount"/> to toggle layer enabled/disabled;
+    /// I to cycle to the next asset in AsciiImage / AsciiModel layers.
     /// 1 = layer 1 (back), 9 = layer 9 (front). Returns true if the key was handled.
     /// </summary>
     public bool HandleKey(ConsoleKeyInfo key)

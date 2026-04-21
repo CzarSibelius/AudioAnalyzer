@@ -1,3 +1,5 @@
+using AudioAnalyzer.Domain;
+
 namespace AudioAnalyzer.Application.Abstractions;
 
 /// <summary>
@@ -28,4 +30,10 @@ public interface IVisualizer
 
     /// <summary>Handles visualizer-specific key bindings (e.g. 1–9 for TextLayers). Returns true if the key was consumed.</summary>
     bool HandleKey(ConsoleKeyInfo key) => false;
+
+    /// <summary>Sets the active layer index in Z-order sorted slot order (same indexing as digit keys). No-op for implementations that do not track a selected layer.</summary>
+    void SetActiveSortedLayerIndex(int sortedZOrderSlotIndex) { }
+
+    /// <summary>Sets the <see cref="TextLayerType"/> of the active sorted slot (same slot as digit keys / palette row). No-op when not applicable.</summary>
+    void ApplyLayerTypeToActiveSortedSlot(TextLayerType newType) { }
 }

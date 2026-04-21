@@ -18,4 +18,10 @@ public interface IVisualizationRenderer
 
     /// <summary>Call when the text layer list may have been replaced (e.g. preset cycle, show entry). Lets the visualizer drop cached per-frame state.</summary>
     void NotifyTextLayersStructureChanged();
+
+    /// <summary>Sets the active TextLayers slot (Z-order sorted index). Used by settings UI and other host flows.</summary>
+    void SetActiveSortedLayerIndex(int sortedZOrderSlotIndex);
+
+    /// <summary>Applies a layer type to the active TextLayers slot. Used by the Preset editor layer type picker (L).</summary>
+    void ApplyLayerTypeToActiveSortedSlot(TextLayerType newType);
 }

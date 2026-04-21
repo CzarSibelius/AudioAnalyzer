@@ -20,6 +20,9 @@ internal sealed class SettingsModal : ISettingsModal
     private readonly IVisualizer _visualizer;
     private readonly IDefaultTextLayersSettingsFactory _defaultTextLayersFactory;
     private readonly ITextLayerStateStore _layerStateStore;
+    private readonly ILayerPickerModal _layerPickerModal;
+    private readonly IVisualizationRenderer _visualizationRenderer;
+    private readonly IDisplayState _displayState;
 
     public SettingsModal(
         IVisualizationOrchestrator orchestrator,
@@ -32,7 +35,10 @@ internal sealed class SettingsModal : ISettingsModal
         ITitleBarNavigationContext navigation,
         IVisualizer visualizer,
         IDefaultTextLayersSettingsFactory defaultTextLayersFactory,
-        ITextLayerStateStore layerStateStore)
+        ITextLayerStateStore layerStateStore,
+        ILayerPickerModal layerPickerModal,
+        IVisualizationRenderer visualizationRenderer,
+        IDisplayState displayState)
     {
         _orchestrator = orchestrator ?? throw new ArgumentNullException(nameof(orchestrator));
         _visualizerSettings = visualizerSettings ?? throw new ArgumentNullException(nameof(visualizerSettings));
@@ -45,10 +51,13 @@ internal sealed class SettingsModal : ISettingsModal
         _visualizer = visualizer ?? throw new ArgumentNullException(nameof(visualizer));
         _defaultTextLayersFactory = defaultTextLayersFactory ?? throw new ArgumentNullException(nameof(defaultTextLayersFactory));
         _layerStateStore = layerStateStore ?? throw new ArgumentNullException(nameof(layerStateStore));
+        _layerPickerModal = layerPickerModal ?? throw new ArgumentNullException(nameof(layerPickerModal));
+        _visualizationRenderer = visualizationRenderer ?? throw new ArgumentNullException(nameof(visualizationRenderer));
+        _displayState = displayState ?? throw new ArgumentNullException(nameof(displayState));
     }
 
     /// <inheritdoc />
-    public void Show(object consoleLock, Action saveSettings)
+    public void Show(object consoleLock, Action saveSettings, Action<bool>? setShellModalOpen = null)
     {
         var state = new SettingsModalState();
         var textLayers = _visualizerSettings.TextLayers ?? new TextLayersVisualizerSettings();
@@ -83,7 +92,40 @@ internal sealed class SettingsModal : ISettingsModal
                 _visualizer.OnTextLayersStructureChanged();
                 saveSettings();
             },
-            RequestVisualBoundsEdit = idx => _boundsEditSession.BeginEdit(idx, textLayers)
+            RequestVisualBoundsEdit = idx => _boundsEditSession.BeginEdit(idx, textLayers),
+            OpenLayerTypePickerFromS = () =>
+            {
+                if (state.LeftPanelPresetSelected)
+                {
+                    return;
+                }
+
+                _visualizer.SetActiveSortedLayerIndex(state.SelectedLayerIndex);
+                // Forward full true/false to the shell guard for the picker only. Do not set the shell guard when S
+                // opens/closes — that guard suppresses orchestrator Redraw() and would freeze the visualizer under S.
+                Action<bool> pickerSetModalOpen = setShellModalOpen ?? (_ => { });
+
+                _layerPickerModal.Show(
+                    consoleLock,
+                    pickerSetModalOpen,
+                    _visualizationRenderer,
+                    _visualizerSettings,
+                    _visualizer,
+                    () =>
+                    {
+                        saveSettings();
+                        if (!_displayState.FullScreen)
+                        {
+                            _orchestrator.RedrawWithFullHeader();
+                        }
+                        else
+                        {
+                            _orchestrator.Redraw();
+                        }
+                    },
+                    restoreTitleBarViewWhenClosed: TitleBarViewKind.PresetSettingsModal,
+                    restoreOverlayRowCountWhenClosed: OverlayRowCount);
+            }
         };
 
         void DrawSettingsContent()

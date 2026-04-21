@@ -1,0 +1,99 @@
+﻿# UI spec: Settings surfaces (shared patterns)
+
+## Blueprint
+
+### Context
+
+Console UI surface documented with ASCII screen dumps and line references per [format](../format/spec.md) and [ADR-0046](../../../docs/adr/0046-screen-dump-ascii-screenshot.md).
+
+### Architecture
+
+Top-level **application modes** (full-screen layouts) are documented separately: [ui-spec-application-modes.md](../application-modes/spec.md). **Visualizer fullscreen (F)** and drawing the visualizer **below** overlay modals: [ui-spec-fullscreen-visualizer.md](../fullscreen-visualizer/spec.md).
+
+This document ties together **General settings hub**, **device selection modal**, and **preset / layer settings modal (S)** so specs and implementation share the same vocabulary. Per-surface dumps and line-by-line references live in:
+
+- [ui-spec-general-settings-hub.md](../general-settings-hub/spec.md)
+- [ui-spec-device-selection-modal.md](../device-selection-modal/spec.md)
+- [ui-spec-preset-settings-modal.md](../preset-settings-modal/spec.md)
+
+Layout rules: [ui-spec-format.md](../format/spec.md), [ADR-0050](../../../docs/adr/0050-ui-alignment-blocks-label-format.md).
+
+## When each surface appears
+
+
+| Surface                         | How to open                                                                                       | ADR                                                                                             |
+| ------------------------------- | ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| **General settings hub**        | **Tab** to General settings mode (after Preset editor / Show play when eligible).                 | [ADR-0061](../../../docs/adr/0061-general-settings-mode.md), [ADR-0062](../../../docs/adr/0062-application-mode-classes.md) |
+| **Device selection modal**      | **D** from main loop (Preset / Show), or **Enter** on **Audio input devices** in the General hub. | [ADR-0035](../../../docs/adr/0035-modal-dependency-injection.md)                                              |
+| **Preset / layer settings (S)** | **S** in Preset editor or Show play (not in General settings).                                    | [ADR-0023](../../../docs/adr/0023-settings-modal-layer-editing.md)                                            |
+
+
+## Universal row 0: title breadcrumb
+
+All surfaces use **ITitleBarBreadcrumbFormatter** and **ITitleBarNavigationContext** on row 0. Rules: [ui-spec-title-breadcrumb.md](../title-breadcrumb/spec.md), [ADR-0060](../../../docs/adr/0060-universal-title-breadcrumb.md).
+
+## Shared building blocks
+
+
+| Building block               | Role                                                                                                                                                                                                                 |
+| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Hint line**                | Short instructions (toolbar-style). In the S modal, the hint row is rendered via **HorizontalRowComponent** ([ADR-0057](../../../docs/adr/0057-horizontal-row-unified-single-line-rows.md)).                                       |
+| **Label:value**              | [ADR-0050](../../../docs/adr/0050-ui-alignment-blocks-label-format.md): colon immediately after the label, no space before the value; no hotkey suffix in labels ([ADR-0034](../../../docs/adr/0034-viewport-label-hotkey-hints.md) superseded). |
+| **Menu rows (hub)**          | Compact settings list with optional selection prefix; hub uses the same label/value idea as modal hints where applicable.                                                                                            |
+| **Vertical selectable list** | **↑/↓** move selection, **Enter** confirms, **Esc** cancels (device modal; palette picker in S modal uses **Esc** to discard preview).                                                                               |
+| **Palette name coloring**    | **PaletteSwatchFormatter** — beat- or tick-driven phase for per-letter colors (toolbar, S modal Palette row, palette picker list).                                                                                   |
+
+
+## Selection affordance
+
+All selectable hub rows and vertical lists use the same **arrow + full-width theme highlight** per [ui-spec-menu-selection.md](../menu-selection/spec.md) and [ADR-0069](../../../docs/adr/0069-unified-menu-selection-affordance.md).
+
+## Feature matrix (where capabilities exist today)
+
+
+| Feature                     | General hub           | Device modal          | S modal (preset / layers)        |
+| --------------------------- | --------------------- | --------------------- | -------------------------------- |
+| Title breadcrumb row        | Yes                   | Yes                   | Yes                              |
+| Hint / instruction line     | Toolbar row           | Line below breadcrumb | Line 1 (HorizontalRowComponent)  |
+| `Label:value` menu          | Yes (audio, app name) | No (plain list)       | Settings column                  |
+| Inline text edit            | Application name      | No                    | Preset rename, string settings   |
+| Full-screen list picker     | No                    | Yes                   | Palette picker (right column)    |
+| Two-column overlay          | No                    | No                    | Yes (layers | settings / picker) |
+| Palette swatch / animation  | Toolbar palette cell  | No                    | Palette row + picker list        |
+| Idle redraw (palette phase) | Same as main toolbar  | No                    | Yes (`DrawIdleOverlayTick`)      |
+
+
+**Global palette:** In General settings, palette is shown on the **toolbar** and cycled from the main key map; the hub does not host a palette list picker (same as toolbar-only cycling unless product direction changes).
+
+## Related overlay: Show edit modal
+
+**Show edit** (**S** in Show play) uses a similar **two-column overlay** shell as the S modal (breadcrumb, hint, separator, list  detail). List selection matches [ui-spec-menu-selection.md](../menu-selection/spec.md). A dedicated Show edit ui-spec may still be added; reuse the overlay shell described in [ui-spec-preset-settings-modal.md](../preset-settings-modal/spec.md).
+
+## Implementation note
+
+Shared list and palette drawing for device selection and the S modal palette picker are consolidated in the Console project (`SettingsSurfacesListDrawing`, `SettingsSurfacesPaletteDrawing`, `MenuSelectionAffordance`) per [ADR-0063](../../../docs/adr/0063-uniform-settings-list-and-palette-drawing.md) and [ADR-0069](../../../docs/adr/0069-unified-menu-selection-affordance.md).
+
+### Constraints
+
+- **8-column blocks** and **Label:value** formatting per [ADR-0050](../../../docs/adr/0050-ui-alignment-blocks-label-format.md).
+- Regenerate screenshot + **Line reference** when layout or semantics change.
+
+## Contract
+
+### Definition of Done
+
+- Screenshot block matches a fresh screen dump when rows or labels change.
+- Every screen line in the dump has a matching **Line reference** entry.
+
+### Regression guardrails
+
+- Cross-links to other console-ui specs and ADRs resolve after moves under specs/console-ui/.
+
+### Scenarios
+
+```gherkin
+Scenario: Capture matches spec
+  Given the documented mode is active in a Windows console
+  When the operator triggers a screen dump (Ctrl+Shift+E per ADR-0046)
+  Then pasted ASCII matches the spec screenshot block line-for-line for controlled fixtures
+```

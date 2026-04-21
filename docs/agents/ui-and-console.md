@@ -4,16 +4,16 @@
 
 When working on console UI (header, modals, main view, layout, or any on-screen content):
 
-1. **Read the format**: Follow [docs/ui-spec-format.md](../ui-spec-format.md) for the structure of UI spec documents (screenshot block + line reference).
+1. **Read the format**: [docs/ui-spec-format.md](../ui-spec-format.md) is a stub pointing to **[specs/console-ui/format/spec.md](../../specs/console-ui/format/spec.md)** (screenshot block + line reference).
 2. **Read UI components**: Use [docs/ui-components.md](../ui-components.md) to understand which component is responsible for each part of the screen.
-3. **Read existing specs**: When changing an existing screen, read the corresponding UI spec in `docs/` so line numbers and descriptions stay accurate. **Application modes** (Preset editor, Show play, General settings): [ui-spec-application-modes.md](../ui-spec-application-modes.md). Settings menus and modals: [ui-spec-settings-surfaces.md](../ui-spec-settings-surfaces.md) (index), plus [ui-spec-menu-selection.md](../ui-spec-menu-selection.md) (selectable rows), [ui-spec-general-settings-hub.md](../ui-spec-general-settings-hub.md), [ui-spec-device-selection-modal.md](../ui-spec-device-selection-modal.md), [ui-spec-preset-settings-modal.md](../ui-spec-preset-settings-modal.md).
-4. **Update or create specs when you change layout**: Refresh the screenshot (from a screen dump per ADR-0046) and update the "Line reference" section so every line is listed and described. For new screens or modals, create a new UI spec file following the format.
+3. **Read existing specs**: Canonical UI **The Spec** files live under **`specs/console-ui/`** (hub: [specs/console-ui/spec.md](../../specs/console-ui/spec.md)). `docs/ui-spec-*.md` files are stubs with the same links. **Application modes**: [ui-spec-application-modes.md](../ui-spec-application-modes.md) → `specs/console-ui/application-modes/spec.md`. Settings surfaces: [ui-spec-settings-surfaces.md](../ui-spec-settings-surfaces.md), [ui-spec-menu-selection.md](../ui-spec-menu-selection.md), [ui-spec-general-settings-hub.md](../ui-spec-general-settings-hub.md), [ui-spec-device-selection-modal.md](../ui-spec-device-selection-modal.md), [ui-spec-preset-settings-modal.md](../ui-spec-preset-settings-modal.md).
+4. **Update or create specs when you change layout**: Edit the matching **`specs/console-ui/**/spec.md`** (not the stub). Refresh the screenshot (from a screen dump per ADR-0046) and update the "Line reference" section so every line is listed and described.
 
 Do not complete console UI changes that affect what appears on screen without updating the relevant UI spec.
 
 ## Architecture (ADRs)
 
-- **Universal title breadcrumb**: Row 0 uses **ITitleBarBreadcrumbFormatter** and **ITitleBarNavigationContext** on the main header and all modals (ADR-0060). Spec: [ui-spec-title-breadcrumb.md](../ui-spec-title-breadcrumb.md).
+- **Universal title breadcrumb**: Row 0 uses **ITitleBarBreadcrumbFormatter** and **ITitleBarNavigationContext** on the main header and all modals (ADR-0060). Spec: [specs/console-ui/title-breadcrumb/spec.md](../../specs/console-ui/title-breadcrumb/spec.md).
 - **UI container and component renderer**: UI is composed from **IUiComponent** and **IUiComponentRenderer**. Single-line rows use **HorizontalRowComponent** with **ScrollingTextComponent** children; set data each frame via **SetRowData** / **SetFromDescriptor**. See ADR-0051, ADR-0052, ADR-0053, ADR-0054, ADR-0056, ADR-0057.
 - **Display text**: Use **PlainText** for unformatted strings, **AnsiText** when content may contain ANSI escape sequences. Use **IScrollingTextViewport** for dynamic text that may exceed width; use **TruncateWithEllipsis** for static text. Display width (terminal columns): use GetDisplayWidth, TruncateToWidth, etc. per ADR-0039.
 - **Viewport labels**: Labels use **LabelFormatting.FormatLabel** / **IScrollingTextViewport.FormatLabel** for `Label:` only (no hotkey in the label). Document shortcuts via **GetBindings()** and the help modal (H). See ADR-0034 (superseded; hotkey parameters removed from APIs).

@@ -29,6 +29,13 @@ public sealed class FractalZoomLayer : TextLayerRendererBase, ITextLayerRenderer
         var st = _stateStore.GetState(ctx.LayerIndex);
         var s = layer.GetCustom<FractalZoomSettings>() ?? new FractalZoomSettings();
 
+        if (!s.IllusoryInfiniteZoom)
+        {
+            st.SegmentIndex = 0;
+            st.JuliaOffsetRe = 0.0;
+            st.JuliaOffsetIm = 0.0;
+        }
+
         int maxIter = Math.Clamp(s.MaxIterations, 4, 32);
 
         double dtScale = DisplayAnimationTiming.ScaleForReference60(ctx.FrameDeltaSeconds);
@@ -43,6 +50,11 @@ public sealed class FractalZoomLayer : TextLayerRendererBase, ITextLayerRenderer
         {
             st.ZoomPhase -= 1.0;
             st.OrbitAngle += s.OrbitStep;
+            if (s.IllusoryInfiniteZoom)
+            {
+                st.SegmentIndex++;
+                (st.JuliaOffsetRe, st.JuliaOffsetIm) = FractalZoomIllusoryReseed.JuliaNudgeForSegment(st.SegmentIndex);
+            }
         }
 
         double flashBoost = (s.BeatReaction == FractalZoomBeatReaction.Flash && snapshot.BeatFlashActive) ? 0.12 : 0;
@@ -60,8 +72,9 @@ public sealed class FractalZoomLayer : TextLayerRendererBase, ITextLayerRenderer
         double logS = logScaleMin + scaleT * (logScaleMax - logScaleMin);
         double pixelScale = Math.Exp(logS);
 
-        const double baseCr = -0.75;
-        const double baseCi = 0.05;
+        (double baseCr, double baseCi) = s.IllusoryInfiniteZoom
+            ? FractalZoomIllusoryReseed.AnchorForSegment(st.SegmentIndex)
+            : (-0.75, 0.05);
         const double orbitRadius = 0.085;
         double centerRe = baseCr + orbitRadius * Math.Cos(st.OrbitAngle);
         double centerIm = baseCi + orbitRadius * Math.Sin(st.OrbitAngle);
@@ -85,9 +98,11 @@ public sealed class FractalZoomLayer : TextLayerRendererBase, ITextLayerRenderer
                 double cr = centerRe + rx * pixelScale;
                 double ci = centerIm - ry * pixelScale;
 
+                double juliaRe = s.JuliaRe + st.JuliaOffsetRe;
+                double juliaIm = s.JuliaIm + st.JuliaOffsetIm;
                 double smooth = s.FractalMode == FractalZoomMode.Mandelbrot
                     ? FractalZoomSampler.EscapeSmoothMandelbrot(cr, ci, maxIter)
-                    : FractalZoomSampler.EscapeSmoothJulia(cr, ci, s.JuliaRe, s.JuliaIm, maxIter);
+                    : FractalZoomSampler.EscapeSmoothJulia(cr, ci, juliaRe, juliaIm, maxIter);
 
                 double t = smooth / maxIter + flashBoost;
                 if (t > 1.0)

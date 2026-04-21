@@ -253,11 +253,30 @@ internal static class ServiceConfiguration
         services.AddSingleton<IUiThemeSelectionModal, UiThemeSelectionModal>();
         services.AddSingleton<IKeyHandlerConfig<DeviceSelectionKeyContext>, DeviceSelectionKeyHandlerConfig>();
         services.AddSingleton<IDeviceSelectionModal, DeviceSelectionModal>();
+        services.AddSingleton<IKeyHandlerConfig<LayerPickerKeyContext>, LayerPickerKeyHandlerConfig>();
+        services.AddSingleton<IKeyHandler<LayerPickerKeyContext>, GenericKeyHandler<LayerPickerKeyContext>>();
+        services.AddSingleton<ILayerPickerModal, LayerPickerModal>();
         services.AddSingleton<IHelpContentProvider, HelpContentProvider>();
         services.AddSingleton<IHelpModal, HelpModal>();
         services.AddSingleton<ISettingsModalRenderer, SettingsModalRenderer>();
         services.AddSingleton<IKeyHandlerConfig<SettingsModalKeyContext>, SettingsModalKeyHandlerConfig>();
-        services.AddSingleton<ISettingsModal, SettingsModal>();
+        services.AddSingleton<IPresetEditorCanvasLayerStackService, PresetEditorCanvasLayerStackService>();
+        services.AddSingleton<ISettingsModal>(sp =>
+            new SettingsModal(
+                sp.GetRequiredService<IVisualizationOrchestrator>(),
+                sp.GetRequiredService<VisualizerSettings>(),
+                sp.GetRequiredService<IPresetRepository>(),
+                sp.GetRequiredService<ISettingsModalRenderer>(),
+                sp.GetRequiredService<IKeyHandler<SettingsModalKeyContext>>(),
+                sp.GetRequiredService<IConsoleDimensions>(),
+                sp.GetRequiredService<ITextLayerBoundsEditSession>(),
+                sp.GetRequiredService<ITitleBarNavigationContext>(),
+                sp.GetRequiredService<IVisualizer>(),
+                sp.GetRequiredService<IDefaultTextLayersSettingsFactory>(),
+                sp.GetRequiredService<ITextLayerStateStore>(),
+                sp.GetRequiredService<ILayerPickerModal>(),
+                sp.GetRequiredService<IVisualizationRenderer>(),
+                sp.GetRequiredService<IDisplayState>()));
         services.AddSingleton<IKeyHandlerConfig<ShowEditModalKeyContext>, ShowEditModalKeyHandlerConfig>();
         services.AddSingleton<IShowEditModal, ShowEditModal>();
         services.AddSingleton<IKeyHandlerConfig<MainLoopKeyContext>, MainLoopKeyHandlerConfig>();

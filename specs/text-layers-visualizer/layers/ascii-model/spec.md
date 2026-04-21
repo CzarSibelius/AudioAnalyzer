@@ -1,0 +1,65 @@
+﻿# ASCII Model (AsciiModel)
+
+## Blueprint
+
+### Context
+
+_See Architecture._
+
+### Architecture
+
+- **Preset / layer JSON**: `Custom` holds `AsciiModelSettings` (discovered via reflection in the S modal).
+- **Render mode**: `RenderMode` — `Shape` (default) or `LegacyGradient`. Shape mode uses more work per cell (six depth tests and lighting samples).
+- **Shape contrast**: `ShapeContrastExponent` — applies only in `Shape` mode; `1.0` disables. Values above `1.0` apply global contrast (normalize the sampling vector by its max component, raise to this power, scale back), which tends to sharpen edges between regions.
+- **Lighting**: Lambert diffuse with an **ambient** floor so back faces are not fully black: `intensity = Ambient + (1 - Ambient) × max(dot(n, L), 0)`.
+  - **Ambient** (`0`–`1`, default `0.2`) — minimum brightness; raise if sides look too dark.
+  - **Lighting preset** (`LightingPreset`): **Classic** — original fixed direction (~ toward +X,+Y,+Z); **Headlight** — light from the viewer (+Z), so the facing side stays brighter while the model rotates; **Custom** — use **Light azimuth °** and **Light elevation °** (horizontal angle from +X toward +Y; elevation from the XY plane toward +Z). Applies to both **Shape** and **Legacy gradient** modes.
+- **Model folder**: `ModelFolderPath` — directory containing `.obj` files (sorted by name). When empty, the effective folder is the **global default asset base** from General settings (`UiSettings.DefaultAssetFolderPath`), or **`AppContext.BaseDirectory`** when unset; relative paths combine with that base; absolute paths ignore it. Which file is shown is stored as **`SelectedModelFileName`** in `Custom` (file name only; when null, the first sorted file). **I** and **Flash** advance it for all AsciiModel layers; persisted when save runs after a handled key. Not shown in the S modal. The application ships **`models/sample/`** next to the executable (`cube.obj`, `tetrahedron.obj`); use `models\\sample` as a **relative** layer path from the global base, or an absolute path, to point at those files.
+- **Rotation**: `RotationAxis` (Y turntable or Xyz combined), `RotationDirection` (Clockwise / CounterClockwise), `RotationSpeed` (base step before SpeedMultiplier).
+- **Zoom**: `EnableZoom`, `ZoomMin`, `ZoomMax`, `ZoomSpeed`, `ZoomStyle` (same styles as AsciiImage: Sine, Breathe, PingPong).
+- **Performance**: `MaxTriangles` — if the mesh exceeds this count, the layer shows a short placeholder instead of rendering.
+
+### Performance (Shape vs Legacy, viewport, mesh)
+
+- **Render mode**: **Shape** (default) is much heavier than **Legacy gradient**: six subsamples per cell, z-buffered shading per sample, then a full pass over every cell to pick the nearest character from a large shape table. **Legacy gradient** uses one center sample per cell and a short brightness ramp (` .:-=+*#%@`). For smooth 60 FPS on large terminals or dense meshes, prefer **Legacy** or reduce cost below.
+- **Viewport area**: Cost scales roughly with **width × height** of the layer draw region. Use a smaller terminal, or **RenderBounds** ([ADR-0058](../../../../docs/adr/0058-layer-render-bounds.md)) to clip the layer to a smaller rectangle.
+- **Triangle count**: Fewer triangles mean less raster work; **`MaxTriangles`** caps work and shows a placeholder when exceeded. Simpler OBJ files help.
+- **Implementation**: The layer reuses raster z/luminance buffers and caches the sorted `.obj` path list per layer when the resolved folder path and directory timestamp are unchanged. **Back-face culling** uses the triangle centroid and view direction toward the camera (eye at origin): a triangle is skipped only when the dot product of the unit face normal and that direction is **strictly negative** (clearly facing away). Grazing or nearly perpendicular faces are not culled, which avoids holes on curved meshes. **Wrong winding** on part of an OBJ can still make those faces disappear as back-facing; open/non-manifold meshes may also look incorrect.
+
+- **Parser**: `ObjFileParser` supports `v` vertex lines and `f` faces (triangles and quads; polygons fan-triangulated). Vertex indices may use `v/vt/vn`; only the position index is used. Lines are `v` / `f` followed by whitespace (space or tab). **Vertex normals** are computed (angle-weighted from adjacent faces) for smooth shading in shape mode. **`ParseFile(IFileSystem, path)`** reads bytes via the same `IFileSystem` registered in DI (so tests can use `MockFileSystem`).
+- **Assets**: `FileBasedLayerAssetPaths.GetSortedObjPaths` enumerates `.obj` files through `IFileSystem.Directory`; `AsciiModelLayer` uses `IFileInfo` for cache invalidation.
+- **Rendering**: `AsciiModelRasterizer` — `System.Numerics` rotation, perspective projection with horizontal **cell aspect** correction (~2×) so models are not stretched vertically in the terminal. **Shape mode** uses fixed cell sampling positions shared with `AsciiShapeTable` (`AsciiCellSampling`); the final pass skips `Set` when no geometry hit so lower layers remain visible outside the silhouette. Each frame, **vertex positions and vertex normals are transformed once** (world space) and indexed per triangle instead of transforming shared vertices repeatedly. **Shape-mode character selection** runs only over the **screen-space bounding box** of triangles that passed culling and projection (not the full layer rectangle when the model footprint is smaller). **Nearest-character lookup** uses a `Vector4` fast path for the first four dimensions of squared Euclidean distance vs. each row in the shape table (same tie-breaking as a scalar six-term sum). Character shape vectors live in `AsciiShapeTable.Generated.cs`; regenerate with `dotnet run --project tools/AsciiShapeTableGen` (requires a monospace TTF on the machine, e.g. Consolas on Windows). Directional light comes from `AsciiModelLighting.GetLightDirection` (preset or custom angles); diffuse is combined with **Ambient** per sample.
+- **State**: `AsciiModelState` in `ITextLayerStateStore<AsciiModelState>` — cached mesh + file identity (length + last write), `RotationAngle`, `ZoomPhase`, reused raster buffers (legacy z-buffer; shape z + luminance), **reused world-space vertex and vertex-normal arrays** sized to the mesh, cached sorted `.obj` paths + resolved folder key + optional directory last-write time.
+- **Profiling**: For before/after timing on a representative mesh and terminal size, use a release build and a profiler (e.g. Visual Studio CPU Usage, `dotnet-trace`) with **`MeasuredMainRenderFps`** / optional per-layer timing in the S modal when enabled in UI settings; no automated benchmark is wired in CI.
+- **Deferred**: Directional contrast using neighbor-cell “external” samples (see the article) is not implemented; global contrast only.
+- **References**: [ADR-0014](../../../../docs/adr/0014-visualizers-as-layers.md), [ADR-0043](../../../../docs/adr/0043-textlayer-state-store.md), [ADR-0055](../../../../docs/adr/0055-layer-specific-beat-reaction.md).
+
+### Constraints
+
+- **I** — Advance to the next `.obj` in the folder (when any AsciiImage or AsciiModel layer exists), same as AsciiImage.
+- **S** (settings modal) — **Enter** on **Model folder** opens the text editor for the path (same pattern as AsciiImage **Image path**).
+
+- Projection uses the **layer draw region** (full visualizer viewport when `RenderBounds` is omitted; otherwise the pixel rectangle from **RenderBounds**), so the model is centered and scaled to that rectangle ([ADR-0058](../../../../docs/adr/0058-layer-render-bounds.md)).
+- Minimum terminal size follows the global TextLayers minimums.
+- **Compositing**: In **Shape** mode, only cells where the projected mesh covers at least one subsample are written; other cells are left unchanged so **lower-ZOrder** layers show through the empty area around the model (within **RenderBounds** / clip). **Legacy** mode already wrote only covered cells.
+
+## Contract
+
+### Definition of Done
+
+- **SpeedMultiplier** (common layer) — scales rotation and zoom animation speed with `SpeedBurst` and beat reactions.
+- **BeatFlashActive** / **BeatCount** — optional **SpeedBurst** and **Flash** (advance to next `.obj` file) via Custom `BeatReaction`.
+
+### Regression guardrails
+
+- New visual content is a **text layer** (`TextLayerRendererBase`), not a new `IVisualizer` ([ADR-0014](../../../../docs/adr/0014-visualizers-as-layers.md)).
+- Viewport rules: .cursor/rules/visualizers-viewport.mdc.
+
+### Scenarios
+
+```gherkin
+Scenario: Layer draws when enabled
+  Given the layer is present in the active preset with Enabled true
+  When TextLayersVisualizer renders a frame
+  Then the layer writes cells consistent with its settings and snapshot inputs
+```

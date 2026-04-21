@@ -35,17 +35,15 @@ Create new visualizer content as **text layer renderers** in TextLayersVisualize
 
 When adding or changing a visualizer:
 
-1. Read `docs/visualizers/README.md` for the list of visualizers and spec files.
-2. If modifying an existing visualizer, read its spec file. If adding a new one, create a new spec file following the same format.
+1. Read **[specs/text-layers-visualizer/spec.md](../../specs/text-layers-visualizer/spec.md)** (hub) and the relevant **`specs/text-layers-visualizer/layers/<slug>/spec.md`**.
+2. Follow **[specs/TEMPLATE.md](../../specs/TEMPLATE.md)** (Blueprint + Contract). If adding a new layer kind, add a new `layers/<slug>/spec.md` and link it from the hub index.
 3. Follow the viewport rule above and ADRs (e.g. encapsulation, TextLayers cell buffer) as applicable.
 
 Keep the spec in sync with the implementation.
 
 ## Further reading
 
-- Per-layer specs (behavior, settings, viewport constraints): [visualizers/README.md](../visualizers/README.md)
+- Stub index (links to `specs/`): [visualizers/README.md](../visualizers/README.md)
 - Console UI components (header, modals, viewports, key handlers): [ui-components.md](../ui-components.md)
-- UI layout specs (screen dump + line references): [ui-spec-format.md](../ui-spec-format.md)
-- Application modes (Preset editor, Show play, General settings): [ui-spec-application-modes.md](../ui-spec-application-modes.md)
-- Settings-related screens: [ui-spec-settings-surfaces.md](../ui-spec-settings-surfaces.md)
+- Console UI **The Spec** hub: [specs/console-ui/spec.md](../../specs/console-ui/spec.md) (stubs: `docs/ui-spec-*.md`)
 - C# documentation and file organization: [ADR-0016](../adr/0016-csharp-documentation-and-file-organization.md); see also `.cursor/rules/csharp-standards.mdc` and `.cursor/rules/no-empty-catch.mdc`

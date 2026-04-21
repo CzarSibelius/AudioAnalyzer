@@ -4,7 +4,7 @@
 
 ## Follow these first
 
-1. Open **[`AGENTS.md`](../AGENTS.md)** — .NET 10 SDK, build (`dotnet build .\AudioAnalyzer.sln`, **0 warnings**), tests, format, ADR pointer, and the topic index table.
+1. Open **[`AGENTS.md`](../AGENTS.md)** — .NET 10 SDK, build (`dotnet build .\AudioAnalyzer.sln`, **0 warnings**), tests, format, ADR pointer, **The Spec** under `specs/`, and the topic index table.
 2. Before architectural or user-facing changes, read **[`docs/adr/README.md`](../docs/adr/README.md)** and align with accepted ADRs. Condensed ADR reminders for agents live in **[`.cursor/rules/adr.mdc`](../.cursor/rules/adr.mdc)** (Cursor loads rules automatically; open that file when working from other tools).
 
 ## Working in this repo (short summary)

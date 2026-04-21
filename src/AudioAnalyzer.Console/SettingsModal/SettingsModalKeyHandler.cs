@@ -202,6 +202,16 @@ internal sealed class SettingsModalKeyHandlerConfig : IKeyHandlerConfig<Settings
                 Description: "Change layer type (left panel)",
                 Section),
             new KeyHandling.KeyBindingEntry<SettingsModalKeyContext>(
+                Matches: k => k.Key == ConsoleKey.L && (k.Modifiers & (ConsoleModifiers.Shift | ConsoleModifiers.Control | ConsoleModifiers.Alt)) == 0,
+                Action: (_, context) =>
+                {
+                    context.OpenLayerTypePickerFromS?.Invoke();
+                    return false;
+                },
+                Key: "L",
+                Description: "Open layer type picker for selected layer (not on Preset row)",
+                Section),
+            new KeyHandling.KeyBindingEntry<SettingsModalKeyContext>(
                 Matches: k => k.Key == ConsoleKey.R,
                 Action: (_, context) =>
                 {

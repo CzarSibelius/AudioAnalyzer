@@ -1,0 +1,56 @@
+﻿# Mirror (layer)
+
+## Blueprint
+
+### Context
+
+Mirrors the current buffer content horizontally or vertically. One part of the screen is the source; the other part is overwritten with its mirror image. Place this layer **above** (higher Z-order than) the layers you want mirrored; it reads whatever has been drawn so far and writes the mirrored copy. Useful for symmetric effects (e.g. left half oscilloscope reflected on the right, or top half reflected to bottom).
+
+### Architecture
+
+- **Schema**: `TextLayerSettings` when `LayerType` is `Mirror`; custom settings in `MirrorSettings`.
+- **Direction** (enum, cycle in S modal): Which side is the source and mirror axis.
+  - **LeftToRight** — Left side is source; right side shows mirror of left.
+  - **RightToLeft** — Right side is source; left side shows mirror of right.
+  - **TopToBottom** — Top side is source; bottom side shows mirror of top.
+  - **BottomToTop** — Bottom side is source; top side shows mirror of bottom.
+- **Mirror split %** (Split, int 25–75, cycle): Position of the mirror boundary as a percentage **within the layer’s draw region** (the full visualizer viewport when `RenderBounds` is null; otherwise the pixel rectangle from [ADR-0058](../../../../docs/adr/0058-layer-render-bounds.md)). Source and destination regions use the smaller of the two sides for 1:1 mirror (e.g. 50% = half and half; 25% = mirror the outer 25% on each end).
+- **Rotation** (enum, cycle): Optional rotation of the mirrored (destination) region.
+  - **None** — Mirrored content shown as-is.
+  - **Flip180** — Flip the mirrored region 180° (both axes).
+- **PaletteId** / **Enabled** / **ZOrder** etc.: Standard common layer settings. Mirror does not support beat reaction (no BeatReaction setting).
+
+- **Implementation**: `TextLayers/Mirror/MirrorLayer.cs`, `MirrorSettings.cs`, `MirrorDirection.cs`, `MirrorRotation.cs`.
+- **State**: None; Mirror is stateless. No per-layer state list in TextLayersVisualizer.
+- **Buffer read**: Uses `ViewportCellBuffer.Get(x, y)` to read cells, then `Set` to write the mirrored region. Flip180 uses a temporary buffer to flip the destination rectangle in-place.
+- **References**: [ADR-0014](../../../../docs/adr/0014-visualizers-as-layers.md), [ADR-0021](../../../../docs/adr/0021-textlayer-settings-common-custom.md), [ADR-0058](../../../../docs/adr/0058-layer-render-bounds.md).
+
+### Constraints
+
+- **1–9** — Select layer.
+- **←/→** — Cycle layer type to Mirror.
+- **S** — Open settings; edit Direction, Split %, Rotation, and common properties.
+
+- **Horizontal directions** (LeftToRight, RightToLeft): Minimum width 2 columns.
+- **Vertical directions** (TopToBottom, BottomToTop): Minimum height 2 rows.
+- Uses the layer’s render rectangle in buffer coordinates (full viewport when `RenderBounds` is null). Split percent and direction determine source and destination regions **inside that rectangle** (1:1 mirror of the smaller side).
+
+## Contract
+
+### Definition of Done
+
+None. Mirror only reads and copies the buffer; it does not use analysis snapshot data.
+
+### Regression guardrails
+
+- New visual content is a **text layer** (`TextLayerRendererBase`), not a new `IVisualizer` ([ADR-0014](../../../../docs/adr/0014-visualizers-as-layers.md)).
+- Viewport rules: .cursor/rules/visualizers-viewport.mdc.
+
+### Scenarios
+
+```gherkin
+Scenario: Layer draws when enabled
+  Given the layer is present in the active preset with Enabled true
+  When TextLayersVisualizer renders a frame
+  Then the layer writes cells consistent with its settings and snapshot inputs
+```

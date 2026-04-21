@@ -52,6 +52,10 @@ public sealed class FractalZoomSettings
     [Setting("BeatReaction", "Beat reaction")]
     public FractalZoomBeatReaction BeatReaction { get; set; } = FractalZoomBeatReaction.None;
 
+    /// <summary>When true, each zoom phase wrap jumps to a new catalog anchor (illusory infinite zoom).</summary>
+    [Setting("IllusoryInfiniteZoom", "Illusory infinite zoom")]
+    public bool IllusoryInfiniteZoom { get; set; } = true;
+
     /// <summary>Charset id for escape-time density glyphs (<c>charsets/*.json</c>, ADR-0080). Unset uses <see cref="CharsetIds.DensitySoft"/>.</summary>
     [Setting("CharsetId", "Charset")]
     [CharsetSetting]
