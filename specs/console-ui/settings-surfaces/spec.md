@@ -59,6 +59,7 @@ All selectable hub rows and vertical lists use the same **arrow + full-width the
 | Inline text edit            | Application name      | No                    | Preset rename, string settings   |
 | Full-screen list picker     | No                    | Yes                   | Palette picker (right column)    |
 | Two-column overlay          | No                    | No                    | Yes (layers | settings / picker) |
+| Delete entire preset        | No                    | No                    | Yes (**Preset** row + **Delete**; [preset-settings-modal](../preset-settings-modal/spec.md)) |
 | Palette swatch / animation  | Toolbar palette cell  | No                    | Palette row + picker list        |
 | Idle redraw (palette phase) | Same as main toolbar  | No                    | Yes (`DrawIdleOverlayTick`)      |
 

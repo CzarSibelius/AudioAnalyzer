@@ -31,6 +31,8 @@ Presets (named TextLayers configurations) were stored inline in `appsettings.jso
 
 7. **Rename (R key)**: Updates `Name` in the preset file via `Save()`. Id (filename) stays the same.
 
+8. **Delete preset (S modal, Preset row)**: Operator removes the **active** preset file via `Delete(id)` when the **Preset** line is selected in the preset / layer settings modal (**S**); at least one preset must remain (see contract in [preset-settings-modal spec](../../specs/console-ui/preset-settings-modal/spec.md)). The replacement `ActivePresetId` is chosen **before** calling `Delete` using the same forward step as preset **V** on the pre-delete list ([`PresetNavigationOrder.GetNextPresetIdByDisplayName`](../../src/AudioAnalyzer.Domain/PresetNavigationOrder.cs)); then `TextLayers` load from the new active preset’s file.
+
 ## Consequences
 
 - Presets can be shared, edited externally, and versioned separately.

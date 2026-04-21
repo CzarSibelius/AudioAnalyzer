@@ -28,4 +28,4 @@ Deliver three Preset editor UX improvements, all gated to **Preset editor** mode
 
 If ordering rules or key chords need product tweaks, **update the spec in the same commit** (same-commit rule). If **L** conflicts with another feature, document the chosen key in the spec and help in the same commit.
 
-**Follow-on PBIs** (same spec hub, split for delivery): [PBI-005](./PBI-005-preset-editor-insert-delete-canvas.md) (Insert/Delete on canvas when **S** closed), [PBI-006](./PBI-006-layer-picker-from-s-modal.md) (**L** from **S** modal + nested guard + slot sync).
+**Follow-on PBIs** (same spec hub, split for delivery): [PBI-005](./PBI-005-preset-editor-insert-delete-canvas.md) (Insert/Delete on canvas when **S** closed), [PBI-006](./PBI-006-layer-picker-from-s-modal.md) (**L** from **S** modal + nested guard + slot sync), [PBI-007](./PBI-007-delete-preset.md) (delete entire preset: **S** modal, **Preset** row + **Delete**; spec: [preset-settings-modal](../specs/console-ui/preset-settings-modal/spec.md)).

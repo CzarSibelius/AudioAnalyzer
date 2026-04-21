@@ -8,7 +8,7 @@ Console UI surface documented with ASCII screen dumps and line references per [f
 
 ### Architecture
 
-Overlay for editing **preset-level** settings (name, default palette), **preset** shortcuts (rename **R**, new **N**), and **text layer** settings (including **Insert** / **Delete** to add or remove layers up to the max count; [ADR-0070](../../../docs/adr/0070-settings-modal-add-remove-layers.md)). Open with **S** in Preset editor or Show play ([ADR-0023](../../../docs/adr/0023-settings-modal-layer-editing.md)). Not available in General settings ([ADR-0061](../../../docs/adr/0061-general-settings-mode.md)). See [ui-spec-settings-surfaces.md](../settings-surfaces/spec.md) for shared patterns. Selectable rows (left list, right settings, palette picker): [ui-spec-menu-selection.md](../menu-selection/spec.md). **L** opens the same **layer type picker** as on the main Preset editor canvas when **LayerList** focus allows (full contract: [preset-editor-navigation/spec.md](../preset-editor-navigation/spec.md)); **Ins** / **Del** remain the modal’s primary add/remove affordance while **S** is open.
+Overlay for editing **preset-level** settings (name, default palette), **preset** shortcuts (rename **R**, new **N**, **delete entire preset**), and **text layer** settings (including **Insert** / **Delete** to add or remove layers up to the max count; [ADR-0070](../../../docs/adr/0070-settings-modal-add-remove-layers.md)). Open with **S** in Preset editor or Show play ([ADR-0023](../../../docs/adr/0023-settings-modal-layer-editing.md)). Not available in General settings ([ADR-0061](../../../docs/adr/0061-general-settings-mode.md)). See [ui-spec-settings-surfaces.md](../settings-surfaces/spec.md) for shared patterns. Selectable rows (left list, right settings, palette picker): [ui-spec-menu-selection.md](../menu-selection/spec.md). **L** opens the same **layer type picker** as on the main Preset editor canvas when **LayerList** focus allows (full contract: [preset-editor-navigation/spec.md](../preset-editor-navigation/spec.md)); **Ins** / **Del** remain the modal’s primary add/remove affordance for **layers** while **S** is open. **Preset-level delete:** when the left-column **Preset** row is selected (same focus as **R** / **N**), plain **Delete** removes the **whole** active preset (disk file via [`IPresetRepository.Delete`](../../../src/AudioAnalyzer.Application/Abstractions/IPresetRepository.cs)), not a text layer — see Constraints and Contract below. Persistence model: [ADR-0022](../../../docs/adr/0022-presets-in-own-files.md).
 
 **Initial layer selection:** When the modal opens, the left-column **layer** highlight matches the active layer in the main Preset editor (the same target as **1–9** and the toolbar), not always the first layer.
 
@@ -26,7 +26,7 @@ Minimum console width ~40 columns; below that the modal may skip drawing.
 
 ```text
 aUdioNLZR/pReset/pReset_2[1]:aScii_image
-  1-9 layer, Ins add, Del remove, ↑↓ Preset or layers, ←→ type, Ctrl+↑↓ move, Enter settings, Shift+1-9 toggle, R rename, N preset, Esc close
+  1-9 layer, Ins add, Del remove layer or delete preset, ↑↓ Preset or layers, ←→ type, Ctrl+↑↓ move, Enter settings, Shift+1-9 toggle, R rename, N preset, Esc close
   ────────────────────────────┬───────────────────────────────────
  ► Preset
    ● 1. Ascii_image            Name:My preset
@@ -52,7 +52,7 @@ aUdioNLZR/pReset/pReset_2[1]:aScii_image
 
 | Focus              | Hint summary (see `GetHintText` in `SettingsModalRenderer`)                                                                                                                                                                                                               |
 | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **LayerList**      | **1–9** selects a layer; **Insert** adds a layer (up to max); **Delete** removes the selected layer; **L** opens the layer type picker for the selected layer row (nested overlay); **↑/↓** moves between **Preset** and layers; **Enter** opens right column (preset or layer settings); Shift+1–9 toggle; **R** rename; **N** new preset; Esc close.   |
+| **LayerList**      | **1–9** selects a layer; **Insert** adds a layer (up to max); **Delete** removes the **selected layer** when a **layer** row is selected, or **deletes the entire active preset** when the **Preset** row is selected (see Contract); **L** opens the layer type picker for the selected layer row (nested overlay); **↑/↓** moves between **Preset** and layers; **Enter** opens right column (preset or layer settings); Shift+1–9 toggle; **R** rename; **N** new preset; Esc close.   |
 | **Renaming**       | Type preset name; Enter save; Esc cancel.                                                                                                                                                                                                                                 |
 | **SettingsList**   | Move in settings; Enter cycle or open palette list on Palette; string rows Enter to edit; ←/Esc back to layer list.                                                                                                                                                       |
 | **EditingSetting** | Type value; Enter or ↑↓ confirm; Esc cancel.                                                                                                                                                                                                                              |
@@ -69,6 +69,10 @@ State fields: `SettingsModalState` (`LeftPanelPresetSelected`, `SelectedLayerInd
 ### Constraints
 
 - **8-column blocks** and **Label:value** formatting per [ADR-0050](../../../docs/adr/0050-ui-alignment-blocks-label-format.md).
+- **Delete disambiguation:** Plain **Delete** in **LayerList** depends on selection: **layer** row → remove that layer ([ADR-0070](../../../docs/adr/0070-settings-modal-add-remove-layers.md)); **Preset** row → delete the **active preset** file and switch the app to another preset (below). Same key as canvas layer delete when **S** is closed ([preset-editor-navigation/spec.md](../preset-editor-navigation/spec.md)); no separate global shortcut for preset delete unless product adds one later.
+- **At least one preset:** [ADR-0019](../../../docs/adr/0019-preset-textlayers-configuration.md) requires a non-empty preset collection. If only **one** preset exists, **Delete** on the **Preset** row is a **no-op** (preset file is not removed; `ActivePresetId` unchanged).
+- **After a successful preset delete:** Compute the successor **`ActivePresetId`** from the preset list **before** removing the file (same result as **V** from the soon-to-be-deleted preset): [`PresetNavigationOrder.GetNextPresetIdByDisplayName`](../../../src/AudioAnalyzer.Domain/PresetNavigationOrder.cs)(`presetsBeforeDelete`, `activeId`) — **not** from `GetAll()` after `Delete`, which would mis-order when the deleted id is no longer in the list. Then call `IPresetRepository.Delete(activeId)`; refresh `VisualizerSettings.Presets` from `GetAll()`; assign the computed successor id; load `TextLayers` from the new active preset’s stored config; persist settings; notify layer structure / state so the visualizer matches the new preset (same invariants as switching presets via **V**).
+- **Show play:** Same **S** modal rules when Show play opens the preset / layer overlay (not General settings).
 - Regenerate screenshot + **Line reference** when layout or semantics change.
 
 ## Contract
@@ -77,10 +81,15 @@ State fields: `SettingsModalState` (`LeftPanelPresetSelected`, `SelectedLayerInd
 
 - Screenshot block matches a fresh screen dump when rows or labels change.
 - Every screen line in the dump has a matching **Line reference** entry.
+- Hint line documents **Del** for both layer removal and preset deletion where applicable; [`SettingsModalRenderer`](../../../src/AudioAnalyzer.Console/SettingsModal/SettingsModalRenderer.cs) hint text matches this spec after behavior ships.
+- **Delete** on **Preset** row with **two or more** presets removes the active preset file, activates the successor per **Constraints**, and leaves the modal in a consistent state (left list, `TextLayers`, persistence).
+- **Delete** on **Preset** row with **one** preset has no effect on disk or active id.
 
 ### Regression guardrails
 
 - Cross-links to other console-ui specs and ADRs resolve after moves under specs/console-ui/.
+- **Delete** on a **layer** row still only removes layers (max/min counts, state store) per ADR-0070; preset delete must not regress layer-delete paths.
+- Help (**H**) and settings-modal binding lists describe preset delete only where **S** / **LayerList** bindings are listed.
 
 ### Scenarios
 
@@ -89,4 +98,26 @@ Scenario: Capture matches spec
   Given the documented mode is active in a Windows console
   When the operator triggers a screen dump (Ctrl+Shift+E per ADR-0046)
   Then pasted ASCII matches the spec screenshot block line-for-line for controlled fixtures
+
+Scenario: Delete on Preset row removes entire preset when another exists
+  Given Preset editor or Show play is active and the S preset settings overlay is open
+  And at least two presets exist
+  And the left-column Preset row is selected
+  When the user presses Delete
+  Then the former active preset file is removed via the preset repository
+  And the active preset becomes the next in ascending display-name order with wrap
+  And TextLayers match the newly active preset's saved configuration
+
+Scenario: Delete on Preset row is ignored when only one preset exists
+  Given the S modal is open with the Preset row selected
+  And exactly one preset exists
+  When the user presses Delete
+  Then no preset file is deleted
+  And ActivePresetId is unchanged
+
+Scenario: Delete on layer row still removes only the layer
+  Given the S modal is open with a layer row selected
+  When the user presses Delete
+  Then only that layer is removed per ADR-0070
+  And the preset file for the active preset remains
 ```

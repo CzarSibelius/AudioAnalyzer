@@ -312,6 +312,47 @@ internal sealed class SettingsModalKeyHandlerConfig : IKeyHandlerConfig<Settings
                     var state = context.State;
                     if (state.LeftPanelPresetSelected)
                     {
+                        var vs = context.VisualizerSettings;
+                        if (vs.Presets is not { Count: >= 2 })
+                        {
+                            return false;
+                        }
+
+                        string? activeId = vs.ActivePresetId;
+                        if (string.IsNullOrWhiteSpace(activeId))
+                        {
+                            return false;
+                        }
+
+                        string? nextActiveId = PresetNavigationOrder.GetNextPresetIdByDisplayName(vs.Presets, activeId);
+                        if (string.IsNullOrWhiteSpace(nextActiveId))
+                        {
+                            return false;
+                        }
+
+                        Preset? successorPreset = context.PresetRepository.GetById(nextActiveId);
+                        if (successorPreset == null)
+                        {
+                            return false;
+                        }
+
+                        context.PresetRepository.Delete(activeId);
+                        vs.Presets = context.PresetRepository.GetAll()
+                            .Select(p => new Preset { Id = p.Id, Name = p.Name, Config = new TextLayersVisualizerSettings() })
+                            .ToList();
+                        vs.ActivePresetId = nextActiveId;
+                        vs.TextLayers ??= new TextLayersVisualizerSettings();
+                        vs.TextLayers.CopyFrom(successorPreset.Config);
+                        context.TextLayers = vs.TextLayers;
+                        context.SortedLayers = (vs.TextLayers.Layers ?? []).OrderBy(l => l.ZOrder).ToList();
+                        state.LeftPanelPresetSelected = true;
+                        state.SelectedLayerIndex = context.SortedLayers.Count > 0
+                            ? Math.Min(state.SelectedLayerIndex, context.SortedLayers.Count - 1)
+                            : 0;
+                        state.SelectedSettingIndex = 0;
+                        state.Focus = SettingsModalFocus.LayerList;
+                        state.Renaming = false;
+                        context.NotifyLayersStructureChanged();
                         return false;
                     }
 
@@ -345,7 +386,7 @@ internal sealed class SettingsModalKeyHandlerConfig : IKeyHandlerConfig<Settings
                     return false;
                 },
                 Key: "Delete",
-                Description: "Remove selected text layer",
+                Description: "Remove selected text layer, or delete entire preset when Preset row selected (requires 2+ presets)",
                 Section),
         ];
     }
