@@ -23,6 +23,10 @@ public sealed class AudioDerivedBeatTimingSourceTests
         }
 
         public void DecayFlashFrame() => DecayCalls++;
+
+        public void ResetAudioDerivedBeatTiming()
+        {
+        }
     }
 
     [Fact]

@@ -45,6 +45,7 @@ internal sealed class DeviceCaptureController : IDeviceCaptureController
         }
         oldInput?.StopCapture();
         oldInput?.Dispose();
+        _beatTiming.NotifyAudioCaptureStopped();
 
         lock (_deviceLock)
         {
@@ -77,6 +78,7 @@ internal sealed class DeviceCaptureController : IDeviceCaptureController
             input = _currentInput;
         }
         input?.StopCapture();
+        _beatTiming.NotifyAudioCaptureStopped();
     }
 
     /// <inheritdoc />
@@ -99,5 +101,6 @@ internal sealed class DeviceCaptureController : IDeviceCaptureController
         }
         toDispose?.StopCapture();
         toDispose?.Dispose();
+        _beatTiming.NotifyAudioCaptureStopped();
     }
 }

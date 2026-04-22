@@ -20,4 +20,10 @@ public interface IBeatDetector
 
     /// <summary>Decays the beat flash. Call every ~50ms when rendering.</summary>
     void DecayFlashFrame();
+
+    /// <summary>
+    /// Clears smoothed BPM, beat ordinal, energy/interval history, and flash. Used when audio capture stops or
+    /// audio-derived tempo is explicitly invalidated.
+    /// </summary>
+    void ResetAudioDerivedBeatTiming();
 }

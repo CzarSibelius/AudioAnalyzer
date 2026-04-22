@@ -5,10 +5,16 @@ namespace AudioAnalyzer.Application.BeatDetection;
 /// <summary>Detects beats from audio energy using energy history and BPM estimation.</summary>
 public sealed class BeatDetector : IBeatDetector
 {
+    /// <summary>
+    /// Wall-clock window with no accepted beat after which smoothed BPM is cleared (see <c>specs/beat-timing-audio/spec.md</c>).
+    /// </summary>
+    public const double StaleBeatWindowSeconds = 6.0;
+
     private const int EnergyHistorySize = 20;
     private const int MinBeatInterval = 250;
     private const int BPMHistorySize = 8;
 
+    private readonly Func<DateTime> _getUtcNow;
     private readonly Queue<double> _energyHistory = new();
     private readonly Queue<DateTime> _beatTimes = new();
     private double _beatThreshold = 1.3;
@@ -16,6 +22,12 @@ public sealed class BeatDetector : IBeatDetector
     private double _currentBpm;
     private int _beatFlashFrames;
     private int _beatCount;
+
+    /// <summary>Creates a detector. <paramref name="getUtcNow"/> enables deterministic tests; production omits it.</summary>
+    public BeatDetector(Func<DateTime>? getUtcNow = null)
+    {
+        _getUtcNow = getUtcNow ?? (() => DateTime.UtcNow);
+    }
 
     /// <inheritdoc />
     public double BeatSensitivity
@@ -36,6 +48,8 @@ public sealed class BeatDetector : IBeatDetector
     /// <inheritdoc />
     public void ProcessFrame(double energy)
     {
+        ExpireStaleTempoIfNeeded();
+
         _energyHistory.Enqueue(energy);
         if (_energyHistory.Count > EnergyHistorySize)
         {
@@ -48,7 +62,7 @@ public sealed class BeatDetector : IBeatDetector
         }
 
         double avgEnergy = _energyHistory.Take(_energyHistory.Count - 1).Average();
-        DateTime now = DateTime.Now;
+        DateTime now = _getUtcNow();
         if (energy > avgEnergy * _beatThreshold && energy > 0.01 &&
             (now - _lastBeatTime).TotalMilliseconds > MinBeatInterval)
         {
@@ -68,9 +82,41 @@ public sealed class BeatDetector : IBeatDetector
     /// <inheritdoc />
     public void DecayFlashFrame()
     {
+        ExpireStaleTempoIfNeeded();
+
         if (_beatFlashFrames > 0)
         {
             _beatFlashFrames--;
+        }
+    }
+
+    /// <inheritdoc />
+    public void ResetAudioDerivedBeatTiming()
+    {
+        _energyHistory.Clear();
+        _beatTimes.Clear();
+        _currentBpm = 0;
+        _beatFlashFrames = 0;
+        _beatCount = 0;
+        _lastBeatTime = DateTime.MinValue;
+    }
+
+    private void ExpireStaleTempoIfNeeded()
+    {
+        if (_currentBpm <= 0)
+        {
+            return;
+        }
+
+        if (_lastBeatTime == DateTime.MinValue)
+        {
+            return;
+        }
+
+        DateTime now = _getUtcNow();
+        if ((now - _lastBeatTime).TotalSeconds >= StaleBeatWindowSeconds)
+        {
+            ResetAudioDerivedBeatTiming();
         }
     }
 

@@ -60,6 +60,17 @@ public sealed class BeatTimingRouter : IBeatTimingSource, IBeatTimingConfigurato
     }
 
     /// <inheritdoc />
+    public void NotifyAudioCaptureStopped()
+    {
+        if (_source != BpmSource.AudioAnalysis)
+        {
+            return;
+        }
+
+        _audio.ResetAudioDerivedBeatTiming();
+    }
+
+    /// <inheritdoc />
     public double CurrentBpm => _active.CurrentBpm;
 
     /// <inheritdoc />

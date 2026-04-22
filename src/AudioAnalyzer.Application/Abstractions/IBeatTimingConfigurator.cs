@@ -14,4 +14,10 @@ public interface IBeatTimingConfigurator
     /// Selects the active <see cref="IBeatTimingSource"/> implementation and updates demo BPM from <paramref name="deviceId"/> when needed.
     /// </summary>
     void ApplyFromSettings(BpmSource source, string? deviceId);
+
+    /// <summary>
+    /// Invoked when the active audio capture path stops or is torn down. When <see cref="ActiveBpmSource"/> is
+    /// <see cref="BpmSource.AudioAnalysis"/>, clears audio-derived BPM and related beat state without affecting Demo or Link.
+    /// </summary>
+    void NotifyAudioCaptureStopped();
 }

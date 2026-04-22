@@ -67,4 +67,26 @@ public sealed class AnalysisEngineWaveformStripSnapshotTests
         Assert.Equal(1, s.WaveformBeatMarkBeatOrdinal[0]);
         Assert.True(s.WaveformBeatMarkMonoSampleIndex[0] > 0);
     }
+
+    [Fact]
+    public void GetSnapshot_clears_waveform_beat_marks_when_beat_count_resets()
+    {
+        var beats = new MutableBeatTiming();
+        var engine = new AnalysisEngine(beats, new VolumeAnalyzer(), new FftBandProcessor());
+        engine.SetNumBands(8);
+        engine.ApplyMaxHistorySeconds(5, 48_000);
+        var format = new AudioFormat { SampleRate = 48_000, BitsPerSample = 16, Channels = 1 };
+        var buffer = new byte[4096];
+        Thread.Sleep(100);
+        engine.ProcessAudio(buffer, buffer.Length, format);
+
+        beats.BeatCount = 2;
+        var s1 = engine.GetSnapshot();
+        Assert.Equal(2, s1.WaveformBeatMarkLength);
+
+        beats.BeatCount = 0;
+        var s2 = engine.GetSnapshot();
+        Assert.Equal(0, s2.WaveformBeatMarkLength);
+        Assert.Empty(s2.WaveformBeatMarkMonoSampleIndex);
+    }
 }

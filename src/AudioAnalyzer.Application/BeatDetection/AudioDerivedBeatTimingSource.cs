@@ -36,4 +36,7 @@ public sealed class AudioDerivedBeatTimingSource : IBeatTimingSource
 
     /// <inheritdoc />
     public void OnVisualTick() => _detector.DecayFlashFrame();
+
+    /// <summary>Clears BPM and beat ordinal from the shared energy detector (audio analysis path).</summary>
+    public void ResetAudioDerivedBeatTiming() => _detector.ResetAudioDerivedBeatTiming();
 }
