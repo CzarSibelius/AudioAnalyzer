@@ -6,6 +6,13 @@ namespace AudioAnalyzer.Visualizers;
 /// <summary>Renders the Geiss plasma-style background layer.</summary>
 public sealed class GeissBackgroundLayer : TextLayerRendererBase, ITextLayerRenderer<GeissBackgroundState>
 {
+    /// <summary>
+    /// Hue / palette index drift per frame, scaled by <see cref="TextLayerSettings.SpeedMultiplier"/> and
+    /// <see cref="TextLayerDrawContext.SpeedBurst"/> like plasma <see cref="GeissBackgroundState.Phase"/>.
+    /// Coefficient is below legacy fixed 0.08 so default drift is easier to watch at 1× and no burst.
+    /// </summary>
+    private const double ColorPhaseSpeed = 0.03;
+
     private const string DefaultPlasmaRamp = " \u00B7:;+*#@\u2588";
     private readonly ITextLayerStateStore<GeissBackgroundState> _stateStore;
     private readonly CharsetResolver _charsetResolver;
@@ -31,7 +38,8 @@ public sealed class GeissBackgroundLayer : TextLayerRendererBase, ITextLayerRend
         double dtScale = DisplayAnimationTiming.ScaleForReference60(ctx.FrameDeltaSeconds);
         double phaseSpeed = layer.SpeedMultiplier * ctx.SpeedBurst * 0.15;
         geissState.Phase += phaseSpeed * dtScale;
-        geissState.ColorPhase += 0.08 * dtScale;
+        double colorPhaseSpeed = layer.SpeedMultiplier * ctx.SpeedBurst * ColorPhaseSpeed;
+        geissState.ColorPhase += colorPhaseSpeed * dtScale;
 
         if (snapshot.SmoothedMagnitudes.Length > 0)
         {
