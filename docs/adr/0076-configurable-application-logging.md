@@ -24,6 +24,7 @@ We also anticipate a need to tune **log verbosity** (for example Trace, Debug, I
 
 ## Consequences
 
+- **Concurrent instances**: When multiple processes run with file logging, default paths must avoid exclusive single-file contention; see [ADR-0083](0083-concurrent-process-instances-and-log-files.md).
 - **Performance** ([ADR-0030](0030-performance-priority.md)): Writing to disk must not block audio, capture, or render hot paths. Prefer buffered, asynchronous, or background-thread flushing.
 - **Exception handling** ([ADR-0011](0011-no-empty-catch-blocks.md)): Logging **supplements** meaningful handling (display, recovery, or explicit documented swallow). Do not replace required user feedback with log-only silent catches.
 - **Privacy**: Log files may contain file paths, audio device names, or other environment-specific strings. Document this risk where configuration is described.

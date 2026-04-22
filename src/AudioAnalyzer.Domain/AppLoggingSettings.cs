@@ -10,7 +10,9 @@ public sealed class AppLoggingSettings
 
     /// <summary>
     /// Log file path. Relative paths are resolved under the application base directory.
-    /// When null or whitespace, defaults to <c>logs/audioanalyzer.log</c> under the base directory.
+    /// When null or whitespace, defaults to <c>logs/audioanalyzer-{ProcessId}.log</c> under the base directory (see ADR-0083).
+    /// The literal <c>{ProcessId}</c> in the path is replaced at startup with the numeric id of the current process.
+    /// A fixed path without that placeholder is allowed for single-instance or external aggregation scenarios but is not safe for concurrent writers.
     /// </summary>
     public string? FilePath { get; set; }
 
