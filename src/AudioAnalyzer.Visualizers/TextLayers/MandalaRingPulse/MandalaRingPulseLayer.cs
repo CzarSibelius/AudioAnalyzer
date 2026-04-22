@@ -4,7 +4,7 @@ using AudioAnalyzer.Domain;
 
 namespace AudioAnalyzer.Visualizers;
 
-/// <summary>Concentric mandala-style rings (and optional spokes) whose radii breathe with tempo and spectrum energy.</summary>
+/// <summary>Concentric mandala-style rings (and optional spokes) whose radii breathe with tempo (when BPM is in range) and spectrum energy.</summary>
 public sealed class MandalaRingPulseLayer : TextLayerRendererBase, ITextLayerRenderer<MandalaRingPulseState>
 {
     private const double AspectRatio = 2.0;
@@ -41,14 +41,14 @@ public sealed class MandalaRingPulseLayer : TextLayerRendererBase, ITextLayerRen
         double instantEnergy = ComputeBroadbandEnergy(snapshot);
         st.SmoothedEnergy = st.SmoothedEnergy * 0.85 + instantEnergy * 0.15;
 
-        double bpm = snapshot.CurrentBpm is >= 30 and <= 300 ? snapshot.CurrentBpm : 120;
+        double tempoBpm = snapshot.CurrentBpm is >= 30 and <= 300 ? snapshot.CurrentBpm : 0;
         double tempoMult = layer.SpeedMultiplier * ctx.SpeedBurst;
         if (s.BeatReaction == MandalaRingPulseBeatReaction.SpeedBurst && snapshot.BeatFlashActive)
         {
             tempoMult *= 1.35;
         }
 
-        double phaseSpeed = Math.Tau * (bpm / 60.0) * pulsesPerBeat * tempoMult;
+        double phaseSpeed = tempoBpm > 0 ? Math.Tau * (tempoBpm / 60.0) * pulsesPerBeat * tempoMult : 0;
         st.PhaseRadians += phaseSpeed * frameDelta;
         st.AngularOffset += s.AngularMotion * frameDelta * layer.SpeedMultiplier * ctx.SpeedBurst;
 

@@ -1,4 +1,4 @@
-﻿# Visualizer specs (index)
+# Visualizer specs (index)
 
 **Moved.** Canonical hub: [../../specs/text-layers-visualizer/spec.md](../../specs/text-layers-visualizer/spec.md)
 

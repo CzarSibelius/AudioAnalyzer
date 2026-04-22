@@ -36,7 +36,7 @@ Uses full layer-local width and height (honors `RenderBounds` the same way as ot
 
 ### Definition of Done
 
-- `CurrentBpm` — drives phase speed (falls back to 120 when BPM is unavailable or out of range).
+- `CurrentBpm` — drives phase speed when in **30–300**; otherwise tempo-driven breathing does not advance (angular motion and energy mix still apply).
 - `SmoothedMagnitudes`, `TargetMaxMagnitude` — broadband energy mix into ring thickness when `EnergyMix` &gt; 0.
 - `BeatFlashActive` — when `BeatReaction` is `SpeedBurst` or `Flash`, boosts pulse speed or adds a one-step palette emphasis.
 - `FrameDeltaSeconds` — phase and angular motion integrate in wall time (seconds per frame).

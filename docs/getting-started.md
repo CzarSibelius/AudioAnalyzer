@@ -58,9 +58,10 @@ You can also run with `--dump-after N` (seconds, then exit) and optional `--dump
 
 ## Ableton Link
 
-Optional **[Ableton Link](https://ableton.github.io/link/)** tempo sync uses a native **`link_shim.dll`** you build and place next to the executable. Official releases from this repository do **not** ship that DLL. Spectrum and levels follow the **audio input**; tempo/beat counters follow Link or Demo when selected in **General settings**. Licensing: see [NOTICE](../NOTICE) and [ADR-0066](adr/0066-bpm-source-and-ableton-link.md).
+Optional **[Ableton Link](https://ableton.github.io/link/)** tempo sync uses a native `**link_shim.dll`** you build and place next to the executable. Official releases from this repository do **not** ship that DLL. Spectrum and levels follow the **audio input**; tempo/beat counters follow Link or Demo when selected in **General settings**. Licensing: see [NOTICE](../NOTICE) and [ADR-0066](adr/0066-bpm-source-and-ableton-link.md).
 
 ## License
 
 - **Audio Analyzer** (this repository): [GNU GPL v3.0 only](../LICENSE) (SPDX: `GPL-3.0-only`).
 - **Ableton Link** and **link_shim**: GPL-2.0+ when you build or distribute those components — [NOTICE](../NOTICE), [ADR-0066](adr/0066-bpm-source-and-ableton-link.md).
+

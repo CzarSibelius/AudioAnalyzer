@@ -4,11 +4,13 @@ This document describes who **Audio Analyzer** is built for, what each group typ
 
 ## Summary
 
-| Audience | Primary goal | Typical setup |
-|----------|--------------|----------------|
-| **Listeners** | See live analysis and visuals for music they play on the PC | Windows, **loopback** (or device) + headphones/speakers; presets for taste |
-| **VJs** | Visuals for live music shows, readable from a distance, controllable flow | Larger terminal or capture of the window; **shows** for timed/beat-based preset chains; optional **[Ableton Link](adr/0066-bpm-source-and-ableton-link.md)** when tempo should follow other Link apps |
-| **Streamers (e.g. DJ sets)** | Terminal visuals as part of a stream layout | Loopback or capture matching the stream mix; **screen dump** (Ctrl+Shift+E, or CLI flags) for clips; presets/shows aligned with set structure |
+
+| Audience                     | Primary goal                                                              | Typical setup                                                                                                                                                                                         |
+| ---------------------------- | ------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Listeners**                | See live analysis and visuals for music they play on the PC               | Windows, **loopback** (or device) + headphones/speakers; presets for taste                                                                                                                            |
+| **VJs**                      | Visuals for live music shows, readable from a distance, controllable flow | Larger terminal or capture of the window; **shows** for timed/beat-based preset chains; optional **[Ableton Link](adr/0066-bpm-source-and-ableton-link.md)** when tempo should follow other Link apps |
+| **Streamers (e.g. DJ sets)** | Terminal visuals as part of a stream layout                               | Loopback or capture matching the stream mix; **screen dump** (Ctrl+Shift+E, or CLI flags) for clips; presets/shows aligned with set structure                                                         |
+
 
 From source (clone, build, run, first session): [getting-started.md](getting-started.md).
 
