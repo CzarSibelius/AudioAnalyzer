@@ -1,6 +1,6 @@
 # AudioAnalyzer.Infrastructure — folder layout
 
-**Project root**: file-based repositories (`FilePresetRepository`, `FileSettingsRepository`, `FilePaletteRepository`, `FileShowRepository`, `FileUiThemeRepository`), NAudio-backed audio input (`NAudioAudioInput`, `NAudioDeviceInfo`), synthetic/demo audio (`SyntheticAudioInput`), and similar adapters that are not grouped under a dedicated subfolder yet.
+**Project root**: file-based repositories (`FilePresetRepository`, `FileSettingsRepository`, `FilePaletteRepository`, `FileShowRepository`, `FileUiThemeRepository`), synthetic/demo audio (`SyntheticAudioInput`), Link shim adapter, and similar adapters that are not grouped under a dedicated subfolder yet. **WASAPI capture is not in this assembly** ([ADR-0084](../../adr/0084-macos-multi-target-and-platform-audio.md)).
 
 **`Logging/`**: `Microsoft.Extensions.Logging` file provider (`BackgroundFileLoggerProvider`, background writer) per ADR-0076.
 

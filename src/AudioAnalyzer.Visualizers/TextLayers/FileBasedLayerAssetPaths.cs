@@ -40,7 +40,7 @@ public static class FileBasedLayerAssetPaths
         var trimmed = fileName.Trim();
         for (int i = 0; i < sortedFullPaths.Count; i++)
         {
-            if (string.Equals(Path.GetFileName(sortedFullPaths[i]), trimmed, StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(GetFileNameForComparison(sortedFullPaths[i]), trimmed, StringComparison.OrdinalIgnoreCase))
             {
                 return i;
             }
@@ -59,7 +59,7 @@ public static class FileBasedLayerAssetPaths
 
         int idx = ResolveIndexByFileName(sortedFullPaths, currentFileName);
         int next = (idx + 1) % sortedFullPaths.Count;
-        return Path.GetFileName(sortedFullPaths[next]);
+        return GetFileNameForComparison(sortedFullPaths[next]);
     }
 
     /// <summary>Advances persisted selection for an AsciiImage or AsciiModel layer. Returns false if the layer type is not file-based or the folder has no assets.</summary>
@@ -109,6 +109,21 @@ public static class FileBasedLayerAssetPaths
         }
 
         return false;
+    }
+
+    /// <summary>
+    /// Last path segment for comparisons — treats both '\' and '/' so Windows-style paths in snapshots/tests behave on Unix hosts.
+    /// </summary>
+    private static string GetFileNameForComparison(string path)
+    {
+        if (string.IsNullOrEmpty(path))
+        {
+            return path;
+        }
+
+        ReadOnlySpan<char> span = path.AsSpan().TrimEnd();
+        int slash = span.LastIndexOfAny('\\', '/');
+        return slash < 0 ? span.ToString() : span[(slash + 1)..].ToString();
     }
 
     private static List<string> EnumerateFiles(string? folderPath, string[] extensions, IFileSystem fileSystem)

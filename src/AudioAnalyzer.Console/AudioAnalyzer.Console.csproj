@@ -5,8 +5,9 @@
   </ItemGroup>
 
   <PropertyGroup>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <TargetFrameworks>net10.0;net10.0-windows10.0.19041.0</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <RootNamespace>AudioAnalyzer.Console</RootNamespace>
@@ -20,13 +21,20 @@
   <ItemGroup>
     <ProjectReference Include="..\AudioAnalyzer.Application\AudioAnalyzer.Application.csproj" />
     <ProjectReference Include="..\AudioAnalyzer.Infrastructure\AudioAnalyzer.Infrastructure.csproj" />
-    <ProjectReference Include="..\AudioAnalyzer.Platform.Windows\AudioAnalyzer.Platform.Windows.csproj" />
     <ProjectReference Include="..\AudioAnalyzer.Visualizers\AudioAnalyzer.Visualizers.csproj" />
     <ProjectReference Include="..\AudioAnalyzer.Domain\AudioAnalyzer.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-windows10.0.19041.0'">
+    <ProjectReference Include="..\AudioAnalyzer.Platform.Windows\AudioAnalyzer.Platform.Windows.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
+    <ProjectReference Include="..\AudioAnalyzer.Platform.macOS\AudioAnalyzer.Platform.macOS.csproj" />
+  </ItemGroup>
+
   <ItemGroup>
-    <None Include="..\..\native\link-shim\build\Release\link_shim.dll" Link="link_shim.dll" CopyToOutputDirectory="PreserveNewest" Condition="Exists('..\..\native\link-shim\build\Release\link_shim.dll')" />
+    <None Include="..\..\native\link-shim\build\Release\link_shim.dll" Link="link_shim.dll" CopyToOutputDirectory="PreserveNewest" Condition="'$(TargetFramework)' == 'net10.0-windows10.0.19041.0' And Exists('..\..\native\link-shim\build\Release\link_shim.dll')" />
     <None Update="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

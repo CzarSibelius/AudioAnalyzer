@@ -2,22 +2,26 @@ using AudioAnalyzer.Application.Abstractions;
 using NAudio.CoreAudioApi;
 using NAudio.Wave;
 
-namespace AudioAnalyzer.Infrastructure;
+namespace AudioAnalyzer.Platform.Windows.Audio;
 
-public sealed class NAudioAudioInput : IAudioInput
+/// <summary>WASAPI-backed <see cref="IAudioInput"/> wrapper for Windows capture and loopback.</summary>
+public sealed class WindowsWaveInAudioInput : IAudioInput
 {
     private IWaveIn? _capture;
     private bool _disposed;
     private readonly object _lock = new();
 
-    public NAudioAudioInput(IWaveIn capture)
+    /// <summary>Creates an input that forwards NAudio buffer events to <see cref="IAudioInput"/> subscribers.</summary>
+    public WindowsWaveInAudioInput(IWaveIn capture)
     {
         _capture = capture;
         _capture.DataAvailable += OnDataAvailable;
     }
 
+    /// <inheritdoc />
     public event EventHandler<AudioDataAvailableEventArgs>? DataAvailable;
 
+    /// <inheritdoc />
     public void Start()
     {
         lock (_lock)
@@ -26,6 +30,7 @@ public sealed class NAudioAudioInput : IAudioInput
         }
     }
 
+    /// <inheritdoc />
     public void StopCapture()
     {
         lock (_lock)
@@ -66,6 +71,7 @@ public sealed class NAudioAudioInput : IAudioInput
         });
     }
 
+    /// <inheritdoc />
     public void Dispose()
     {
         lock (_lock)

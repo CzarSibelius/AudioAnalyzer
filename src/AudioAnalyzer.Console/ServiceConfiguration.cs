@@ -10,8 +10,13 @@ using AudioAnalyzer.Domain;
 using AudioAnalyzer.Infrastructure;
 using AudioAnalyzer.Infrastructure.AsciiVideo;
 using AudioAnalyzer.Infrastructure.NowPlaying;
+#if WINDOWS
 using AudioAnalyzer.Platform.Windows.AsciiVideo;
+using AudioAnalyzer.Platform.Windows.Audio;
 using AudioAnalyzer.Platform.Windows.NowPlaying;
+#else
+using AudioAnalyzer.Platform.macOS.Audio;
+#endif
 using AudioAnalyzer.Visualizers;
 using AudioAnalyzer.Infrastructure.Logging;
 using Microsoft.Extensions.DependencyInjection;
@@ -56,20 +61,19 @@ internal static class ServiceConfiguration
         services.AddSingleton<IFileSystem>(_ => options?.FileSystem ?? new FileSystem());
         services.AddSingleton<IShowRepository>(sp =>
             new FileShowRepository(sp.GetRequiredService<IFileSystem>(), options?.ShowsDirectory));
-        services.AddSingleton<IAudioDeviceInfo, NAudioDeviceInfo>();
+#if WINDOWS
+        services.AddSingleton<IAudioDeviceInfo, WindowsAudioDeviceInfo>();
+
         services.AddSingleton<INowPlayingProvider>(sp =>
         {
             if (options?.NowPlayingProvider != null)
             {
                 return options.NowPlayingProvider;
             }
-            if (OperatingSystem.IsWindows())
-            {
-                var provider = new WindowsNowPlayingProvider();
-                provider.Start();
-                return provider;
-            }
-            return new NullNowPlayingProvider();
+
+            var provider = new WindowsNowPlayingProvider();
+            provider.Start();
+            return provider;
         });
 
         services.AddSingleton<IAsciiVideoFrameSource>(sp =>
@@ -79,12 +83,7 @@ internal static class ServiceConfiguration
                 return options.AsciiVideoFrameSource;
             }
 
-            if (OperatingSystem.IsWindows())
-            {
-                return new WindowsAsciiVideoFrameSource(sp.GetRequiredService<ILogger<WindowsAsciiVideoFrameSource>>());
-            }
-
-            return new NullAsciiVideoFrameSource();
+            return new WindowsAsciiVideoFrameSource(sp.GetRequiredService<ILogger<WindowsAsciiVideoFrameSource>>());
         });
 
         services.AddSingleton<IAsciiVideoDeviceCatalog>(_ =>
@@ -94,13 +93,20 @@ internal static class ServiceConfiguration
                 return options.AsciiVideoDeviceCatalog;
             }
 
-            if (OperatingSystem.IsWindows())
-            {
-                return new WindowsAsciiVideoDeviceCatalog();
-            }
-
-            return new NullAsciiVideoDeviceCatalog();
+            return new WindowsAsciiVideoDeviceCatalog();
         });
+#else
+        services.AddSingleton<IAudioDeviceInfo, MacOsAudioDeviceInfo>();
+
+        services.AddSingleton<INowPlayingProvider>(sp =>
+            options?.NowPlayingProvider ?? new NullNowPlayingProvider());
+
+        services.AddSingleton<IAsciiVideoFrameSource>(sp =>
+            options?.AsciiVideoFrameSource ?? new NullAsciiVideoFrameSource());
+
+        services.AddSingleton<IAsciiVideoDeviceCatalog>(_ =>
+            options?.AsciiVideoDeviceCatalog ?? new NullAsciiVideoDeviceCatalog());
+#endif
 
         services.AddSingleton<IDefaultTextLayersSettingsFactory>(_ => new DefaultTextLayersSettingsFactory());
         services.AddSingleton<TextLayerStateStore>();

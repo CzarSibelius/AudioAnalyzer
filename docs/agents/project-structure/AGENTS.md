@@ -9,6 +9,7 @@
 | [AudioAnalyzer.Application](audioanalyzer.application.md)           | `src/AudioAnalyzer.Application/`      |
 | [AudioAnalyzer.Infrastructure](audioanalyzer.infrastructure.md)     | `src/AudioAnalyzer.Infrastructure/`   |
 | [AudioAnalyzer.Platform.Windows](audioanalyzer.platform.windows.md) | `src/AudioAnalyzer.Platform.Windows/` |
+| [AudioAnalyzer.Platform.macOS](audioanalyzer.platform.macos.md) | `src/AudioAnalyzer.Platform.macOS/` |
 | [AudioAnalyzer.Visualizers](audioanalyzer.visualizers.md)           | `src/AudioAnalyzer.Visualizers/`      |
 | [AudioAnalyzer.Console](audioanalyzer.console.md)                   | `src/AudioAnalyzer.Console/`          |
 | [AsciiShapeTableGen](asciishapetablegen.md)                         | `tools/AsciiShapeTableGen/`           |

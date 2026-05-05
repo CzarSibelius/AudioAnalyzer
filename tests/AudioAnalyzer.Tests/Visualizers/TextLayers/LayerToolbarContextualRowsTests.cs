@@ -64,7 +64,7 @@ public sealed class LayerToolbarContextualRowsTests
     [Fact]
     public void AsciiImage_empty_folder_shows_placeholder()
     {
-        const string dir = @"W:\toolbar-empty-img";
+        string dir = Path.Combine(Path.GetTempPath(), "aa-tests-toolbar-empty-img");
         var fs = new MockFileSystem();
         fs.Directory.CreateDirectory(dir);
 
@@ -79,7 +79,7 @@ public sealed class LayerToolbarContextualRowsTests
     [Fact]
     public void AsciiImage_selected_file_name_controls_toolbar_first_when_unset()
     {
-        const string dir = @"W:\toolbar-img2";
+        string dir = Path.Combine(Path.GetTempPath(), "aa-tests-toolbar-img2");
         var fs = new MockFileSystem(new Dictionary<string, MockFileData>(StringComparer.OrdinalIgnoreCase)
         {
             [Path.Combine(dir, "z.png")] = new MockFileData("x"),
@@ -97,7 +97,7 @@ public sealed class LayerToolbarContextualRowsTests
     [Fact]
     public void AsciiImage_selected_file_name_overrides_snippet_index()
     {
-        const string dir = @"W:\toolbar-img3";
+        string dir = Path.Combine(Path.GetTempPath(), "aa-tests-toolbar-img3");
         var fs = new MockFileSystem(new Dictionary<string, MockFileData>(StringComparer.OrdinalIgnoreCase)
         {
             [Path.Combine(dir, "a.png")] = new MockFileData("x"),
@@ -113,7 +113,7 @@ public sealed class LayerToolbarContextualRowsTests
     [Fact]
     public void AsciiModel_selected_file_name_controls_toolbar()
     {
-        const string dir = @"W:\toolbar-obj";
+        string dir = Path.Combine(Path.GetTempPath(), "aa-tests-toolbar-obj");
         var fs = new MockFileSystem(new Dictionary<string, MockFileData>(StringComparer.OrdinalIgnoreCase)
         {
             [Path.Combine(dir, "b.obj")] = new MockFileData("x"),
@@ -131,7 +131,7 @@ public sealed class LayerToolbarContextualRowsTests
     [Fact]
     public void FileBasedLayerAssetPaths_matches_layer_enumeration_order()
     {
-        const string dir = @"W:\asset-paths-order";
+        string dir = Path.Combine(Path.GetTempPath(), "aa-tests-asset-paths-order");
         var fs = new MockFileSystem(new Dictionary<string, MockFileData>(StringComparer.OrdinalIgnoreCase)
         {
             [Path.Combine(dir, "2.png")] = new MockFileData("x"),

@@ -16,12 +16,19 @@ public sealed class ConsoleShiftLetterVTests
     [Fact]
     public void IsShiftVChord_true_for_uppercase_V_when_caps_lock_off_even_without_shift_modifier()
     {
+        var key = new ConsoleKeyInfo('V', ConsoleKey.V, shift: false, alt: false, control: false);
+        if (!OperatingSystem.IsWindows())
+        {
+            Assert.False(ConsoleShiftLetterV.IsShiftVChord(key));
+            Assert.True(ConsoleShiftLetterV.IsPlainPresetVChord(key));
+            return;
+        }
+
         if (global::System.Console.CapsLock)
         {
             return;
         }
 
-        var key = new ConsoleKeyInfo('V', ConsoleKey.V, shift: false, alt: false, control: false);
         Assert.True(ConsoleShiftLetterV.IsShiftVChord(key));
         Assert.False(ConsoleShiftLetterV.IsPlainPresetVChord(key));
     }
@@ -37,6 +44,11 @@ public sealed class ConsoleShiftLetterVTests
     [Fact]
     public void IsShiftVChord_false_when_caps_lock_on_and_uppercase_V_without_shift()
     {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
         if (!global::System.Console.CapsLock)
         {
             return;

@@ -62,7 +62,7 @@ public sealed class FileBasedLayerAssetPathsTests
     [Fact]
     public void TryAdvanceDirectoryAssetSelection_ascii_image_updates_custom()
     {
-        const string dir = @"V:\adv-img";
+        string dir = Path.Combine(Path.GetTempPath(), "aa-tests-adv-img");
         var fs = new MockFileSystem(new Dictionary<string, MockFileData>(StringComparer.OrdinalIgnoreCase)
         {
             [Path.Combine(dir, "a.png")] = new MockFileData("x"),
@@ -85,7 +85,7 @@ public sealed class FileBasedLayerAssetPathsTests
     [Fact]
     public void TryAdvanceDirectoryAssetSelection_ascii_model_updates_custom()
     {
-        const string dir = @"V:\adv-obj";
+        string dir = Path.Combine(Path.GetTempPath(), "aa-tests-adv-obj");
         var fs = new MockFileSystem(new Dictionary<string, MockFileData>(StringComparer.OrdinalIgnoreCase)
         {
             [Path.Combine(dir, "m1.obj")] = new MockFileData("x"),
@@ -104,7 +104,7 @@ public sealed class FileBasedLayerAssetPathsTests
     [Fact]
     public void GetSortedObjPaths_mock_file_system_enumerates_virtual_folder()
     {
-        const string folder = "M:/objs";
+        string folder = Path.Combine(Path.GetTempPath(), "aa-tests-objs");
         string fullPath = Path.Combine(folder, "z.obj");
         var fs = new MockFileSystem(new Dictionary<string, MockFileData>(StringComparer.OrdinalIgnoreCase)
         {

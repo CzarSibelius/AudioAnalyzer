@@ -25,6 +25,12 @@ internal static class ConsoleShiftLetterV
             return true;
         }
 
+        // CapsLock is a Windows-only console API; on Unix terminals rely on explicit Shift in modifiers only.
+        if (!OperatingSystem.IsWindows())
+        {
+            return false;
+        }
+
         return key.KeyChar == 'V' && !global::System.Console.CapsLock;
     }
 

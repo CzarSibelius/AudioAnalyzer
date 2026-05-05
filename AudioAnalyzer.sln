@@ -16,6 +16,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AudioAnalyzer.Platform.Wind
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AudioAnalyzer.Tests", "tests\AudioAnalyzer.Tests\AudioAnalyzer.Tests.csproj", "{17B8C9D0-E1F2-3456-0123-567890123456}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AudioAnalyzer.Platform.macOS", "src\AudioAnalyzer.Platform.macOS\AudioAnalyzer.Platform.macOS.csproj", "{852942EE-2695-4172-A115-6EAAC8D11937}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -50,6 +52,10 @@ Global
 		{17B8C9D0-E1F2-3456-0123-567890123456}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{17B8C9D0-E1F2-3456-0123-567890123456}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{17B8C9D0-E1F2-3456-0123-567890123456}.Release|Any CPU.Build.0 = Release|Any CPU
+		{852942EE-2695-4172-A115-6EAAC8D11937}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{852942EE-2695-4172-A115-6EAAC8D11937}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{852942EE-2695-4172-A115-6EAAC8D11937}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{852942EE-2695-4172-A115-6EAAC8D11937}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

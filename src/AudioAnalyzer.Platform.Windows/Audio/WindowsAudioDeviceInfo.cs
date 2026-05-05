@@ -1,20 +1,31 @@
 using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Domain;
+using AudioAnalyzer.Infrastructure;
+using Microsoft.Extensions.Logging;
 using NAudio.CoreAudioApi;
 using NAudio.Wave;
 
-namespace AudioAnalyzer.Infrastructure;
+namespace AudioAnalyzer.Platform.Windows.Audio;
 
-public sealed class NAudioDeviceInfo : IAudioDeviceInfo
+/// <summary>Enumerates WASAPI capture and loopback devices and builds NAudio captures on Windows.</summary>
+public sealed partial class WindowsAudioDeviceInfo : IAudioDeviceInfo
 {
+    private readonly ILogger<WindowsAudioDeviceInfo> _logger;
     private const string LoopbackPrefix = "loopback:";
     private const string CapturePrefix = "capture:";
 
+    /// <summary>Initializes a new instance of the <see cref="WindowsAudioDeviceInfo"/> class.</summary>
+    /// <param name="logger">Logger for enumeration failures.</param>
+    public WindowsAudioDeviceInfo(ILogger<WindowsAudioDeviceInfo> logger)
+    {
+        _logger = logger;
+    }
+
+    /// <inheritdoc />
     public IReadOnlyList<AudioDeviceEntry> GetDevices()
     {
         var list = new List<AudioDeviceEntry>();
 
-        // Demo mode options (synthetic BPM stream for testing without audio)
         list.Add(new AudioDeviceEntry { Name = "Demo Mode (90 BPM)", Id = DemoAudioDevice.Prefix + "90" });
         list.Add(new AudioDeviceEntry { Name = "Demo Mode (120 BPM)", Id = DemoAudioDevice.Prefix + "120" });
         list.Add(new AudioDeviceEntry { Name = "Demo Mode (140 BPM)", Id = DemoAudioDevice.Prefix + "140" });
@@ -36,22 +47,21 @@ public sealed class NAudioDeviceInfo : IAudioDeviceInfo
                 list.Add(new AudioDeviceEntry { Name = "🔊 " + device.FriendlyName + " (Loopback)", Id = LoopbackPrefix + device.FriendlyName });
             }
         }
-        catch
+        catch (Exception ex)
         {
-            if (list.Count == 0)
-            {
-                list.Add(new AudioDeviceEntry { Name = "System Audio (Loopback)", Id = null });
-            }
+            LogWasapiEnumerationFailed(ex);
         }
+
         return list;
     }
 
+    /// <inheritdoc />
     public IAudioInput CreateCapture(string? deviceId)
     {
         if (string.IsNullOrEmpty(deviceId))
         {
             var loopback = new WasapiLoopbackCapture();
-            return new NAudioAudioInput(loopback);
+            return new WindowsWaveInAudioInput(loopback);
         }
 
         if (deviceId.StartsWith(DemoAudioDevice.Prefix, StringComparison.Ordinal))
@@ -62,6 +72,7 @@ public sealed class NAudioDeviceInfo : IAudioDeviceInfo
             {
                 bpm = Math.Clamp(parsed, 60, 180);
             }
+
             return new SyntheticAudioInput(bpm);
         }
 
@@ -75,7 +86,7 @@ public sealed class NAudioDeviceInfo : IAudioDeviceInfo
                 if (d.FriendlyName == name)
                 {
                     var capture = new WasapiCapture(d);
-                    return new NAudioAudioInput(capture);
+                    return new WindowsWaveInAudioInput(capture);
                 }
             }
         }
@@ -88,10 +99,11 @@ public sealed class NAudioDeviceInfo : IAudioDeviceInfo
                 if (d.FriendlyName == name)
                 {
                     var loopback = new WasapiLoopbackCapture(d);
-                    return new NAudioAudioInput(loopback);
+                    return new WindowsWaveInAudioInput(loopback);
                 }
             }
         }
-        return new NAudioAudioInput(new WasapiLoopbackCapture());
+
+        return new WindowsWaveInAudioInput(new WasapiLoopbackCapture());
     }
 }

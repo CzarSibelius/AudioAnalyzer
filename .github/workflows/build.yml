@@ -27,9 +27,10 @@ jobs:
         env:
           DOTNET_CLI_TELEMETRY_OPTOUT: 1
 
+      # Primary Windows host target; portable `net10.0` tests run on macOS job (ADR-0084).
       - name: Test
         run: >-
-          dotnet test ./AudioAnalyzer.sln --no-build -warnaserror
+          dotnet test ./AudioAnalyzer.sln --no-build -warnaserror -f net10.0-windows10.0.19041.0
           --logger "trx;LogFileName=tests.trx"
           --logger "junit;LogFilePath=TestResults/junit.xml"
 
@@ -43,7 +44,56 @@ jobs:
             **/TestResults/junit.xml
           if-no-files-found: warn
 
+  build-macos:
+    runs-on: macos-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore (solution — resolves Windows targeting packs)
+        run: dotnet restore ./AudioAnalyzer.sln
+
+      # Repo-wide style gate for the Unix agent graph (PBI-012); matches AGENTS.md dotnet format policy.
+      - name: Verify formatting
+        run: dotnet format ./AudioAnalyzer.sln --verify-no-changes
+
+      # Full-solution `dotnet build -f net10.0` does not skip Windows-only projects cleanly; build portable entrypoints explicitly (ADR-0084).
+      - name: Build Console (net10.0)
+        run: dotnet build ./src/AudioAnalyzer.Console/AudioAnalyzer.Console.csproj --no-incremental -warnaserror -f net10.0
+        env:
+          DOTNET_CLI_TELEMETRY_OPTOUT: 1
+
+      - name: Build tests (net10.0)
+        run: dotnet build ./tests/AudioAnalyzer.Tests/AudioAnalyzer.Tests.csproj --no-incremental -warnaserror -f net10.0
+        env:
+          DOTNET_CLI_TELEMETRY_OPTOUT: 1
+
+      # Integration suite may assume Windows console/audio; unit-only gate matches AGENTS.md allowance for macOS agents.
+      - name: Test (unit, net10.0)
+        run: >-
+          dotnet test ./tests/AudioAnalyzer.Tests/AudioAnalyzer.Tests.csproj --no-build -warnaserror -f net10.0
+          --filter "FullyQualifiedName!~AudioAnalyzer.Tests.Integration"
+          --logger "trx;LogFileName=tests-macos.trx"
+          --logger "junit;LogFilePath=TestResults/junit-macos.xml"
+
+      - name: Upload macOS test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports-macos
+          path: |
+            **/TestResults/tests-macos.trx
+            **/TestResults/junit-macos.xml
+          if-no-files-found: warn
+
   # EnricoMi/publish-unit-test-result-action is a container action (Linux-only).
+  # Consumes Windows artifact only; macOS TRX/JUnit stay in test-reports-macos for manual triage until we add a merge step.
   publish-test-results:
     name: Publish test results
     runs-on: ubuntu-latest

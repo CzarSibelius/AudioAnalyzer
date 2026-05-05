@@ -28,6 +28,7 @@ All terminal visual content is composed through **TextLayersVisualizer** — the
 
 ### Regression guardrails
 
+- **AsciiImage / AsciiModel directory cycling**: file-name resolution for sorted asset paths treats both `\` and `/` as separators so behavior matches across Windows and Unix test hosts (portable CI — see [platform-macos hub](../platform-macos/spec.md) / **ADR-0084** consequences on path assumptions).
 - **Ctrl+R** clears runtime waveform/overview caches and layer state stores but **does not** rewrite preset JSON on disk.
 - **V** / **Shift+V** / **S** / **Tab** semantics for presets, layers, and Show play stay aligned with [console-ui hub](../console-ui/spec.md) and [preset editor navigation](../console-ui/preset-editor-navigation/spec.md).
 

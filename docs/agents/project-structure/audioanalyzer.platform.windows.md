@@ -1,5 +1,7 @@
 # AudioAnalyzer.Platform.Windows — folder layout
 
+**`Audio/`**: WASAPI-backed **`WindowsAudioDeviceInfo`** / **`WindowsWaveInAudioInput`** ([ADR-0084](../../adr/0084-macos-multi-target-and-platform-audio.md)).
+
 **`NowPlaying/`**: Windows-specific now-playing provider(s) (e.g. `WindowsNowPlayingProvider`).
 
 **`AsciiVideo/`**: Windows webcam frame source for the ASCII video text layer (e.g. `WindowsAsciiVideoFrameSource` with `WindowsAsciiVideoFrameSource.Logging.cs` for `[LoggerMessage]` partials, `WindowsAsciiVideoDeviceCatalog` for S modal labels, WinRT interop helpers).

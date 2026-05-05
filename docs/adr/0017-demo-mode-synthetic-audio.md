@@ -21,4 +21,4 @@ We add a **Demo Mode** as a selectable audio input. Demo mode appears in the dev
 - Visualizers can be tested and demonstrated without real audio playing.
 - No changes to `AnalysisEngine`, visualizers, or the analysis pipeline; synthetic input plugs into the existing `IAudioInput` abstraction.
 - Demo mode does not require NAudio capture devices; it works on any environment where the app runs.
-- Implementation lives in `AudioAnalyzer.Infrastructure` alongside `NAudioAudioInput` and `NAudioDeviceInfo`.
+- **`SyntheticAudioInput`** lives in `AudioAnalyzer.Infrastructure`. WASAPI-based capture listing/types moved to **`AudioAnalyzer.Platform.Windows`** ([ADR-0084](./0084-macos-multi-target-and-platform-audio.md)); Demo IDs are still produced by each platform’s `IAudioDeviceInfo`.
