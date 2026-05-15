@@ -1,5 +1,8 @@
 using System.IO.Abstractions;
 using AudioAnalyzer.Application.Abstractions;
+#if MACOS
+using AudioAnalyzer.Platform.macOS.Audio;
+#endif
 
 namespace AudioAnalyzer.Console;
 
@@ -31,4 +34,12 @@ internal sealed class ServiceConfigurationOptions
 
     /// <summary>Charsets directory when using a custom file system (e.g. tests).</summary>
     public string? CharsetsDirectory { get; init; }
+
+#if MACOS
+    /// <summary>Override Core Audio enumeration/capture for tests (macOS host TFM).</summary>
+    public IMacOsAudioEnumerator? MacOsAudioEnumerator { get; init; }
+
+    /// <summary>Override ScreenCaptureKit system-audio factory for tests.</summary>
+    public IMacOsScreenCaptureKitSystemAudioInputFactory? MacOsScreenCaptureKitSystemAudioInputFactory { get; init; }
+#endif
 }

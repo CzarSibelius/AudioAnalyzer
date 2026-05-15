@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleDevelopmentRegion</key>
+  <string>en</string>
+  <key>CFBundleExecutable</key>
+  <string>AudioAnalyzer.Console</string>
+  <key>CFBundleIdentifier</key>
+  <string>dev.audioanalyzer.console</string>
+  <key>CFBundleInfoDictionaryVersion</key>
+  <string>6.0</string>
+  <key>CFBundleName</key>
+  <string>AudioAnalyzer</string>
+  <key>CFBundlePackageType</key>
+  <string>APPL</string>
+  <key>CFBundleShortVersionString</key>
+  <string>1.0</string>
+  <key>CFBundleVersion</key>
+  <string>1</string>
+  <key>LSMinimumSystemVersion</key>
+  <string>11.0</string>
+  <key>NSMicrophoneUsageDescription</key>
+  <string>AudioAnalyzer captures the microphone or other audio inputs you choose so it can analyze levels and spectrum in real time.</string>
+  <key>NSScreenCaptureUsageDescription</key>
+  <string>AudioAnalyzer uses ScreenCaptureKit to capture system audio for visualization when you pick the ScreenCaptureKit desktop row. The display is included in the capture filter to satisfy Screen Recording APIs; only audio is forwarded to analysis.</string>
+</dict>
+</plist>

@@ -182,7 +182,7 @@ internal sealed class GeneralSettingsHubKeyHandlerConfig : IKeyHandlerConfig<Gen
 
     private static bool OpenDevicePicker(GeneralSettingsHubKeyContext ctx)
     {
-        ctx.StopCapture();
+        ctx.ReleaseCaptureForDeviceSelection();
         var (newId, newName) = ctx.DeviceSelectionModal.Show(ctx.GetDeviceName(), ctx.SetModalOpen);
         if (newName != "")
         {

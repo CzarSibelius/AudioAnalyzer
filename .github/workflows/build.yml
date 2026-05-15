@@ -19,6 +19,10 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
+      # Console multi-targets net10.0-macos*; solution restore/build on Windows needs the macOS workload packs.
+      - name: Install macOS workload (host TFM; pin matches Directory.Build.props)
+        run: dotnet workload install macos
+
       - name: Restore
         run: dotnet restore ./AudioAnalyzer.sln
 
@@ -27,7 +31,7 @@ jobs:
         env:
           DOTNET_CLI_TELEMETRY_OPTOUT: 1
 
-      # Primary Windows host target; portable `net10.0` tests run on macOS job (ADR-0084).
+      # Primary Windows host target; full solution restore also resolves the pinned macOS host TFM (ADR-0086).
       - name: Test
         run: >-
           dotnet test ./AudioAnalyzer.sln --no-build -warnaserror -f net10.0-windows10.0.19041.0
@@ -56,6 +60,9 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
+      - name: Install macOS workload (pinned net10.0-macos* host; see Directory.Build.props)
+        run: dotnet workload install macos
+
       - name: Restore (solution — resolves Windows targeting packs)
         run: dotnet restore ./AudioAnalyzer.sln
 
@@ -63,21 +70,21 @@ jobs:
       - name: Verify formatting
         run: dotnet format ./AudioAnalyzer.sln --verify-no-changes
 
-      # Full-solution `dotnet build -f net10.0` does not skip Windows-only projects cleanly; build portable entrypoints explicitly (ADR-0084).
-      - name: Build Console (net10.0)
-        run: dotnet build ./src/AudioAnalyzer.Console/AudioAnalyzer.Console.csproj --no-incremental -warnaserror -f net10.0
+      # Pinned macOS host TFM (ADR-0086); keep in sync with Directory.Build.props → AudioAnalyzerMacOsHostTfm.
+      - name: Build Console (macOS host TFM)
+        run: dotnet build ./src/AudioAnalyzer.Console/AudioAnalyzer.Console.csproj --no-incremental -warnaserror -f net10.0-macos26.0
         env:
           DOTNET_CLI_TELEMETRY_OPTOUT: 1
 
-      - name: Build tests (net10.0)
-        run: dotnet build ./tests/AudioAnalyzer.Tests/AudioAnalyzer.Tests.csproj --no-incremental -warnaserror -f net10.0
+      - name: Build tests (macOS host TFM)
+        run: dotnet build ./tests/AudioAnalyzer.Tests/AudioAnalyzer.Tests.csproj --no-incremental -warnaserror -f net10.0-macos26.0
         env:
           DOTNET_CLI_TELEMETRY_OPTOUT: 1
 
       # Integration suite may assume Windows console/audio; unit-only gate matches AGENTS.md allowance for macOS agents.
-      - name: Test (unit, net10.0)
+      - name: Test (unit, macOS host TFM)
         run: >-
-          dotnet test ./tests/AudioAnalyzer.Tests/AudioAnalyzer.Tests.csproj --no-build -warnaserror -f net10.0
+          dotnet test ./tests/AudioAnalyzer.Tests/AudioAnalyzer.Tests.csproj --no-build -warnaserror -f net10.0-macos26.0
           --filter "FullyQualifiedName!~AudioAnalyzer.Tests.Integration"
           --logger "trx;LogFileName=tests-macos.trx"
           --logger "junit;LogFilePath=TestResults/junit-macos.xml"

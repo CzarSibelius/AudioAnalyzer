@@ -196,9 +196,9 @@ internal sealed partial class ApplicationShell
                 _showPlaybackController.Tick();
             }
 
-            if (System.Console.KeyAvailable)
+            if (InteractiveConsoleInput.KeyAvailable)
             {
-                var key = System.Console.ReadKey(true);
+                var key = InteractiveConsoleInput.ReadKey(true);
                 if (_applicationModeFactory.GetActiveApplicationMode().UsesGeneralSettingsHubKeyHandling)
                 {
                     var hubCtx = CreateGeneralSettingsHubKeyContext(consoleLock, open => modalOpen = open);
@@ -272,6 +272,7 @@ internal sealed partial class ApplicationShell
             SettingsModal = _settingsModal,
             ShowEditModal = _showEditModal,
             StopCapture = _deviceController.StopCapture,
+            ReleaseCaptureForDeviceSelection = _deviceController.ReleaseCaptureForDeviceSelection,
             StartCapture = _deviceController.StartCapture,
             RestartCapture = _deviceController.RestartCapture,
             DeviceSelectionModal = _deviceSelectionModal,
@@ -296,6 +297,7 @@ internal sealed partial class ApplicationShell
             SaveSettings = () => _settingsPersistence.Save(),
             GetDeviceName = () => _deviceController.CurrentDeviceName,
             StopCapture = _deviceController.StopCapture,
+            ReleaseCaptureForDeviceSelection = _deviceController.ReleaseCaptureForDeviceSelection,
             StartCapture = _deviceController.StartCapture,
             RestartCapture = _deviceController.RestartCapture,
             DeviceSelectionModal = _deviceSelectionModal,

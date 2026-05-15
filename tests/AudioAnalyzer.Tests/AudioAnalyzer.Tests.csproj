@@ -2,11 +2,23 @@
 
   <PropertyGroup>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
-    <TargetFrameworks>net10.0;net10.0-windows10.0.19041.0</TargetFrameworks>
+    <TargetFrameworks>net10.0-windows10.0.19041.0;$(AudioAnalyzerMacOsHostTfm)</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
     <RootNamespace>AudioAnalyzer.Tests</RootNamespace>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)' == '$(AudioAnalyzerMacOsHostTfm)'">
+    <ApplicationId>dev.audioanalyzer.tests</ApplicationId>
+    <LinkMode>None</LinkMode>
+    <EnableTrimAnalyzer>false</EnableTrimAnalyzer>
+    <!-- macOS workload runs ILLink when PublishTrimmed=true; SDK requires self-contained for that path (NETSDK1102 if false). -->
+    <SelfContained>true</SelfContained>
+    <!-- xUnit test SDK sets OutputType=Exe; skip app-bundle packaging (not needed to run tests). -->
+    <_CanOutputAppBundle>false</_CanOutputAppBundle>
+    <!-- Single RID so macOS SDK maps to TargetArchitectures (library test project does not infer like Exe). Intel: dotnet build/test -r osx-x64 -->
+    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == ''">osx-arm64</RuntimeIdentifier>
   </PropertyGroup>
 
   <ItemGroup>
@@ -18,6 +30,10 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-windows10.0.19041.0'">
+    <Compile Remove="Platform\macOS\**\*.cs" />
   </ItemGroup>
 
   <ItemGroup>

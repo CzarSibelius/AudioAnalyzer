@@ -100,7 +100,9 @@ Decisions are numbered and kept under version control so the rationale stays wit
 | [0081](0081-consolidate-matrix-rain-into-falling-letters.md) | Remove MatrixRain; FallingLetters charset-only, `AnimationMode` (Particles / ColumnRain), `Flash` beat                                           | Accepted   |
 | [0082](0082-starfield-text-layer.md)                         | Starfield text layer — pseudo-3D perspective starfield, state store, perf cap, charset glyphs                                                    | Accepted   |
 | [0083](0083-concurrent-process-instances-and-log-files.md)   | Concurrent process instances — per-process default log path (placeholders), explicit path caveat                                               | Accepted   |
-| [0084](0084-macos-multi-target-and-platform-audio.md)        | macOS multi-targeting — `net10.0` vs Windows TFM, Platform.macOS / Platform.Windows audio split, Infrastructure without unconditional WASAPI       | Accepted   |
+| [0084](0084-macos-multi-target-and-platform-audio.md)        | macOS multi-targeting — Platform.macOS / Windows audio split, Infrastructure without unconditional WASAPI; **host TFMs** → **[0086](0086-macos-windows-hosts-and-screencapturekit.md)** | Accepted   |
+| [0085](0085-macos-desktop-output-via-virtual-routing.md)     | macOS desktop output — virtual routing row, stable id, heuristics; ScreenCaptureKit deferred                                                     | Accepted   |
+| [0086](0086-macos-windows-hosts-and-screencapturekit.md)     | macOS + Windows console hosts only (no portable `net10.0`); optional ScreenCaptureKit desktop audio on macOS TFM                                  | Accepted   |
 
 
 ## Process

@@ -241,7 +241,7 @@ internal sealed class MainLoopKeyHandlerConfig : IKeyHandlerConfig<MainLoopKeyCo
                 Matches: k => k.Key == ConsoleKey.D,
                 Action: (_, ctx) =>
                 {
-                    ctx.StopCapture();
+                    ctx.ReleaseCaptureForDeviceSelection();
                     var (newId, newName) = ctx.DeviceSelectionModal.Show(ctx.GetDeviceName(), ctx.SetModalOpen);
                     if (newName != "")
                     {

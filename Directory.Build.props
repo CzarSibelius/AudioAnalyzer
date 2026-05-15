@@ -1,5 +1,7 @@
 <Project>
   <PropertyGroup>
+    <!-- Pinned macOS host TFM for Console, Tests, Platform.macOS (ADR-0086, Directory.Build.props single source of truth). Requires `dotnet workload install macos`. -->
+    <AudioAnalyzerMacOsHostTfm>net10.0-macos26.0</AudioAnalyzerMacOsHostTfm>
     <PackageLicenseExpression>GPL-3.0-only</PackageLicenseExpression>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <!-- Enforce .editorconfig code style rules as build diagnostics -->

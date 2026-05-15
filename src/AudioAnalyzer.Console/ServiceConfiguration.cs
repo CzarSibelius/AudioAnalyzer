@@ -14,8 +14,10 @@ using AudioAnalyzer.Infrastructure.NowPlaying;
 using AudioAnalyzer.Platform.Windows.AsciiVideo;
 using AudioAnalyzer.Platform.Windows.Audio;
 using AudioAnalyzer.Platform.Windows.NowPlaying;
-#else
+#elif MACOS
 using AudioAnalyzer.Platform.macOS.Audio;
+#else
+#error AudioAnalyzer.Console must be built for net10.0-windows… or the pinned net10.0-macos* host TFM.
 #endif
 using AudioAnalyzer.Visualizers;
 using AudioAnalyzer.Infrastructure.Logging;
@@ -95,8 +97,20 @@ internal static class ServiceConfiguration
 
             return new WindowsAsciiVideoDeviceCatalog();
         });
-#else
-        services.AddSingleton<IAudioDeviceInfo, MacOsAudioDeviceInfo>();
+#elif MACOS
+        services.AddSingleton<IMacOsAudioEnumerator>(sp =>
+            options?.MacOsAudioEnumerator ?? new MacOsCoreAudioEnumerator(
+                sp.GetRequiredService<ILogger<MacOsCoreAudioEnumerator>>(),
+                sp.GetRequiredService<ILoggerFactory>()));
+
+        services.AddSingleton<IMacOsScreenCaptureKitSystemAudioInputFactory>(sp =>
+            options?.MacOsScreenCaptureKitSystemAudioInputFactory
+            ?? new MacOsScreenCaptureKitSystemAudioInputFactory(sp.GetRequiredService<ILoggerFactory>()));
+
+        services.AddSingleton<IAudioDeviceInfo>(sp => new MacOsAudioDeviceInfo(
+            sp.GetRequiredService<ILogger<MacOsAudioDeviceInfo>>(),
+            sp.GetRequiredService<IMacOsAudioEnumerator>(),
+            sp.GetRequiredService<IMacOsScreenCaptureKitSystemAudioInputFactory>()));
 
         services.AddSingleton<INowPlayingProvider>(sp =>
             options?.NowPlayingProvider ?? new NullNowPlayingProvider());
@@ -106,6 +120,8 @@ internal static class ServiceConfiguration
 
         services.AddSingleton<IAsciiVideoDeviceCatalog>(_ =>
             options?.AsciiVideoDeviceCatalog ?? new NullAsciiVideoDeviceCatalog());
+#else
+#error AudioAnalyzer.Console must be built for net10.0-windows… or the pinned net10.0-macos* host TFM.
 #endif
 
         services.AddSingleton<IDefaultTextLayersSettingsFactory>(_ => new DefaultTextLayersSettingsFactory());

@@ -6,6 +6,8 @@
 
 Console UI surface documented with ASCII screen dumps and line references per [format](../format/spec.md) and [ADR-0046](../../../docs/adr/0046-screen-dump-ascii-screenshot.md).
 
+On **macOS**, the list includes **Demo modes**, a **Desktop / system output (virtual mixer)** row ([ADR-0085](../../../docs/adr/0085-macos-desktop-output-via-virtual-routing.md)), a **Desktop / system audio (ScreenCaptureKit)** row that requires **Screen Recording** permission ([ADR-0086](../../../docs/adr/0086-macos-windows-hosts-and-screencapturekit.md)), and **Core Audio** inputs (microphones plus virtual sinks such as BlackHole when installed). It does **not** imply **WASAPI-style built-in loopback** without routing or that capture path; desktop audio follows operator routing ([ADR-0084](../../../docs/adr/0084-macos-multi-target-and-platform-audio.md)). **Windows** builds continue to show loopback entries per WASAPI.
+
 ### Architecture
 
 Full-screen modal for choosing an audio input device. Opened from **D** in Preset / Show modes, or **Enter** on **Audio input devices** in [General settings hub](../general-settings-hub/spec.md). See [ui-spec-settings-surfaces.md](../settings-surfaces/spec.md) for shared patterns. List selection: [ui-spec-menu-selection.md](../menu-selection/spec.md).

@@ -7,10 +7,24 @@
   <PropertyGroup>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>net10.0;net10.0-windows10.0.19041.0</TargetFrameworks>
+    <TargetFrameworks>net10.0-windows10.0.19041.0;$(AudioAnalyzerMacOsHostTfm)</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <RootNamespace>AudioAnalyzer.Console</RootNamespace>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)' == '$(AudioAnalyzerMacOsHostTfm)'">
+    <DefineConstants>$(DefineConstants);MACOS</DefineConstants>
+    <ApplicationId>dev.audioanalyzer.console</ApplicationId>
+    <LinkMode>None</LinkMode>
+    <EnableTrimAnalyzer>false</EnableTrimAnalyzer>
+    <!-- Preserve PublishFolderType metadata when Tests (or other hosts) reference this project. -->
+    <MSBuildDisableGetCopyToPublishDirectoryItemsOptimization>true</MSBuildDisableGetCopyToPublishDirectoryItemsOptimization>
+  </PropertyGroup>
+
+  <!-- Wrap apphost in AudioAnalyzer.app on macOS builds so NSMicrophoneUsageDescription applies (flat dotnet run cannot). -->
+  <PropertyGroup Condition="'$(TargetFramework)' == '$(AudioAnalyzerMacOsHostTfm)' AND $([MSBuild]::IsOSPlatform('osx'))">
+    <CreateMacOSAppBundle>true</CreateMacOSAppBundle>
   </PropertyGroup>
 
   <ItemGroup>
@@ -29,7 +43,7 @@
     <ProjectReference Include="..\AudioAnalyzer.Platform.Windows\AudioAnalyzer.Platform.Windows.csproj" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
+  <ItemGroup Condition="'$(TargetFramework)' == '$(AudioAnalyzerMacOsHostTfm)'">
     <ProjectReference Include="..\AudioAnalyzer.Platform.macOS\AudioAnalyzer.Platform.macOS.csproj" />
   </ItemGroup>
 
@@ -37,12 +51,25 @@
     <None Include="..\..\native\link-shim\build\Release\link_shim.dll" Link="link_shim.dll" CopyToOutputDirectory="PreserveNewest" Condition="'$(TargetFramework)' == 'net10.0-windows10.0.19041.0' And Exists('..\..\native\link-shim\build\Release\link_shim.dll')" />
     <None Update="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <PublishFolderType>Resource</PublishFolderType>
     </None>
-    <None Include="palettes\*.json" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="presets\*.json" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="themes\*.json" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="charsets\*.json" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="models\**\*" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="palettes\*.json" CopyToOutputDirectory="PreserveNewest" PublishFolderType="Resource" />
+    <None Include="presets\*.json" CopyToOutputDirectory="PreserveNewest" PublishFolderType="Resource" />
+    <None Include="themes\*.json" CopyToOutputDirectory="PreserveNewest" PublishFolderType="Resource" />
+    <None Include="charsets\*.json" CopyToOutputDirectory="PreserveNewest" PublishFolderType="Resource" />
+    <None Include="models\**\*" CopyToOutputDirectory="PreserveNewest" PublishFolderType="Resource" />
   </ItemGroup>
+
+  <Target Name="CreateMacOSAppBundle" AfterTargets="Build" Condition="'$(TargetFramework)' == '$(AudioAnalyzerMacOsHostTfm)' AND $([MSBuild]::IsOSPlatform('osx')) AND '$(CreateMacOSAppBundle)' == 'true'">
+    <PropertyGroup>
+      <_OutDir>$([MSBuild]::EnsureTrailingSlash('$(TargetDir)'))</_OutDir>
+      <_SdkAppBundle>$(_OutDir)AudioAnalyzer.Console.app</_SdkAppBundle>
+      <_AppBundle>$(_OutDir)AudioAnalyzer.app</_AppBundle>
+      <_PlistSource>$(MSBuildProjectDirectory)/macOS/Info.plist</_PlistSource>
+    </PropertyGroup>
+    <RemoveDir Directories="$(_AppBundle)" Condition="Exists('$(_AppBundle)')" />
+    <Exec Command="rsync -a --delete &quot;$(_SdkAppBundle)/&quot; &quot;$(_AppBundle)/&quot;" />
+    <Copy SourceFiles="$(_PlistSource)" DestinationFiles="$(_AppBundle)/Contents/Info.plist" SkipUnchangedFiles="false" />
+  </Target>
 
 </Project>

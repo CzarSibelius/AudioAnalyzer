@@ -7,7 +7,9 @@ using AudioAnalyzer.Visualizers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-// Parse CLI for screen-dump automation
+MacOsLaunchDiagnostics.WriteMicrophoneBundleHintIfNeeded();
+
+// Parse CLI for screen-dump automation (before interactive-console gate so --dump-after can run headless).
 int? dumpAfterSeconds = null;
 string? dumpPath = null;
 string[] cliArgs = Environment.GetCommandLineArgs();
@@ -23,6 +25,12 @@ for (int i = 1; i < cliArgs.Length; i++)
         dumpPath = cliArgs[i + 1];
         i++;
     }
+}
+
+if (!InteractiveConsoleInput.IsSupported && dumpAfterSeconds == null)
+{
+    MacOsLaunchDiagnostics.ReportTerminalRequiredAndExit();
+    return;
 }
 
 // Load settings before building the renderer so visualizer settings are available for DI
@@ -51,9 +59,18 @@ if (initialName == "")
             (initialDeviceId, initialName) = provider.GetRequiredService<IDeviceSelectionModal>().Show(null, _ => { });
         }
     }
-    else
+    else if (InteractiveConsoleInput.IsSupported)
     {
         (initialDeviceId, initialName) = provider.GetRequiredService<IDeviceSelectionModal>().Show(null, _ => { });
+    }
+    else
+    {
+        var demo = devices.FirstOrDefault(d => d.Id?.StartsWith(DemoAudioDevice.Prefix, StringComparison.Ordinal) == true);
+        if (demo != null)
+        {
+            initialDeviceId = demo.Id;
+            initialName = demo.Name;
+        }
     }
 }
 

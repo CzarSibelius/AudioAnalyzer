@@ -24,10 +24,11 @@ FFT, levels, and spectrum follow your **audio input**. Beat/BPM can follow **ene
 
 ## Requirements and limitations
 
-- **Windows** (WASAPI loopback/capture).
+- **Windows** — Full **WASAPI** loopback/capture and optional Windows-only layers (e.g. ASCII webcam).
+- **macOS** — **Core Audio** input capture + Demo mode; **no** built-in WASAPI-style loopback without **virtual routing** (e.g. BlackHole + Multi-Output) or the in-app **Desktop / system output** row, and optionally **ScreenCaptureKit** system audio when implemented ([ADR-0084](docs/adr/0084-macos-multi-target-and-platform-audio.md), [ADR-0085](docs/adr/0085-macos-desktop-output-via-virtual-routing.md), [ADR-0086](docs/adr/0086-macos-windows-hosts-and-screencapturekit.md)). From-source builds use the pinned **`net10.0-macos*`** host TFM (see [getting started](docs/getting-started.md)); install the **`macos`** .NET workload once (`dotnet workload install macos`).
 - **[.NET 10](https://dotnet.microsoft.com/download)** SDK or later if you build from source; NuGet restore happens on build.
 
-The app is **not** a DAW, DJ deck, video compositor (no NDI/Spout), or cross-platform product — see **Out of scope** in [docs/product-audience.md](docs/product-audience.md).
+The app is **not** a DAW, DJ deck, or video compositor (no NDI/Spout). Product scope and non-goals (including platform honesty): [docs/product-audience.md](docs/product-audience.md).
 
 ## License
 

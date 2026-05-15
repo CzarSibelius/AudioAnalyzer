@@ -18,6 +18,9 @@ internal sealed class GeneralSettingsHubKeyContext : IKeyHandlerContext
     /// <summary>Stops current capture before device switch.</summary>
     public required Action StopCapture { get; init; }
 
+    /// <summary>Tears down capture before device picker so enumeration can run (macOS Core Audio).</summary>
+    public required Action ReleaseCaptureForDeviceSelection { get; init; }
+
     /// <summary>Starts or restarts capture with the given device.</summary>
     public required Action<string?, string> StartCapture { get; init; }
 

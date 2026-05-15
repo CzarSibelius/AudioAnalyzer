@@ -1,13 +1,15 @@
 using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Application.Display;
 using AudioAnalyzer.Domain;
+using Microsoft.Extensions.Logging;
 
 namespace AudioAnalyzer.Console;
 
 /// <summary>Device selection modal per ADR-0006. Key handling via IKeyHandler per ADR-0047.</summary>
-internal sealed class DeviceSelectionModal : IDeviceSelectionModal
+internal sealed partial class DeviceSelectionModal : IDeviceSelectionModal
 {
     private readonly IAudioDeviceInfo _deviceInfo;
+    private readonly ILogger<DeviceSelectionModal> _logger;
     private readonly IKeyHandler<DeviceSelectionKeyContext> _keyHandler;
     private readonly ISettingsRepository _settingsRepo;
     private readonly AppSettings _settings;
@@ -19,6 +21,7 @@ internal sealed class DeviceSelectionModal : IDeviceSelectionModal
 
     public DeviceSelectionModal(
         IAudioDeviceInfo deviceInfo,
+        ILogger<DeviceSelectionModal> logger,
         IKeyHandler<DeviceSelectionKeyContext> keyHandler,
         ISettingsRepository settingsRepo,
         AppSettings settings,
@@ -29,6 +32,7 @@ internal sealed class DeviceSelectionModal : IDeviceSelectionModal
         ITitleBarBreadcrumbFormatter breadcrumbFormatter)
     {
         _deviceInfo = deviceInfo ?? throw new ArgumentNullException(nameof(deviceInfo));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _keyHandler = keyHandler ?? throw new ArgumentNullException(nameof(keyHandler));
         _settingsRepo = settingsRepo ?? throw new ArgumentNullException(nameof(settingsRepo));
         _settings = settings ?? throw new ArgumentNullException(nameof(settings));
@@ -42,7 +46,9 @@ internal sealed class DeviceSelectionModal : IDeviceSelectionModal
     /// <inheritdoc />
     public (string? deviceId, string name) Show(string? currentDeviceName, Action<bool> setModalOpen)
     {
+        LogDeviceModalGetDevicesBegin();
         var devices = _deviceInfo.GetDevices();
+        LogDeviceModalGetDevicesEnd(devices.Count);
         if (devices.Count == 0)
         {
             System.Console.WriteLine("No audio devices found!");
@@ -107,6 +113,7 @@ internal sealed class DeviceSelectionModal : IDeviceSelectionModal
 
         bool HandleKey(ConsoleKeyInfo key) => _keyHandler.Handle(key, context);
 
+        LogDeviceModalEnteringRunModal();
         ModalSystem.RunModal(
             DrawDeviceContent,
             HandleKey,

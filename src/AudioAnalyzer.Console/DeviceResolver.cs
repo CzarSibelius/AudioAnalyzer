@@ -21,11 +21,38 @@ internal static class DeviceResolver
 
         if (settings.InputMode == "loopback" && string.IsNullOrEmpty(settings.DeviceName))
         {
-            var systemAudio = devices.FirstOrDefault(d => d.Id == null);
+            AudioDeviceEntry? systemAudio = devices.FirstOrDefault(d => d.Id == null);
             if (systemAudio != null)
             {
                 return (systemAudio.Id, systemAudio.Name);
             }
+
+            // macOS has no WASAPI loopback; fresh settings use InputMode=loopback (Windows default).
+            // Prefer Demo so startup does not auto-open ScreenCaptureKit / virtual-routing capture (ADR-0084).
+            if (OperatingSystem.IsMacOS())
+            {
+                AudioDeviceEntry? demo = devices.FirstOrDefault(d =>
+                    d.Id != null && d.Id.StartsWith(DemoAudioDevice.Prefix, StringComparison.Ordinal));
+                if (demo != null)
+                {
+                    return (demo.Id, demo.Name);
+                }
+            }
+
+            AudioDeviceEntry? macDesktop = devices.FirstOrDefault(d =>
+                string.Equals(d.Id, CrossPlatformAudioDeviceIds.MacOsDesktopVirtualRouting, StringComparison.Ordinal));
+            if (macDesktop != null)
+            {
+                return (macDesktop.Id, macDesktop.Name);
+            }
+
+            AudioDeviceEntry? macSck = devices.FirstOrDefault(d =>
+                string.Equals(d.Id, CrossPlatformAudioDeviceIds.MacOsScreenCaptureKitSystemAudio, StringComparison.Ordinal));
+            if (macSck != null)
+            {
+                return (macSck.Id, macSck.Name);
+            }
+
             return (devices[0].Id, devices[0].Name);
         }
 

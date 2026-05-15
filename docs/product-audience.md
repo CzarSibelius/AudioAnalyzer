@@ -37,7 +37,7 @@ People who **broadcast** and want the terminal visualization in OBS or similar�
 
 ## Shared behavior
 
-All audiences use the same core product: **Windows** console app, **WASAPI** loopback or capture (or Demo), **presets** (layer stacks), optional **shows**, **General settings** for audio/BPM source and hub options, and the same **GPL-3.0-only** app license.
+All audiences use the same core analysis + visualization stack: **presets** (layer stacks), optional **shows**, **General settings** for audio/BPM source and hub options, and the same **GPL-3.0-only** app license. **Windows** remains the primary console target (**WASAPI** loopback/capture or Demo). **macOS** builds use **Core Audio** inputs + Demo on the pinned **`net10.0-macos*`** host TFM per [ADR-0086](adr/0086-macos-windows-hosts-and-screencapturekit.md). Platform differences: [ADR-0084](adr/0084-macos-multi-target-and-platform-audio.md).
 
 ## Out of scope (non-goals)
 
@@ -45,6 +45,6 @@ These are common adjacent products; stating them here avoids scope confusion:
 
 - **Not a DAW or DJ application** — no decks, clips, or stem separation; audio is analyzed and drawn, not remixed inside this repo.
 - **Not a video compositor** — no NDI, Spout, or built-in OBS plugin; streamers integrate by **capturing the console window** (or using dumps for stills).
-- **Not cross-platform** — Windows-focused (WASAPI, optional Windows-only layers such as webcam ASCII per [ADR-0074](adr/0074-ascii-video-layer-and-frame-source.md)).
+- **Platform honesty** — **Windows** delivers full WASAPI loopback/capture and optional Windows-only capabilities (e.g. webcam ASCII per [ADR-0074](adr/0074-ascii-video-layer-and-frame-source.md)). **macOS** supports Core Audio **input** capture + Demo; there is **no** built-in WASAPI-equivalent system loopback without **virtual routing** or optional **ScreenCaptureKit** ([ADR-0084](adr/0084-macos-multi-target-and-platform-audio.md), [ADR-0085](adr/0085-macos-desktop-output-via-virtual-routing.md), [ADR-0086](adr/0086-macos-windows-hosts-and-screencapturekit.md)). Other hosts/builds are unsupported unless documented.
 
 When a feature request clearly targets a different product category, prefer updating this section (or an ADR) rather than expanding scope silently.

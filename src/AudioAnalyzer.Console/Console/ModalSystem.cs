@@ -22,12 +22,12 @@ internal static class ModalSystem
         drawContent();
         while (true)
         {
-            if (System.Console.KeyAvailable)
+            if (InteractiveConsoleInput.KeyAvailable)
             {
-                var keys = new List<ConsoleKeyInfo> { System.Console.ReadKey(true) };
-                while (System.Console.KeyAvailable)
+                var keys = new List<ConsoleKeyInfo> { InteractiveConsoleInput.ReadKey(true) };
+                while (InteractiveConsoleInput.KeyAvailable)
                 {
-                    keys.Add(System.Console.ReadKey(true));
+                    keys.Add(InteractiveConsoleInput.ReadKey(true));
                 }
 
                 foreach (var k in keys)
@@ -113,7 +113,7 @@ internal static class ModalSystem
 
         while (true)
         {
-            if (System.Console.KeyAvailable)
+            if (InteractiveConsoleInput.KeyAvailable)
             {
                 if (consoleLock != null)
                 {
@@ -127,10 +127,10 @@ internal static class ModalSystem
                     ClearAndDraw();
                 }
                 // Collect queued keys and process in order
-                var keys = new List<ConsoleKeyInfo> { System.Console.ReadKey(true) };
-                while (System.Console.KeyAvailable)
+                var keys = new List<ConsoleKeyInfo> { InteractiveConsoleInput.ReadKey(true) };
+                while (InteractiveConsoleInput.KeyAvailable)
                 {
-                    keys.Add(System.Console.ReadKey(true));
+                    keys.Add(InteractiveConsoleInput.ReadKey(true));
                 }
                 foreach (var k in keys)
                 {

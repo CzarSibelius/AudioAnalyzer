@@ -54,8 +54,11 @@ internal sealed class MainLoopKeyContext : IKeyHandlerContext
     /// <summary>Show edit modal for Show play mode.</summary>
     public required IShowEditModal ShowEditModal { get; init; }
 
-    /// <summary>Stops current capture before device switch.</summary>
+    /// <summary>Stops current capture without disposing (rare; pause-like).</summary>
     public required Action StopCapture { get; init; }
+
+    /// <summary>Tears down capture before device picker so enumeration can run (macOS Core Audio).</summary>
+    public required Action ReleaseCaptureForDeviceSelection { get; init; }
 
     /// <summary>Starts or restarts capture with the given device.</summary>
     public required Action<string?, string> StartCapture { get; init; }

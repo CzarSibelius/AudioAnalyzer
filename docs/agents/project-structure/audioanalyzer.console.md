@@ -19,6 +19,7 @@ The **executable** hosts DI, the main loop, application modes, and console UI. N
 **Content (non-C#)**:
 
 - `appsettings.json`, `palettes/`, `presets/`, **`models/`** — bundled files copied to output (`CopyToOutputDirectory` in `.csproj`). Do not remove or relocate without updating the project file and any code that resolves paths.
+- **`macOS/Info.plist`** — bundle template for **`AudioAnalyzer.app`** (macOS **`net10.0-macos*`** host builds): **`NSMicrophoneUsageDescription`** so TCC can show the microphone prompt for the real apphost (see [getting-started.md](../../getting-started.md#command-line-macos)).
 
 ## Rules
 
