@@ -1,5 +1,6 @@
 using System.IO.Abstractions;
 using System.Text.RegularExpressions;
+using AudioAnalyzer.Application.Abstractions;
 
 namespace AudioAnalyzer.Console;
 

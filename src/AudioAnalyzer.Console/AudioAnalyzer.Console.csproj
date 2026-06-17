@@ -18,13 +18,13 @@
     <ApplicationId>dev.audioanalyzer.console</ApplicationId>
     <LinkMode>None</LinkMode>
     <EnableTrimAnalyzer>false</EnableTrimAnalyzer>
+    <!-- Console host: build the macOS SDK .app bundle so macOS has a code-signed bundle identity + Info.plist
+         for TCC consent (Microphone / System Audio Recording). We run the inner launcher in the terminal so
+         the interactive TUI still works. See ADR-0088. -->
+    <_CanOutputAppBundle>true</_CanOutputAppBundle>
+    <RunWithOpen>false</RunWithOpen>
     <!-- Preserve PublishFolderType metadata when Tests (or other hosts) reference this project. -->
     <MSBuildDisableGetCopyToPublishDirectoryItemsOptimization>true</MSBuildDisableGetCopyToPublishDirectoryItemsOptimization>
-  </PropertyGroup>
-
-  <!-- Wrap apphost in AudioAnalyzer.app on macOS builds so NSMicrophoneUsageDescription applies (flat dotnet run cannot). -->
-  <PropertyGroup Condition="'$(TargetFramework)' == '$(AudioAnalyzerMacOsHostTfm)' AND $([MSBuild]::IsOSPlatform('osx'))">
-    <CreateMacOSAppBundle>true</CreateMacOSAppBundle>
   </PropertyGroup>
 
   <ItemGroup>
@@ -60,16 +60,20 @@
     <None Include="models\**\*" CopyToOutputDirectory="PreserveNewest" PublishFolderType="Resource" />
   </ItemGroup>
 
-  <Target Name="CreateMacOSAppBundle" AfterTargets="Build" Condition="'$(TargetFramework)' == '$(AudioAnalyzerMacOsHostTfm)' AND $([MSBuild]::IsOSPlatform('osx')) AND '$(CreateMacOSAppBundle)' == 'true'">
+  <!-- macOS capture needs TCC consent, which requires a code-signed .app bundle identity (ADR-0088).
+       The SDK builds + ad-hoc signs the .app but does not embed our privacy usage strings or the native shims,
+       so finalize the bundle (inject usage strings, copy the shims into Contents/MacOS, re-sign ad-hoc). -->
+  <Target Name="FinalizeMacOsAppBundle" BeforeTargets="Run" Condition="'$(TargetFramework)' == '$(AudioAnalyzerMacOsHostTfm)' AND $([MSBuild]::IsOSPlatform('osx'))">
+    <Exec Command="bash &quot;$(MSBuildProjectDirectory)/../../scripts/macos/pack-bundle.sh&quot; &quot;$(TargetDir)AudioAnalyzer.Console.app&quot; &quot;$(MSBuildProjectDirectory)/macOS/Info.plist&quot; &quot;$(MSBuildProjectDirectory)/../../native/audio-tap-shim/build/libaudio_tap_shim.dylib&quot; &quot;$(MSBuildProjectDirectory)/../../native/video-capture-shim/build/libvideo_capture_shim.dylib&quot;" />
+  </Target>
+
+  <!-- SDK ComputeRunArguments overrides a same-named project target; run after it (and _PrepareRunDesktop)
+       to run the bundle launcher directly in the terminal (not `open`, which detaches the console TUI). -->
+  <Target Name="SetMacOsFlatRunCommand" AfterTargets="ComputeRunArguments" BeforeTargets="Run" Condition="'$(TargetFramework)' == '$(AudioAnalyzerMacOsHostTfm)' AND $([MSBuild]::IsOSPlatform('osx'))">
     <PropertyGroup>
-      <_OutDir>$([MSBuild]::EnsureTrailingSlash('$(TargetDir)'))</_OutDir>
-      <_SdkAppBundle>$(_OutDir)AudioAnalyzer.Console.app</_SdkAppBundle>
-      <_AppBundle>$(_OutDir)AudioAnalyzer.app</_AppBundle>
-      <_PlistSource>$(MSBuildProjectDirectory)/macOS/Info.plist</_PlistSource>
+      <RunCommand>$(TargetDir)AudioAnalyzer.Console.app/Contents/MacOS/AudioAnalyzer.Console</RunCommand>
+      <RunWorkingDirectory>$(TargetDir)AudioAnalyzer.Console.app/Contents/MacOS</RunWorkingDirectory>
     </PropertyGroup>
-    <RemoveDir Directories="$(_AppBundle)" Condition="Exists('$(_AppBundle)')" />
-    <Exec Command="rsync -a --delete &quot;$(_SdkAppBundle)/&quot; &quot;$(_AppBundle)/&quot;" />
-    <Copy SourceFiles="$(_PlistSource)" DestinationFiles="$(_AppBundle)/Contents/Info.plist" SkipUnchangedFiles="false" />
   </Target>
 
 </Project>

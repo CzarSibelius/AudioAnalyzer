@@ -72,9 +72,7 @@ public sealed partial class MacOsCoreAudioEnumerator : IMacOsAudioEnumerator
                 name = uid;
             }
 
-            bool desktopMixSink = MacOsDesktopMixSinkHeuristic.LooksLikeDesktopMixSink(name, uid);
-            string icon = desktopMixSink ? "🔊 " : "🎤 ";
-            string label = icon + name + (desktopMixSink ? " (desktop mix)" : "");
+            string label = "🎤 " + name;
             if (defaultUid != null && string.Equals(uid, defaultUid, StringComparison.Ordinal))
             {
                 label += " (Default)";

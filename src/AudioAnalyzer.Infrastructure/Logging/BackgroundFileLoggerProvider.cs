@@ -18,8 +18,12 @@ public sealed class BackgroundFileLoggerProvider : ILoggerProvider, IDisposable
         _minLevel = minLevel;
     }
 
-    /// <summary>Creates a provider from settings; returns a shared no-op provider when logging is disabled.</summary>
-    public static ILoggerProvider Create(AppLoggingSettings? logging, IFileSystem fileSystem)
+    /// <summary>
+    /// Creates a provider from settings; returns a shared no-op provider when logging is disabled.
+    /// Relative log paths are resolved under <paramref name="baseDirectory"/> (writable user-data root);
+    /// when null or empty, <see cref="AppContext.BaseDirectory"/> is used.
+    /// </summary>
+    public static ILoggerProvider Create(AppLoggingSettings? logging, IFileSystem fileSystem, string? baseDirectory = null)
     {
         ArgumentNullException.ThrowIfNull(fileSystem);
         if (logging?.Enabled != true)
@@ -27,7 +31,8 @@ public sealed class BackgroundFileLoggerProvider : ILoggerProvider, IDisposable
             return s_noOp;
         }
 
-        string path = LogFilePathResolver.Resolve(logging.FilePath, AppContext.BaseDirectory);
+        string root = string.IsNullOrWhiteSpace(baseDirectory) ? AppContext.BaseDirectory : baseDirectory;
+        string path = LogFilePathResolver.Resolve(logging.FilePath, root);
         LogLevel minLevel = AppLoggingLevelParser.Parse(logging.MinimumLevel);
         var writer = new BackgroundFileLogWriter(fileSystem, path);
         return new BackgroundFileLoggerProvider(writer, minLevel);

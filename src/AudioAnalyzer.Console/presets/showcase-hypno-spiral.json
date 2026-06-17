@@ -1,0 +1,28 @@
+{
+  "Name": "Hypno spiral",
+  "Config": {
+    "PaletteId": "default",
+    "Layers": [
+      {
+        "LayerType": "Fill",
+        "Enabled": true,
+        "ZOrder": 0,
+        "SpeedMultiplier": 1,
+        "ColorIndex": 0,
+        "PaletteId": "clear-black",
+        "RenderBounds": null,
+        "Custom": null
+      },
+      {
+        "LayerType": "HypnoSpiral",
+        "Enabled": true,
+        "ZOrder": 1,
+        "SpeedMultiplier": 1,
+        "ColorIndex": 0,
+        "PaletteId": "neon-mandala",
+        "RenderBounds": null,
+        "Custom": null
+      }
+    ]
+  }
+}

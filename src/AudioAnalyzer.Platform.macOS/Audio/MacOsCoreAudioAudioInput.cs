@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using System.Threading;
 using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Platform.macOS.Audio.CoreAudio;
 using Microsoft.Extensions.Logging;
@@ -9,6 +10,9 @@ namespace AudioAnalyzer.Platform.macOS.Audio;
 public sealed partial class MacOsCoreAudioAudioInput : IAudioInput
 {
     private static readonly MacOsCoreAudioInterop.AudioQueueInputCallback s_callback = OnRecordedStatic;
+
+    // No audio within this window after Start is treated as silent capture (e.g. TCC mic denial or a dead device).
+    private const int SilenceWatchdogMs = 3000;
 
     private readonly string _deviceUid;
     private readonly ILogger<MacOsCoreAudioAudioInput> _logger;
@@ -24,6 +28,8 @@ public sealed partial class MacOsCoreAudioAudioInput : IAudioInput
     private bool _running;
     private bool _disposed;
     private uint _allocatedBufferCapacity;
+    private Timer? _silenceWatchdog;
+    private bool _dataObserved;
 
     /// <summary>Initializes capture for the Core Audio device UID (resolved at <see cref="Start"/>).</summary>
     public MacOsCoreAudioAudioInput(string deviceUid, ILogger<MacOsCoreAudioAudioInput> logger)
@@ -63,7 +69,43 @@ public sealed partial class MacOsCoreAudioAudioInput : IAudioInput
             }
 
             _running = true;
+            ArmSilenceWatchdogLocked();
         }
+    }
+
+    private void ArmSilenceWatchdogLocked()
+    {
+        if (_silenceWatchdog != null || _dataObserved)
+        {
+            return;
+        }
+
+        _silenceWatchdog = new Timer(
+            static state => ((MacOsCoreAudioAudioInput)state!).OnSilenceWatchdog(),
+            this,
+            SilenceWatchdogMs,
+            Timeout.Infinite);
+    }
+
+    private void OnSilenceWatchdog()
+    {
+        bool silent;
+        lock (_lock)
+        {
+            DisposeSilenceWatchdogLocked();
+            silent = !_disposed && _running && !_dataObserved;
+        }
+
+        if (silent)
+        {
+            LogCaptureSilenceHint(SilenceWatchdogMs / 1000.0, _deviceUid);
+        }
+    }
+
+    private void DisposeSilenceWatchdogLocked()
+    {
+        _silenceWatchdog?.Dispose();
+        _silenceWatchdog = null;
     }
 
     /// <inheritdoc />
@@ -79,6 +121,7 @@ public sealed partial class MacOsCoreAudioAudioInput : IAudioInput
             }
 
             _running = false;
+            DisposeSilenceWatchdogLocked();
         }
 
         // Must not hold _lock: AudioQueueStop waits for the input callback, which acquires _lock in OnRecorded.
@@ -98,6 +141,7 @@ public sealed partial class MacOsCoreAudioAudioInput : IAudioInput
 
             _disposed = true;
             _running = false;
+            DisposeSilenceWatchdogLocked();
             queueCopy = _queue;
             _queue = IntPtr.Zero;
         }
@@ -223,11 +267,10 @@ public sealed partial class MacOsCoreAudioAudioInput : IAudioInput
 
                 if (status != MacOsCoreAudioConstants.noErr)
                 {
+                    // kAudioQueueErr_InvalidProperty (-66684) here is benign: we fall back to default
+                    // input routing. Actual capture failures (e.g. TCC mic denial) surface as silence,
+                    // which the silence watchdog reports after Start (not via this status code).
                     LogCurrentDevicePropertyFailed(_deviceUid, status);
-                    if (status == -66684)
-                    {
-                        LogMicrophonePermissionHint(status);
-                    }
                 }
             }
             finally
@@ -287,6 +330,7 @@ public sealed partial class MacOsCoreAudioAudioInput : IAudioInput
 
     private void TearDownQueueLocked()
     {
+        DisposeSilenceWatchdogLocked();
         if (_queue != IntPtr.Zero)
         {
             _ = MacOsCoreAudioInterop.AudioQueueDispose(_queue, immediate: 1);
@@ -382,6 +426,9 @@ public sealed partial class MacOsCoreAudioAudioInput : IAudioInput
                 {
                     return;
                 }
+
+                _dataObserved = true;
+                DisposeSilenceWatchdogLocked();
 
                 // Marshal.Copy while holding _lock so teardown cannot invalidate buffer metadata vs. native dispose ordering.
                 InterleavedPcmChunk interleaved = MaterializePcm(dataPtr, bytesUsed);

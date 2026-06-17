@@ -1,0 +1,32 @@
+{
+  "Name": "Falling letters",
+  "Config": {
+    "PaletteId": "default",
+    "Layers": [
+      {
+        "LayerType": "Fill",
+        "Enabled": true,
+        "ZOrder": 0,
+        "SpeedMultiplier": 1,
+        "ColorIndex": 0,
+        "PaletteId": "clear-black",
+        "RenderBounds": null,
+        "Custom": null
+      },
+      {
+        "LayerType": "FallingLetters",
+        "Enabled": true,
+        "ZOrder": 1,
+        "SpeedMultiplier": 1,
+        "ColorIndex": 0,
+        "PaletteId": "radioactive",
+        "RenderBounds": null,
+        "Custom": {
+          "AnimationMode": "ColumnRain",
+          "BeatReaction": "None",
+          "CharsetId": "digits"
+        }
+      }
+    ]
+  }
+}

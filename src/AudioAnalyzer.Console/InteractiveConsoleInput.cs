@@ -5,6 +5,12 @@ internal static class InteractiveConsoleInput
 {
     private static int _isSupportedState = -1;
 
+    /// <summary>Clears cached <see cref="IsSupported"/> state (e.g. after macOS TTY reattach).</summary>
+    internal static void InvalidateCache()
+    {
+        _isSupportedState = -1;
+    }
+
     /// <summary>Whether <see cref="System.Console.KeyAvailable"/> can be used without throwing.</summary>
     internal static bool IsSupported
     {

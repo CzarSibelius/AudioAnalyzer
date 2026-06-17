@@ -1,3 +1,4 @@
+using System.IO;
 using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Application.Display;
 using AudioAnalyzer.Domain;
@@ -8,6 +9,20 @@ namespace AudioAnalyzer.Console;
 /// <summary>Device selection modal per ADR-0006. Key handling via IKeyHandler per ADR-0047.</summary>
 internal sealed partial class DeviceSelectionModal : IDeviceSelectionModal
 {
+    private const int DeviceListStartRow = 3;
+
+    private static int GetDeviceModalListViewportRowCount()
+    {
+        try
+        {
+            int h = System.Console.WindowHeight;
+            return Math.Max(1, h - DeviceListStartRow - 1);
+        }
+        catch (IOException)
+        {
+            return Math.Max(1, 24 - DeviceListStartRow - 1);
+        }
+    }
     private readonly IAudioDeviceInfo _deviceInfo;
     private readonly ILogger<DeviceSelectionModal> _logger;
     private readonly IKeyHandler<DeviceSelectionKeyContext> _keyHandler;
@@ -97,14 +112,28 @@ internal sealed partial class DeviceSelectionModal : IDeviceSelectionModal
             TitleBarBreadcrumbRow.Write(0, width, _breadcrumbFormatter);
 
             System.Console.SetCursorPosition(0, 1);
-            System.Console.WriteLine("  Use ↑/↓ to select, ENTER to confirm, ESC to cancel");
+            int viewportRows = GetDeviceModalListViewportRowCount();
+            string hint = "  Use ↑/↓ to select, ENTER to confirm, ESC to cancel";
+            if (devices.Count > viewportRows)
+            {
+                hint += " — list scrolls when longer than the window";
+            }
+
+            System.Console.WriteLine(hint);
             System.Console.WriteLine();
 
+            int scrollOffset = SettingsSurfacesListDrawing.ComputeListScrollOffset(
+                context.SelectedIndex,
+                devices.Count,
+                viewportRows);
+
             SettingsSurfacesListDrawing.DrawAudioDeviceList(
-                3,
+                DeviceListStartRow,
                 width,
                 devices,
                 context.SelectedIndex,
+                scrollOffset,
+                viewportRows,
                 currentDeviceName,
                 selBg,
                 selFg,

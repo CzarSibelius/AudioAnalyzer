@@ -4,7 +4,7 @@
 
 ### Context
 
-Frames are produced by **`IAsciiVideoFrameSource`** (Application abstraction). The console host registers **`WindowsAsciiVideoFrameSource`** on Windows ([ADR-0074](../../../../docs/adr/0074-ascii-video-layer-and-frame-source.md)) and **`NullAsciiVideoFrameSource`** elsewhere. Capture runs **off the main thread**; each visualization frame the visualizer calls **`PrepareForFrame`** once with the **frontmost** enabled ASCII video layer’s settings (highest `ZOrder`), then each **`AsciiVideoLayer`** reads the **latest** frame only (no unbounded queue).
+Frames are produced by **`IAsciiVideoFrameSource`** (Application abstraction). The console host registers **`WindowsAsciiVideoFrameSource`** on Windows and **`MacOsAsciiVideoFrameSource`** on macOS ([ADR-0074](../../../../docs/adr/0074-ascii-video-layer-and-frame-source.md)); tests inject a fake. Capture runs **off the main thread**; each visualization frame the visualizer calls **`PrepareForFrame`** once with the **frontmost** enabled ASCII video layer’s settings (highest `ZOrder`), then each **`AsciiVideoLayer`** reads the **latest** frame only (no unbounded queue).
 
 **Privacy:** The camera is used only while an enabled `AsciiVideo` layer is present in the active preset (and the OS may prompt for permission). When no such layer is active, **`PrepareForFrame(null)`** stops capture and releases the device.
 
@@ -14,7 +14,7 @@ Layer-specific settings live in **`Custom`** as **`AsciiVideoSettings`** (S moda
 
 | Property | Meaning |
 |----------|---------|
-| **Source** (`SourceKind`) | `Webcam` (implemented on Windows) or `File` (reserved; layer shows *File source N/A*) |
+| **Source** (`SourceKind`) | `Webcam` (implemented on Windows and macOS) or `File` (reserved; layer shows *File source N/A*) |
 | **Webcam device** | Zero-based index into enumerated video capture device groups. In the S modal the row shows **`index · display name`** when WinRT provides a name (`MediaFrameSourceGroup.DisplayName`; list cached ~30s) |
 | **Max capture width / height** | Optional caps (`0` = no cap). When **either** cap is greater than zero, the implementation considers only formats whose width (and/or height) does not exceed the non-zero cap(s), then picks the **largest** resolution (most pixels) among those. Omitting a cap on one axis means that axis is not filtered |
 | **Palette source** | Same as ASCII image: layer palette vs per-pixel frame colors (`AsciiImagePaletteSource`) |
@@ -24,6 +24,7 @@ Layer-specific settings live in **`Custom`** as **`AsciiVideoSettings`** (S moda
 - **State**: **`AsciiVideoState`** in `ITextLayerStateStore<AsciiVideoState>` caches the last converted frame by source **sequence** id and convert size/palette mode.
 - **Windows**: `WindowsAsciiVideoFrameSource` in `Platform.Windows/AsciiVideo/` uses WinRT **`MediaCapture`** + **`MediaFrameReader`**, double-buffered latest BGRA frame. Frame source selection prefers **`MediaFrameSourceKind.Color`** with **`MediaStreamType.VideoPreview`**, then Color + **`VideoRecord`**, then any Color stream, then preview/record fallbacks (stable order by source id). Many drivers expose pixels only on **`VideoMediaFrame.Direct3DSurface`**; when **`SoftwareBitmap`** is null, frames are copied via **`SoftwareBitmap.CreateCopyFromSurfaceAsync`** on a **non-blocking async path** (no synchronous `.GetResult()` on the WinRT task in the frame callback). **`IsWebcamSessionActive`** is set only after **`MediaFrameReader.StartAsync`** succeeds; **`IsWebcamStarting`** is true while the device is still opening. **Placeholders**: *No camera* (no session), *Opening camera* (starting), *Waiting for video* (streaming but no frame yet); after ~8s without a frame, a second line suggests checking **Camera** privacy in Windows Settings. Failures are logged under **`WindowsAsciiVideoFrameSource`** (event ids 7650–7657) when application logging is enabled ([ADR-0076](../../../../docs/adr/0076-configurable-application-logging.md)). **`WindowsAsciiVideoDeviceCatalog`** enumerates the same groups for settings labels via **`IAsciiVideoDeviceCatalog`**.
 - **Interop**: `MemoryBufferInterop` reads **`BitmapBuffer`** through COM **`Marshal.QueryInterface`** for **`IMemoryBufferByteAccess`** on **`CreateReference()`**; a direct cast from the WinRT projection can throw **`InvalidCastException`** (e.g. with CsWinRT `IInspectable` wrappers).
+- **macOS**: `MacOsAsciiVideoFrameSource` in `Platform.macOS/AsciiVideo/` drives a native shim **`libvideo_capture_shim.dylib`** (`native/video-capture-shim/`, AVFoundation **`AVCaptureSession`** + **`AVCaptureVideoDataOutput`** with **`kCVPixelFormatType_32BGRA`** and `alwaysDiscardsLateVideoFrames`). A background command worker applies `PrepareForFrame` requests; frames arrive on the shim's serial dispatch queue and are repacked to tight BGRA (honoring `bytesPerRow`) into a single latest-frame slot. **Max capture width/height** map to the largest AVFoundation **session preset** within the caps (default 640×480 when uncapped). **`IsWebcamSessionActive`** is set after `video_capture_start` succeeds; **`IsWebcamStarting`** is true while the session opens (including the camera-authorization prompt, up to 30s). The shim is loaded from `Contents/MacOS` by **`MacOsVideoCaptureShimNative`**; builds/tests succeed without it (layer shows *No camera*, device list empty). Capture requires **`NSCameraUsageDescription`** in the bundle Info.plist and macOS **Camera** TCC consent; failures log under **`MacOsAsciiVideoFrameSource`** (event ids 7660–7666). **`MacOsAsciiVideoDeviceCatalog`** lists AVFoundation devices (built-in, external, Continuity, Desk View) for settings labels.
 - **Tests**: **`FakeAsciiVideoFrameSource`** supplies solid-color frames without hardware.
 
 ### Troubleshooting
@@ -34,7 +35,7 @@ Layer-specific settings live in **`Custom`** as **`AsciiVideoSettings`** (S moda
 
 ### Deferred / limitations
 
-- **`File`** (and streams) are not implemented; only **`Webcam`** on Windows produces frames.
+- **`File`** (and streams) are not implemented; only **`Webcam`** produces frames (Windows and macOS).
 - **Multiple `AsciiVideo` layers**: A single capture session is driven by the **frontmost** enabled layer’s device index and caps. Other enabled `AsciiVideo` layers **read the same latest frame**; they do not open separate cameras in this version. Coordinating multiple simultaneous cameras is left for a future change.
 
 ### Constraints

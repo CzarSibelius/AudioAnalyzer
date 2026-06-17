@@ -36,6 +36,10 @@
     <Compile Remove="Platform\macOS\**\*.cs" />
   </ItemGroup>
 
+  <ItemGroup Condition="'$(TargetFramework)' == '$(AudioAnalyzerMacOsHostTfm)'">
+    <Compile Remove="Platform\Windows\**\*.cs" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\..\src\AudioAnalyzer.Application\AudioAnalyzer.Application.csproj" />
     <ProjectReference Include="..\..\src\AudioAnalyzer.Console\AudioAnalyzer.Console.csproj" />

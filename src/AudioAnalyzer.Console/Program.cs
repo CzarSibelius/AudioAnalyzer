@@ -1,3 +1,4 @@
+using System.IO.Abstractions;
 using AudioAnalyzer.Application;
 using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Console;
@@ -6,8 +7,6 @@ using AudioAnalyzer.Infrastructure;
 using AudioAnalyzer.Visualizers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-
-MacOsLaunchDiagnostics.WriteMicrophoneBundleHintIfNeeded();
 
 // Parse CLI for screen-dump automation (before interactive-console gate so --dump-after can run headless).
 int? dumpAfterSeconds = null;
@@ -27,23 +26,50 @@ for (int i = 1; i < cliArgs.Length; i++)
     }
 }
 
-if (!InteractiveConsoleInput.IsSupported && dumpAfterSeconds == null)
+bool consoleInputReady = InteractiveConsoleInput.IsSupported;
+
+if (!consoleInputReady && dumpAfterSeconds == null)
 {
     MacOsLaunchDiagnostics.ReportTerminalRequiredAndExit();
     return;
 }
 
 // Load settings before building the renderer so visualizer settings are available for DI
-var presetRepo = new FilePresetRepository();
-var settingsRepo = new FileSettingsRepository(presetRepo, new DefaultTextLayersSettingsFactory());
+var fileSystem = new FileSystem();
+HostContentPaths contentPaths = HostContentPaths.Resolve(fileSystem, PlatformSelection.CreateContentLocator());
+var presetRepo = new FilePresetRepository(fileSystem, contentPaths.PresetsDirectory);
+var settingsRepo = new FileSettingsRepository(
+    fileSystem,
+    presetRepo,
+    new DefaultTextLayersSettingsFactory(),
+    contentPaths.SettingsFilePath);
 var settings = settingsRepo.LoadAppSettings();
 var visualizerSettings = settingsRepo.LoadVisualizerSettings();
 
-using var provider = ServiceConfiguration.Build(settingsRepo, presetRepo, settings, visualizerSettings);
+using var provider = ServiceConfiguration.Build(
+    settingsRepo,
+    presetRepo,
+    settings,
+    visualizerSettings,
+    new ServiceConfigurationOptions
+    {
+        FileSystem = fileSystem,
+        ShowsDirectory = contentPaths.ShowsDirectory,
+        ThemesDirectory = contentPaths.ThemesDirectory,
+        CharsetsDirectory = contentPaths.CharsetsDirectory,
+        WritableDataRoot = contentPaths.WritableDataRoot,
+        PaletteRepository = new FilePaletteRepository(fileSystem, contentPaths.PalettesDirectory),
+    });
 var deviceInfo = provider.GetRequiredService<IAudioDeviceInfo>();
 
+var bootstrapLoggerFactory = provider.GetRequiredService<ILoggerFactory>();
+provider.GetRequiredService<IPlatformStartupDiagnostics>().LogStartup();
+
 var devices = deviceInfo.GetDevices();
-var (initialDeviceId, initialName) = DeviceResolver.TryResolveFromSettings(devices, settings);
+var (initialDeviceId, initialName) = DeviceResolver.TryResolveFromSettings(
+    devices,
+    settings,
+    provider.GetRequiredService<IDefaultDeviceFallbackPolicy>());
 if (initialName == "")
 {
     if (dumpAfterSeconds != null)
@@ -85,7 +111,6 @@ var engine = provider.GetRequiredService<AnalysisEngine>();
 engine.BeatSensitivity = settings.BeatSensitivity;
 provider.GetRequiredService<IWaveformHistoryConfigurator>().ApplyMaxHistorySeconds(settings.MaxAudioHistorySeconds, null);
 
-ILoggerFactory loggerFactory = provider.GetRequiredService<ILoggerFactory>();
-StartupLogging.LogApplicationStarted(loggerFactory.CreateLogger("AudioAnalyzer"));
+StartupLogging.LogApplicationStarted(bootstrapLoggerFactory.CreateLogger("AudioAnalyzer"));
 
 shell.Run(initialDeviceId, initialName, dumpAfterSeconds, dumpPath);

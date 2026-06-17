@@ -12,6 +12,7 @@ internal sealed partial class HeaderContainer : IHeaderContainer, IUiComponent
     private readonly IUiComponentRenderer<IUiComponent> _componentRenderer;
     private readonly IUiStateUpdater<IUiComponent> _stateUpdater;
     private readonly IDisplayDimensions _displayDimensions;
+    private readonly IConsoleBufferController _consoleBufferController;
     private readonly INowPlayingProvider _nowPlayingProvider;
     private readonly AnalysisEngine _engine;
     private readonly UiSettings _uiSettings;
@@ -38,6 +39,7 @@ internal sealed partial class HeaderContainer : IHeaderContainer, IUiComponent
         IUiComponentRenderer<IUiComponent> componentRenderer,
         IUiStateUpdater<IUiComponent> stateUpdater,
         IDisplayDimensions displayDimensions,
+        IConsoleBufferController consoleBufferController,
         INowPlayingProvider nowPlayingProvider,
         AnalysisEngine engine,
         UiSettings uiSettings,
@@ -50,6 +52,7 @@ internal sealed partial class HeaderContainer : IHeaderContainer, IUiComponent
         _componentRenderer = componentRenderer ?? throw new ArgumentNullException(nameof(componentRenderer));
         _stateUpdater = stateUpdater ?? throw new ArgumentNullException(nameof(stateUpdater));
         _displayDimensions = displayDimensions ?? throw new ArgumentNullException(nameof(displayDimensions));
+        _consoleBufferController = consoleBufferController ?? throw new ArgumentNullException(nameof(consoleBufferController));
         _nowPlayingProvider = nowPlayingProvider ?? throw new ArgumentNullException(nameof(nowPlayingProvider));
         _engine = engine ?? throw new ArgumentNullException(nameof(engine));
         _uiSettings = uiSettings ?? throw new ArgumentNullException(nameof(uiSettings));
@@ -69,16 +72,9 @@ internal sealed partial class HeaderContainer : IHeaderContainer, IUiComponent
     {
         try
         {
-            if (OperatingSystem.IsWindows())
-            {
-                int w = _displayDimensions.Width;
-                int h = Math.Max(15, _displayDimensions.Height);
-                if (w >= 10 && h >= 15)
-                {
-                    System.Console.BufferWidth = w;
-                    System.Console.BufferHeight = h;
-                }
-            }
+            int w = _displayDimensions.Width;
+            int h = Math.Max(15, _displayDimensions.Height);
+            _consoleBufferController.EnsureBufferSize(w, h);
         }
         catch (Exception ex)
         {

@@ -14,7 +14,7 @@ public sealed class MacOsAudioDeviceInfoTests
         return new MacOsAudioDeviceInfo(
             NullLogger<MacOsAudioDeviceInfo>.Instance,
             fake,
-            new MacOsScreenCaptureKitSystemAudioInputFactory(NullLoggerFactory.Instance));
+            new SubstituteTapFactory(new DummyAudioInput()));
     }
 
     [Fact]
@@ -27,36 +27,12 @@ public sealed class MacOsAudioDeviceInfoTests
         var devices = info.GetDevices();
 
         Assert.Contains(devices, d => d.Id == DemoAudioDevice.Prefix + "120");
-        Assert.Contains(devices, d => d.Id == CrossPlatformAudioDeviceIds.MacOsDesktopVirtualRouting);
-        Assert.Contains(devices, d => d.Id == CrossPlatformAudioDeviceIds.MacOsScreenCaptureKitSystemAudio);
+        if (OperatingSystem.IsMacOS() && OperatingSystem.IsMacOSVersionAtLeast(14, 2))
+        {
+            Assert.Contains(devices, d => d.Id == CrossPlatformAudioDeviceIds.MacOsCoreAudioTapSystemAudio);
+        }
+
         Assert.Contains(devices, d => d.Id == MacOsAudioDeviceIds.EncodeInputUid("uid-test"));
-    }
-
-    [Fact]
-    public void CreateCapture_DesktopVirtualRouting_PicksFirstHeuristicVirtualMixer()
-    {
-        var fake = new FakeMacOsAudioEnumerator();
-        fake.PhysicalInputs.Add(new MacOsPhysicalAudioDevice("🎤 Built-in", "uid-in", "Built-in Mic"));
-        fake.PhysicalInputs.Add(new MacOsPhysicalAudioDevice("🔊 BlackHole 2ch (desktop mix)", "uid-bh", "BlackHole 2ch"));
-        using var dummy = new DummyAudioInput();
-        fake.Captures[MacOsAudioDeviceIds.EncodeInputUid("uid-bh")] = dummy;
-
-        var info = CreateInfo(fake);
-        IAudioInput resolved = info.CreateCapture(CrossPlatformAudioDeviceIds.MacOsDesktopVirtualRouting);
-
-        Assert.Same(dummy, resolved);
-    }
-
-    [Fact]
-    public void CreateCapture_DesktopVirtualRouting_NoHeuristicMatch_FallsBackToSynthetic()
-    {
-        var fake = new FakeMacOsAudioEnumerator();
-        fake.PhysicalInputs.Add(new MacOsPhysicalAudioDevice("🎤 Only Mic", "uid-in", "Built-in Mic"));
-
-        var info = CreateInfo(fake);
-        using var input = info.CreateCapture(CrossPlatformAudioDeviceIds.MacOsDesktopVirtualRouting);
-
-        Assert.IsType<SyntheticAudioInput>(input);
     }
 
     [Fact]
@@ -83,14 +59,17 @@ public sealed class MacOsAudioDeviceInfoTests
     }
 
     [Fact]
-    public void CreateCapture_ScreenCaptureKit_DelegatesToFactory()
+    public void CreateCapture_CoreAudioTap_DelegatesToFactory()
     {
         var fake = new FakeMacOsAudioEnumerator();
         using var expected = new DummyAudioInput();
-        var factory = new SubstituteSckFactory(expected);
+        var tapFactory = new SubstituteTapFactory(expected);
 
-        var info = new MacOsAudioDeviceInfo(NullLogger<MacOsAudioDeviceInfo>.Instance, fake, factory);
-        IAudioInput resolved = info.CreateCapture(CrossPlatformAudioDeviceIds.MacOsScreenCaptureKitSystemAudio);
+        var info = new MacOsAudioDeviceInfo(
+            NullLogger<MacOsAudioDeviceInfo>.Instance,
+            fake,
+            tapFactory);
+        IAudioInput resolved = info.CreateCapture(CrossPlatformAudioDeviceIds.MacOsCoreAudioTapSystemAudio);
 
         Assert.Same(expected, resolved);
     }
@@ -105,11 +84,11 @@ public sealed class MacOsAudioDeviceInfoTests
         Assert.IsType<SyntheticAudioInput>(input);
     }
 
-    private sealed class SubstituteSckFactory : IMacOsScreenCaptureKitSystemAudioInputFactory
+    private sealed class SubstituteTapFactory : IMacOsCoreAudioTapSystemAudioInputFactory
     {
         private readonly IAudioInput _input;
 
-        public SubstituteSckFactory(IAudioInput input) => _input = input;
+        public SubstituteTapFactory(IAudioInput input) => _input = input;
 
         public IAudioInput Create() => _input;
     }

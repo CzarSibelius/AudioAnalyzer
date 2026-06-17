@@ -1,6 +1,8 @@
 # ADR-0085: macOS desktop (“system”) output via virtual routing and a stable list id
 
-**Status**: Accepted
+**Status**: Superseded by [0088](./0088-macos-coreaudio-only-and-signed-app-bundle.md)
+
+> **Update (current):** The **virtual-routing** device row, the `CrossPlatformAudioDeviceIds.MacOsDesktopVirtualRouting` id, and the desktop-mix sink heuristic described below were **removed** by [ADR-0088](./0088-macos-coreaudio-only-and-signed-app-bundle.md). macOS "what you hear" capture now uses the **Core Audio process tap** ([ADR-0087](./0087-macos-core-audio-tap-system-audio.md)) exclusively. Operators may still set up a BlackHole/Multi-Output device manually and select it as a normal **Core Audio input**, but the app no longer adds a dedicated routing row or applies sink heuristics. The sections below are **historical**.
 
 ## Context
 

@@ -1,0 +1,31 @@
+{
+  "Name": "Marquee",
+  "Config": {
+    "PaletteId": "default",
+    "Layers": [
+      {
+        "LayerType": "Fill",
+        "Enabled": true,
+        "ZOrder": 0,
+        "SpeedMultiplier": 1,
+        "ColorIndex": 0,
+        "PaletteId": "clear-black",
+        "RenderBounds": null,
+        "Custom": null
+      },
+      {
+        "LayerType": "Marquee",
+        "Enabled": true,
+        "ZOrder": 1,
+        "SpeedMultiplier": 1,
+        "ColorIndex": 0,
+        "PaletteId": "default",
+        "RenderBounds": null,
+        "Custom": {
+          "TextSnippets": ["AUDIO ANALYZER", "MARQUEE LAYER"],
+          "BeatReaction": "None"
+        }
+      }
+    ]
+  }
+}

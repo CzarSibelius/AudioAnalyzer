@@ -1,0 +1,42 @@
+{
+  "Name": "Buffer distortion",
+  "Config": {
+    "PaletteId": "default",
+    "Layers": [
+      {
+        "LayerType": "Fill",
+        "Enabled": true,
+        "ZOrder": 0,
+        "SpeedMultiplier": 1,
+        "ColorIndex": 0,
+        "PaletteId": "clear-black",
+        "RenderBounds": null,
+        "Custom": null
+      },
+      {
+        "LayerType": "ScrollingColors",
+        "Enabled": true,
+        "ZOrder": 1,
+        "SpeedMultiplier": 1,
+        "ColorIndex": 0,
+        "PaletteId": "rainbow",
+        "RenderBounds": null,
+        "Custom": null
+      },
+      {
+        "LayerType": "BufferDistortion",
+        "Enabled": true,
+        "ZOrder": 2,
+        "SpeedMultiplier": 1,
+        "ColorIndex": 0,
+        "PaletteId": "default",
+        "RenderBounds": null,
+        "Custom": {
+          "Mode": "DropRipples",
+          "SpawnOnBeat": true,
+          "MaxRipples": 8
+        }
+      }
+    ]
+  }
+}

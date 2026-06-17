@@ -1,6 +1,8 @@
 # ADR-0086: macOS and Windows console hosts (no portable `net10.0`) and optional ScreenCaptureKit desktop audio
 
-**Status**: Accepted
+**Status**: Accepted (ScreenCaptureKit portion superseded by [0088](./0088-macos-coreaudio-only-and-signed-app-bundle.md))
+
+> **Update (current):** The **host TFM policy** in this ADR (Console + Tests target `net10.0-windows…` and `net10.0-macos*` only, no portable `net10.0`) **remains in force**. The optional **ScreenCaptureKit** desktop-audio path (Decision §4 and related consequences) was **removed** by [ADR-0088](./0088-macos-coreaudio-only-and-signed-app-bundle.md): macOS system audio now uses the **Core Audio process tap** ([ADR-0087](./0087-macos-core-audio-tap-system-audio.md)) only, and the macOS console runs from an **ad-hoc signed `.app` bundle** so TCC grants Microphone / System Audio Recording. Treat the SCK material below as **historical**.
 
 ## Context
 
@@ -49,4 +51,4 @@ We accept that **AudioAnalyzer.Console** (and **AudioAnalyzer.Tests** mirroring 
 ## Implementation tracking
 
 - **Host TFM migration** (Console, Tests, Platform.macOS, CI, docs): [`tasks/PBI-015-macos-windows-host-only-tfms.md`](../../tasks/PBI-015-macos-windows-host-only-tfms.md)
-- **ScreenCaptureKit** system audio (PBI-016): implemented (`MacOsScreenCaptureKitSystemAudioInput`, stable id `CrossPlatformAudioDeviceIds.MacOsScreenCaptureKitSystemAudio`); see `specs/platform-macos/spec.md` and `tasks/PBI-016-macos-screencapturekit-system-audio.md`.
+- **ScreenCaptureKit** system audio (PBI-016): implemented historically, then **removed** by [ADR-0088](./0088-macos-coreaudio-only-and-signed-app-bundle.md) in favor of the Core Audio process tap; the `MacOsScreenCaptureKitSystemAudioInput` types and `MacOsScreenCaptureKitSystemAudio` id no longer exist.

@@ -9,8 +9,9 @@ public sealed class AppLoggingSettings
     public bool Enabled { get; set; }
 
     /// <summary>
-    /// Log file path. Relative paths are resolved under the application base directory.
-    /// When null or whitespace, defaults to <c>logs/audioanalyzer-{ProcessId}.log</c> under the base directory (see ADR-0083).
+    /// Log file path. Relative paths are resolved under the writable user-data root
+    /// (on macOS app bundles this is <c>~/Library/Application Support/AudioAnalyzer</c>; otherwise the app base directory).
+    /// When null or whitespace, defaults to <c>logs/audioanalyzer-{ProcessId}.log</c> under that root (see ADR-0083).
     /// The literal <c>{ProcessId}</c> in the path is replaced at startup with the numeric id of the current process.
     /// A fixed path without that placeholder is allowed for single-instance or external aggregation scenarios but is not safe for concurrent writers.
     /// </summary>

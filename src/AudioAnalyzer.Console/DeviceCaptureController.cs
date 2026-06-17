@@ -14,6 +14,10 @@ internal sealed partial class DeviceCaptureController : IDeviceCaptureController
     private readonly ILogger<DeviceCaptureController> _logger;
     private readonly object _deviceLock = new();
 
+    // Serializes the blocking start/stop transition so overlapping device switches (and the single
+    // native Core Audio tap state) cannot run concurrently. Held on a background thread, never the UI thread.
+    private readonly object _transitionLock = new();
+
     private IAudioInput? _currentInput;
     private string _currentDeviceName = "";
     private string? _currentDeviceId;
@@ -42,28 +46,56 @@ internal sealed partial class DeviceCaptureController : IDeviceCaptureController
     public void StartCapture(string? deviceId, string name)
     {
         IAudioInput? oldInput;
+        IAudioInput newInput;
         lock (_deviceLock)
         {
             oldInput = _currentInput;
-            _currentInput = null;
-        }
-        oldInput?.StopCapture();
-        oldInput?.Dispose();
-        _beatTiming.NotifyAudioCaptureStopped();
-
-        IAudioInput? startedInput;
-        lock (_deviceLock)
-        {
-            _currentInput = _deviceInfo.CreateCapture(deviceId);
+            newInput = _deviceInfo.CreateCapture(deviceId);
+            _currentInput = newInput;
             _currentDeviceName = name;
             _currentDeviceId = deviceId;
-            _beatTiming.ApplyFromSettings(_appSettings.BpmSource, deviceId);
-            _currentInput.DataAvailable += OnCapturedAudioAvailable;
-            startedInput = _currentInput;
+            newInput.DataAvailable += OnCapturedAudioAvailable;
         }
 
-        // Avoid acquisition order input-lock → device-lock vs device-lock → input-lock (e.g. macOS Audio Queue callback).
-        startedInput?.Start();
+        // Stopping the old input and starting the new one can block the caller for a long time:
+        // Core Audio capture (system-audio tap / mic) triggers TCC consent prompts and aggregate-device
+        // creation synchronously. Run that transition off the UI thread so startup and device switches
+        // stay responsive (ADR-0030); the device name is already published above for the header.
+        _ = Task.Run(() => RunCaptureTransition(oldInput, newInput, deviceId));
+    }
+
+    private void RunCaptureTransition(IAudioInput? oldInput, IAudioInput newInput, string? deviceId)
+    {
+        // Serialize transitions; never hold _deviceLock across blocking Start/Stop calls so we keep the
+        // input-lock → device-lock ordering used by capture callbacks (ADR-0018).
+        lock (_transitionLock)
+        {
+            try
+            {
+                oldInput?.StopCapture();
+                oldInput?.Dispose();
+                _beatTiming.NotifyAudioCaptureStopped();
+
+                bool isCurrent;
+                lock (_deviceLock)
+                {
+                    isCurrent = ReferenceEquals(_currentInput, newInput);
+                    if (isCurrent)
+                    {
+                        _beatTiming.ApplyFromSettings(_appSettings.BpmSource, deviceId);
+                    }
+                }
+
+                if (isCurrent)
+                {
+                    newInput.Start();
+                }
+            }
+            catch (Exception ex)
+            {
+                LogCaptureTransitionFailed(ex);
+            }
+        }
     }
 
     private void OnCapturedAudioAvailable(object? sender, AudioDataAvailableEventArgs e)
@@ -112,14 +144,17 @@ internal sealed partial class DeviceCaptureController : IDeviceCaptureController
     public void RestartCapture()
     {
         IAudioInput? input;
+        string? deviceId;
         lock (_deviceLock)
         {
             input = _currentInput;
+            deviceId = _currentDeviceId;
         }
 
         if (input != null)
         {
-            input.Start();
+            // Restarting an existing input can also block (Core Audio); keep the UI thread responsive.
+            _ = Task.Run(() => RunCaptureTransition(null, input, deviceId));
             return;
         }
 

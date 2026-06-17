@@ -1,0 +1,28 @@
+{
+  "Name": "Scrolling colors",
+  "Config": {
+    "PaletteId": "default",
+    "Layers": [
+      {
+        "LayerType": "Fill",
+        "Enabled": true,
+        "ZOrder": 0,
+        "SpeedMultiplier": 1,
+        "ColorIndex": 0,
+        "PaletteId": "clear-black",
+        "RenderBounds": null,
+        "Custom": null
+      },
+      {
+        "LayerType": "ScrollingColors",
+        "Enabled": true,
+        "ZOrder": 1,
+        "SpeedMultiplier": 1,
+        "ColorIndex": 0,
+        "PaletteId": "rainbow",
+        "RenderBounds": null,
+        "Custom": null
+      }
+    ]
+  }
+}

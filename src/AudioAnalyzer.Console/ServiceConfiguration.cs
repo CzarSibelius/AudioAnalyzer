@@ -8,17 +8,6 @@ using AudioAnalyzer.Application.Fft;
 using AudioAnalyzer.Application.VolumeAnalysis;
 using AudioAnalyzer.Domain;
 using AudioAnalyzer.Infrastructure;
-using AudioAnalyzer.Infrastructure.AsciiVideo;
-using AudioAnalyzer.Infrastructure.NowPlaying;
-#if WINDOWS
-using AudioAnalyzer.Platform.Windows.AsciiVideo;
-using AudioAnalyzer.Platform.Windows.Audio;
-using AudioAnalyzer.Platform.Windows.NowPlaying;
-#elif MACOS
-using AudioAnalyzer.Platform.macOS.Audio;
-#else
-#error AudioAnalyzer.Console must be built for net10.0-windows… or the pinned net10.0-macos* host TFM.
-#endif
 using AudioAnalyzer.Visualizers;
 using AudioAnalyzer.Infrastructure.Logging;
 using Microsoft.Extensions.DependencyInjection;
@@ -40,7 +29,10 @@ internal static class ServiceConfiguration
         services.AddSingleton(settings);
         services.AddSingleton(visualizerSettings);
         services.AddSingleton<ILoggerProvider>(sp =>
-            BackgroundFileLoggerProvider.Create(sp.GetRequiredService<AppSettings>().Logging, sp.GetRequiredService<IFileSystem>()));
+            BackgroundFileLoggerProvider.Create(
+                sp.GetRequiredService<AppSettings>().Logging,
+                sp.GetRequiredService<IFileSystem>(),
+                options?.WritableDataRoot));
         services.AddLogging(logging =>
         {
             AppLoggingSettings logSettings = settings.Logging ?? new AppLoggingSettings();
@@ -63,66 +55,8 @@ internal static class ServiceConfiguration
         services.AddSingleton<IFileSystem>(_ => options?.FileSystem ?? new FileSystem());
         services.AddSingleton<IShowRepository>(sp =>
             new FileShowRepository(sp.GetRequiredService<IFileSystem>(), options?.ShowsDirectory));
-#if WINDOWS
-        services.AddSingleton<IAudioDeviceInfo, WindowsAudioDeviceInfo>();
 
-        services.AddSingleton<INowPlayingProvider>(sp =>
-        {
-            if (options?.NowPlayingProvider != null)
-            {
-                return options.NowPlayingProvider;
-            }
-
-            var provider = new WindowsNowPlayingProvider();
-            provider.Start();
-            return provider;
-        });
-
-        services.AddSingleton<IAsciiVideoFrameSource>(sp =>
-        {
-            if (options?.AsciiVideoFrameSource != null)
-            {
-                return options.AsciiVideoFrameSource;
-            }
-
-            return new WindowsAsciiVideoFrameSource(sp.GetRequiredService<ILogger<WindowsAsciiVideoFrameSource>>());
-        });
-
-        services.AddSingleton<IAsciiVideoDeviceCatalog>(_ =>
-        {
-            if (options?.AsciiVideoDeviceCatalog != null)
-            {
-                return options.AsciiVideoDeviceCatalog;
-            }
-
-            return new WindowsAsciiVideoDeviceCatalog();
-        });
-#elif MACOS
-        services.AddSingleton<IMacOsAudioEnumerator>(sp =>
-            options?.MacOsAudioEnumerator ?? new MacOsCoreAudioEnumerator(
-                sp.GetRequiredService<ILogger<MacOsCoreAudioEnumerator>>(),
-                sp.GetRequiredService<ILoggerFactory>()));
-
-        services.AddSingleton<IMacOsScreenCaptureKitSystemAudioInputFactory>(sp =>
-            options?.MacOsScreenCaptureKitSystemAudioInputFactory
-            ?? new MacOsScreenCaptureKitSystemAudioInputFactory(sp.GetRequiredService<ILoggerFactory>()));
-
-        services.AddSingleton<IAudioDeviceInfo>(sp => new MacOsAudioDeviceInfo(
-            sp.GetRequiredService<ILogger<MacOsAudioDeviceInfo>>(),
-            sp.GetRequiredService<IMacOsAudioEnumerator>(),
-            sp.GetRequiredService<IMacOsScreenCaptureKitSystemAudioInputFactory>()));
-
-        services.AddSingleton<INowPlayingProvider>(sp =>
-            options?.NowPlayingProvider ?? new NullNowPlayingProvider());
-
-        services.AddSingleton<IAsciiVideoFrameSource>(sp =>
-            options?.AsciiVideoFrameSource ?? new NullAsciiVideoFrameSource());
-
-        services.AddSingleton<IAsciiVideoDeviceCatalog>(_ =>
-            options?.AsciiVideoDeviceCatalog ?? new NullAsciiVideoDeviceCatalog());
-#else
-#error AudioAnalyzer.Console must be built for net10.0-windows… or the pinned net10.0-macos* host TFM.
-#endif
+        PlatformSelection.AddPlatformServices(services, options);
 
         services.AddSingleton<IDefaultTextLayersSettingsFactory>(_ => new DefaultTextLayersSettingsFactory());
         services.AddSingleton<TextLayerStateStore>();
@@ -192,6 +126,7 @@ internal static class ServiceConfiguration
                 sp.GetRequiredService<IUiComponentRenderer<IUiComponent>>(),
                 sp.GetRequiredService<IUiStateUpdater<IUiComponent>>(),
                 sp.GetRequiredService<IDisplayDimensions>(),
+                sp.GetRequiredService<IConsoleBufferController>(),
                 sp.GetRequiredService<INowPlayingProvider>(),
                 sp.GetRequiredService<AnalysisEngine>(),
                 sp.GetRequiredService<UiSettings>(),
@@ -301,10 +236,10 @@ internal static class ServiceConfiguration
                 sp.GetRequiredService<IDisplayState>()));
         services.AddSingleton<IKeyHandlerConfig<ShowEditModalKeyContext>, ShowEditModalKeyHandlerConfig>();
         services.AddSingleton<IShowEditModal, ShowEditModal>();
+        services.AddSingleton<KeyHandling.ConsoleShiftLetterV>();
         services.AddSingleton<IKeyHandlerConfig<MainLoopKeyContext>, MainLoopKeyHandlerConfig>();
         services.AddSingleton<IDeviceCaptureController, DeviceCaptureController>();
         services.AddSingleton<IAppSettingsPersistence, AppSettingsPersistence>();
-        services.AddSingleton<IScreenDumpContentProvider, WindowsConsoleScreenDumpContentProvider>();
         services.AddSingleton<IScreenDumpService, ScreenDumpService>();
         services.AddSingleton<ApplicationShell>();
 

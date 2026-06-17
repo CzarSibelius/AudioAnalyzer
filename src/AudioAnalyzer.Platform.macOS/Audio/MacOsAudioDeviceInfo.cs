@@ -1,30 +1,31 @@
 using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Domain;
 using AudioAnalyzer.Infrastructure;
+using AudioAnalyzer.Platform.macOS.Audio.CoreAudioTap;
 using Microsoft.Extensions.Logging;
 
 namespace AudioAnalyzer.Platform.macOS.Audio;
 
 /// <summary>
-/// Device listing for macOS (pinned <c>net10.0-macos*</c> host per ADR-0086): Demo synthesis, desktop-output shortcuts (virtual routing per ADR-0085;
-/// optional ScreenCaptureKit system audio per ADR-0086 / PBI-016), and Core Audio inputs (PBI-013 / ADR-0084). There is no WASAPI-style built-in loopback;
-/// desktop visualization uses virtual devices, SCK with Screen Recording consent, or routing.
+/// Device listing for macOS (pinned <c>net10.0-macos*</c> host per ADR-0086): Demo synthesis, Core Audio process-tap system audio
+/// (macOS 14.2+, System Audio Recording consent per ADR-0087), and Core Audio inputs (PBI-013 / ADR-0084). There is no WASAPI-style
+/// built-in loopback; system/desktop "what you hear" capture uses the Core Audio tap (see ADR-0088).
 /// </summary>
 public sealed partial class MacOsAudioDeviceInfo : IAudioDeviceInfo
 {
     private readonly ILogger<MacOsAudioDeviceInfo> _logger;
     private readonly IMacOsAudioEnumerator _enumerator;
-    private readonly IMacOsScreenCaptureKitSystemAudioInputFactory _sckSystemAudioFactory;
+    private readonly IMacOsCoreAudioTapSystemAudioInputFactory _tapSystemAudioFactory;
 
     /// <summary>Initializes a new instance of the <see cref="MacOsAudioDeviceInfo"/> class.</summary>
     public MacOsAudioDeviceInfo(
         ILogger<MacOsAudioDeviceInfo> logger,
         IMacOsAudioEnumerator enumerator,
-        IMacOsScreenCaptureKitSystemAudioInputFactory sckSystemAudioFactory)
+        IMacOsCoreAudioTapSystemAudioInputFactory tapSystemAudioFactory)
     {
         _logger = logger;
         _enumerator = enumerator;
-        _sckSystemAudioFactory = sckSystemAudioFactory ?? throw new ArgumentNullException(nameof(sckSystemAudioFactory));
+        _tapSystemAudioFactory = tapSystemAudioFactory ?? throw new ArgumentNullException(nameof(tapSystemAudioFactory));
     }
 
     /// <inheritdoc />
@@ -36,17 +37,24 @@ public sealed partial class MacOsAudioDeviceInfo : IAudioDeviceInfo
             new() { Name = "Demo Mode (90 BPM)", Id = DemoAudioDevice.Prefix + "90" },
             new() { Name = "Demo Mode (120 BPM)", Id = DemoAudioDevice.Prefix + "120" },
             new() { Name = "Demo Mode (140 BPM)", Id = DemoAudioDevice.Prefix + "140" },
-            new()
-            {
-                Name = "🔊 Desktop / system output (virtual mixer if installed)",
-                Id = CrossPlatformAudioDeviceIds.MacOsDesktopVirtualRouting,
-            },
-            new()
-            {
-                Name = "🖥️ Desktop / system audio (ScreenCaptureKit — Screen Recording permission)",
-                Id = CrossPlatformAudioDeviceIds.MacOsScreenCaptureKitSystemAudio,
-            },
         };
+
+        if (MacOsCoreAudioTapAvailability.IsOperatingSystemSupported)
+        {
+            string tapLabel = MacOsCoreAudioTapAvailability.IsCaptureReady
+                ? "🔉 Desktop / system audio (Core Audio tap — System Audio Recording permission)"
+                : "🔉 Desktop / system audio (Core Audio tap — build native/audio-tap-shim, see docs)";
+            list.Add(new AudioDeviceEntry
+            {
+                Name = tapLabel,
+                Id = CrossPlatformAudioDeviceIds.MacOsCoreAudioTapSystemAudio,
+            });
+
+            if (!MacOsCoreAudioTapAvailability.IsCaptureReady)
+            {
+                LogCoreAudioTapShimNotLoaded();
+            }
+        }
 
         foreach (MacOsPhysicalAudioDevice d in _enumerator.GetPhysicalInputs())
         {
@@ -77,28 +85,9 @@ public sealed partial class MacOsAudioDeviceInfo : IAudioDeviceInfo
             return new SyntheticAudioInput(bpm);
         }
 
-        if (string.Equals(deviceId, CrossPlatformAudioDeviceIds.MacOsScreenCaptureKitSystemAudio, StringComparison.Ordinal))
+        if (string.Equals(deviceId, CrossPlatformAudioDeviceIds.MacOsCoreAudioTapSystemAudio, StringComparison.Ordinal))
         {
-            return _sckSystemAudioFactory.Create();
-        }
-
-        if (string.Equals(deviceId, CrossPlatformAudioDeviceIds.MacOsDesktopVirtualRouting, StringComparison.Ordinal))
-        {
-            foreach (MacOsPhysicalAudioDevice d in _enumerator.GetPhysicalInputs())
-            {
-                if (MacOsDesktopMixSinkHeuristic.LooksLikeDesktopMixSink(d.HardwareName, d.Uid))
-                {
-                    string encoded = MacOsAudioDeviceIds.EncodeInputUid(d.Uid);
-                    if (_enumerator.TryCreateCapture(encoded, out IAudioInput? routed) && routed != null)
-                    {
-                        LogDesktopVirtualRoutingPicked(d.HardwareName);
-                        return routed;
-                    }
-                }
-            }
-
-            LogDesktopVirtualRoutingNoSinkFound();
-            return new SyntheticAudioInput(120);
+            return _tapSystemAudioFactory.Create();
         }
 
         if (_enumerator.TryCreateCapture(deviceId, out IAudioInput? capture) && capture != null)

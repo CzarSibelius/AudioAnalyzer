@@ -14,12 +14,12 @@ The **executable** hosts DI, the main loop, application modes, and console UI. N
 
 **`ShowEdit/`**: show edit modal key handling.
 
-**Project root**: composition and wiring — `Program`, `ApplicationShell`, `ServiceConfiguration`, application modes, orchestration, persistence glue, cross-cutting console services (`ScreenDumpService`, `LayerSettingsReflection`, toolbar/layout helpers, etc.).
+**Project root**: composition and wiring — `Program`, `ApplicationShell`, `ServiceConfiguration`, `PlatformSelection` (the single compile-time OS switch selecting the platform DI module and content locator, see [ADR-0092](../../adr/0092-platform-behavior-via-abstractions-and-di-module.md)), application modes, orchestration, persistence glue, cross-cutting console services (`StartupLogging`, `MacOsLaunchDiagnostics`, `ScreenDumpService`, `LayerSettingsReflection`, toolbar/layout helpers, etc.).
 
 **Content (non-C#)**:
 
 - `appsettings.json`, `palettes/`, `presets/`, **`models/`** — bundled files copied to output (`CopyToOutputDirectory` in `.csproj`). Do not remove or relocate without updating the project file and any code that resolves paths.
-- **`macOS/Info.plist`** — bundle template for **`AudioAnalyzer.app`** (macOS **`net10.0-macos*`** host builds): **`NSMicrophoneUsageDescription`** so TCC can show the microphone prompt for the real apphost (see [getting-started.md](../../getting-started.md#command-line-macos)).
+- **`macOS/Info.plist`** — privacy usage strings for a future signed macOS bundle; the console host uses flat output and **`dotnet run`** (see [getting-started.md](../../getting-started.md#command-line-macos)).
 
 ## Rules
 

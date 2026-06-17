@@ -10,8 +10,8 @@ public sealed partial class MacOsCoreAudioAudioInput
     [LoggerMessage(EventId = 7731, Level = LogLevel.Warning, Message = "AudioQueueSetProperty(CurrentDevice) failed for UID {Uid}: OSStatus={Status}; using default input routing.")]
     private partial void LogCurrentDevicePropertyFailed(string uid, int status);
 
-    [LoggerMessage(EventId = 7737, Level = LogLevel.Information, Message = "If capture stays silent: macOS Privacy → Microphone — enable access for the host (Terminal, Cursor, or dotnet). OSStatus={Status} often appears when TCC denies mic access.")]
-    private partial void LogMicrophonePermissionHint(int status);
+    [LoggerMessage(EventId = 7737, Level = LogLevel.Warning, Message = "No audio captured within {Seconds}s for UID {Uid}. If this is a microphone/input device, grant Microphone access to the host in System Settings → Privacy & Security → Microphone (signed-bundle TCC, ADR-0088); persistent silence with no callbacks usually means access was denied or the device delivers no data.")]
+    private partial void LogCaptureSilenceHint(double seconds, string uid);
 
     [LoggerMessage(EventId = 7736, Level = LogLevel.Warning, Message = "AudioQueueSetProperty(ChannelLayout) failed: OSStatus={Status}")]
     private partial void LogChannelLayoutFailed(int status);

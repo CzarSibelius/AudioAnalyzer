@@ -13,9 +13,6 @@ public sealed partial class MacOsAudioDeviceInfo
     [LoggerMessage(EventId = 7720, Level = LogLevel.Warning, Message = "Unknown or unavailable audio device id {DeviceId}; falling back to Demo synthesis (120 BPM).")]
     private partial void LogUnknownDevice(string deviceId);
 
-    [LoggerMessage(EventId = 7723, Level = LogLevel.Information, Message = "macOS desktop routing: capturing virtual mixer \"{DeviceName}\" for system output visualization.")]
-    private partial void LogDesktopVirtualRoutingPicked(string deviceName);
-
-    [LoggerMessage(EventId = 7724, Level = LogLevel.Warning, Message = "macOS desktop routing: no recognized virtual mixer (e.g. BlackHole) found; falling back to Demo synthesis (120 BPM). Install a virtual device and route Mac playback to it (see docs/getting-started.md).")]
-    private partial void LogDesktopVirtualRoutingNoSinkFound();
+    [LoggerMessage(EventId = 7725, Level = LogLevel.Warning, Message = "Core Audio tap device is listed but libaudio_tap_shim.dylib is missing next to the app. Build native/audio-tap-shim and rebuild the macOS host (see native/README.md).")]
+    private partial void LogCoreAudioTapShimNotLoaded();
 }

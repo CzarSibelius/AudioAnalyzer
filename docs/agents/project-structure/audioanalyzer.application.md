@@ -1,6 +1,6 @@
 # AudioAnalyzer.Application — folder layout
 
-**`Abstractions/`**: interfaces and small DTOs consumed by Console, Infrastructure, or Visualizers (e.g. repositories, viewport/toolbar abstractions).
+**`Abstractions/`**: interfaces and small DTOs consumed by Console, Infrastructure, or Visualizers (e.g. repositories, viewport/toolbar abstractions). Includes the cross-platform host abstractions implemented per platform and injected from the platform projects ([ADR-0092](../../adr/0092-platform-behavior-via-abstractions-and-di-module.md)): `IConsoleBufferController`, `ICapsLockState`, `IScreenDumpContentProvider`, `IHostContentLocator`, `IPlatformStartupDiagnostics`, `IDefaultDeviceFallbackPolicy`.
 
 **Feature folders** (keep new code in the closest match):
 

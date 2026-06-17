@@ -1,5 +1,7 @@
 # PBI-016: macOS ScreenCaptureKit system audio (optional desktop capture)
 
+> **Reverted / closed:** This work was implemented and later **removed** by [ADR-0088](../docs/adr/0088-macos-coreaudio-only-and-signed-app-bundle.md). macOS system audio now uses the **Core Audio process tap** only ([ADR-0087](../docs/adr/0087-macos-core-audio-tap-system-audio.md)); the ScreenCaptureKit and virtual-routing paths no longer exist. The directive below is **historical**.
+
 **Transient work item** — close after merge (or split into follow-up PBIs if scope explodes).
 
 ## Directive

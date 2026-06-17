@@ -1,0 +1,31 @@
+{
+  "Name": "Oscilloscope",
+  "Config": {
+    "PaletteId": "default",
+    "Layers": [
+      {
+        "LayerType": "Fill",
+        "Enabled": true,
+        "ZOrder": 0,
+        "SpeedMultiplier": 1,
+        "ColorIndex": 0,
+        "PaletteId": "clear-black",
+        "RenderBounds": null,
+        "Custom": null
+      },
+      {
+        "LayerType": "Oscilloscope",
+        "Enabled": true,
+        "ZOrder": 1,
+        "SpeedMultiplier": 1,
+        "ColorIndex": 0,
+        "PaletteId": "oscilloscope",
+        "RenderBounds": null,
+        "Custom": {
+          "Gain": 2.5,
+          "Filled": true
+        }
+      }
+    ]
+  }
+}

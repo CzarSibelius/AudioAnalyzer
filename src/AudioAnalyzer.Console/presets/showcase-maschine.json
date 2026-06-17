@@ -1,0 +1,32 @@
+{
+  "Name": "Maschine",
+  "Config": {
+    "PaletteId": "default",
+    "Layers": [
+      {
+        "LayerType": "Fill",
+        "Enabled": true,
+        "ZOrder": 0,
+        "SpeedMultiplier": 1,
+        "ColorIndex": 0,
+        "PaletteId": "clear-black",
+        "RenderBounds": null,
+        "Custom": null
+      },
+      {
+        "LayerType": "Maschine",
+        "Enabled": true,
+        "ZOrder": 1,
+        "SpeedMultiplier": 1,
+        "ColorIndex": 0,
+        "PaletteId": "acid-k",
+        "RenderBounds": null,
+        "Custom": {
+          "TextSnippets": ["MASCHINE", "AUDIO ANALYZER"],
+          "AccentColorIndex": 1,
+          "AccentColumnMode": "Moving"
+        }
+      }
+    ]
+  }
+}

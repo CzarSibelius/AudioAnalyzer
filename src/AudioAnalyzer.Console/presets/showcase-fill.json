@@ -1,0 +1,35 @@
+{
+  "Name": "Fill gradient",
+  "Config": {
+    "PaletteId": "default",
+    "Layers": [
+      {
+        "LayerType": "Fill",
+        "Enabled": true,
+        "ZOrder": 0,
+        "SpeedMultiplier": 1,
+        "ColorIndex": 0,
+        "PaletteId": "clear-black",
+        "RenderBounds": null,
+        "Custom": null
+      },
+      {
+        "LayerType": "Fill",
+        "Enabled": true,
+        "ZOrder": 1,
+        "SpeedMultiplier": 1,
+        "ColorIndex": 0,
+        "PaletteId": "miami-1984",
+        "RenderBounds": null,
+        "Custom": {
+          "FillType": "FullBlock",
+          "FillColorStyle": "Gradient",
+          "GradientEndColorIndex": 4,
+          "FillGradientDirection": "TopToBottom",
+          "FillCompositeMode": "Replace",
+          "BlendStrength": 1
+        }
+      }
+    ]
+  }
+}

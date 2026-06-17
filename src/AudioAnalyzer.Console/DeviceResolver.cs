@@ -10,10 +10,16 @@ internal static class DeviceResolver
     private const string LoopbackPrefix = "loopback:";
 
     /// <summary>Attempts to resolve a device id and name from the given devices and persisted app settings.</summary>
+    /// <param name="devices">Available devices.</param>
+    /// <param name="settings">Persisted application settings.</param>
+    /// <param name="fallbackPolicy">Platform policy for the loopback fallback when no system-audio entry exists.</param>
     public static (string? deviceId, string name) TryResolveFromSettings(
         IReadOnlyList<AudioDeviceEntry> devices,
-        AppSettings settings)
+        AppSettings settings,
+        IDefaultDeviceFallbackPolicy fallbackPolicy)
     {
+        ArgumentNullException.ThrowIfNull(fallbackPolicy);
+
         if (devices.Count == 0)
         {
             return (null, "");
@@ -28,32 +34,16 @@ internal static class DeviceResolver
             }
 
             // macOS has no WASAPI loopback; fresh settings use InputMode=loopback (Windows default).
-            // Prefer Demo so startup does not auto-open ScreenCaptureKit / virtual-routing capture (ADR-0084).
-            if (OperatingSystem.IsMacOS())
+            // Prefer the Core Audio system-audio tap as the "what you hear" default (ADR-0089);
+            // the platform fallback policy then decides between Demo and the first listed device.
+            AudioDeviceEntry? macTap = devices.FirstOrDefault(d =>
+                string.Equals(d.Id, CrossPlatformAudioDeviceIds.MacOsCoreAudioTapSystemAudio, StringComparison.Ordinal));
+            if (macTap != null)
             {
-                AudioDeviceEntry? demo = devices.FirstOrDefault(d =>
-                    d.Id != null && d.Id.StartsWith(DemoAudioDevice.Prefix, StringComparison.Ordinal));
-                if (demo != null)
-                {
-                    return (demo.Id, demo.Name);
-                }
+                return (macTap.Id, macTap.Name);
             }
 
-            AudioDeviceEntry? macDesktop = devices.FirstOrDefault(d =>
-                string.Equals(d.Id, CrossPlatformAudioDeviceIds.MacOsDesktopVirtualRouting, StringComparison.Ordinal));
-            if (macDesktop != null)
-            {
-                return (macDesktop.Id, macDesktop.Name);
-            }
-
-            AudioDeviceEntry? macSck = devices.FirstOrDefault(d =>
-                string.Equals(d.Id, CrossPlatformAudioDeviceIds.MacOsScreenCaptureKitSystemAudio, StringComparison.Ordinal));
-            if (macSck != null)
-            {
-                return (macSck.Id, macSck.Name);
-            }
-
-            return (devices[0].Id, devices[0].Name);
+            return fallbackPolicy.ResolveLoopbackFallback(devices);
         }
 
         if (settings.InputMode == "device" && !string.IsNullOrEmpty(settings.DeviceName))

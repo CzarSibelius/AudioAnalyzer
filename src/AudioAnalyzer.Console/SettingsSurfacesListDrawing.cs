@@ -18,23 +18,41 @@ internal static class SettingsSurfacesListDrawing
         return Math.Clamp(selectedIndex - (visibleCount - 1), 0, totalCount - visibleCount);
     }
 
-    /// <summary>Draws the device list starting at <paramref name="startRow"/> (full width). Rows use <see cref="MenuSelectionAffordance"/> prefix and optional (current) suffix.</summary>
+    /// <summary>Draws the device list starting at <paramref name="startRow"/> (full width). Renders <paramref name="viewportRowCount"/> lines from <paramref name="scrollOffset"/>; rows use <see cref="MenuSelectionAffordance"/> prefix and optional (current) suffix.</summary>
     public static void DrawAudioDeviceList(
         int startRow,
         int width,
         IReadOnlyList<AudioDeviceEntry> devices,
         int selectedIndex,
+        int scrollOffset,
+        int viewportRowCount,
         string? currentDeviceName,
         PaletteColor selBg,
         PaletteColor selFg,
         PaletteColor currentColor)
     {
-        for (int i = 0; i < devices.Count; i++)
+        for (int vi = 0; vi < viewportRowCount; vi++)
         {
-            bool isCurrent = currentDeviceName != null && devices[i].Name == currentDeviceName;
-            string prefix = MenuSelectionAffordance.GetPrefix(i == selectedIndex);
+            int globalIndex = scrollOffset + vi;
+            if (globalIndex >= devices.Count)
+            {
+                try
+                {
+                    System.Console.SetCursorPosition(0, startRow + vi);
+                    System.Console.Write(new string(' ', Math.Max(0, width - 1)));
+                }
+                catch (Exception ex)
+                {
+                    _ = ex; /* Console write unavailable: swallow to avoid crash */
+                }
+
+                continue;
+            }
+
+            bool isCurrent = currentDeviceName != null && devices[globalIndex].Name == currentDeviceName;
+            string prefix = MenuSelectionAffordance.GetPrefix(globalIndex == selectedIndex);
             string suffix = isCurrent ? " (current)" : "";
-            string line = $"{prefix}{devices[i].Name}{suffix}";
+            string line = $"{prefix}{devices[globalIndex].Name}{suffix}";
             if (line.Length < width - 1)
             {
                 line = line.PadRight(width - 1);
@@ -45,7 +63,7 @@ internal static class SettingsSurfacesListDrawing
             }
 
             string lineToWrite;
-            if (i == selectedIndex)
+            if (globalIndex == selectedIndex)
             {
                 lineToWrite = MenuSelectionAffordance.ApplyRowHighlight(true, line, selBg, selFg);
             }
@@ -60,7 +78,7 @@ internal static class SettingsSurfacesListDrawing
 
             try
             {
-                System.Console.SetCursorPosition(0, startRow + i);
+                System.Console.SetCursorPosition(0, startRow + vi);
                 System.Console.WriteLine(lineToWrite);
             }
             catch (Exception ex)
@@ -71,7 +89,7 @@ internal static class SettingsSurfacesListDrawing
 
         try
         {
-            System.Console.SetCursorPosition(0, startRow + devices.Count);
+            System.Console.SetCursorPosition(0, startRow + viewportRowCount);
             System.Console.WriteLine(new string(' ', width - 1));
         }
         catch (Exception ex)

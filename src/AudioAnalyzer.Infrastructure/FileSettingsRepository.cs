@@ -131,7 +131,7 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
         if (!_fileSystem.File.Exists(_settingsPath))
         {
             var file = new SettingsFile();
-            SaveFile(file);
+            TrySaveBootstrapSettings(file);
             return file;
         }
         try
@@ -162,8 +162,21 @@ public sealed class FileSettingsRepository : ISettingsRepository, IVisualizerSet
             System.Diagnostics.Debug.WriteLine($"Settings backup failed: {ex.Message}");
         }
         var file = new SettingsFile();
-        SaveFile(file);
+        TrySaveBootstrapSettings(file);
         return file;
+    }
+
+    private void TrySaveBootstrapSettings(SettingsFile file)
+    {
+        try
+        {
+            SaveFile(file);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // Writable path unavailable (e.g. read-only bundle dir): keep in-memory defaults so the host can start.
+            System.Diagnostics.Debug.WriteLine($"Could not write bootstrap appsettings to '{_settingsPath}': {ex.Message}");
+        }
     }
 
     private void SaveFile(SettingsFile file)

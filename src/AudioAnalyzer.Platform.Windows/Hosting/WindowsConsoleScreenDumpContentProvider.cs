@@ -1,20 +1,16 @@
 using System.Runtime.InteropServices;
+using AudioAnalyzer.Application.Abstractions;
 
-namespace AudioAnalyzer.Console;
+namespace AudioAnalyzer.Platform.Windows.Hosting;
 
 /// <summary>
-/// Reads the visible Windows console screen buffer for screen dumps.
+/// Reads the visible Windows console screen buffer for screen dumps via Win32.
 /// </summary>
-internal sealed class WindowsConsoleScreenDumpContentProvider : IScreenDumpContentProvider
+public sealed class WindowsConsoleScreenDumpContentProvider : IScreenDumpContentProvider
 {
     /// <inheritdoc />
     public string? ReadVisibleConsoleContent()
     {
-        if (!OperatingSystem.IsWindows())
-        {
-            return null;
-        }
-
         try
         {
             IntPtr handle = NativeMethods.GetStdHandle(NativeMethods.STD_OUTPUT_HANDLE);

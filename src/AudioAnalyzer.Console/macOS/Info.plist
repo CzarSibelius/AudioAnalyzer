@@ -19,10 +19,12 @@
   <key>CFBundleVersion</key>
   <string>1</string>
   <key>LSMinimumSystemVersion</key>
-  <string>11.0</string>
+  <string>14.2</string>
+  <key>NSAudioCaptureUsageDescription</key>
+  <string>AudioAnalyzer captures system audio output (what you hear on speakers or headphones) when you choose the Core Audio tap desktop row, so it can analyze levels and spectrum in real time.</string>
   <key>NSMicrophoneUsageDescription</key>
   <string>AudioAnalyzer captures the microphone or other audio inputs you choose so it can analyze levels and spectrum in real time.</string>
-  <key>NSScreenCaptureUsageDescription</key>
-  <string>AudioAnalyzer uses ScreenCaptureKit to capture system audio for visualization when you pick the ScreenCaptureKit desktop row. The display is included in the capture filter to satisfy Screen Recording APIs; only audio is forwarded to analysis.</string>
+  <key>NSCameraUsageDescription</key>
+  <string>AudioAnalyzer captures webcam video when you add an ASCII video layer, so it can render the live camera image as ASCII art in the terminal.</string>
 </dict>
 </plist>

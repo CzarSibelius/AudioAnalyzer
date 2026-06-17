@@ -1,0 +1,32 @@
+{
+  "Name": "Llama style spectrum",
+  "Config": {
+    "PaletteId": "default",
+    "Layers": [
+      {
+        "LayerType": "Fill",
+        "Enabled": true,
+        "ZOrder": 0,
+        "SpeedMultiplier": 1,
+        "ColorIndex": 0,
+        "PaletteId": "clear-black",
+        "RenderBounds": null,
+        "Custom": null
+      },
+      {
+        "LayerType": "LlamaStyle",
+        "Enabled": true,
+        "ZOrder": 1,
+        "SpeedMultiplier": 1,
+        "ColorIndex": 0,
+        "PaletteId": "default",
+        "RenderBounds": null,
+        "Custom": {
+          "ShowVolumeBar": true,
+          "ShowFrequencyLabels": true,
+          "ColorScheme": "Winamp"
+        }
+      }
+    ]
+  }
+}

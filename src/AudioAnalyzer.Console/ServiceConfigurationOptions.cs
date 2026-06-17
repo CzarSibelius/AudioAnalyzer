@@ -1,8 +1,5 @@
 using System.IO.Abstractions;
 using AudioAnalyzer.Application.Abstractions;
-#if MACOS
-using AudioAnalyzer.Platform.macOS.Audio;
-#endif
 
 namespace AudioAnalyzer.Console;
 
@@ -35,11 +32,16 @@ internal sealed class ServiceConfigurationOptions
     /// <summary>Charsets directory when using a custom file system (e.g. tests).</summary>
     public string? CharsetsDirectory { get; init; }
 
-#if MACOS
-    /// <summary>Override Core Audio enumeration/capture for tests (macOS host TFM).</summary>
-    public IMacOsAudioEnumerator? MacOsAudioEnumerator { get; init; }
+    /// <summary>
+    /// Base directory for resolving relative log file paths (writable user-data root).
+    /// When null, falls back to <see cref="AppContext.BaseDirectory"/>.
+    /// </summary>
+    public string? WritableDataRoot { get; init; }
 
-    /// <summary>Override ScreenCaptureKit system-audio factory for tests.</summary>
-    public IMacOsScreenCaptureKitSystemAudioInputFactory? MacOsScreenCaptureKitSystemAudioInputFactory { get; init; }
-#endif
+    /// <summary>
+    /// Optional platform-specific override bag (e.g. <c>MacOsPlatformOptions</c>) passed to the
+    /// selected platform module. Kept as <see cref="object"/> so this shared options type carries
+    /// no operating-system-specific types.
+    /// </summary>
+    public object? PlatformOverrides { get; init; }
 }

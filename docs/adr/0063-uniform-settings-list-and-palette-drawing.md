@@ -9,7 +9,7 @@ General settings hub, device selection modal, and the preset (S) settings modal 
 ## Decision
 
 1. **Shared list scroll math** — `SettingsSurfacesListDrawing.ComputeListScrollOffset` is the single implementation for keeping a selected index visible in a fixed-height window (device list and palette picker).
-2. **Device list drawing** — `SettingsSurfacesListDrawing.DrawAudioDeviceList` draws the full-screen device selection list; `DeviceSelectionModal` delegates to it.
+2. **Device list drawing** — `SettingsSurfacesListDrawing.DrawAudioDeviceList` draws the device selection list in a **viewport** sized to the console window; `DeviceSelectionModal` computes scroll offset via **`ComputeListScrollOffset`** and delegates drawing.
 3. **Palette picker and Palette setting row** — `SettingsSurfacesPaletteDrawing` owns picker list drawing (`DrawPicker`), picker row ANSI (`FormatPickerPaletteRow`), and the Palette setting cell (`FormatPaletteSettingRow`). `SettingsModalRenderer` delegates to these helpers.
 4. **General settings hub menu rows** — Hub `Label:value` lines are built by `GeneralSettingsHubMenuLines` and rendered via **HorizontalRowComponent** + **IUiComponentRenderer**** so the same row primitive as toolbar/hint rows applies (**[ADR-0057](0057-horizontal-row-unified-single-line-rows.md)).
 

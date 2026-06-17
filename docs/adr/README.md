@@ -101,8 +101,14 @@ Decisions are numbered and kept under version control so the rationale stays wit
 | [0082](0082-starfield-text-layer.md)                         | Starfield text layer — pseudo-3D perspective starfield, state store, perf cap, charset glyphs                                                    | Accepted   |
 | [0083](0083-concurrent-process-instances-and-log-files.md)   | Concurrent process instances — per-process default log path (placeholders), explicit path caveat                                               | Accepted   |
 | [0084](0084-macos-multi-target-and-platform-audio.md)        | macOS multi-targeting — Platform.macOS / Windows audio split, Infrastructure without unconditional WASAPI; **host TFMs** → **[0086](0086-macos-windows-hosts-and-screencapturekit.md)** | Accepted   |
-| [0085](0085-macos-desktop-output-via-virtual-routing.md)     | macOS desktop output — virtual routing row, stable id, heuristics; ScreenCaptureKit deferred                                                     | Accepted   |
-| [0086](0086-macos-windows-hosts-and-screencapturekit.md)     | macOS + Windows console hosts only (no portable `net10.0`); optional ScreenCaptureKit desktop audio on macOS TFM                                  | Accepted   |
+| [0085](0085-macos-desktop-output-via-virtual-routing.md)     | macOS desktop output — virtual routing row, stable id, heuristics — historical; superseded by [0088](0088-macos-coreaudio-only-and-signed-app-bundle.md) | Superseded |
+| [0086](0086-macos-windows-hosts-and-screencapturekit.md)     | macOS + Windows console hosts only (no portable `net10.0`); ScreenCaptureKit portion superseded by [0088](0088-macos-coreaudio-only-and-signed-app-bundle.md) | Accepted   |
+| [0087](0087-macos-core-audio-tap-system-audio.md)            | macOS system audio via Core Audio process taps (14.2+), native `libaudio_tap_shim`, `ISystemAudioCapture`, System Audio Recording consent          | Accepted   |
+| [0088](0088-macos-coreaudio-only-and-signed-app-bundle.md)   | macOS capture is Core Audio only (drop SCK + virtual routing); run from an ad-hoc signed `.app` bundle for TCC                                    | Accepted   |
+| [0089](0089-macos-startup-default-prefers-system-audio-tap.md) | macOS startup default prefers the Core Audio system-audio tap over Demo for fresh settings; mic-path silence watchdog replaces misleading `-66684` hint | Accepted   |
+| [0090](0090-async-capture-start-off-ui-thread.md)            | Start/stop audio capture off the UI thread so startup and device switches stay responsive during blocking Core Audio start / TCC consent                | Accepted   |
+| [0091](0091-macos-tap-explicit-consent-output-driven-aggregate-stable-signing.md) | macOS tap — explicit System Audio Recording consent (private TCC API), output-driven aggregate (IO clock), stable code-signing identity; amends 0087/0088/0090 | Accepted   |
+| [0092](0092-platform-behavior-via-abstractions-and-di-module.md) | Platform behavior behind cross-platform abstractions + per-platform DI modules; OS conditionals confined to a single composition-root switch (`PlatformSelection`); updates 0046 | Accepted   |
 
 
 ## Process

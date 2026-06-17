@@ -9,11 +9,15 @@ internal sealed class MainLoopKeyHandlerConfig : IKeyHandlerConfig<MainLoopKeyCo
 {
     private const string Section = "Keyboard controls";
     private readonly IPresetEditorCanvasLayerStackService _canvasLayerStack;
+    private readonly KeyHandling.ConsoleShiftLetterV _shiftLetterV;
     private readonly Lazy<IReadOnlyList<KeyHandling.KeyBindingEntry<MainLoopKeyContext>>> _entries;
 
-    public MainLoopKeyHandlerConfig(IPresetEditorCanvasLayerStackService canvasLayerStack)
+    public MainLoopKeyHandlerConfig(
+        IPresetEditorCanvasLayerStackService canvasLayerStack,
+        KeyHandling.ConsoleShiftLetterV shiftLetterV)
     {
         _canvasLayerStack = canvasLayerStack ?? throw new ArgumentNullException(nameof(canvasLayerStack));
+        _shiftLetterV = shiftLetterV ?? throw new ArgumentNullException(nameof(shiftLetterV));
         _entries = new Lazy<IReadOnlyList<KeyHandling.KeyBindingEntry<MainLoopKeyContext>>>(BuildEntries);
     }
 
@@ -40,7 +44,7 @@ internal sealed class MainLoopKeyHandlerConfig : IKeyHandlerConfig<MainLoopKeyCo
                 Description: "Switch between Preset editor, Show play, and General settings",
                 Section),
             new KeyHandling.KeyBindingEntry<MainLoopKeyContext>(
-                Matches: KeyHandling.ConsoleShiftLetterV.IsShiftVChord,
+                Matches: _shiftLetterV.IsShiftVChord,
                 Action: (_, ctx) =>
                 {
                     if (ctx.GetApplicationMode() != ApplicationMode.PresetEditor)
@@ -66,7 +70,7 @@ internal sealed class MainLoopKeyHandlerConfig : IKeyHandlerConfig<MainLoopKeyCo
                 Section,
                 ApplicableMode: ApplicationMode.PresetEditor),
             new KeyHandling.KeyBindingEntry<MainLoopKeyContext>(
-                Matches: KeyHandling.ConsoleShiftLetterV.IsPlainPresetVChord,
+                Matches: _shiftLetterV.IsPlainPresetVChord,
                 Action: (_, ctx) =>
                 {
                     if (ctx.GetApplicationMode() == ApplicationMode.PresetEditor)

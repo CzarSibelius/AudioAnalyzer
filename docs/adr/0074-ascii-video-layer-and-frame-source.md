@@ -2,6 +2,15 @@
 
 **Status**: Accepted
 
+## Update (current): macOS webcam support
+
+The webcam source is now implemented on **macOS** as a second concrete `IAsciiVideoFrameSource`, alongside the original Windows implementation:
+
+- **`MacOsAsciiVideoFrameSource`** + **`MacOsAsciiVideoDeviceCatalog`** in `AudioAnalyzer.Platform.macOS/Audio/AvCaptureVideo/`, registered from the console host's `#elif MACOS` DI block (mirrors the Windows registration; test override via `ServiceConfigurationOptions.AsciiVideoFrameSource`).
+- Capture uses **AVFoundation** (`AVCaptureSession` + `AVCaptureVideoDataOutput`, `kCVPixelFormatType_32BGRA`, `alwaysDiscardsLateVideoFrames`) through a native Objective-C++ shim **`libvideo_capture_shim.dylib`** (`native/video-capture-shim/`), loaded by **`MacOsVideoCaptureShimNative`** from `Contents/MacOS` of the `.app` bundle — same pattern as the Core Audio tap shim ([ADR-0087](0087-macos-core-audio-tap-system-audio.md), [ADR-0088](0088-macos-coreaudio-only-and-signed-app-bundle.md)).
+- TCC: the bundle Info.plist gains **`NSCameraUsageDescription`**; `scripts/macos/pack-bundle.sh` injects it, copies the video shim next to the launcher, and re-signs ad-hoc. Builds and tests succeed **without** the dylib (the layer shows *No camera* and the device list is empty until it is built).
+- Resolution caps map to the largest AVFoundation **session preset** within `MaxCaptureWidth` / `MaxCaptureHeight` (default 640×480 when uncapped). Capture and BGRA repacking run off the render thread; `TryGetLatestFrame` returns a copy of the latest frame only.
+
 ## Context
 
 We want a text layer that renders **live video** as ASCII in the terminal. The first source should be a **webcam**; later we may support **video files**, streams, or other producers without redesigning the layer.

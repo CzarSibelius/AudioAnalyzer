@@ -1,4 +1,5 @@
 using System.IO.Abstractions.TestingHelpers;
+using AudioAnalyzer.Application.Abstractions;
 using AudioAnalyzer.Console;
 using Xunit;
 

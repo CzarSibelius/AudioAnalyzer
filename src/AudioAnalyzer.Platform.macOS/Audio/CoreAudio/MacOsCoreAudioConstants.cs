@@ -14,8 +14,9 @@ internal static class MacOsCoreAudioConstants
     internal static readonly uint kAudioDevicePropertyDeviceUID =
         MacOsCoreAudioFourCc.FourCC('u', 'i', 'd', ' ');
 
+    // kAudioDevicePropertyDeviceNameCFString aliases kAudioObjectPropertyName ('lnam').
     internal static readonly uint kAudioDevicePropertyDeviceNameCFString =
-        MacOsCoreAudioFourCc.FourCC('l', 'c', 'n', 'm');
+        MacOsCoreAudioFourCc.FourCC('l', 'n', 'a', 'm');
 
     internal static readonly uint kAudioDevicePropertyStreamFormat =
         MacOsCoreAudioFourCc.FourCC('s', 'f', 'm', 't');

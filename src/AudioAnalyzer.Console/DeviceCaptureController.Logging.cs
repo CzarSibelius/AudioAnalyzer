@@ -9,4 +9,7 @@ internal sealed partial class DeviceCaptureController
 
     [LoggerMessage(EventId = 7781, Level = LogLevel.Information, Message = "Device UI: capture released for picker")]
     private partial void LogReleaseCaptureForSelectionEnd();
+
+    [LoggerMessage(EventId = 7782, Level = LogLevel.Error, Message = "Audio capture start/stop transition failed")]
+    private partial void LogCaptureTransitionFailed(Exception ex);
 }
