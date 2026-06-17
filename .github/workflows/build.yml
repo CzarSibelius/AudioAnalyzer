@@ -49,7 +49,9 @@ jobs:
           if-no-files-found: warn
 
   build-macos:
-    runs-on: macos-latest
+    # net10.0-macos26.0 SDK requires Xcode 26+; macos-latest still maps to macOS 15 (default Xcode 16.4)
+    # until the July 2026 migration completes. Pin macos-26 (default Xcode 26.x) so the SDK's Xcode check passes.
+    runs-on: macos-26
     permissions:
       contents: read
     steps:
