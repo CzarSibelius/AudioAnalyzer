@@ -109,6 +109,9 @@ Decisions are numbered and kept under version control so the rationale stays wit
 | [0090](0090-async-capture-start-off-ui-thread.md)            | Start/stop audio capture off the UI thread so startup and device switches stay responsive during blocking Core Audio start / TCC consent                | Accepted   |
 | [0091](0091-macos-tap-explicit-consent-output-driven-aggregate-stable-signing.md) | macOS tap — explicit System Audio Recording consent (private TCC API), output-driven aggregate (IO clock), stable code-signing identity; amends 0087/0088/0090 | Accepted   |
 | [0092](0092-platform-behavior-via-abstractions-and-di-module.md) | Platform behavior behind cross-platform abstractions + per-platform DI modules; OS conditionals confined to a single composition-root switch (`PlatformSelection`); updates 0046 | Accepted   |
+| [0093](0093-confirm-before-quit-and-deliberate-quit-keys.md)  | Confirm-before-quit reusable yes/no modal; `Q` / `Ctrl+Q` quit keys; top-level Escape and Ctrl+C route to confirmation (no accidental quit); amends 0061 | Accepted   |
+| [0094](0094-macos-now-playing-mediaremote-adapter.md)        | macOS now-playing read via `mediaremote-adapter` (Perl platform binary + bundled `MediaRemoteAdapter.framework`); direct private MediaRemote (15.4+ entitlement block) and the publish-only WWDC26 Now Playing framework rejected; implements 0027 on macOS | Accepted   |
+| [0095](0095-feature-capability-report.md)                    | Feature capability report — cross-platform `IFeatureCapabilityReport` aggregating shim/permission-dependent feature status; startup Information log (summary + per-capability) and read-only General Settings status section; macOS non-prompting TCC preflight (System Audio Recording / Microphone / Camera) | Accepted   |
 
 
 ## Process

@@ -24,5 +24,8 @@ public enum TitleBarViewKind
     LayerPickerModal,
 
     /// <summary>Reserved for a future full-screen settings hub (<see cref="ApplicationMode.Settings"/>).</summary>
-    SettingsHub
+    SettingsHub,
+
+    /// <summary>Reusable yes/no confirmation modal (e.g. quit confirmation); app-name track plus a suffix (ADR-0093).</summary>
+    ConfirmationModal
 }

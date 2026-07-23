@@ -31,7 +31,7 @@ Fullscreen is a **runtime** flag on [`IDisplayState`](../../../src/AudioAnalyzer
 
 ## Keys (high level)
 
-Key routing is unchanged: [`ApplicationShell`](../../../src/AudioAnalyzer.Console/ApplicationShell.cs) tries the active mode’s visualizer keys first (`MainContentContainer.HandleKey` → `IApplicationMode.TryHandleVisualizerKeys`), then the main-loop handler (**Tab**, **V**, **S**, **D**, **H**, **+/-**, **P**, **F**, **Ctrl+Shift+E**, **Escape**). Fullscreen does not disable layer keys (**1–9**, **←/→**, etc.) on the visualizer. Authoritative bindings: dynamic help (**H**) and [`GetBindings()`](../../../src/AudioAnalyzer.Console/KeyHandling/MainLoopKeyHandler.cs) (note **V** is labeled Preset-editor-only in help; the handler still matches **V** in other modes — see implementation if behavior is tightened later).
+Key routing is unchanged: [`ApplicationShell`](../../../src/AudioAnalyzer.Console/ApplicationShell.cs) tries the active mode’s visualizer keys first (`MainContentContainer.HandleKey` → `IApplicationMode.TryHandleVisualizerKeys`), then the main-loop handler (**Tab**, **V**, **S**, **D**, **H**, **+/-**, **P**, **F**, **Ctrl+Shift+E**, **Q** / **Ctrl+Q** / **Escape** → [quit confirmation](../quit-confirmation-modal/spec.md)). Fullscreen does not disable layer keys (**1–9**, **←/→**, etc.) on the visualizer. Authoritative bindings: dynamic help (**H**) and [`GetBindings()`](../../../src/AudioAnalyzer.Console/KeyHandling/MainLoopKeyHandler.cs) (note **V** is labeled Preset-editor-only in help; the handler still matches **V** in other modes — see implementation if behavior is tightened later).
 
 ## Screenshot
 

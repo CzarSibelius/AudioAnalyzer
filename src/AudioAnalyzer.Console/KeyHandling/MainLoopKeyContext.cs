@@ -15,6 +15,9 @@ internal sealed class MainLoopKeyContext : IKeyHandlerContext
     /// <summary>When set to true, the main loop will exit.</summary>
     public bool ShouldQuit { get; set; }
 
+    /// <summary>Opens the quit confirmation modal (ADR-0093); returns true when the user confirms. Set <see cref="ShouldQuit"/> only on true.</summary>
+    public required Func<bool> RequestQuitConfirmation { get; init; }
+
     /// <summary>Sets whether a modal is currently open (affects render guard).</summary>
     public required Action<bool> SetModalOpen { get; init; }
 

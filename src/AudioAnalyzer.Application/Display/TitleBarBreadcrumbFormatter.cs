@@ -41,6 +41,7 @@ public sealed class TitleBarBreadcrumbFormatter : ITitleBarBreadcrumbFormatter
             TitleBarViewKind.DeviceAudioInputModal => BuildDeviceAudioInput(palette),
             TitleBarViewKind.LayerPickerModal => BuildPresetScopedSuffix(palette, "layers"),
             TitleBarViewKind.SettingsHub => BuildSettingsHub(palette),
+            TitleBarViewKind.ConfirmationModal => BuildAppNameSuffix(palette, _navigation.ConfirmationBreadcrumbSuffix ?? "confirm"),
             _ => BuildMainView(palette)
         };
     }
@@ -130,6 +131,16 @@ public sealed class TitleBarBreadcrumbFormatter : ITitleBarBreadcrumbFormatter
         AnsiConsole.AppendColored(sb, TextHelpers.Hackerize("settings"), palette.Mode);
         AppendSlash(sb, palette);
         AnsiConsole.AppendColored(sb, TextHelpers.Hackerize("audioinput"), palette.Preset);
+        return sb.ToString();
+    }
+
+    private string BuildAppNameSuffix(TitleBarPalette palette, string rawSuffix)
+    {
+        var sb = new StringBuilder();
+        string appName = EffectiveAppName.FromUiSettings(_uiSettings);
+        AnsiConsole.AppendColored(sb, appName, palette.AppName);
+        AppendSlash(sb, palette);
+        AnsiConsole.AppendColored(sb, TextHelpers.Hackerize(rawSuffix), palette.Mode);
         return sb.ToString();
     }
 

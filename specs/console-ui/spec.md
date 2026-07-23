@@ -22,6 +22,7 @@ The operator-facing surface is a **Windows console** UI with strict row alignmen
 | Fullscreen visualizer | [fullscreen-visualizer/spec.md](./fullscreen-visualizer/spec.md) |
 | Settings surfaces index | [settings-surfaces/spec.md](./settings-surfaces/spec.md) |
 | Device selection modal | [device-selection-modal/spec.md](./device-selection-modal/spec.md) |
+| Quit confirmation modal | [quit-confirmation-modal/spec.md](./quit-confirmation-modal/spec.md) |
 | Preset settings modal | [preset-settings-modal/spec.md](./preset-settings-modal/spec.md) |
 | Title breadcrumb | [title-breadcrumb/spec.md](./title-breadcrumb/spec.md) |
 | Toolbar | [toolbar/spec.md](./toolbar/spec.md) |

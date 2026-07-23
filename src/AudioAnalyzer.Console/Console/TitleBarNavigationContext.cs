@@ -23,4 +23,7 @@ internal sealed class TitleBarNavigationContext : ITitleBarNavigationContext
 
     /// <inheritdoc />
     public string? PresetSettingsFocusedSettingId { get; set; }
+
+    /// <inheritdoc />
+    public string? ConfirmationBreadcrumbSuffix { get; set; }
 }

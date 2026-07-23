@@ -24,4 +24,7 @@ public interface ITitleBarNavigationContext
 
     /// <summary>When in preset settings modal with focus on the settings column, the id of the highlighted setting row (e.g. Palette, Speed); formatted with hacker style after <c>[n]:layerType</c>.</summary>
     string? PresetSettingsFocusedSettingId { get; set; }
+
+    /// <summary>When <see cref="View"/> is <see cref="TitleBarViewKind.ConfirmationModal"/>, the breadcrumb suffix after the app name (e.g. <c>quit</c>); formatted with hacker style. Null falls back to a generic label (ADR-0093).</summary>
+    string? ConfirmationBreadcrumbSuffix { get; set; }
 }

@@ -16,6 +16,7 @@ public sealed class TitleBarBreadcrumbFormatterTests
         public int? PresetSettingsLayerOneBased { get; set; }
         public string? PresetSettingsLayerTypeRaw { get; set; }
         public string? PresetSettingsFocusedSettingId { get; set; }
+        public string? ConfirmationBreadcrumbSuffix { get; set; }
     }
 
     private sealed class StubVisualizer : IVisualizer
@@ -218,6 +219,43 @@ public sealed class TitleBarBreadcrumbFormatterTests
         Assert.Contains("aUdioNLZR", line);
         Assert.Contains("sEttings", line);
         Assert.Contains("aUdioinput", line);
+    }
+
+    [Fact]
+    public void ConfirmationModal_UsesAppNameTrackWithHackerizedSuffix()
+    {
+        var nav = new TestNav
+        {
+            View = TitleBarViewKind.ConfirmationModal,
+            ConfirmationBreadcrumbSuffix = "quit"
+        };
+        var f = CreateFormatter(
+            CreateVisualizerSettings(),
+            new StubVisualizer(),
+            nav);
+
+        string line = StripAnsi(f.BuildAnsiLine());
+        Assert.Contains("aUdioNLZR", line);
+        Assert.Contains("qUit", line);
+        Assert.DoesNotContain("pReset", line);
+    }
+
+    [Fact]
+    public void ConfirmationModal_FallsBackToConfirm_WhenSuffixNull()
+    {
+        var nav = new TestNav
+        {
+            View = TitleBarViewKind.ConfirmationModal,
+            ConfirmationBreadcrumbSuffix = null
+        };
+        var f = CreateFormatter(
+            CreateVisualizerSettings(),
+            new StubVisualizer(),
+            nav);
+
+        string line = StripAnsi(f.BuildAnsiLine());
+        Assert.Contains("aUdioNLZR", line);
+        Assert.Contains("cOnfirm", line);
     }
 
     [Fact]

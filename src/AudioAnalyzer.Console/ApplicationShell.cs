@@ -52,9 +52,12 @@ internal sealed partial class ApplicationShell
     private readonly ILogger<ApplicationShell> _logger;
     private readonly ILayerPickerModal _layerPickerModal;
     private readonly IVisualizer _visualizer;
+    private readonly IConfirmationModal _confirmationModal;
 
     private CancellationTokenSource? _headerRefreshCts;
     private volatile bool _quitAfterDump;
+    private volatile bool _quitConfirmationRequested;
+    private ConsoleCancelEventHandler? _cancelKeyPressHandler;
 
     public ApplicationShell(
         IDeviceCaptureController deviceController,
@@ -87,7 +90,8 @@ internal sealed partial class ApplicationShell
         ILayerRuntimeResetCoordinator layerRuntimeResetCoordinator,
         ILogger<ApplicationShell> logger,
         ILayerPickerModal layerPickerModal,
-        IVisualizer visualizer)
+        IVisualizer visualizer,
+        IConfirmationModal confirmationModal)
     {
         _deviceController = deviceController ?? throw new ArgumentNullException(nameof(deviceController));
         _visualizerSettingsRepo = visualizerSettingsRepo;
@@ -120,6 +124,7 @@ internal sealed partial class ApplicationShell
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _layerPickerModal = layerPickerModal ?? throw new ArgumentNullException(nameof(layerPickerModal));
         _visualizer = visualizer ?? throw new ArgumentNullException(nameof(visualizer));
+        _confirmationModal = confirmationModal ?? throw new ArgumentNullException(nameof(confirmationModal));
     }
 
     /// <summary>Runs the main loop. Does not return until the user quits.</summary>
@@ -130,8 +135,23 @@ internal sealed partial class ApplicationShell
     public void Run(string? initialDeviceId, string initialDeviceName, int? dumpAfterSeconds = null, string? dumpPath = null)
     {
         _quitAfterDump = false;
+        _quitConfirmationRequested = false;
         bool modalOpen = false;
         object consoleLock = new();
+        Action<bool> setModalOpen = open => modalOpen = open;
+
+        // Intercept Ctrl+C so it opens the quit confirmation instead of hard-terminating the process (ADR-0093);
+        // actual quit still follows the orderly Shutdown() ordering (ADR-0018). The handler runs on a separate
+        // thread, so it only flags the request; the main loop shows the modal on its own thread.
+        _cancelKeyPressHandler = (_, e) =>
+        {
+            e.Cancel = true;
+            if (!modalOpen)
+            {
+                _quitConfirmationRequested = true;
+            }
+        };
+        System.Console.CancelKeyPress += _cancelKeyPressHandler;
 
         _orchestrator.SetHeaderCallback(
             () => _headerContainer.DrawMain(_deviceController.CurrentDeviceName),
@@ -191,6 +211,16 @@ internal sealed partial class ApplicationShell
                 break;
             }
 
+            if (_quitConfirmationRequested)
+            {
+                _quitConfirmationRequested = false;
+                if (ShowQuitConfirmation(setModalOpen))
+                {
+                    running = false;
+                    break;
+                }
+            }
+
             if (_visualizerSettings.ApplicationMode == ApplicationMode.ShowPlay)
             {
                 _showPlaybackController.Tick();
@@ -201,7 +231,7 @@ internal sealed partial class ApplicationShell
                 var key = InteractiveConsoleInput.ReadKey(true);
                 if (_applicationModeFactory.GetActiveApplicationMode().UsesGeneralSettingsHubKeyHandling)
                 {
-                    var hubCtx = CreateGeneralSettingsHubKeyContext(consoleLock, open => modalOpen = open);
+                    var hubCtx = CreateGeneralSettingsHubKeyContext(consoleLock, setModalOpen);
                     if (_generalSettingsHubKeyHandler.Handle(key, hubCtx))
                     {
                         _settingsPersistence.Save();
@@ -225,7 +255,7 @@ internal sealed partial class ApplicationShell
                 }
                 else
                 {
-                    var ctx = CreateKeyContext(consoleLock, open => modalOpen = open);
+                    var ctx = CreateKeyContext(consoleLock, setModalOpen);
                     if (_keyHandler.Handle(key, ctx))
                     {
                         if (ctx.ShouldQuit)
@@ -258,6 +288,7 @@ internal sealed partial class ApplicationShell
         {
             SetModalOpen = setModalOpen,
             ConsoleLock = consoleLock,
+            RequestQuitConfirmation = () => ShowQuitConfirmation(setModalOpen),
             RefreshHeaderAndRedraw = () => _orchestrator.RedrawWithFullHeader(),
             SaveSettings = () => _settingsPersistence.Save(),
             SaveVisualizerSettings = () => _visualizerSettingsRepo.SaveVisualizerSettings(_visualizerSettings),
@@ -287,6 +318,22 @@ internal sealed partial class ApplicationShell
             Visualizer = _visualizer,
             VisualizerSettings = _visualizerSettings
         };
+    }
+
+    /// <summary>Shows the quit confirmation modal (ADR-0093) and restores the main view afterwards. Returns true when the user confirms quitting.</summary>
+    private bool ShowQuitConfirmation(Action<bool> setModalOpen)
+    {
+        bool confirmed = _confirmationModal.Show("quit", "Quit AudioAnalyzer?", setModalOpen);
+        if (!_displayState.FullScreen)
+        {
+            _orchestrator.RedrawWithFullHeader();
+        }
+        else
+        {
+            _orchestrator.Redraw();
+        }
+
+        return confirmed;
     }
 
     private GeneralSettingsHubKeyContext CreateGeneralSettingsHubKeyContext(object consoleLock, Action<bool> setModalOpen)
@@ -398,6 +445,12 @@ internal sealed partial class ApplicationShell
 
     private void Shutdown()
     {
+        if (_cancelKeyPressHandler != null)
+        {
+            System.Console.CancelKeyPress -= _cancelKeyPressHandler;
+            _cancelKeyPressHandler = null;
+        }
+
         _headerRefreshCts?.Cancel();
         _headerRefreshCts?.Dispose();
         _headerRefreshCts = null;

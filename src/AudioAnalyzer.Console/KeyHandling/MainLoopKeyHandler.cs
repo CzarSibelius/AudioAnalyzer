@@ -4,7 +4,7 @@ using KeyHandling = AudioAnalyzer.Console.KeyHandling;
 
 namespace AudioAnalyzer.Console;
 
-/// <summary>Config for main loop keys: Tab, V, S, D, H, +/-, P, F, Ctrl+R (full layer reset), Ctrl+Shift+E (screen dump), Escape.</summary>
+/// <summary>Config for main loop keys: Tab, V, S, D, H, +/-, P, F, Ctrl+R (full layer reset), Ctrl+Shift+E (screen dump), Q / Ctrl+Q / Escape (quit confirmation).</summary>
 internal sealed class MainLoopKeyHandlerConfig : IKeyHandlerConfig<MainLoopKeyContext>
 {
     private const string Section = "Keyboard controls";
@@ -19,6 +19,16 @@ internal sealed class MainLoopKeyHandlerConfig : IKeyHandlerConfig<MainLoopKeyCo
         _canvasLayerStack = canvasLayerStack ?? throw new ArgumentNullException(nameof(canvasLayerStack));
         _shiftLetterV = shiftLetterV ?? throw new ArgumentNullException(nameof(shiftLetterV));
         _entries = new Lazy<IReadOnlyList<KeyHandling.KeyBindingEntry<MainLoopKeyContext>>>(BuildEntries);
+    }
+
+    private static bool RequestQuit(MainLoopKeyContext ctx)
+    {
+        if (ctx.RequestQuitConfirmation())
+        {
+            ctx.ShouldQuit = true;
+        }
+
+        return true;
     }
 
     private IReadOnlyList<KeyHandling.KeyBindingEntry<MainLoopKeyContext>> BuildEntries()
@@ -232,14 +242,16 @@ internal sealed class MainLoopKeyHandlerConfig : IKeyHandlerConfig<MainLoopKeyCo
                 Description: "Preset modal (Preset editor) or Show edit modal (Show play)",
                 Section),
             new KeyHandling.KeyBindingEntry<MainLoopKeyContext>(
+                Matches: k => k.Key == ConsoleKey.Q && (k.Modifiers & (ConsoleModifiers.Shift | ConsoleModifiers.Alt)) == 0,
+                Action: (_, ctx) => RequestQuit(ctx),
+                Key: "Q / Ctrl+Q",
+                Description: "Quit the application (asks for confirmation)",
+                Section),
+            new KeyHandling.KeyBindingEntry<MainLoopKeyContext>(
                 Matches: k => k.Key == ConsoleKey.Escape,
-                Action: (_, ctx) =>
-                {
-                    ctx.ShouldQuit = true;
-                    return true;
-                },
-                Key: "Escape",
-                Description: "Quit the application",
+                Action: (_, ctx) => RequestQuit(ctx),
+                Key: "Esc",
+                Description: "Quit the application (asks for confirmation)",
                 Section),
             new KeyHandling.KeyBindingEntry<MainLoopKeyContext>(
                 Matches: k => k.Key == ConsoleKey.D,
