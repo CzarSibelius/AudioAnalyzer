@@ -650,4 +650,26 @@ int audio_tap_is_running(void)
     return running;
 }
 
+int audio_tap_permission_status(void)
+{
+    // Status-only preflight: never calls TCCAccessRequest, so this cannot trigger a consent prompt
+    // (prompting stays at capture start; see EnsureSystemAudioRecordingAuthorized).
+    using PreflightFn = int (*)(CFStringRef, CFDictionaryRef);
+    static CFStringRef const kAudioCaptureService = CFSTR("kTCCServiceAudioCapture");
+
+    void* tcc = dlopen("/System/Library/PrivateFrameworks/TCC.framework/TCC", RTLD_LAZY);
+    if (tcc == nullptr)
+    {
+        return -1;
+    }
+
+    auto preflight = reinterpret_cast<PreflightFn>(dlsym(tcc, "TCCAccessPreflight"));
+    if (preflight == nullptr)
+    {
+        return -1;
+    }
+
+    return preflight(kAudioCaptureService, nullptr) == 0 ? 1 : 0;
+}
+
 } // extern "C"

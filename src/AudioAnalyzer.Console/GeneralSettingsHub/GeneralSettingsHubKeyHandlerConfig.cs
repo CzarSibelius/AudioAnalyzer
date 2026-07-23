@@ -102,7 +102,7 @@ internal sealed class GeneralSettingsHubKeyHandlerConfig : IKeyHandlerConfig<Gen
             return false;
         }
 
-        ctx.State.SelectedIndex = (ctx.State.SelectedIndex + delta + GeneralSettingsHubMenuRows.Count) % GeneralSettingsHubMenuRows.Count;
+        ctx.State.SelectedIndex = GeneralSettingsHubMenuRows.WrapSelection(ctx.State.SelectedIndex, delta);
         return true;
     }
 

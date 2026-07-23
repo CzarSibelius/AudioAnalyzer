@@ -14,6 +14,7 @@ internal sealed class ModeTransitionService : IModeTransitionService
     private readonly IDisplayState _displayState;
     private readonly GeneralSettingsHubState _generalSettingsHubState;
     private readonly ShowPlaybackController _showPlaybackController;
+    private readonly IFeatureCapabilityReport _featureCapabilityReport;
 
     public ModeTransitionService(
         IVisualizerSettingsRepository visualizerSettingsRepo,
@@ -21,7 +22,8 @@ internal sealed class ModeTransitionService : IModeTransitionService
         IShowRepository showRepository,
         IDisplayState displayState,
         GeneralSettingsHubState generalSettingsHubState,
-        ShowPlaybackController showPlaybackController)
+        ShowPlaybackController showPlaybackController,
+        IFeatureCapabilityReport featureCapabilityReport)
     {
         _visualizerSettingsRepo = visualizerSettingsRepo ?? throw new ArgumentNullException(nameof(visualizerSettingsRepo));
         _visualizerSettings = visualizerSettings ?? throw new ArgumentNullException(nameof(visualizerSettings));
@@ -29,6 +31,7 @@ internal sealed class ModeTransitionService : IModeTransitionService
         _displayState = displayState ?? throw new ArgumentNullException(nameof(displayState));
         _generalSettingsHubState = generalSettingsHubState ?? throw new ArgumentNullException(nameof(generalSettingsHubState));
         _showPlaybackController = showPlaybackController ?? throw new ArgumentNullException(nameof(showPlaybackController));
+        _featureCapabilityReport = featureCapabilityReport ?? throw new ArgumentNullException(nameof(featureCapabilityReport));
     }
 
     /// <inheritdoc />
@@ -52,6 +55,7 @@ internal sealed class ModeTransitionService : IModeTransitionService
             _displayState.FullScreen = false;
             _visualizerSettings.ApplicationMode = ApplicationMode.Settings;
             _generalSettingsHubState.ResetInteraction();
+            _featureCapabilityReport.Refresh();
             _visualizerSettingsRepo.SaveVisualizerSettings(_visualizerSettings);
             return;
         }
@@ -72,6 +76,7 @@ internal sealed class ModeTransitionService : IModeTransitionService
         _displayState.FullScreen = false;
         _visualizerSettings.ApplicationMode = ApplicationMode.Settings;
         _generalSettingsHubState.ResetInteraction();
+        _featureCapabilityReport.Refresh();
         _visualizerSettingsRepo.SaveVisualizerSettings(_visualizerSettings);
     }
 

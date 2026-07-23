@@ -13,7 +13,10 @@ internal sealed class GeneralSettingsHubAreaRenderer : IUiComponentRenderer<Gene
     private readonly AppSettings _appSettings;
     private readonly IPaletteRepository _paletteRepo;
     private readonly IUiThemeRepository _themeRepo;
+    private readonly IFeatureCapabilityReport _featureReport;
     private readonly IUiComponentRenderer<HorizontalRowComponent> _horizontalRowRenderer;
+    private IReadOnlyList<FeatureCapabilityStatus>? _cachedSnapshot;
+    private IReadOnlyList<FeatureCapabilityStatus> _visibleStatuses = [];
     private readonly HorizontalRowComponent _audioMenuRow = new();
     private readonly HorizontalRowComponent _bpmSourceMenuRow = new();
     private readonly HorizontalRowComponent _appNameMenuRow = new();
@@ -30,6 +33,7 @@ internal sealed class GeneralSettingsHubAreaRenderer : IUiComponentRenderer<Gene
         AppSettings appSettings,
         IPaletteRepository paletteRepo,
         IUiThemeRepository themeRepo,
+        IFeatureCapabilityReport featureReport,
         IUiComponentRenderer<HorizontalRowComponent> horizontalRowRenderer)
     {
         _state = state ?? throw new ArgumentNullException(nameof(state));
@@ -37,6 +41,7 @@ internal sealed class GeneralSettingsHubAreaRenderer : IUiComponentRenderer<Gene
         _appSettings = appSettings ?? throw new ArgumentNullException(nameof(appSettings));
         _paletteRepo = paletteRepo ?? throw new ArgumentNullException(nameof(paletteRepo));
         _themeRepo = themeRepo ?? throw new ArgumentNullException(nameof(themeRepo));
+        _featureReport = featureReport ?? throw new ArgumentNullException(nameof(featureReport));
         _horizontalRowRenderer = horizontalRowRenderer ?? throw new ArgumentNullException(nameof(horizontalRowRenderer));
     }
 
@@ -217,14 +222,19 @@ internal sealed class GeneralSettingsHubAreaRenderer : IUiComponentRenderer<Gene
         rowContext.StartRow = startRow + 9;
         _horizontalRowRenderer.Render(_showLayerRenderTimeMenuRow, rowContext);
 
+        // The Edit line is drawn in the gap between the last menu row and the Feature status section so the
+        // status block stays anchored below the menu (ADR-0095). Menu rows occupy relative rows 2..(1+Count).
+        int editLineRow = 2 + GeneralSettingsHubMenuRows.Count;
         if (_state.EditMode != GeneralSettingsHubEditMode.None)
         {
-            WriteRaw(10, startRow, width, sb =>
+            WriteRaw(editLineRow, startRow, width, sb =>
             {
                 AnsiConsole.AppendColored(sb, "  Edit: ", palette.Label);
                 AnsiConsole.AppendColored(sb, _state.RenameBuffer, palette.Highlighted);
             });
         }
+
+        RenderFeatureStatusSection(editLineRow + 1, startRow, width, maxLines, palette, analysis, beatColors);
 
         return ComponentRenderResult.Written(maxLines);
     }
@@ -233,6 +243,53 @@ internal sealed class GeneralSettingsHubAreaRenderer : IUiComponentRenderer<Gene
     public void ResetVisualizerAreaCleared()
     {
         _regionCleared = false;
+    }
+
+    private void RenderFeatureStatusSection(
+        int titleRow,
+        int startRow,
+        int width,
+        int maxLines,
+        UiPalette palette,
+        AudioAnalysisSnapshot analysis,
+        IReadOnlyList<PaletteColor> beatColors)
+    {
+        IReadOnlyList<FeatureCapabilityStatus> statuses = GetVisibleStatuses();
+        if (titleRow >= maxLines)
+        {
+            return;
+        }
+
+        WriteRaw(titleRow, startRow, width, sb =>
+        {
+            int phase = PaletteSwatchFormatter.ComputeToolbarPhaseOffset(analysis, beatColors.Count);
+            sb.Append(PaletteSwatchFormatter.FormatPaletteColoredName("Feature status", beatColors, phase));
+        });
+
+        for (int i = 0; i < statuses.Count; i++)
+        {
+            int row = titleRow + 1 + i;
+            if (row >= maxLines)
+            {
+                break;
+            }
+
+            FeatureCapabilityStatus status = statuses[i];
+            WriteRaw(row, startRow, width, sb =>
+                sb.Append(GeneralSettingsHubMenuLines.FormatFeatureStatusLine(status, palette)));
+        }
+    }
+
+    private IReadOnlyList<FeatureCapabilityStatus> GetVisibleStatuses()
+    {
+        IReadOnlyList<FeatureCapabilityStatus> snapshot = _featureReport.GetStatuses();
+        if (!ReferenceEquals(snapshot, _cachedSnapshot))
+        {
+            _cachedSnapshot = snapshot;
+            _visibleStatuses = GeneralSettingsHubMenuLines.FilterVisibleStatuses(snapshot);
+        }
+
+        return _visibleStatuses;
     }
 
     private static void WriteRaw(int lineIndex, int startRow, int width, Action<StringBuilder> build)

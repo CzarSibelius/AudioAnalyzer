@@ -403,4 +403,13 @@ int video_capture_is_running(void)
     }
 }
 
+int video_capture_authorization_status(int media_is_audio)
+{
+    @autoreleasepool
+    {
+        AVMediaType type = media_is_audio != 0 ? AVMediaTypeAudio : AVMediaTypeVideo;
+        return static_cast<int>([AVCaptureDevice authorizationStatusForMediaType:type]);
+    }
+}
+
 } // extern "C"

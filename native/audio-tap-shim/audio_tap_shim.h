@@ -53,6 +53,11 @@ AUDIO_TAP_SHIM_API void audio_tap_stop(void);
 
 AUDIO_TAP_SHIM_API int audio_tap_is_running(void);
 
+// Non-prompting System Audio Recording (TCC) status. Uses TCCAccessPreflight only; never calls
+// TCCAccessRequest, so it cannot raise a consent prompt. Returns 1 when authorized, 0 when not
+// authorized, -1 when the status cannot be determined (TCC private API unavailable).
+AUDIO_TAP_SHIM_API int audio_tap_permission_status(void);
+
 #ifdef __cplusplus
 }
 #endif

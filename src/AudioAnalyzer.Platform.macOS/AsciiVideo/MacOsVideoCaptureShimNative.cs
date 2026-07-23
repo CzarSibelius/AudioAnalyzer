@@ -90,4 +90,7 @@ internal static class MacOsVideoCaptureShimNative
 
     [DllImport(LibraryName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "video_capture_is_running")]
     internal static extern int VideoCaptureIsRunning();
+
+    [DllImport(LibraryName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "video_capture_authorization_status")]
+    internal static extern int VideoCaptureAuthorizationStatus(int mediaIsAudio);
 }

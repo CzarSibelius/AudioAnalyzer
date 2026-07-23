@@ -58,6 +58,12 @@ VIDEO_CAPTURE_SHIM_API void video_capture_stop(void);
 
 VIDEO_CAPTURE_SHIM_API int video_capture_is_running(void);
 
+// Non-prompting AVFoundation authorization status. Uses authorizationStatusForMediaType only; never
+// calls requestAccessForMediaType, so it cannot raise a consent prompt. media_is_audio selects
+// Microphone (1, AVMediaTypeAudio) vs Camera (0, AVMediaTypeVideo). Returns the AVAuthorizationStatus
+// value: 0 NotDetermined, 1 Restricted, 2 Denied, 3 Authorized; -1 on error.
+VIDEO_CAPTURE_SHIM_API int video_capture_authorization_status(int media_is_audio);
+
 #ifdef __cplusplus
 }
 #endif

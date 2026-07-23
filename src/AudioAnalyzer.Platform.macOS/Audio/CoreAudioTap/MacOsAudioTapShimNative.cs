@@ -95,4 +95,7 @@ internal static class MacOsAudioTapShimNative
 
     [DllImport(LibraryName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "audio_tap_is_running")]
     internal static extern int AudioTapIsRunning();
+
+    [DllImport(LibraryName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "audio_tap_permission_status")]
+    internal static extern int AudioTapPermissionStatus();
 }

@@ -64,6 +64,9 @@ var deviceInfo = provider.GetRequiredService<IAudioDeviceInfo>();
 
 var bootstrapLoggerFactory = provider.GetRequiredService<ILoggerFactory>();
 provider.GetRequiredService<IPlatformStartupDiagnostics>().LogStartup();
+StartupLogging.LogFeatureCapabilities(
+    bootstrapLoggerFactory.CreateLogger("AudioAnalyzer"),
+    provider.GetRequiredService<IFeatureCapabilityReport>().GetStatuses());
 
 var devices = deviceInfo.GetDevices();
 var (initialDeviceId, initialName) = DeviceResolver.TryResolveFromSettings(

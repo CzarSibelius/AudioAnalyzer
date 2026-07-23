@@ -1,6 +1,7 @@
 using System.IO.Abstractions;
 using AudioAnalyzer.Application;
 using AudioAnalyzer.Application.Abstractions;
+using AudioAnalyzer.Application.Diagnostics;
 using AudioAnalyzer.Application.Display;
 using AudioAnalyzer.Application.BeatDetection;
 using AudioAnalyzer.Infrastructure.Link;
@@ -56,7 +57,14 @@ internal static class ServiceConfiguration
         services.AddSingleton<IShowRepository>(sp =>
             new FileShowRepository(sp.GetRequiredService<IFileSystem>(), options?.ShowsDirectory));
 
+        // Cross-platform (managed) feature capability probes are registered before the platform module so
+        // the aggregated report lists them first (audio capture, Ableton Link), then platform-specific rows.
+        services.AddSingleton<IFeatureCapabilityProbe, AudioCaptureCapabilityProbe>();
+        services.AddSingleton<IFeatureCapabilityProbe, AbletonLinkCapabilityProbe>();
+
         PlatformSelection.AddPlatformServices(services, options);
+
+        services.AddSingleton<IFeatureCapabilityReport, FeatureCapabilityReport>();
 
         services.AddSingleton<IDefaultTextLayersSettingsFactory>(_ => new DefaultTextLayersSettingsFactory());
         services.AddSingleton<TextLayerStateStore>();
@@ -202,6 +210,7 @@ internal static class ServiceConfiguration
                 sp.GetRequiredService<AppSettings>(),
                 sp.GetRequiredService<IPaletteRepository>(),
                 sp.GetRequiredService<IUiThemeRepository>(),
+                sp.GetRequiredService<IFeatureCapabilityReport>(),
                 sp.GetRequiredService<IUiComponentRenderer<HorizontalRowComponent>>()));
         services.AddSingleton<IKeyHandlerConfig<GeneralSettingsHubKeyContext>, GeneralSettingsHubKeyHandlerConfig>();
         services.AddSingleton<IKeyHandler<GeneralSettingsHubKeyContext>, GenericKeyHandler<GeneralSettingsHubKeyContext>>();
@@ -236,6 +245,8 @@ internal static class ServiceConfiguration
                 sp.GetRequiredService<IDisplayState>()));
         services.AddSingleton<IKeyHandlerConfig<ShowEditModalKeyContext>, ShowEditModalKeyHandlerConfig>();
         services.AddSingleton<IShowEditModal, ShowEditModal>();
+        services.AddSingleton<IKeyHandlerConfig<ConfirmationKeyContext>, ConfirmationKeyHandlerConfig>();
+        services.AddSingleton<IConfirmationModal, ConfirmationModal>();
         services.AddSingleton<KeyHandling.ConsoleShiftLetterV>();
         services.AddSingleton<IKeyHandlerConfig<MainLoopKeyContext>, MainLoopKeyHandlerConfig>();
         services.AddSingleton<IDeviceCaptureController, DeviceCaptureController>();

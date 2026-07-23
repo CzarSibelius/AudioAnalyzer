@@ -221,6 +221,53 @@ internal static class GeneralSettingsHubMenuLines
         return sb.ToString();
     }
 
+    /// <summary>
+    /// Returns the capabilities shown in the hub Feature status section: everything except
+    /// <see cref="FeatureAvailability.NotApplicable"/> (hidden per ADR-0095), in report order.
+    /// </summary>
+    public static List<FeatureCapabilityStatus> FilterVisibleStatuses(IReadOnlyList<FeatureCapabilityStatus> statuses)
+    {
+        ArgumentNullException.ThrowIfNull(statuses);
+        var visible = new List<FeatureCapabilityStatus>(statuses.Count);
+        foreach (var status in statuses)
+        {
+            if (status.Availability != FeatureAvailability.NotApplicable)
+            {
+                visible.Add(status);
+            }
+        }
+
+        return visible;
+    }
+
+    /// <summary>
+    /// Formats one read-only feature-status line: <c>name:available</c> / <c>name:unavailable</c> with an
+    /// optional dimmed <c>(detail)</c>. No selection affordance (not a selectable row); see ADR-0095.
+    /// </summary>
+    public static string FormatFeatureStatusLine(FeatureCapabilityStatus status, UiPalette palette)
+    {
+        ArgumentNullException.ThrowIfNull(status);
+        ArgumentNullException.ThrowIfNull(palette);
+
+        var sb = new StringBuilder();
+        AnsiConsole.AppendColored(sb, MenuSelectionAffordance.GetPrefix(false), palette.Label);
+        AnsiConsole.AppendColored(sb, status.Name, palette.Label);
+        AnsiConsole.AppendColored(sb, ":", palette.Normal);
+
+        bool available = status.Availability == FeatureAvailability.Available;
+        AnsiConsole.AppendColored(
+            sb,
+            available ? "available" : "unavailable",
+            available ? palette.Normal : palette.Dimmed);
+
+        if (!string.IsNullOrWhiteSpace(status.Detail))
+        {
+            AnsiConsole.AppendColored(sb, " (" + status.Detail.Trim() + ")", palette.Dimmed);
+        }
+
+        return sb.ToString();
+    }
+
     /// <summary>Resolves display text for the current <see cref="UiSettings.UiThemeId"/>.</summary>
     public static string ResolveUiThemeDisplaySummary(UiSettings uiSettings, IUiThemeRepository themeRepo)
     {

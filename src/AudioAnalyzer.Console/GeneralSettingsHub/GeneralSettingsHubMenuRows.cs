@@ -14,4 +14,12 @@ internal static class GeneralSettingsHubMenuRows
 
     /// <summary>Number of menu rows (for wrap).</summary>
     public const int Count = 8;
+
+    /// <summary>
+    /// Wraps a selection index by <paramref name="delta"/> within the selectable menu rows. The result
+    /// is always in <c>[0, <see cref="Count"/>)</c>, so navigation never lands on the read-only Feature
+    /// status section rendered below the menu (ADR-0095).
+    /// </summary>
+    public static int WrapSelection(int index, int delta) =>
+        ((index + delta) % Count + Count) % Count;
 }

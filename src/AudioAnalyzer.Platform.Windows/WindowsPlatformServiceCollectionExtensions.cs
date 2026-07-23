@@ -52,6 +52,8 @@ public static class WindowsPlatformServiceCollectionExtensions
         services.AddSingleton<IPlatformStartupDiagnostics, WindowsStartupDiagnostics>();
         services.AddSingleton<IDefaultDeviceFallbackPolicy, WindowsDefaultDeviceFallbackPolicy>();
 
+        services.AddSingleton<IFeatureCapabilityProbe, WindowsFeatureCapabilityProbe>();
+
         return services;
     }
 }
