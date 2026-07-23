@@ -2,6 +2,8 @@
 
 **Status**: Accepted
 
+**Update (current)**: This decision is no longer Windows-only. macOS implements the same `INowPlayingProvider` contract via the `mediaremote-adapter` mechanism (Perl platform binary + bundled helper framework) — see [ADR-0094](0094-macos-now-playing-mediaremote-adapter.md). The Context/Consequences below that frame now-playing as "Windows-only initially" with Linux as the only future are historical; macOS additionally supplies `Album`.
+
 ## Context
 
 The application header had an empty line (row 5) that could display useful information. Windows exposes the Global System Media Transport Controls (GSMTC) API, which allows applications to read the currently playing media from other apps (Spotify, VLC, browsers, etc.). Showing "Artist - Title" in the header provides context without requiring the user to switch applications.

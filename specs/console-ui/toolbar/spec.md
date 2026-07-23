@@ -19,7 +19,7 @@ Console UI surface documented with ASCII screen dumps and line references per [f
 | Line | Source | Content |
 |------|--------|---------|
 | **1** | [`HeaderContainer`](../../../src/AudioAnalyzer.Console/Console/HeaderContainer.cs) title row | Universal title breadcrumb (`ITitleBarContentProvider`); one full-width preformatted cell ([ui-spec-title-breadcrumb.md](../title-breadcrumb/spec.md)). |
-| **2** | `HeaderContainer` row 2 | **Device:** device name; **Now:** now-playing (scrolls when long). |
+| **2** | `HeaderContainer` row 2 | **Device:** device name; **Now:** now-playing (scrolls when long). Populated on **Windows** (GSMTC) and **macOS** (`mediaremote-adapter`, [ADR-0094](../../../docs/adr/0094-macos-now-playing-mediaremote-adapter.md)); empty when no provider/session. |
 | **3** | `HeaderContainer` row 3 | **BPM**, **Beat**, **Volume/dB** (values depend on BPM source and audio; see mode specs). |
 | **4** | [`MainContentContainer`](../../../src/AudioAnalyzer.Console/Console/MainContentContainer.cs) + [`MainContentToolbarLayout`](../../../src/AudioAnalyzer.Console/MainContentToolbarLayout.cs) + visualizer | **Preset editor:** Layers (1–9 digits), optional contextual fields, **Palette**. **Show play:** **Show**, **Entry**, optional contextual fields, **Palette** — see [TextLayersToolbarBuilder](../../../src/AudioAnalyzer.Application/TextLayersToolbarBuilder.cs). |
 

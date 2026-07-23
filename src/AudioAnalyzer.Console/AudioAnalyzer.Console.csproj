@@ -23,6 +23,10 @@
          the interactive TUI still works. See ADR-0088. -->
     <_CanOutputAppBundle>true</_CanOutputAppBundle>
     <RunWithOpen>false</RunWithOpen>
+    <!-- Pin a single RID so the macOS assembly's processor architecture is host-independent and matches the
+         Tests project (which pins osx-arm64). Without this, cross-building the solution on a Windows runner
+         infers a different arch for this Exe than Tests' arm64, producing CS8012. Intel: dotnet build/run -r osx-x64. -->
+    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == ''">osx-arm64</RuntimeIdentifier>
     <!-- Preserve PublishFolderType metadata when Tests (or other hosts) reference this project. -->
     <MSBuildDisableGetCopyToPublishDirectoryItemsOptimization>true</MSBuildDisableGetCopyToPublishDirectoryItemsOptimization>
   </PropertyGroup>
@@ -64,7 +68,7 @@
        The SDK builds + ad-hoc signs the .app but does not embed our privacy usage strings or the native shims,
        so finalize the bundle (inject usage strings, copy the shims into Contents/MacOS, re-sign ad-hoc). -->
   <Target Name="FinalizeMacOsAppBundle" BeforeTargets="Run" Condition="'$(TargetFramework)' == '$(AudioAnalyzerMacOsHostTfm)' AND $([MSBuild]::IsOSPlatform('osx'))">
-    <Exec Command="bash &quot;$(MSBuildProjectDirectory)/../../scripts/macos/pack-bundle.sh&quot; &quot;$(TargetDir)AudioAnalyzer.Console.app&quot; &quot;$(MSBuildProjectDirectory)/macOS/Info.plist&quot; &quot;$(MSBuildProjectDirectory)/../../native/audio-tap-shim/build/libaudio_tap_shim.dylib&quot; &quot;$(MSBuildProjectDirectory)/../../native/video-capture-shim/build/libvideo_capture_shim.dylib&quot;" />
+    <Exec Command="bash &quot;$(MSBuildProjectDirectory)/../../scripts/macos/pack-bundle.sh&quot; &quot;$(TargetDir)AudioAnalyzer.Console.app&quot; &quot;$(MSBuildProjectDirectory)/macOS/Info.plist&quot; &quot;$(MSBuildProjectDirectory)/../../native/audio-tap-shim/build/libaudio_tap_shim.dylib&quot; &quot;$(MSBuildProjectDirectory)/../../native/video-capture-shim/build/libvideo_capture_shim.dylib&quot; &quot;$(MSBuildProjectDirectory)/../../native/mediaremote-adapter/build/MediaRemoteAdapter.framework&quot; &quot;$(MSBuildProjectDirectory)/../../native/mediaremote-adapter/bin/mediaremote-adapter.pl&quot;" />
   </Target>
 
   <!-- SDK ComputeRunArguments overrides a same-named project target; run after it (and _PrepareRunDesktop)

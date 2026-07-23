@@ -61,6 +61,22 @@ cmake --build build --config Release
 
 Once **`build/libvideo_capture_shim.dylib`** exists, run the macOS console via **`scripts/macos/run.sh`** (or `dotnet run -f net10.0-macos26.0`). The **`FinalizeMacOsAppBundle`** step (`scripts/macos/pack-bundle.sh`) copies the dylib into **`Contents/MacOS`** of the `.app`, injects the **`NSCameraUsageDescription`** privacy usage string, and **ad-hoc re-signs** the bundle so macOS TCC can grant consent ([ADR-0088](../docs/adr/0088-macos-coreaudio-only-and-signed-app-bundle.md)). Grant **Camera** access when prompted (or enable it for **AudioAnalyzer** in System Settings → Privacy & Security → Camera). The **ad-hoc TCC caveat** described above (re-prompts on rebuild) applies here too.
 
+## MediaRemote adapter (`mediaremote-adapter`)
+
+macOS **now-playing** (read what another app is playing) for the header `Now:` row and the `NowPlaying` text layer ([ADR-0027](../docs/adr/0027-now-playing-header.md), [ADR-0094](../docs/adr/0094-macos-now-playing-mediaremote-adapter.md)). Direct private `MediaRemote` is blocked for third-party apps since macOS **15.4**, and the WWDC26 Now Playing framework is publish-only; instead the app runs **`/usr/bin/perl`** (a `com.apple.`-entitled platform binary) with the vendored **`mediaremote-adapter.pl`** + **`MediaRemoteAdapter.framework`** ([ungive/mediaremote-adapter](https://github.com/ungive/mediaremote-adapter), **BSD-3-Clause**, pinned). `MacOsNowPlayingProvider` spawns `… stream --no-diff --no-artwork`, parses the JSON lines, and caches the latest `NowPlayingInfo`. The framework is **bundled, not linked** (passed as a script argument), so there is no P/Invoke. Builds and tests succeed **without** the artifact; macOS then falls back to `NullNowPlayingProvider` (empty `Now:` row).
+
+### Build (macOS)
+
+Vendor the BSD-3 sources under `native/mediaremote-adapter/` (pinned commit/tag, keep its `LICENSE`) and build the universal (`x86_64`+`arm64`) framework with its CMake target:
+
+```bash
+cd native/mediaremote-adapter
+cmake -B build
+cmake --build build
+```
+
+This produces `build/MediaRemoteAdapter.framework` and the `bin/mediaremote-adapter.pl` script. The **`FinalizeMacOsAppBundle`** step (`scripts/macos/pack-bundle.sh`) copies both into **`Contents/Resources/mediaremote-adapter/`** of the `.app` and re-signs the bundle (`--deep` covers the framework; the `com.apple.` permission attaches to `/usr/bin/perl`, not the framework signature). **No** Info.plist usage string is needed — now-playing read has no TCC entitlement. Implementation is tracked in **PBI-018**.
+
 ## Ableton Link shim (`link-shim`)
 
 The managed app loads `**link_shim.dll**` from the executable directory to use **Ableton Link** as a BPM source ([ADR-0066](../docs/adr/0066-bpm-source-and-ableton-link.md)). The .NET solution **builds and tests without** this DLL; Link mode shows a hint until the DLL is present.

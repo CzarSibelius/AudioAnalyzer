@@ -3,6 +3,8 @@ using AudioAnalyzer.Infrastructure.NowPlaying;
 using AudioAnalyzer.Platform.macOS.AsciiVideo;
 using AudioAnalyzer.Platform.macOS.Audio;
 using AudioAnalyzer.Platform.macOS.Hosting;
+using AudioAnalyzer.Platform.macOS.NowPlaying;
+using AudioAnalyzer.Platform.macOS.Permissions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -41,8 +43,27 @@ public static class MacOsPlatformServiceCollectionExtensions
             sp.GetRequiredService<IMacOsAudioEnumerator>(),
             sp.GetRequiredService<IMacOsCoreAudioTapSystemAudioInputFactory>()));
 
-        services.AddSingleton<INowPlayingProvider>(_ =>
-            nowPlayingOverride ?? new NullNowPlayingProvider());
+        services.AddSingleton<INowPlayingProvider>(sp =>
+        {
+            if (nowPlayingOverride != null)
+            {
+                return nowPlayingOverride;
+            }
+
+            var availability = new MacOsMediaRemoteAdapterAvailability(
+                sp.GetRequiredService<IHostContentLocator>());
+            if (!availability.TryResolvePaths(out string scriptPath, out string frameworkPath))
+            {
+                return new NullNowPlayingProvider();
+            }
+
+            var provider = new MacOsNowPlayingProvider(
+                scriptPath,
+                frameworkPath,
+                sp.GetRequiredService<ILogger<MacOsNowPlayingProvider>>());
+            provider.Start();
+            return provider;
+        });
 
         services.AddSingleton<IAsciiVideoFrameSource>(sp =>
             asciiVideoFrameSourceOverride
@@ -57,6 +78,10 @@ public static class MacOsPlatformServiceCollectionExtensions
         services.AddSingleton<IHostContentLocator, MacOsHostContentLocator>();
         services.AddSingleton<IPlatformStartupDiagnostics, MacOsStartupDiagnostics>();
         services.AddSingleton<IDefaultDeviceFallbackPolicy, MacOsDefaultDeviceFallbackPolicy>();
+
+        services.AddSingleton<IFeatureCapabilityProbe>(sp =>
+            new MacOsFeatureCapabilityProbe(sp.GetRequiredService<IHostContentLocator>()));
+        services.AddSingleton<IFeatureCapabilityProbe, MacOsPermissionCapabilityProbe>();
 
         return services;
     }

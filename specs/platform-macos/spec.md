@@ -4,7 +4,7 @@
 
 ### Context
 
-AudioAnalyzer ships with **Windows** and **macOS** console builds (**`net10.0-windows…`** and **`net10.0-macos*`** per [ADR-0086](../../docs/adr/0086-macos-windows-hosts-and-screencapturekit.md)—no portable **`net10.0`** host). **WASAPI** loopback and capture live in **`AudioAnalyzer.Platform.Windows`**; **Core Audio** process-tap system audio + microphone/input capture live in **`AudioAnalyzer.Platform.macOS`** (ScreenCaptureKit and virtual-routing paths were removed per [ADR-0088](../../docs/adr/0088-macos-coreaudio-only-and-signed-app-bundle.md)); optional **Windows-only** adapters stay in **Platform.Windows** (now-playing, ASCII webcam); **Infrastructure** stays free of unconditional WASAPI types ([ADR-0084](../../docs/adr/0084-macos-multi-target-and-platform-audio.md)).
+AudioAnalyzer ships with **Windows** and **macOS** console builds (**`net10.0-windows…`** and **`net10.0-macos*`** per [ADR-0086](../../docs/adr/0086-macos-windows-hosts-and-screencapturekit.md)—no portable **`net10.0`** host). **WASAPI** loopback and capture live in **`AudioAnalyzer.Platform.Windows`**; **Core Audio** process-tap system audio + microphone/input capture live in **`AudioAnalyzer.Platform.macOS`** (ScreenCaptureKit and virtual-routing paths were removed per [ADR-0088](../../docs/adr/0088-macos-coreaudio-only-and-signed-app-bundle.md)); per-OS adapters for **now-playing** and **ASCII webcam** live in each platform assembly (Windows GSMTC / WinRT; macOS `mediaremote-adapter` for now-playing per [ADR-0094](../../docs/adr/0094-macos-now-playing-mediaremote-adapter.md), AVFoundation for webcam); **Infrastructure** stays free of unconditional WASAPI types ([ADR-0084](../../docs/adr/0084-macos-multi-target-and-platform-audio.md)).
 
 **First-class macOS** means: the solution **builds and runs on macOS** (Apple Silicon and Intel where supported by .NET), **automated verification** includes a macOS lane, **operator documentation** describes prerequisites and audio routing realistically, and **feature parity** is explicit: core visualization, presets, shows, and Demo mode work; Windows-only capabilities remain **documented degradations** or gain macOS equivalents where justified.
 
@@ -19,6 +19,7 @@ This spec is the **contract** for that program of work. **Host TFMs** are **[ADR
 - **Infrastructure**: Shared, OS-agnostic pieces stay here; **NAudio WASAPI-only** types must not be required for a macOS build (conditional compilation or moved types).
 - **Screen dump**: `IScreenDumpContentProvider` is abstracted and provided per platform via DI ([ADR-0046](../../docs/adr/0046-screen-dump-ascii-screenshot.md), [ADR-0092](../../docs/adr/0092-platform-behavior-via-abstractions-and-di-module.md)). macOS currently registers `NullScreenDumpContentProvider` (documented degraded behavior: dump unavailable, returns null); a future Unix-terminal implementation could replace it without touching shared code.
 - **Ableton Link**: Native shim is Windows DLL today ([ADR-0066](../../docs/adr/0066-bpm-source-and-ableton-link.md)). macOS **may** ship later via `dylib` + CMake; treat as **follow-up** unless ADR-0084 scopes it into the first milestone.
+- **Now-playing**: `INowPlayingProvider` ([ADR-0027](../../docs/adr/0027-now-playing-header.md)) is implemented on macOS by `MacOsNowPlayingProvider` in `Platform.macOS/NowPlaying/` via the `mediaremote-adapter` mechanism — `/usr/bin/perl` (a `com.apple.`-entitled platform binary) runs the bundled `mediaremote-adapter.pl` + `MediaRemoteAdapter.framework` in `stream --no-diff --no-artwork` mode; the provider parses JSON lines into a thread-safe cache and exposes a synchronous `GetNowPlaying()` (background-cache model like Windows GSMTC, [ADR-0030](../../docs/adr/0030-performance-priority.md)). Direct private `MediaRemote` (blocked since macOS 15.4) and the publish-only WWDC26 Now Playing framework are **rejected**; when the adapter is unavailable the factory falls back to `NullNowPlayingProvider`. The BSD-3 adapter is vendored (pinned) under `native/mediaremote-adapter/` and bundled into the `.app` by `pack-bundle.sh`; **no** TCC usage string is required. See [ADR-0094](../../docs/adr/0094-macos-now-playing-mediaremote-adapter.md).
 - **CI**: Add **macOS** job(s): at minimum `dotnet build` for the solution or cross-platform subset and **unit tests** excluding Windows-only integration assumptions.
 
 ### Constraints
@@ -53,7 +54,7 @@ When macOS support ships, update in the **same change set** as behavior or posit
 - On a **macOS** CI runner (or documented local smoke): `dotnet build` / `dotnet test` succeed with **0 warnings** for the **macOS** host TFM (per [AGENTS.md](../../AGENTS.md); integration filters as today).
 - Launch on macOS: **Demo mode** drives analysis and visualization without crashing on the **macOS** host build. **Core Audio microphone (and other input-capable) capture** plus **Core Audio process-tap system audio** are implemented in **`AudioAnalyzer.Platform.macOS`** (PBI-013, [ADR-0087](../../docs/adr/0087-macos-core-audio-tap-system-audio.md)); **OS-level system loopback** parity with Windows WASAPI is **not** claimed—the tap requires macOS 14.2+, the built shim, consent, and a signed bundle—see **Constraints**, [ADR-0088](../../docs/adr/0088-macos-coreaudio-only-and-signed-app-bundle.md), and operator docs.
 - **Windows** release artifacts remain buildable and tested (no regression in existing Windows CI expectations unless intentionally consolidated and documented).
-- Operator docs state **limitations** (now-playing, ASCII webcam, Link shim, screen dump) per actual implementation.
+- **Now-playing** is implemented on macOS (`MacOsNowPlayingProvider` via `mediaremote-adapter`, [ADR-0094](../../docs/adr/0094-macos-now-playing-mediaremote-adapter.md)); operator docs state remaining **limitations** (ASCII webcam, Link shim, screen dump) per actual implementation.
 
 ### Regression guardrails
 
@@ -104,6 +105,22 @@ Scenario: Windows-only features degrade gracefully on macOS
   Given the application is running on macOS
   When a Windows-only capability is invoked or configured
   Then the product does not crash and behavior matches documented degradation or hides the option
+```
+
+```gherkin
+Scenario: macOS now-playing populates the header from another app
+  Given the macOS console runs from the finalized .app bundle with the mediaremote-adapter framework and script present
+  And another application is playing media reported to the system now-playing center
+  When the header Now: row and the NowPlaying layer refresh
+  Then they show the current Artist - Title (and Album when available) from GetNowPlaying()
+```
+
+```gherkin
+Scenario: macOS now-playing degrades when the adapter is unavailable
+  Given the macOS build is run without the bundled mediaremote-adapter artifacts or the adapter is non-functional
+  When now-playing is resolved at startup
+  Then the factory registers NullNowPlayingProvider and the Now: row is empty
+  And the application does not crash or block the render thread
 ```
 
 ```gherkin

@@ -258,3 +258,14 @@ cmake --build build --config Release
 Copy `**link_shim.dll**` next to `AudioAnalyzer.Console.exe`. The app runs without it; **Ableton Link** BPM mode then shows a “no native DLL” hint until the DLL is present. Link peers must be on the **same LAN**; see [Ableton Link documentation](https://ableton.github.io/link/). **GPL-2.0+** applies to Link and the shim when you build or ship that DLL; the project as a whole is **GPL-3.0-only** — see root `LICENSE`, `NOTICE`, and [ADR-0066](adr/0066-bpm-source-and-ableton-link.md). Official releases from this repository do not ship `link_shim.dll`.
 
 **Agents and CI:** toolchain prerequisites (CMake + MSVC Build Tools, Developer PowerShell for VS), verification, and a checklist are in [docs/agents/native-link-shim-build.md](agents/native-link-shim-build.md).
+
+## macOS now-playing native build (`MediaRemoteAdapter.framework`)
+
+Optional, macOS only. The macOS header `Now:` row and the `NowPlaying` text layer read system media via the vendored [`mediaremote-adapter`](https://github.com/ungive/mediaremote-adapter) (**BSD-3-Clause**, pinned at **v0.7.6** under `native/mediaremote-adapter/`, see its `LICENSE`). Build the universal helper framework from `**native/mediaremote-adapter**`:
+
+```bash
+cmake -B build
+cmake --build build
+```
+
+The finalize step (`scripts/macos/pack-bundle.sh` / `FinalizeMacOsAppBundle`) copies `build/MediaRemoteAdapter.framework` and `bin/mediaremote-adapter.pl` into `Contents/Resources/mediaremote-adapter/`. The app runs without the artifacts; macOS then falls back to `NullNowPlayingProvider` (empty `Now:` row). **No** TCC usage string is required (now-playing read has no entitlement). BSD-3-Clause is compatible with the project's **GPL-3.0-only** distribution ([ADR-0075](adr/0075-nuget-license-compatibility.md)); the project as a whole is GPL-3.0-only — see root `LICENSE`, `NOTICE`, and [ADR-0094](adr/0094-macos-now-playing-mediaremote-adapter.md). See also [`native/README.md`](../native/README.md).
